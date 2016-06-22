@@ -1,0 +1,10 @@
+logging:
+    file: aucote.log
+    level: debug
+database:
+    credentials:
+        host: localhost
+        database: aucote
+        user: postgres
+        password: postgres
+        port: 5433
