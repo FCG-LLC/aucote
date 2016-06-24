@@ -1,16 +1,19 @@
 from .base import NmapBase
-from scans.structs import Port, TransportProtocol
+from structs import Port, TransportProtocol
 import logging as log
 import ipaddress
 
 class PortsScan(NmapBase):
 
-    def scan_ports(self, nodes):
+    def scan_ports(self, nodes, ports=None):
         node_by_ip = {node.ip: node for node in nodes}
         result = []   
         args = list(self.COMMON_ARGS)
-        #args.extend(('-p', '1-65535')) #TODO: disabled for increased speed of tests
-        args.extend(('-p', '442-444'))
+        if ports is None:
+            args.extend(('-p', '1-65535')) #TODO: disabled for increased speed of tests
+        else:
+            port_str = ','.join([str(port) for port in ports])
+            args.extend(('-p', port_str))
         args.extend( ('-sV', '--script', 'banner') )
         args.extend([str(node.ip) for node in nodes])
         xml = self.call_nmap(args)

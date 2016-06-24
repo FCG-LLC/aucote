@@ -89,6 +89,18 @@ def get_vulnerabilities():
         result['vulnerabilities'] = db.get_vulnerabilities(scan_id, port_id)
         return jsonify(result)
 
+@app.route('/api/v1/exploits')
+def get_exploits():
+    '''
+    This Flask view returns list of exploits supported by this application
+    Returns:
+        JSON HTTP response or HTTP error code on error.
+    '''
+    result = new_result()
+    with ApiDb(cfg.get('database.credentials')) as db:
+        result['exploits'] = db.get_exploits()
+        return jsonify(result)
+
 
 
 

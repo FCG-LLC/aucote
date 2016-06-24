@@ -39,7 +39,10 @@ class ApiDb(DbBase):
 
     def get_vulnerabilities(self, scan_id, port_id):
         result = []
-        query = 'SELECT v.id, v.port_id, v.title, v.description, v.risk_level from vulnerabilities v LEFT JOIN ports p on v.port_id = p.id WHERE '
+        query = '''SELECT v.id, v.port_id, e.title, e.description, e.risk_level FROM vulnerabilities v 
+            LEFT JOIN ports p ON v.port_id = p.id 
+            LEFT JOIN exploits e ON v.exploit_id = e.id
+            WHERE '''
         conditions = []
         args = []
         if scan_id is not None:
@@ -58,6 +61,19 @@ class ApiDb(DbBase):
                 'riskLevel': row[4]
             }
             result.append(port)
+        return result
+
+    def get_exploits(self):
+        result = []
+        for row in self.fetch_all('SELECT id, app, name, title, description, risk_level FROM exploits'):
+            result.append({
+                'id': row[0],
+                'app': row[1],
+                'name': row[2],
+                'title': row[3],
+                'description': row[4],
+                'riskLevel': row[5]
+                })
         return result
 
 

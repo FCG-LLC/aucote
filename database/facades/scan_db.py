@@ -1,4 +1,6 @@
 from utils.database import DbBase
+from database.objects import Exploit, Exploits
+from structs import RiskLevel
 
 class ScanDb(DbBase):
     '''
@@ -43,10 +45,22 @@ class ScanDb(DbBase):
     def insert_vulnerability(self, vulnerability):
         data = {
         'port_id': vulnerability.port.db_id,
-        'title': vulnerability.title,
-        'description': vulnerability.description,
-        'risk_level': vulnerability.risk_level.value,
+        'exploit_id': vulnerability.exploit.db_id,
+        'output': vulnerability.output
         }
         db_id = self.insert('vulnerabilities', data)
         self.commit()
         return db_id
+
+    def get_exploits(self):
+        exploits = Exploits()
+        for row in self.fetch_all('SELECT app, name, title, description, risk_level, id FROM exploits'):
+            exploit = Exploit()
+            exploit.app = row[0]
+            exploit.name = row[1]
+            exploit.title = row[2]
+            exploit.description = row[3]
+            exploit.risk_level = RiskLevel(row[4])
+            exploit.db_id = row[5]
+            exploits.add(exploit)
+        return exploits

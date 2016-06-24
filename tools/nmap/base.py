@@ -1,7 +1,7 @@
 from aucote_cfg import cfg
 from xml.etree import ElementTree
 import logging as log
-from scans.structs import Port, TransportProtocol
+from structs import Port, TransportProtocol, Vulnerability
 import subprocess
 
 
@@ -19,30 +19,21 @@ class NmapBase:
 
 class NmapScript(NmapBase):
     NAME = None
-    def __init__(self, port):
+    ARGS = None
+
+    def __init__(self, port, exploit):
+        self.exploit = exploit
         self.port = port
 
-    def run(self):
-        args = self.COMMON_ARGS + ( '-p', str(self.port.number), '-sV', '--script', self.NAME, str(self.port.node.ip))
-        xml = self.call_nmap(args)
-        host = xml.find('host')
-        if host is not None:
-            ports = host.find('ports')
-            if ports is not None:
-                port = ports.find('port')
-                if port is not None:
-                    for script in port.findall('script'):
-                        if script.get('id') == self.NAME:
-                            log.debug('Parsing output from script %s', self.NAME)
-                            try:
-                                return self.handle_script(script)
-                            except Exception as err:
-                                log.warning('Exception while parsing output from script %s', self.NAME, exc_info=err)
-                                log.debug('Problematic XML: %s', ElementTree.dump(script))
-        log.debug('Did not found output of script %s', self.NAME)
-        return None
-
-    def handle_script(self, script):
-        raise NotImplementedError
+    def handle(self, script):
+        table = script.find('table')
+        if table is None: return #no data, probably no response from server, so no problem
+        state = table.find("./elem[@key='state']").text
+        if state  not in ('VULNERABLE', 'LIKELY VULNERABLE'): return None #TODO: add likelihood to vulnerability
+        result = Vulnerability()
+        result.exploit = self.exploit
+        result.port = self.port
+        result.output = script.get('output')
+        return result
 
 

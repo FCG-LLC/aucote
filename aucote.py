@@ -40,6 +40,11 @@ def run_service():
 def run_syncdb():
     mm = MigrationManager(cfg.get("database.credentials"), cfg.get("database.migration.path"))
     mm.migrate()
+    from migrations.scripts import sync_exploits
+    from database.facades import MigrationDb
+    with MigrationDb(cfg.get("database.credentials")) as db:
+        sync_exploits.run(db)
+
 
 
 

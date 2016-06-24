@@ -33,10 +33,9 @@ class Port(DbObject):
     banner = None
 
 class Vulnerability(DbObject):
-    title = None
-    description = None
-    risk_level = None
+    exploit = None
     port = None
+    output = None
 
 
 
