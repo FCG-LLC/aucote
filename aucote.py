@@ -21,13 +21,10 @@ def run_api():
     api_thread()
 
 def run_scan():
-    start = datetime.datetime.utcnow()
     with ScanDb(cfg.get("database.credentials")) as scan_db:
-        scan_id = scan_db.insert_scan(start)
-        executor = Executor(scan_db, scan_id)
+        executor = Executor(scan_db)
         executor.run()
-        end = datetime.datetime.utcnow()
-        scan_db.update_scan(scan_id, end)
+        
         
 def run_service():
     thread = Thread(target=api_thread)

@@ -1,69 +1,102 @@
-from .base import NmapScript 
+from .base import VulnNmapScript, InfoNmapScript
 
 #SSL================================
-class SslCcsInjection(NmapScript):
+class SslCcsInjection(VulnNmapScript):
     NAME = 'ssl-ccs-injection'
 
-class SslDhParams(NmapScript):
+class SslDhParams(VulnNmapScript):
     NAME = 'ssl-dh-params'
 
-class SslHeartbleed(NmapScript):
+class SslHeartbleed(VulnNmapScript):
     NAME = 'ssl-heartbleed'
 
-class SslPoodle(NmapScript):
+class SslPoodle(VulnNmapScript):
     NAME = 'ssl-poodle'
 
-#SSH=================================
-class Ssh2EnumAlgos(NmapScript):
-    NAME='ssh2-enum-algos'
-
-class SshHostKey(NmapScript):
-    NAME = 'ssh-hostkey'
-
 #SAMBA===============================
-class SmbCheckVulns(NmapScript):
-    NAME = 'smb-check-vulns'
 
-class SmbVulnCve2009_3103(NmapScript):
+class SmbVulnCve2009_3103(VulnNmapScript):
     NAME = 'smb-vuln-cve2009-3103'
 
 #HTTP=================================
-class HttpSlowLorisCheck(NmapScript):
+class HttpSlowLorisCheck(VulnNmapScript):
     NAME='http-slowloris-check'
     ARGS='http-slowloris.threads=500,http-slowloris.timeout=200'
 
-class HtttpVulnCve2014_2129(NmapScript):
+class HtttpVulnCve2014_2129(VulnNmapScript):
     NAME = 'http-vuln-cve2014-2129'
 
-class HtttpVulnCve2014_2127(NmapScript):
+class HtttpVulnCve2014_2127(VulnNmapScript):
     NAME = 'http-vuln-cve2014-2127'
 
-class HtttpVulnCve2014_2126(NmapScript):
+class HtttpVulnCve2014_2126(VulnNmapScript):
     NAME = 'http-vuln-cve2014-2126'
 
-class HtttpVulnCve2015_1635(NmapScript):
+class HtttpVulnCve2015_1635(VulnNmapScript):
     NAME = 'http-vuln-cve2015-1635'
 
-class HtttpVulnCve2015_1427(NmapScript):
+class HtttpVulnCve2015_1427(VulnNmapScript):
     NAME = 'http-vuln-cve2015-1427'
 
-class HttpPhpVersion(NmapScript):
-    NAME = 'http-php-version'
-
-class FtpVsftpdBackdoor(NmapScript):
+class FtpVsftpdBackdoor(VulnNmapScript):
     NAME = 'ftp-vsftpd-backdoor'
 
-class FtpAnon(NmapScript):
+class FtpAnon(VulnNmapScript):
     NAME = 'ftp-anon'
 
-class DistccCve2004_2687(NmapScript):
+class DistccCve2004_2687(VulnNmapScript):
     NAME = 'distcc-cve2004-2687'
 
-class MySqlInfo(NmapScript):
-    NAME = 'mysql-info'
-
-class RmiVulnClassLoader(NmapScript):
+class RmiVulnClassLoader(VulnNmapScript):
     NAME = 'rmi-vuln-classloader'
 
-class IscsiInfo(NmapScript):
+
+class IrcUnrealircdBackdoor(VulnNmapScript):
+    NAME = 'irc-unrealircd-backdoor'
+
+
+#INFO =================================================
+class IscsiInfo(InfoNmapScript):
     NAME = 'iscsi-info'
+
+class Ssh2EnumAlgos(InfoNmapScript):
+    NAME='ssh2-enum-algos'
+
+class SshHostKey(InfoNmapScript):
+    NAME = 'ssh-hostkey'
+
+class SmbOsDiscovery(InfoNmapScript):
+    NAME = 'smb-os-discovery'
+
+class MySqlInfo(InfoNmapScript):
+    NAME = 'mysql-info'
+
+class MongodbDatabases(InfoNmapScript):
+    NAME = 'mongodb-databases'
+
+class MongodbInfo(InfoNmapScript):
+    NAME = 'mongodb-info'
+
+class IkeVersion(InfoNmapScript):
+    NAME = 'ike-version'
+
+class LdapSearch(InfoNmapScript):
+    NAME = 'ldap-search'
+
+class HttpEnum(InfoNmapScript):
+    NAME = 'http-enum'
+
+class HttpPhpVersion(InfoNmapScript):
+    NAME = 'http-php-version'
+
+class VncInfo(InfoNmapScript):
+    NAME = 'vnc-info'
+
+class RpcInfo(InfoNmapScript):
+    NAME = 'rpcinfo'
+
+
+
+
+
+

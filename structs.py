@@ -1,6 +1,10 @@
 from utils.database import DbObject
 from enum import Enum
 
+class Scan(DbObject):
+    start = None
+    end = None
+
 class Node:
     name = None
     ip = None
@@ -19,6 +23,7 @@ class RiskLevel(Enum):
     HIGH = 'High'
     MEDIUM = 'Medium'
     LOW = 'Low'
+    NONE = 'None'
 
 class Port(DbObject):
     TABLE = 'ports'

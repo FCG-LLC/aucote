@@ -17,7 +17,7 @@ class NmapBase:
         xml_txt = subprocess.check_output(nmap_args, stderr=subprocess.DEVNULL)
         return ElementTree.fromstring(xml_txt)
 
-class NmapScript(NmapBase):
+class NmapScript:
     NAME = None
     ARGS = None
 
@@ -26,14 +26,33 @@ class NmapScript(NmapBase):
         self.port = port
 
     def handle(self, script):
+        vuln = self.get_vulnerability(script)
+        if vuln == None: return None
+        vuln.exploit = self.exploit
+        vuln.port = self.port
+        vuln.output = script.get('output').strip()
+        return vuln
+
+
+    def get_vulnerability(self, script):
+        raise NotImplementedError
+
+class VulnNmapScript(NmapScript):
+    def handle(self, script):
+        
+        
+        return result
+
+    def get_vulnerability(self, script):
         table = script.find('table')
-        if table is None: return #no data, probably no response from server, so no problem
+        if table is None: return None #no data, probably no response from server, so no problem detected
         state = table.find("./elem[@key='state']").text
         if state  not in ('VULNERABLE', 'LIKELY VULNERABLE'): return None #TODO: add likelihood to vulnerability
-        result = Vulnerability()
-        result.exploit = self.exploit
-        result.port = self.port
-        result.output = script.get('output')
-        return result
+        return Vulnerability()
+
+
+class InfoNmapScript(NmapScript):
+    def get_vulnerability(self, script):
+        return Vulnerability()
 
 

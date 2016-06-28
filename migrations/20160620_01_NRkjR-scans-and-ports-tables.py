@@ -38,7 +38,7 @@ steps = [
         ''','''
             DROP TABLE ports
     '''), step('''
-        CREATE TYPE risk_level_type AS ENUM('High', 'Medium', 'Low')
+        CREATE TYPE risk_level_type AS ENUM('High', 'Medium', 'Low', 'None')
         ''','''
         DROP TYPE risk_level_type
     '''),step('''
