@@ -21,7 +21,7 @@ easy_install -U setuptools
 pip install -r requirements.txt
 
 rm -rf ${PACKAGE_PATH}
-mkdir ${PACKAGE_PATH}
+mkdir -p ${PACKAGE_PATH}
 mkdir -p ${PACKAGE_TARGET_PATH}
 mkdir -p ${PACKAGE_PATH}/DEBIAN
 mkdir -p ${PACKAGE_PATH}/bin
