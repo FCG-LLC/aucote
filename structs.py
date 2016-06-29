@@ -1,5 +1,6 @@
 from utils.database import DbObject
 from enum import Enum
+import datetime
 
 class Scan(DbObject):
     start = None
@@ -11,13 +12,20 @@ class Node:
     id = None
 
 class TransportProtocol(Enum):
-    TCP = 'TCP',
-    UDP = 'UDP',
-    ICMP = 'ICMP'
+    def __init__(self, db_val, iana):
+        self.db_val = db_val
+        self.iana = iana
+
+    TCP = ('TCP', 6)
+    UDP = ('UDP', 17)
+    ICMP = ('ICMP', 1)
 
     @classmethod
     def from_nmap_name(cls, name):
-        return cls((name.upper(),))
+        name = name.upper()
+        for val in cls:
+            if val.db_val == name: return val
+        raise ValueError('Invalid transport protocol name: %s'%name)
 
 class RiskLevel(Enum):
     HIGH = 'High'
@@ -29,6 +37,7 @@ class Port(DbObject):
     TABLE = 'ports'
     def __init__(self):
         self.vulnerabilities = []
+        self.when_discovered = datetime.datetime.utcnow()
 
     node = None
     number = None
@@ -36,11 +45,18 @@ class Port(DbObject):
     service_name = None
     service_version = None
     banner = None
+    when_discovered = None
+
+    def __str__(self):
+        return '%s:%s'%(self.node.ip, self.number)
 
 class Vulnerability(DbObject):
+    def __init__(self):
+        self.when_discovered = datetime.datetime.utcnow()
     exploit = None
     port = None
     output = None
+    when_discovered = None
 
 
 

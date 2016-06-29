@@ -1,6 +1,6 @@
 from aucote_cfg import cfg, load as cfg_load
 import argparse
-from database.facades import ScanDb
+from utils.kudu_queue import KuduQueue
 from utils.database import MigrationManager
 import datetime
 from scans import Executor
@@ -21,8 +21,9 @@ def run_api():
     api_thread()
 
 def run_scan():
-    with ScanDb(cfg.get("database.credentials")) as scan_db:
-        executor = Executor(scan_db)
+    #with ScanDb(cfg.get("database.credentials")) as scan_db:
+    with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
+        executor = Executor(kudu_queue)
         executor.run()
         
         

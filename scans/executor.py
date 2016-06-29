@@ -8,6 +8,7 @@ import json
 from structs import Node, Scan
 from .tasks import NmapPortScanTask
 from .nmap_scripts_cfg import SERVICE_TO_SCRIPTS, PORT_TO_SCRIPTS
+import datetime
 
 class Executor:
     '''
@@ -17,21 +18,21 @@ class Executor:
     _thread_pool = None
     _exploits = None
 
-    def __init__(self, db):
-        self._db = db
+    def __init__(self, kudu_queue):
+        self._kudu_queue = kudu_queue
 
     def run(self):
         scan = Scan()
         scan.start = datetime.datetime.utcnow()
-        scan.db_id = self._db.insert_scan(scan.start)
         nodes = self._get_nodes()
         ps = PortsScan()
         ports = ps.scan_ports(nodes)
         if self._exploits is None:
-            self._exploits = self._db.get_exploits()
+            from fixtures.exploits import read_exploits
+            self._exploits = read_exploits()
         for port in ports:
             port.scan = scan
-            port.db_id = self._db.insert_port(port, self._scan_id)
+            #port.db_id = self._db.insert_port(port, self._scan_id)
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         
         for port in ports:
@@ -44,13 +45,11 @@ class Executor:
         self._thread_pool.join()
         self._thread_pool.stop()
         end = datetime.datetime.utcnow()
-        self._db.update_scan(scan_id, end)
 
     def add_task(self, task):
         log.debug('Added task: %s', task)
-        task.db = self._db
+        task.kudu_queue = self._kudu_queue
         task.executor = self
-        task.scan_id = self._scan_id
         task.exploits = self._exploits
         self._thread_pool.add_task(task)
 

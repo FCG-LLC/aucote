@@ -1,5 +1,4 @@
 from utils.database import DbBase
-from database.objects import Exploit, Exploits
 from structs import RiskLevel
 
 class ScanDb(DbBase):

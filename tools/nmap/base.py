@@ -38,11 +38,6 @@ class NmapScript:
         raise NotImplementedError
 
 class VulnNmapScript(NmapScript):
-    def handle(self, script):
-        
-        
-        return result
-
     def get_vulnerability(self, script):
         table = script.find('table')
         if table is None: return None #no data, probably no response from server, so no problem detected
