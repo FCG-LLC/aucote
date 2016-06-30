@@ -15,4 +15,5 @@ class Serializer:
         msg.add_str(vuln.output if vuln is not None else '')
         msg.add_int(vuln.exploit.id if vuln is not None else 0)
         msg.add_datetime(vuln.when_discovered if vuln is not None else None)
+        return msg
         
