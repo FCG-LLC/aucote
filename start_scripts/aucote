@@ -1,0 +1,5 @@
+#! /bin/bash
+set -e
+
+cd /opt/aucote
+venv/bin/python aucote.py "$@"
