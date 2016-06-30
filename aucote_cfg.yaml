@@ -10,7 +10,7 @@ database:
         port: 5433
 kuduworker:
     queue:
-        address: someaddress
+        address: ipc:///tmp/skaza-pipeline.ipc
 service:
     scans:
         threads: 30

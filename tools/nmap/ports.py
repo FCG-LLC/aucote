@@ -11,7 +11,7 @@ class PortsScan(NmapBase):
         args = list(self.COMMON_ARGS)
         if ports is None:
             pass
-            args.extend(('-p', '443,80,22'))
+            #args.extend(('-p', '443,80,22'))
             #args.extend(('-p', '1-65535')) #TODO: disabled for increased speed of tests
         else:
             port_str = ','.join([str(port) for port in ports])
