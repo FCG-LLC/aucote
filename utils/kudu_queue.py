@@ -46,7 +46,8 @@ class KuduMsg:
     def add_ip(self, val):
         assert type(val) in (IPv4Address, IPv6Address)
         if type(val) == IPv4Address:
-            val = IPv6Address('2002::%s'%val)
+            txt = '2002:%02x%02x:%02x%02x::'%tuple(val.packed)
+            val = IPv6Address(txt)
         self._data.extend(val.packed)
 
 class KuduQueue:
@@ -71,8 +72,9 @@ class KuduQueue:
         self.close()
 
     def send_msg(self, msg):
-        #return
         assert type(msg) == KuduMsg
+        #log.debug('przemek: {%s}',','.join('0x%x'%byte for byte in msg._data))
+        #return
         log.debug('sending bytes to kuduworker: %s', bytes_str(msg._data))
         self._socket.send(msg._data)
         
