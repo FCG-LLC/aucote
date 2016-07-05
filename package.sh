@@ -5,7 +5,7 @@ set -e
 VERSION=$1
 PACKAGE_NAME=aucote
 PYTHON_FILES=`find . -not -path './venv*' -and -not -path './package*' -and -name '*.py'`
-PACKAGE_FILES="venv ${PYTHON_FILES} fixtues/exploits/*"
+PACKAGE_FILES="venv ${PYTHON_FILES} fixtures/exploits/*"
 PACKAGE_PATH=package/${PACKAGE_NAME}_${VERSION}
 PACKAGE_TARGET_PATH=${PACKAGE_PATH}/opt/${PACKAGE_NAME}
 PACKAGE_BIN_PATH=${PACKAGE_PATH}/bin/
