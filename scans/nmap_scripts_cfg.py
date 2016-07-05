@@ -14,7 +14,7 @@ SERVICE_TO_SCRIPTS = {
     'isakmp': [IkeVersion],
     'ldap': [LdapSearch],
     'vnc': [VncInfo],
-    'rpcbind': RpcInfo
+    'rpcbind': [RpcInfo]
 }
 
 PORT_TO_SCRIPTS = {
