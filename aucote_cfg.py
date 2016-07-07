@@ -26,13 +26,11 @@ _DEFAULT = {
     },
     'tools':{
         'nmap':{
-            'cmd': 'nmap',
-            'runs_as_root': False,
-            'max_network_scan_size':{
-                'full': 0,
-                'normal': 1024,
-                'fast': 65536
-            }
+            'cmd': 'nmap'
+        },
+        'masscan': {
+            'cmd': 'masscan',
+            'rate': 1000
         }
     },
     'service': {

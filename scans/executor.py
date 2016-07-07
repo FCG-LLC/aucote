@@ -2,12 +2,12 @@ from aucote_cfg import cfg
 import urllib.request as http
 from utils.threads import ThreadPool
 from tools.nmap import PortsScan
+from tools.masscan import MasscanPorts
 import ipaddress
 import logging as log
 import json
 from structs import Node, Scan
-from .tasks import NmapPortScanTask
-from .nmap_scripts_cfg import SERVICE_TO_SCRIPTS, PORT_TO_SCRIPTS
+from .tasks import NmapPortInfoTask
 import datetime
 
 class Executor:
@@ -25,7 +25,7 @@ class Executor:
         scan = Scan()
         scan.start = datetime.datetime.utcnow()
         nodes = self._get_nodes()
-        ps = PortsScan()
+        ps = MasscanPorts() #PortsScan()
         ports = ps.scan_ports(nodes)
         if self._exploits is None:
             from fixtures.exploits import read_exploits
@@ -36,10 +36,12 @@ class Executor:
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         
         for port in ports:
-            all_scripts = set()
-            all_scripts.update(SERVICE_TO_SCRIPTS.get(port.service_name, tuple()))
-            all_scripts.update(PORT_TO_SCRIPTS.get(port.number, tuple()))
-            self.add_task(NmapPortScanTask(port, all_scripts))
+            self.add_task(NmapPortInfoTask(port))
+        #for port in ports:
+        #    all_scripts = set()
+        #    all_scripts.update(SERVICE_TO_SCRIPTS.get(port.service_name, tuple()))
+        #    all_scripts.update(PORT_TO_SCRIPTS.get(port.number, tuple()))
+        #    self.add_task(NmapPortScanTask(port, all_scripts))
 
         self._thread_pool.start()
         self._thread_pool.join()

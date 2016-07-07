@@ -3,19 +3,15 @@ from xml.etree import ElementTree
 import logging as log
 from structs import Port, TransportProtocol, Vulnerability
 import subprocess
+from ..common import Command
 
 
-class NmapBase:
+class NmapBase(Command):
     '''
     Base for all classes using nmap application.
     '''
     COMMON_ARGS = ('-n', '--privileged', '-oX', '-', '-T4')
-    def call_nmap(self, args):
-        nmap_args = [cfg.get('tools.nmap.cmd')]
-        nmap_args.extend(args)
-        log.debug('Executing: %s', ' '.join(nmap_args))
-        xml_txt = subprocess.check_output(nmap_args, stderr=subprocess.DEVNULL)
-        return ElementTree.fromstring(xml_txt)
+    NAME = 'nmap'
 
 class NmapScript:
     NAME = None

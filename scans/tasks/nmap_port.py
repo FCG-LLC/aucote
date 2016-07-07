@@ -16,8 +16,8 @@ class NmapPortScanTask(NmapBase):
         vulners = []
         if self._script_classes:
             scripts = {cls.NAME:cls(self._port, self.exploits.find('nmap', cls.NAME)) for cls in self._script_classes}
-            args = list(self.COMMON_ARGS)
-            args.extend(( '-p', str(self._port.number), '-sV'))
+            #args = list(self.COMMON_ARGS)
+            args = ['-p', str(self._port.number), '-sV']
             for script in scripts.values():
                 args.append('--script')
                 args.append(script.NAME)
@@ -25,20 +25,14 @@ class NmapPortScanTask(NmapBase):
                     args.append('--script-args')
                     args.append(script.ARGS)
             args.append(str(self._port.node.ip))
-            xml = self.call_nmap(args)
-            host = xml.find('host')
-            if host is not None:
-                ports = host.find('ports')
-                if ports is not None:
-                    port = ports.find('port')
-                    if port is not None:
-                        for script in port.findall('script'):
-                            found_handler = scripts.get(script.get('id'))
-                            if found_handler is None: continue
-                            log.debug('Parsing output from script %s', script.get('id'))
-                            vuln = found_handler.handle(script)
-                            if vuln is not None:
-                                vulners.append(vuln)
+            xml = self.call(args)
+            for script in xml.findall('host/ports/port/script'):
+                found_handler = scripts.get(script.get('id'))
+                if found_handler is None: continue
+                log.debug('Parsing output from script %s', script.get('id'))
+                vuln = found_handler.handle(script)
+                if vuln is not None:
+                    vulners.append(vuln)
         serializer = Serializer()
         if vulners:
             for vuln in vulners:
