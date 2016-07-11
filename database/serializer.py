@@ -8,7 +8,7 @@ class MsgType(Enum):
 class Serializer:
     def serialize_port_vuln(self, port, vuln):
         msg = KuduMsg()
-        msg.add_short(MsgType.VULNERABILITY)
+        msg.add_short(MsgType.VULNERABILITY.value)
         msg.add_datetime(port.scan.start)
         msg.add_short(port.number)
         msg.add_ip(port.node.ip)
@@ -25,7 +25,7 @@ class Serializer:
 
     def serialize_exploit(self, exploit):
         msg = KuduMsg()
-        msg.add_short(MsgType.EXPLOIT)
+        msg.add_short(MsgType.EXPLOIT.value)
         msg.add_int(exploit.id)
         msg.add_str(explot.app)
         msg.add_str(exploit.name)
