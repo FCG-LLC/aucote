@@ -17,5 +17,12 @@ class Command:
         all_args.extend(self.COMMON_ARGS)
         all_args.extend(args)
         log.debug('Executing: %s', ' '.join(all_args))
-        xml_txt = subprocess.check_output(all_args, stderr=subprocess.DEVNULL)
-        return ElementTree.fromstring(xml_txt)
+        with open("stderr", "rb+") as f:
+            try:
+                xml_txt = subprocess.check_output(all_args, stderr=f)
+                return ElementTree.fromstring(xml_txt)
+            except subprocess.CalledProcessError as e:
+                f.seek(0)
+                log.warning("Command '%s' Failed:\n\n%s", " ".join(all_args),
+                            "".join([line.decode() for line in f.readlines()]))
+                exit(1)
