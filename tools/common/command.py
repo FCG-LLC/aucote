@@ -12,12 +12,13 @@ class Command:
     COMMON_ARGS = None
     NAME = None
 
-    def call(self, args):
-        all_args = nmap_args = [cfg.get('tools.%s.cmd'%self.NAME)]
+    def call(self, args=[]):
+        all_args = [cfg.get('tools.%s.cmd'%self.NAME)]
         all_args.extend(self.COMMON_ARGS)
         all_args.extend(args)
         log.debug('Executing: %s', ' '.join(all_args))
         with open("stderr", "rb+") as f:
+            f.truncate()
             try:
                 xml_txt = subprocess.check_output(all_args, stderr=f)
                 return ElementTree.fromstring(xml_txt)
