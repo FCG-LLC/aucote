@@ -14,3 +14,7 @@ kuduworker:
 service:
     scans:
         threads: 30
+topdis:
+    api:
+        host: 10.12.1.175
+        port: 1234
