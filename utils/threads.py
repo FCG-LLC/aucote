@@ -25,7 +25,7 @@ class ThreadPool:
     def start(self):
         self._threads = [Thread(target=self._worker) for _ in range(0, self._num_threads)]
         for num, thread in enumerate(self._threads):
-            thread.name = "%s%02d"%(self._name,num)
+            thread.name = "%s%02d"%(self._name, num)
             thread.deamon = True
             thread.start()
 

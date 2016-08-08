@@ -43,7 +43,7 @@ class PeriodicTimer:
         """
         delay_sec = delay.total_seconds() if delay is not None else 0
         while True:
-            if delay_sec>0:
+            if delay_sec > 0:
                 time.sleep(delay_sec)
             last_call = time.monotonic()
             try:

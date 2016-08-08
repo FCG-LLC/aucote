@@ -1,13 +1,30 @@
 from enum import Enum
 from utils.kudu_queue import KuduMsg
 
+
 class MsgType(Enum):
+    """
+    Class for message type
+    """
     VULNERABILITY = 0
     EXPLOIT = 1
 
 
 class Serializer:
+    """
+    Class for serializing objects
+    """
+
     def serialize_port_vuln(self, port, vuln):
+        """
+        Function which return serialized port and vuln objects
+        Args:
+            port: Port object
+            vuln: Vulnerability object
+
+        Returns: Serialized objects as string
+
+        """
         msg = KuduMsg()
         msg.add_short(MsgType.VULNERABILITY.value)
         msg.add_datetime(port.scan.start)
@@ -25,6 +42,14 @@ class Serializer:
         return msg
 
     def serialize_exploit(self, exploit):
+        """
+        Function which return serialized exploit object
+        Args:
+            exploit: Exploit object
+
+        Returns: Serialized object as string
+
+        """
         msg = KuduMsg()
         msg.add_short(MsgType.EXPLOIT.value)
         msg.add_int(exploit.id)

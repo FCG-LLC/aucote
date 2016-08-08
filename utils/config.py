@@ -1,4 +1,8 @@
+"""
+Config related code
+"""
 import yaml
+
 
 class Config:
     """

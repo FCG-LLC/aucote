@@ -1,3 +1,6 @@
+"""
+Mapping services and ports to scans
+"""
 from tools.nmap.scripts import *
 
 SERVICE_TO_SCRIPTS = {
@@ -21,5 +24,4 @@ SERVICE_TO_SCRIPTS = {
 
 PORT_TO_SCRIPTS = {
     27017: [MongodbDatabases, MongodbInfo],
-    
 }

@@ -14,6 +14,9 @@ _LOG_LEVEL = {
 }
 
 def config(file_name, level):
+    """
+    Configure logging
+    """
     log_level = _LOG_LEVEL[level]
     print("Logging to the file: %s"%file_name)
     pattern = '%(levelname)s %(asctime)s %(threadName)s: %(message)s'

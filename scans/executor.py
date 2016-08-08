@@ -1,3 +1,7 @@
+"""
+This is main module of aucote scanning functionality.
+"""
+
 import urllib.request as http
 import ipaddress
 import logging as log
@@ -11,9 +15,9 @@ from .tasks import NmapPortInfoTask
 
 
 class Executor:
-    '''
+    """
     Gets the information about nodes and starts the tasks
-    '''
+    """
 
     _thread_pool = None
     _exploits = None
@@ -22,6 +26,9 @@ class Executor:
         self._kudu_queue = kudu_queue
 
     def run(self):
+        """
+        Start tasks: scanning nodes and ports
+        """
         scan = Scan()
         scan.start = datetime.datetime.utcnow()
         nodes = self._get_nodes()
@@ -48,6 +55,9 @@ class Executor:
         self._thread_pool.stop()
 
     def add_task(self, task):
+        """
+        Add task for executing
+        """
         log.debug('Added task: %s', task)
         task.kudu_queue = self._kudu_queue
         task.executor = self
@@ -55,6 +65,9 @@ class Executor:
         self._thread_pool.add_task(task)
 
     def _get_nodes(self):
+        """
+        Get nodes from todis application
+        """
         url = 'http://%s:%s/api/v1/nodes?ip=t'%(cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
         resource = http.urlopen(url)
         charset = resource.headers.get_content_charset() or 'utf-8'
@@ -70,4 +83,3 @@ class Executor:
                 node.id = node_struct['id']
                 nodes.append(node)
         return nodes
-

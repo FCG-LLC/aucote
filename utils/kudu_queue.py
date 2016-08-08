@@ -1,8 +1,8 @@
 from nanomsg import Socket, PUSH
-import struct
 import logging as log
 from utils.string import bytes_str
 from ipaddress import IPv4Address, IPv6Address
+
 
 class KuduMsg:
     _ENDIANNESS = 'little'
@@ -63,7 +63,7 @@ class KuduQueue:
     def close(self):
         #return
         self._socket.close()
-        self._socket=None
+        self._socket = None
 
     def __enter__(self):
         self.connect()

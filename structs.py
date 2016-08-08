@@ -1,20 +1,34 @@
-from utils.database import DbObject
+"""
+This file provides structures for project.
+"""
+
 from enum import Enum
 import datetime
 
+from utils.database import DbObject
+
 
 class Scan(DbObject):
+    """
+    Scan object
+    """
     start = None
     end = None
 
 
 class Node:
+    """
+    Node object consist of name, id and ip
+    """
     name = None
     ip = None
     id = None
 
 
 class TransportProtocol(Enum):
+    """
+    Transport protocol object consist of db_val and IANA val
+    """
     def __init__(self, db_val, iana):
         self.db_val = db_val
         self.iana = iana
@@ -25,6 +39,15 @@ class TransportProtocol(Enum):
 
     @classmethod
     def from_nmap_name(cls, name):
+        """
+        Create TransportProtocol object basing on string name
+        Args:
+            name: string representation of transport protocol, eg. "tcp", "udp"
+
+        Returns: TransportProtocol object
+
+        Raises: ValueError if not: tcp, udp or icmp
+        """
         name = name.upper()
         for val in cls:
             if val.db_val == name:
@@ -33,6 +56,9 @@ class TransportProtocol(Enum):
 
 
 class RiskLevel(Enum):
+    """
+    Risk level object
+    """
     def __init__(self, txt, number):
         self.txt = txt
         self.number = number
@@ -44,6 +70,15 @@ class RiskLevel(Enum):
 
     @classmethod
     def from_name(cls, name):
+        """
+        Create RiskLevel object basing on string name
+        Args:
+            name: string representation of risk level, eg. "medium"
+
+        Returns: RiskLevel object
+
+        Raises: ValueError if not: High, Medium, Low or None
+        """
         for val in cls:
             if val.txt == name:
                 return val
@@ -51,6 +86,9 @@ class RiskLevel(Enum):
 
 
 class Port(DbObject):
+    """
+    Port object
+    """
     TABLE = 'ports'
     def __init__(self):
         self.vulnerabilities = []
@@ -69,6 +107,9 @@ class Port(DbObject):
 
 
 class Vulnerability(DbObject):
+    """
+    Vulnerability object
+    """
     def __init__(self):
         self.when_discovered = datetime.datetime.utcnow()
     exploit = None

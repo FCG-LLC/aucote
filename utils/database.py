@@ -1,6 +1,11 @@
+"""
+Database related code
+"""
+
 import psycopg2
-import logging as log
 import yoyo
+
+import logging as log
 
 class DbBase:
     """
@@ -14,19 +19,32 @@ class DbBase:
         self._cfg = db_config
 
     def __enter__(self):
+        """
+        connect to database while enters in "with" statement
+        """
         self.connect()
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
+        """
+        disconnect from database while exits from "with" statement
+        """
         self.close()
 
     def close(self):
+        """
+        Close connection to database.
+
+        """
         if self.conn is None: return
         self.conn.close()
         self.conn = None
         self.cur = None
 
     def commit(self):
+        """
+        Commit changes to database
+        """
         self.conn.commit()
 
     def connect(self):
@@ -38,14 +56,17 @@ class DbBase:
             self.close()
         conn_str = "user='%s' password='%s' host='%s' port='%s' dbname='%s'"%(
             self._cfg['user'],
-            self._cfg['password'], 
-            self._cfg['host'], 
-            self._cfg['port'], 
+            self._cfg['password'],
+            self._cfg['host'],
+            self._cfg['port'],
             self._cfg['database'])
         self.conn = psycopg2.connect(conn_str)
         self.cur = self.conn.cursor()
 
     def fetch_all(self, query, *args):
+        """
+        Execute query and fetch all rows
+        """
         self.cur.execute(query, args)
         return self.cur.fetchall()
 
@@ -68,10 +89,6 @@ class DbBase:
         except:
             log.warning('Exception while inserting data into %s table, data: %s', table, values_dict)
             raise
-
-
-class DbMapping:
-    pass
 
 
 class DbObject:
