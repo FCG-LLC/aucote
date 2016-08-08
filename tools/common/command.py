@@ -1,7 +1,11 @@
+import tempfile
 from xml.etree import ElementTree
 import logging as log
 from aucote_cfg import cfg
 import subprocess
+
+from utils.exceptions import NonXMLOutputException
+
 
 class Command:
     '''
@@ -17,13 +21,17 @@ class Command:
         all_args.extend(self.COMMON_ARGS)
         all_args.extend(args)
         log.debug('Executing: %s', ' '.join(all_args))
-        with open("stderr", "rb+") as f:
+        with tempfile.TemporaryFile() as f:
             f.truncate()
             try:
                 xml_txt = subprocess.check_output(all_args, stderr=f)
+                if not xml_txt:
+                    raise NonXMLOutputException()
                 return ElementTree.fromstring(xml_txt)
             except subprocess.CalledProcessError as e:
                 f.seek(0)
                 log.warning("Command '%s' Failed:\n\n%s", " ".join(all_args),
                             "".join([line.decode() for line in f.readlines()]))
                 exit(1)
+            except ElementTree.ParseError as e:
+                raise NonXMLOutputException()

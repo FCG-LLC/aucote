@@ -1,3 +1,4 @@
+from utils.exceptions import NonXMLOutputException
 from .base import MasscanBase
 from ..common import OpenPortsParser
 from aucote_cfg import cfg
@@ -10,7 +11,10 @@ class MasscanPorts(MasscanBase):
     def scan_ports(self, nodes):
         args = ['--rate', str(cfg.get('tools.masscan.rate'))]
         args.extend([str(node.ip) for node in nodes])
-        xml = self.call(args)
+        try:
+            xml = self.call(args)
+        except NonXMLOutputException:
+            return []
         parser = OpenPortsParser()
         node_by_ip = {node.ip: node for node in nodes}
         ports = parser.parse(xml, node_by_ip)

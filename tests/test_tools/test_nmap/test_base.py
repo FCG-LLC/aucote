@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, patch
 from tools.nmap.base import NmapBase, NmapScript
 import xml.etree.ElementTree as ET
 

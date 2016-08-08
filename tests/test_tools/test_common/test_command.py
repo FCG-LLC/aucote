@@ -1,54 +1,42 @@
 import subprocess
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from xml.etree.ElementTree import Element
 
+import aucote_cfg
 from tools.common import Command
+from utils.exceptions import NonXMLOutputException
 
-
-class Patch:
+@patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
+class CommandTest(TestCase):
     '''
-    Mock-up methods
+    Test system command with and without stderr.
     '''
 
     SCRIPT_XML = '''<?xml version="1.0"?>
         <script output="">
         </script>
         '''
+    NON_XML = '''This is non xml output!'''
 
-    @staticmethod
-    def cfg_get(*args, **kwargs):
-        return 'test'
+    def setUp(self):
+        self.command = Command()
+        self.command.COMMON_ARGS = []
 
-    @staticmethod
-    def check_output(command, stderr):
-        return Patch.SCRIPT_XML
-
-    @staticmethod
-    def check_output_error(command, stderr):
-        stderr.write(b"This is example standard error output text!")
-        raise subprocess.CalledProcessError(returncode=1, cmd='test')
-
-
-class CommandTest(TestCase):
-    '''
-    Test system command with and without stderr.
-    '''
-
-    @patch('subprocess.check_output', Patch.check_output)
-    @patch('aucote_cfg.cfg.get', Patch.cfg_get)
-    def test_command_stdout(self):
-        command = Command()
-        command.COMMON_ARGS = []
-        result = command.call()
-
+    @patch('subprocess.check_output', MagicMock(return_value=SCRIPT_XML))
+    def test_stdout(self):
+        result = self.command.call()
         self.assertIsInstance(result, Element)
         self.assertEqual(result.tag, 'script')
 
-    @patch('subprocess.check_output', Patch.check_output_error)
-    @patch('aucote_cfg.cfg.get', Patch.cfg_get)
-    def test_command_stderr(self):
-        command = Command()
-        command.COMMON_ARGS = []
+    @patch('subprocess.check_output', MagicMock(side_effect=subprocess.CalledProcessError(returncode=1, cmd='test')))
+    def test_stderr(self):
+        self.assertRaises(SystemExit, self.command.call)
 
-        self.assertRaises(SystemExit, command.call)
+    @patch('subprocess.check_output', MagicMock(return_value=''))
+    def test_empty_output(self):
+        self.assertRaises(NonXMLOutputException, self.command.call)
+
+    @patch('subprocess.check_output', MagicMock(return_value=NON_XML))
+    def test_without_xml_output(self):
+        self.assertRaises(NonXMLOutputException, self.command.call)

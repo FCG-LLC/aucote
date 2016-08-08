@@ -4,6 +4,9 @@ import logging as log
 import ipaddress
 
 class PortsScan(NmapBase):
+    '''
+    This class is deprecated
+    '''
 
     def scan_ports(self, nodes, ports=None):
         node_by_ip = {node.ip: node for node in nodes}
