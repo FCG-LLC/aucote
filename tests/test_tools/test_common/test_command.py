@@ -3,7 +3,6 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from xml.etree.ElementTree import Element
 
-import aucote_cfg
 from tools.common import Command
 from utils.exceptions import NonXMLOutputException
 
