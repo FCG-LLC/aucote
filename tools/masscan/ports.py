@@ -9,7 +9,8 @@ class MasscanPorts(MasscanBase):
     '''
 
     def scan_ports(self, nodes):
-        args = ['--rate', str(cfg.get('tools.masscan.rate'))]
+        args = ['--rate', str(cfg.get('tools.masscan.rate')),
+                '--ports', str(cfg.get('tools.masscan.ports'))]
         args.extend([str(node.ip) for node in nodes])
         try:
             xml = self.call(args)

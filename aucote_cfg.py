@@ -30,7 +30,8 @@ _DEFAULT = {
         },
         'masscan': {
             'cmd': 'masscan',
-            'rate': 1000
+            'rate': 1000,
+            'ports': '0-65535,U:0-65535'
         }
     },
     'service': {
