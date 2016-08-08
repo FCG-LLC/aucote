@@ -17,7 +17,7 @@ class Command:
     NAME = None
 
     def call(self, args=[]):
-        all_args = [cfg.get('tools.%s.cmd'%self.NAME)]
+        all_args = [cfg.get('tools.%s.cmd' % self.NAME)]
         all_args.extend(self.COMMON_ARGS)
         all_args.extend(args)
         log.debug('Executing: %s', ' '.join(all_args))

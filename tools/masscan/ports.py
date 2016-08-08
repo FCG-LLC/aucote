@@ -20,5 +20,3 @@ class MasscanPorts(MasscanBase):
         node_by_ip = {node.ip: node for node in nodes}
         ports = parser.parse(xml, node_by_ip)
         return ports
-
-

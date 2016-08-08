@@ -3,9 +3,9 @@ import logging as log
 import yoyo
 
 class DbBase:
-    '''
+    """
     Base class for components that make connection to PostgreSQL database
-    '''
+    """
 
     conn = None
     cur = None
@@ -30,9 +30,9 @@ class DbBase:
         self.conn.commit()
 
     def connect(self):
-        '''
+        """
         Makes a PostgreSQL connection from provided configuration dictionary.
-        '''
+        """
         if self.conn:
             #close and reconnect
             self.close()
@@ -42,7 +42,7 @@ class DbBase:
             self._cfg['host'], 
             self._cfg['port'], 
             self._cfg['database'])
-        self.conn =  psycopg2.connect(conn_str)
+        self.conn = psycopg2.connect(conn_str)
         self.cur = self.conn.cursor()
 
     def fetch_all(self, query, *args):
@@ -50,9 +50,9 @@ class DbBase:
         return self.cur.fetchall()
 
     def insert(self, table, values_dict, returning=None):
-        '''
+        """
         Shortcut for single inserts. Inserts a row into table.
-        '''
+        """
         try:
             columns = list(values_dict)
             values = [values_dict[key] for key in columns]
@@ -69,29 +69,32 @@ class DbBase:
             log.warning('Exception while inserting data into %s table, data: %s', table, values_dict)
             raise
 
+
 class DbMapping:
     pass
 
+
 class DbObject:
-    '''
+    """
     Base class for objects that need to be saved and read from a database.
-    '''
+    """
     db_id = None
     TABLE = None
     MAPPING = None
 
+
 class MigrationManager:
-    '''
+    """
     Performs execution of migrations.
-    '''
+    """
     def __init__(self, db_config, migration_path):
         self._db_config = db_config
         self._migration_path = migration_path
 
     def migrate(self):
-        '''
+        """
         Runs the migration process
-        '''
+        """
         print('Migrating...')
         connect_str = 'postgres://%s:%s@%s:%s/%s'%(
             self._db_config['user'],
@@ -107,6 +110,3 @@ class MigrationManager:
             print('->', migr.id)
         backend.apply_migrations(migrations)
         print('Migrations done. Exiting.')
-
-
-

@@ -2,14 +2,17 @@ from utils.database import DbObject
 from enum import Enum
 import datetime
 
+
 class Scan(DbObject):
     start = None
     end = None
+
 
 class Node:
     name = None
     ip = None
     id = None
+
 
 class TransportProtocol(Enum):
     def __init__(self, db_val, iana):
@@ -24,8 +27,10 @@ class TransportProtocol(Enum):
     def from_nmap_name(cls, name):
         name = name.upper()
         for val in cls:
-            if val.db_val == name: return val
+            if val.db_val == name:
+                return val
         raise ValueError('Invalid transport protocol name: %s'%name)
+
 
 class RiskLevel(Enum):
     def __init__(self, txt, number):
@@ -40,8 +45,10 @@ class RiskLevel(Enum):
     @classmethod
     def from_name(cls, name):
         for val in cls:
-            if val.txt == name: return val
+            if val.txt == name:
+                return val
         raise ValueError('Unsupported risk level name: %s'%name)
+
 
 class Port(DbObject):
     TABLE = 'ports'
@@ -60,6 +67,7 @@ class Port(DbObject):
     def __str__(self):
         return '%s:%s'%(self.node.ip, self.number)
 
+
 class Vulnerability(DbObject):
     def __init__(self):
         self.when_discovered = datetime.datetime.utcnow()
@@ -67,6 +75,3 @@ class Vulnerability(DbObject):
     port = None
     output = None
     when_discovered = None
-
-
-

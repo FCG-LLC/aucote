@@ -1,25 +1,26 @@
-from queue import Queue, Empty
+from queue import Queue
 import logging as log
-from threading import Lock, Thread
+from threading import Thread
 import time
 
+
 class ThreadPool:
-    '''
+    """
     Provides a pool of threads and a queue to execute callable tasks.
-    '''
+    """
 
     def __init__(self, num_threads=1, name='Worker'):
-        '''
+        """
         Args:
             num_threads(int) - number of threads in the pool
-        '''
+        """
         self._queue = Queue() #thread safe
         self._threads = []
         self._num_threads = num_threads
         self._name = name
 
-    def add_task(self, callable):
-        self._queue.put(callable) #_queue is thread safe
+    def add_task(self, task):
+        self._queue.put(task) #_queue is thread safe
 
     def start(self):
         self._threads = [Thread(target=self._worker) for _ in range(0, self._num_threads)]

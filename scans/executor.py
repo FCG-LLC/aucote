@@ -1,14 +1,14 @@
-from aucote_cfg import cfg
 import urllib.request as http
-from utils.threads import ThreadPool
-from tools.nmap import PortsScan
-from tools.masscan import MasscanPorts
 import ipaddress
 import logging as log
 import json
+import datetime
+from aucote_cfg import cfg
+from utils.threads import ThreadPool
+from tools.masscan import MasscanPorts
 from structs import Node, Scan
 from .tasks import NmapPortInfoTask
-import datetime
+
 
 class Executor:
     '''
@@ -34,7 +34,7 @@ class Executor:
             port.scan = scan
             #port.db_id = self._db.insert_port(port, self._scan_id)
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
-        
+
         for port in ports:
             self.add_task(NmapPortInfoTask(port))
         #for port in ports:
@@ -46,7 +46,6 @@ class Executor:
         self._thread_pool.start()
         self._thread_pool.join()
         self._thread_pool.stop()
-        end = datetime.datetime.utcnow()
 
     def add_task(self, task):
         log.debug('Added task: %s', task)

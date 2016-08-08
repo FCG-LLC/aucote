@@ -50,6 +50,8 @@ _DEFAULT = {
 
 #global cfg
 cfg = Config(_DEFAULT)
+
+
 def load(file_name):
     '''
     Initializes this module.

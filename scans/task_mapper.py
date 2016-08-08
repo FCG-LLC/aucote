@@ -1,6 +1,5 @@
-from .nmap_scripts_cfg import SERVICE_TO_SCRIPTS, PORT_TO_SCRIPTS
-import logging as log
 from scans.tasks import NmapPortScanTask
+from .nmap_scripts_cfg import SERVICE_TO_SCRIPTS, PORT_TO_SCRIPTS
 
 class TaskMapper:
     '''

@@ -50,6 +50,7 @@ class KuduMsg:
             val = IPv6Address(txt)
         self._data.extend(val.packed)
 
+
 class KuduQueue:
     def __init__(self, address):
         self._address = address
@@ -77,4 +78,3 @@ class KuduQueue:
         #return
         log.debug('sending bytes to kuduworker: %s', bytes_str(msg._data))
         self._socket.send(msg._data)
-        

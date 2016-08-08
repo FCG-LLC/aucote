@@ -1,9 +1,10 @@
-from utils.kudu_queue import KuduMsg
 from enum import Enum
+from utils.kudu_queue import KuduMsg
 
 class MsgType(Enum):
     VULNERABILITY = 0
-    EXPLOIT  = 1
+    EXPLOIT = 1
+
 
 class Serializer:
     def serialize_port_vuln(self, port, vuln):
@@ -27,10 +28,9 @@ class Serializer:
         msg = KuduMsg()
         msg.add_short(MsgType.EXPLOIT.value)
         msg.add_int(exploit.id)
-        msg.add_str(explot.app)
+        msg.add_str(exploit.app)
         msg.add_str(exploit.name)
         msg.add_str(exploit.title)
         msg.add_str(exploit.description)
         msg.add_byte(exploit.risk_level.number)
         return msg
-        

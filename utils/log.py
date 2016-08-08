@@ -16,9 +16,9 @@ _LOG_LEVEL = {
 def config(file_name, level):
     log_level = _LOG_LEVEL[level]
     print("Logging to the file: %s"%file_name)
-    FORMAT = '%(levelname)s %(asctime)s %(threadName)s: %(message)s'
-    err_handler = log.StreamHandler( sys.__stderr__ )
+    pattern = '%(levelname)s %(asctime)s %(threadName)s: %(message)s'
+    err_handler = log.StreamHandler(sys.__stderr__)
     err_handler.setLevel(log.WARNING)
-    log.basicConfig(filename=file_name,level=log_level, format=FORMAT)
+    log.basicConfig(filename=file_name, level=log_level, format=pattern)
     log.getLogger().addHandler(err_handler)
     log.info("========================= Starting application =========================")
