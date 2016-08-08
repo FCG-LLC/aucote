@@ -74,7 +74,5 @@ class KuduQueue:
 
     def send_msg(self, msg):
         assert type(msg) == KuduMsg
-        #log.debug('przemek: {%s}',','.join('0x%x'%byte for byte in msg._data))
-        #return
         log.debug('sending bytes to kuduworker: %s', bytes_str(msg._data))
         self._socket.send(msg._data)

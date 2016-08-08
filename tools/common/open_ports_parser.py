@@ -3,9 +3,9 @@ from structs import TransportProtocol, Port
 import logging as log
 
 class OpenPortsParser:
-    '''
+    """
     Parsers output of nmap (also masscan) to find open ports
-    '''
+    """
     def parse(self, xml, node_by_ip):
         result = []
         for host in xml.findall('host'):

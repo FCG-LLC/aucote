@@ -3,17 +3,17 @@ from tools.nmap import NmapBase
 from ..task_mapper import TaskMapper
 
 class NmapPortInfoTask(NmapBase):
-    '''
+    """
     Scans one port using provided vulnerability scan
-    '''
+    """
 
     def __init__(self, port):
         self._port = port
 
     def __call__(self):
         args = list()
-        args.extend(( '-p', str(self._port.number), '-sV'))
-        args.extend( ('--script', 'banner'))
+        args.extend(('-p', str(self._port.number), '-sV'))
+        args.extend(('--script', 'banner'))
         args.append(str(self._port.node.ip))
         xml = self.call(args)
         banner = xml.find("host/ports/port/script[@id='banner']")
@@ -31,6 +31,3 @@ class NmapPortInfoTask(NmapBase):
         #assign tasks
         tm = TaskMapper(self.executor)
         tm.assign_tasks(self._port)
-
-
-                       
