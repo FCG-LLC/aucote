@@ -23,5 +23,7 @@ SERVICE_TO_SCRIPTS = {
 }
 
 PORT_TO_SCRIPTS = {
-    27017: [MongodbDatabases, MongodbInfo],
+    "TCP": {
+        27017: [MongodbDatabases, MongodbInfo],
+    }
 }
