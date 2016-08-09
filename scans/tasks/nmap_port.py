@@ -1,4 +1,3 @@
-from .base import ScanTask
 from tools.nmap import NmapBase
 import logging as log
 from database.serializer import Serializer
@@ -16,8 +15,9 @@ class NmapPortScanTask(NmapBase):
         vulners = []
         if self._script_classes:
             scripts = {cls.NAME:cls(self._port, self.exploits.find('nmap', cls.NAME)) for cls in self._script_classes}
-            #args = list(self.COMMON_ARGS)
             args = ['-p', str(self._port.number), '-sV']
+            if self._port.transport_protocol.name == "UDP":
+                args.append("-sU")
             for script in scripts.values():
                 args.append('--script')
                 args.append(script.NAME)
@@ -42,8 +42,3 @@ class NmapPortScanTask(NmapBase):
         else:
             msg = serializer.serialize_port_vuln(self._port, None)
             self.kudu_queue.send_msg(msg)
-
-
-
-
-

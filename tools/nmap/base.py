@@ -1,8 +1,4 @@
-from aucote_cfg import cfg
-from xml.etree import ElementTree
-import logging as log
-from structs import Port, TransportProtocol, Vulnerability
-import subprocess
+from structs import Vulnerability
 from ..common import Command
 
 
@@ -12,6 +8,7 @@ class NmapBase(Command):
     '''
     COMMON_ARGS = ('-n', '--privileged', '-oX', '-', '-T4')
     NAME = 'nmap'
+
 
 class NmapScript:
     NAME = None
@@ -29,16 +26,16 @@ class NmapScript:
         vuln.output = script.get('output').strip()
         return vuln
 
-
     def get_vulnerability(self, script):
         raise NotImplementedError
+
 
 class VulnNmapScript(NmapScript):
     def get_vulnerability(self, script):
         table = script.find('table')
         if table is None: return None #no data, probably no response from server, so no problem detected
         state = table.find("./elem[@key='state']").text
-        if state  not in ('VULNERABLE', 'LIKELY VULNERABLE'): return None #TODO: add likelihood to vulnerability
+        if state not in ('VULNERABLE', 'LIKELY VULNERABLE'): return None #TODO: add likelihood to vulnerability
         return Vulnerability()
 
 

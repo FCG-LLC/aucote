@@ -95,8 +95,5 @@ class VncInfo(InfoNmapScript):
 class RpcInfo(InfoNmapScript):
     NAME = 'rpcinfo'
 
-
-
-
-
-
+class NtpInfo(InfoNmapScript):
+    NAME = 'ntp-info'

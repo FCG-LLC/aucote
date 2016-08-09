@@ -13,6 +13,8 @@ class NmapPortInfoTask(NmapBase):
     def __call__(self):
         args = list()
         args.extend(('-p', str(self._port.number), '-sV'))
+        if self._port.transport_protocol.name == "UDP":
+            args.append("-sU")
         args.extend(('--script', 'banner'))
         args.append(str(self._port.node.ip))
         xml = self.call(args)
