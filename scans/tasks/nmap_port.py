@@ -3,9 +3,9 @@ import logging as log
 from database.serializer import Serializer
 
 class NmapPortScanTask(NmapBase):
-    '''
+    """
     Scans one port using provided vulnerability scan
-    '''
+    """
 
     def __init__(self, port, script_clases):
         self._port = port
