@@ -7,12 +7,12 @@ from utils.exceptions import HydraPortMismatchException
 
 class HydraResults(object):
     INFO_PATTERN = r"(?P<info_message>.*)"
-    MESSAGE_PATTERN = r"^\[(?P<type>(DATA|ERROR))\] (?P<message>.*?)$"
+    MESSAGE_PATTERN = r"^\[(?P<type>(DATA|ERROR|WARNING))\] (?P<message>.*?)$"
     SUCCESS_PATTERN = r"^\[(?P<port>\d*?)\]\[(?P<service>[\w\-]*?)\]\s+host:\s(?P<host>[\w\.]*?)\s{3}login:\s" \
                             r"(?P<login>.*?)\s{3}password:\s(?P<password>(.*?))$"
 
-    SUMMARY_PATTERN = r"^(?P<success_number>\d+) of (?P<all_number>\d+) target successfully completed, " \
-                      r"(?P<valid_passwords>\d+) valid password found$"
+    SUMMARY_PATTERN = r"^(?P<success_number>\d+) of (?P<all_number>\d+) target (successfully |)completed, " \
+                      r"(?P<valid_passwords>\d+) valid password(s|) found$"
 
     ALL_PATTERN = "((?P<message_match>{1})|(?P<success_match>{2})|(?P<summary_match>{3})|(?P<info_match>{0}))".format(
         INFO_PATTERN, MESSAGE_PATTERN, SUCCESS_PATTERN, SUMMARY_PATTERN)
@@ -36,15 +36,15 @@ class HydraResults(object):
                 self._results.append(HydraResult.from_re_match(match, port))
 
             elif match.group('summary_match'):
+                log.debug("Hydra: {0}".format(line))
                 self.success = int(match.group('success_number'))
                 self.all = int(match.group('all_number'))
                 self.fail = self.all - self.success
 
             elif match.group('message_match'):
-                if match.group('type') == 'DATA':
-                    log.info("Hydra: {0}".format(match.group('message')))
-                elif match.group('type') == 'ERROR':
-                    log.error("Hydra: {0}".format(match.group('message')))
+                log.debug("Hydra: {0}".format(match.group('message')))
+            elif line and not match.group('info_match'):
+                log.debug("Hydra: Unrecognized message: {0}".format(line))
 
     def __getitem__(self, item):
         return self._results[item]

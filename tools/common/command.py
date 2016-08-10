@@ -24,7 +24,7 @@ class Command:
         with tempfile.TemporaryFile() as f:
             f.truncate()
             try:
-                return self.parser(subprocess.check_output(all_args, stderr=f))
+                return self.parser(subprocess.check_output(all_args, stderr=f).decode('utf-8'))
             except subprocess.CalledProcessError as e:
                 f.seek(0)
                 log.warning("Command '%s' Failed:\n\n%s", " ".join(all_args),

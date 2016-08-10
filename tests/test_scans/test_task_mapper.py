@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock, patch, MagicMock
 
 from scans.task_mapper import TaskMapper
+from scans.tasks import NmapPortScanTask
 from structs import Port, TransportProtocol
 
 
@@ -50,6 +51,8 @@ class TaskMapperTest(unittest.TestCase):
         self.task_mapper.assign_tasks(self.TCP)
 
     def udp_port(self, task):
+        if not isinstance(task, NmapPortScanTask):
+            return
         self.assertEqual(task._port, self.UDP)
         self.assertIn(Script1, task._script_classes)
         self.assertIn(Script3, task._script_classes)
@@ -57,6 +60,8 @@ class TaskMapperTest(unittest.TestCase):
         self.assertNotIn(Script2, task._script_classes)
 
     def tcp_port(self, task):
+        if not isinstance(task, NmapPortScanTask):
+            return
         self.assertEqual(task._port, self.TCP)
         self.assertIn(Script1, task._script_classes)
         self.assertIn(Script2, task._script_classes)

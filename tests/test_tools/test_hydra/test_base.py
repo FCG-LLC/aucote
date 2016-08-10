@@ -5,7 +5,7 @@ from tools.hydra.base import HydraBase
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
 class HydraBasetest(TestCase):
-    OUTPUT_SUCCESSFUL = '''Hydra v8.2 (c) 2016 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
+    OUTPUT_SUCCESSFUL = b'''Hydra v8.2 (c) 2016 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
 
 Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 14:19:36
 [DATA] max 1 task per 1 server, overall 64 tasks, 1 login try (l:1/p:1), ~0 tries per task
@@ -14,7 +14,7 @@ Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 14:19:36
 1 of 1 target successfully completed, 1 valid password found
 Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
 
-    OUTPUT_UNSUCCESSFUL = '''Hydra v8.2 (c) 2016 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
+    OUTPUT_UNSUCCESSFUL = b'''Hydra v8.2 (c) 2016 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
 
 Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 14:20:17
 [DATA] max 1 task per 1 server, overall 64 tasks, 1 login try (l:1/p:1), ~0 tries per task

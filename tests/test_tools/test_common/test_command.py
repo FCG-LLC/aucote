@@ -13,7 +13,7 @@ class CommandTest(TestCase):
     Test system command with and without stderr.
     '''
 
-    SCRIPT_XML = '''<?xml version="1.0"?>
+    SCRIPT_XML = b'''<?xml version="1.0"?>
         <script output="">
         </script>
         '''
@@ -25,17 +25,17 @@ class CommandTest(TestCase):
     @patch('subprocess.check_output', MagicMock(return_value=SCRIPT_XML))
     def test_stdout(self):
         result = self.command.call()
-        self.assertEqual(result, self.SCRIPT_XML)
+        self.assertEqual(result, self.SCRIPT_XML.decode("utf-8"))
 
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
 class CommandXMLTest(TestCase):
-    SCRIPT_XML = '''<?xml version="1.0"?>
+    SCRIPT_XML = b'''<?xml version="1.0"?>
         <script output="">
         </script>
         '''
 
-    NON_XML = '''This is non XML output!'''
+    NON_XML = b'''This is non XML output!'''
 
     def setUp(self):
         self.command_xml = CommandXML()
@@ -51,7 +51,7 @@ class CommandXMLTest(TestCase):
     def test_stderr(self):
         self.assertRaises(SystemExit, self.command_xml.call)
 
-    @patch('subprocess.check_output', MagicMock(return_value=''))
+    @patch('subprocess.check_output', MagicMock(return_value=b''))
     def test_empty_output(self):
         self.assertRaises(NonXMLOutputException, self.command_xml.call)
 

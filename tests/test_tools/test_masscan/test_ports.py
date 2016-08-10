@@ -13,7 +13,7 @@ class MasscanPortsTest(TestCase):
 
     NODE_IP = '127.0.0.1'
     NODE_NAME = 'localhost'
-    MASSSCAN_OUTPUT_XML = """<?xml version="1.0"?>
+    MASSSCAN_OUTPUT_XML = b"""<?xml version="1.0"?>
 <!-- masscan v1.0 scan -->
 <?xml-stylesheet href="" type="text/xsl"?>
 <nmaprun scanner="masscan" start="1470387319" version="1.0-BETA"  xmloutputversion="1.03">
@@ -26,7 +26,7 @@ class MasscanPortsTest(TestCase):
 </runstats>
 </nmaprun>
 """
-    NON_XML = '''This is non xml output!'''
+    NON_XML = b'''This is non xml output!'''
 
     def setUp(self):
         self.masscanports = MasscanPorts()
