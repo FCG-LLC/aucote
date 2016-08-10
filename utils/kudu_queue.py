@@ -1,3 +1,7 @@
+"""
+Module responsible for Kudu communication
+"""
+
 from nanomsg import Socket, PUSH
 import logging as log
 from utils.string import bytes_str
@@ -5,37 +9,64 @@ from ipaddress import IPv4Address, IPv6Address
 
 
 class KuduMsg:
+    """
+    Class which represents message for Kudu
+    """
     _ENDIANNESS = 'little'
     def __init__(self):
+        """
+        init variables
+        """
         self._data = bytearray()
 
     def add_bool(self, val):
-        assert val in (True, False)
+        """
+        Add boolean value to data
+        """
+        assert isinstance(val, (True, False))
         self._data.extend(val.to_bytes(1, self._ENDIANNESS))
 
     def add_byte(self, val):
-        assert type(val) == int
+        """
+        Add byte to data
+        """
+        assert isinstance(val, int)
         self._data.extend(val.to_bytes(1, self._ENDIANNESS))
-    
+
     def add_short(self, val):
-        assert type(val) == int
+        """
+        Add short value to data
+        """
+        assert isinstance(val, int)
         self._data.extend(val.to_bytes(2, self._ENDIANNESS))
 
     def add_int(self, val):
-        assert type(val) == int
+        """
+        Add int value to data
+        """
+        assert isinstance(val, int)
         self._data.extend(val.to_bytes(4, self._ENDIANNESS))
 
     def add_long(self, val):
-        assert type(val) == int
+        """
+        Add long value to data
+        """
+        assert isinstance(val, int)
         self._data.extend(val.to_bytes(8, self._ENDIANNESS))
 
     def add_str(self, val):
-        assert type(val) == str
-        b = val.encode('utf-8')
-        self.add_short(len(b))
-        self._data.extend(b)
+        """
+        Add string value to data
+        """
+        assert isinstance(val, str)
+        bytes = val.encode('utf-8')
+        self.add_short(len(bytes))
+        self._data.extend(bytes)
 
     def add_datetime(self, val):
+        """
+        Add datetime value to data
+        """
         if val is None:
             self.add_long(0)
             return
@@ -44,35 +75,57 @@ class KuduMsg:
         self.add_long(num_timestamp)
 
     def add_ip(self, val):
-        assert type(val) in (IPv4Address, IPv6Address)
-        if type(val) == IPv4Address:
+        """
+        Add ip value to data
+        """
+        assert isinstance(val, (IPv4Address, IPv6Address))
+        if isinstance(val, IPv4Address):
             txt = '2002:%02x%02x:%02x%02x::'%tuple(val.packed)
             val = IPv6Address(txt)
         self._data.extend(val.packed)
 
 
 class KuduQueue:
+    """
+    Represents kudu queue
+    """
     def __init__(self, address):
+        """
+        init variables
+        """
         self._address = address
 
     def connect(self):
-        #return
+        """
+        Connect to kudu
+        """
         self._socket = Socket(PUSH)
         self._socket.connect(self._address)
 
     def close(self):
-        #return
+        """
+        Disconnect from kudu
+        """
         self._socket.close()
         self._socket = None
 
     def __enter__(self):
+        """
+        Connect to kudu while entering by with statement
+        """
         self.connect()
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
+        """
+        Disonnect from kudu while exiting from with statement
+        """
         self.close()
 
     def send_msg(self, msg):
-        assert type(msg) == KuduMsg
+        """
+        Send message to queue
+        """
+        assert isinstance(msg, KuduMsg)
         log.debug('sending bytes to kuduworker: %s', bytes_str(msg._data))
         self._socket.send(msg._data)

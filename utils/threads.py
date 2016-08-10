@@ -20,9 +20,15 @@ class ThreadPool:
         self._name = name
 
     def add_task(self, task):
-        self._queue.put(task) #_queue is thread safe
+        """
+        Add thread task to queue
+        """
+        self._queue.put(task)
 
     def start(self):
+        """
+        Start threads
+        """
         self._threads = [Thread(target=self._worker) for _ in range(0, self._num_threads)]
         for num, thread in enumerate(self._threads):
             thread.name = "%s%02d"%(self._name, num)
@@ -30,13 +36,19 @@ class ThreadPool:
             thread.start()
 
     def stop(self):
+        """
+        Stop threads by sending end-the-work signal
+        """
         for _ in self._threads:
-            self._queue.put(None) #send end-the-work signal
+            self._queue.put(None)
         for thread in self._threads:
             thread.join()
         self._threads = []
 
     def join(self):
+        """
+        Join to the threads
+        """
         self._queue.join()
 
     def _worker(self):
