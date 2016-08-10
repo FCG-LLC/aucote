@@ -31,7 +31,13 @@ _DEFAULT = {
         'masscan': {
             'cmd': 'masscan',
             'rate': 1000,
-            'ports': '0-65535,U:0-65535'
+            'ports': '0-65535,U:0-65535',
+            'args': ''
+        },
+        'hydra': {
+            'cmd': 'hydra',
+            'loginfile': 'static/logins.hydra.txt',
+            'passwordfile': 'static/passwords.hydra.txt',
         }
     },
     'service': {

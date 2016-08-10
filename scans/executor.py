@@ -32,23 +32,20 @@ class Executor:
         scan = Scan()
         scan.start = datetime.datetime.utcnow()
         nodes = self._get_nodes()
-        ps = MasscanPorts() #PortsScan()
-        ports = ps.scan_ports(nodes)
+        scanner = MasscanPorts()
+        ports = scanner.scan_ports(nodes)
+
         if self._exploits is None:
             from fixtures.exploits import read_exploits
             self._exploits = read_exploits()
+
         for port in ports:
             port.scan = scan
-            #port.db_id = self._db.insert_port(port, self._scan_id)
+
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
 
         for port in ports:
             self.add_task(NmapPortInfoTask(port))
-        #for port in ports:
-        #    all_scripts = set()
-        #    all_scripts.update(SERVICE_TO_SCRIPTS.get(port.service_name, tuple()))
-        #    all_scripts.update(PORT_TO_SCRIPTS.get(port.number, tuple()))
-        #    self.add_task(NmapPortScanTask(port, all_scripts))
 
         self._thread_pool.start()
         self._thread_pool.join()
@@ -64,7 +61,8 @@ class Executor:
         task.exploits = self._exploits
         self._thread_pool.add_task(task)
 
-    def _get_nodes(self):
+    @classmethod
+    def _get_nodes(cls):
         """
         Get nodes from todis application
         """

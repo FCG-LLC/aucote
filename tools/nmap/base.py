@@ -1,8 +1,8 @@
 from structs import Vulnerability
-from ..common import Command
+from tools.common.command import CommandXML
 
 
-class NmapBase(Command):
+class NmapBase(CommandXML):
     '''
     Base for all classes using nmap application.
     '''

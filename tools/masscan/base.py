@@ -1,6 +1,7 @@
-from aucote_cfg import cfg
-from ..common import Command
-class MasscanBase(Command):
+from tools.common.command import CommandXML
+
+
+class MasscanBase(CommandXML):
     '''
     Base for all classes using masscan application.
     '''

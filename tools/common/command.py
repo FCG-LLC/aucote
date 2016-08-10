@@ -24,14 +24,25 @@ class Command:
         with tempfile.TemporaryFile() as f:
             f.truncate()
             try:
-                xml_txt = subprocess.check_output(all_args, stderr=f)
-                if not xml_txt:
-                    raise NonXMLOutputException()
-                return ElementTree.fromstring(xml_txt)
+                return self.parser(subprocess.check_output(all_args, stderr=f))
             except subprocess.CalledProcessError as e:
                 f.seek(0)
                 log.warning("Command '%s' Failed:\n\n%s", " ".join(all_args),
                             "".join([line.decode() for line in f.readlines()]))
                 exit(1)
-            except ElementTree.ParseError as e:
+
+    @classmethod
+    def parser(cls, output):
+        return output
+
+
+class CommandXML(Command):
+
+    @classmethod
+    def parser(cls, output):
+        try:
+            if not output:
                 raise NonXMLOutputException()
+            return ElementTree.fromstring(output)
+        except ElementTree.ParseError as e:
+            raise NonXMLOutputException()

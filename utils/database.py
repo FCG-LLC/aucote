@@ -2,10 +2,10 @@
 Database related code
 """
 
+import logging as log
 import psycopg2
 import yoyo
 
-import logging as log
 
 class DbBase:
     """
@@ -36,7 +36,8 @@ class DbBase:
         Close connection to database.
 
         """
-        if self.conn is None: return
+        if self.conn is None:
+            return
         self.conn.close()
         self.conn = None
         self.cur = None

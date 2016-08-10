@@ -4,6 +4,8 @@ This is executable file of aucote project.
 
 import argparse
 import logging as log
+from os import chdir
+from os.path import dirname, realpath
 
 from scans import Executor
 import utils.log as log_cfg
@@ -87,4 +89,7 @@ def run_syncdb():
 # =================== start app =================
 
 if __name__ == "__main__":
+    dir_path = dirname(realpath(__file__))
+    chdir(dir_path)
+
     main()
