@@ -2,10 +2,11 @@
 Module responsible for Kudu communication
 """
 
-from nanomsg import Socket, PUSH
 import logging as log
-from utils.string import bytes_str
 from ipaddress import IPv4Address, IPv6Address
+
+from utils.string import bytes_str
+from nanomsg import Socket, PUSH
 
 
 class KuduMsg:
@@ -59,9 +60,9 @@ class KuduMsg:
         Add string value to data
         """
         assert isinstance(val, str)
-        bytes = val.encode('utf-8')
-        self.add_short(len(bytes))
-        self._data.extend(bytes)
+        bytestring = val.encode('utf-8')
+        self.add_short(len(bytestring))
+        self._data.extend(bytestring)
 
     def add_datetime(self, val):
         """

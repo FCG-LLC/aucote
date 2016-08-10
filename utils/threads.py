@@ -1,3 +1,6 @@
+"""
+File containing Threads-related functionality
+"""
 from queue import Queue
 import logging as log
 from threading import Thread
