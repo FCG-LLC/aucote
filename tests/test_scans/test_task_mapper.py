@@ -67,6 +67,3 @@ class TaskMapperTest(unittest.TestCase):
         self.assertIn(Script2, task._script_classes)
         self.assertIn(Script4, task._script_classes)
         self.assertNotIn(Script3, task._script_classes)
-
-
-

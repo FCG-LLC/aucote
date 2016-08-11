@@ -66,7 +66,7 @@ class Executor:
         """
         Get nodes from todis application
         """
-        url = 'http://%s:%s/api/v1/nodes?ip=t'%(cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
+        url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
         resource = http.urlopen(url)
         charset = resource.headers.get_content_charset() or 'utf-8'
         nodes_txt = resource.read().decode(charset)
