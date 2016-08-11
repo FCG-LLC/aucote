@@ -68,13 +68,13 @@ def run_service():
 
     """
     scan_period = parse_period(cfg.get('service.scans.period'))
-    timer = PeriodicTimer(scan_period, run_scan())
+    timer = PeriodicTimer(scan_period, run_scan)
     timer.loop()
 
 
 def run_syncdb():
     """
-    Synchronice local exploits database with Kudu
+    Synchronize local exploits database with Kudu
     Returns:
 
     """

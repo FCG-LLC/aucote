@@ -50,4 +50,4 @@ class PeriodicTimer:
                 self._callback()
             except Exception as err:
                 log.warning('Exception %s while executing callback of periodic timer', exc_info=err)
-            delay_sec = self.period - (time.monotonic() - last_call)
+            delay_sec = self._period - (time.monotonic() - last_call)
