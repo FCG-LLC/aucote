@@ -61,6 +61,14 @@ class Executor:
         task.exploits = self._exploits
         self._thread_pool.add_task(task)
 
+    @property
+    def exploits(self):
+        return self._exploits
+
+    @property
+    def kudu_queue(self):
+        return self._kudu_queue
+
     @classmethod
     def _get_nodes(cls):
         """
