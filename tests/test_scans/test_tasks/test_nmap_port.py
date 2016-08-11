@@ -12,6 +12,9 @@ from tools.nmap.base import NmapScript
 # TODO: This tests are complicated because of nesting and many mocking. Should be refactored.
 @patch('database.serializer.Serializer.serialize_port_vuln', MagicMock)
 class NmapPortScanTaskTest(unittest.TestCase):
+    """
+    Testing nmap port scanning task
+    """
     XML = '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE nmaprun>
 <?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
@@ -33,6 +36,10 @@ class NmapPortScanTaskTest(unittest.TestCase):
 </nmaprun>'''
 
     def setUp(self):
+        """
+        Prepare some internal variables:
+            exploit, port, exploits, script, vunerability, scan_task
+        """
         self.exploit = Exploit()
         self.exploit.app = 'nmap'
         self.exploit.name = 'test'
@@ -60,10 +67,16 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task.kudu_queue = MagicMock()
 
     def test_tcp_scan(self):
+        """
+        Test TCP scanning
+        """
         self.scan_task.call = MagicMock(side_effect=self.check_args_tcp)
         self.scan_task()
 
     def check_args_tcp(self, args):
+        """
+        Check if script is executing with proper arguments
+        """
         self.assertIn('-p', args)
         self.assertIn('22', args)
         self.assertIn('-sV', args)
@@ -76,10 +89,16 @@ class NmapPortScanTaskTest(unittest.TestCase):
         return ElementTree.fromstring(self.XML)
 
     def test_udp_scan(self):
+        """
+        Test UDP scanning
+        """
         self.scan_task._port.transport_protocol = TransportProtocol.from_nmap_name("UDP")
         self.scan_task.call = MagicMock(side_effect=self.check_args_udp)
         self.scan_task()
 
     def check_args_udp(self, args):
+        """
+        Check if script is executing with proper arguments
+        """
         self.assertIn('-sU', args)
         return self.check_args_tcp(args)

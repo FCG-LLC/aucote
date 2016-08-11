@@ -1,3 +1,6 @@
+"""
+Test main aucote file
+"""
 from unittest import TestCase
 from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
 
@@ -8,7 +11,6 @@ from aucote import main, run_scan, run_service, run_syncdb
 @patch('aucote_cfg.cfg.load', Mock(return_value=""))
 @patch('utils.log.config', Mock(return_value=""))
 class AucoteTest(TestCase):
-
     def test_main_scan(self):
         args = PropertyMock()
         args.configure_mock(cmd='scan')
@@ -17,7 +19,7 @@ class AucoteTest(TestCase):
             with patch('aucote.run_scan') as mock:
                 main()
 
-        mock.assert_called_once_with()
+        self.assertEqual(mock.call_count, 1)
 
     def test_main_service(self):
         args = PropertyMock()
@@ -26,7 +28,7 @@ class AucoteTest(TestCase):
             with patch('aucote.run_service') as mock:
                 main()
 
-        mock.assert_called_once_with()
+        self.assertEqual(mock.call_count, 1)
 
     def test_main_syncdb(self):
         args = PropertyMock()
@@ -35,21 +37,21 @@ class AucoteTest(TestCase):
             with patch('aucote.run_syncdb') as mock:
                 main()
 
-        mock.assert_called_once_with()
+        self.assertEqual(mock.call_count, 1)
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
     @patch('scans.executor.Executor.run')
     def test_scan(self, mock_executor):
         run_scan()
-        mock_executor.assert_called_once_with()
+        self.assertEqual(mock_executor.call_count, 1)
 
     @patch('aucote.run_scan', MagicMock())
     @patch('utils.time.parse_period', MagicMock())
     @patch('utils.time.PeriodicTimer.loop')
     def test_service(self, mock_timer_loop):
         run_service()
-        mock_timer_loop.assert_called_once_with()
+        self.assertEqual(mock_timer_loop.call_count, 1)
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))
