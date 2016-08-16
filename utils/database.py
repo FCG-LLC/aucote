@@ -6,8 +6,10 @@ import logging as log
 import psycopg2
 import yoyo
 
+from utils.database_interface import DbInterface
 
-class DbBase:
+
+class DbBase(DbInterface):
     """
     Base class for components that make connection to PostgreSQL database
     """
@@ -17,19 +19,6 @@ class DbBase:
 
     def __init__(self, db_config):
         self._cfg = db_config
-
-    def __enter__(self):
-        """
-        connect to database while enters in "with" statement
-        """
-        self.connect()
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        """
-        disconnect from database while exits from "with" statement
-        """
-        self.close()
 
     def close(self):
         """

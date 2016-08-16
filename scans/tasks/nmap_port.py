@@ -7,11 +7,38 @@ class NmapPortScanTask(NmapBase):
     Scans one port using provided vulnerability scan
     """
 
-    def __init__(self, port, script_clases):
+    def __init__(self, executor, port, script_classes):
+        """
+        Initialize variables
+        Args:
+            executor:
+            port:
+            script_clases:
+        """
+        super().__init__(executor=executor)
         self._port = port
-        self._script_classes = script_clases
+        self._script_classes = script_classes
+
+    @property
+    def port(self):
+        """
+        Returns port
+        """
+        return self._port
+
+    @property
+    def script_classes(self):
+        """
+        Returns script classes
+        """
+        return self._script_classes
 
     def __call__(self):
+        """
+        Implement Tasks call method:
+        scans port used nmap and provided script classes
+        send serialized vulnerabilities to kudu queue
+        """
         vulners = []
         if self._script_classes:
             scripts = {cls.NAME:cls(self._port, self.exploits.find('nmap', cls.NAME)) for cls in self._script_classes}

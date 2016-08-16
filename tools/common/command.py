@@ -5,9 +5,10 @@ from aucote_cfg import cfg
 import subprocess
 
 from utils.exceptions import NonXMLOutputException
+from utils.task import Task
 
 
-class Command:
+class Command(Task):
     '''
     Base file for all classes that call a command (create process) using command line arguments.
     '''

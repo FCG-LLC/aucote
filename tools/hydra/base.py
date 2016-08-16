@@ -1,9 +1,15 @@
+"""
+Provides basic integrations of THC Hydra
+"""
 from aucote_cfg import cfg
 from tools.common import Command
 from tools.hydra.structs import HydraResults
 
 
 class HydraBase(Command):
+    """
+    Hydra base class
+    """
     COMMON_ARGS = ('-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'))
     NAME = 'hydra'
 
@@ -16,17 +22,30 @@ class HydraBase(Command):
                          'rlogin', 'rsh', 'rtsp', 's7-300', 'sip', 'smb', 'smtp', 'smtps', 'smtp-enum', 'snmp',
                          'socks5', 'ssh', 'sshkey', 'svn', 'teamspeak', 'telnet', 'telnets', 'vmauthd', 'vnc', 'xmpp']
 
+    @classmethod
     def parser(cls, output):
+        """
+        Parse output and return HydraResults object
+        """
         return HydraResults(output)
 
 
-class HydraScript(HydraBase):
-
-    def __init__(self, port):
+class HydraScriptTask(HydraBase):
+    """
+    This class is callable
+    """
+    def __init__(self, executor, port):
+        """
+        Initialize variables
+        """
+        super().__init__(executor=executor)
         self._port = port
 
     def __call__(self):
+        """
+        Call command, parse output and send to kudu_queue
+        @TODO: Sending to kudu
+        """
         result = self.call([str(self._port.node.ip), self._port.service_name, ])
-
-        a = 3
-        pass
+        parsed = self.parse(result)
+        return parsed

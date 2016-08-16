@@ -23,7 +23,11 @@ Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 14:20:17
 Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:20:21'''
 
     def setUp(self):
-        self.hydra = HydraBase()
+        self.executor = MagicMock()
+        self.hydra = HydraBase(executor=self.executor)
+
+    def test_init(self):
+        self.assertEqual(self.hydra.executor, self.executor)
 
     @patch('subprocess.check_output', MagicMock(return_value=OUTPUT_SUCCESSFUL))
     def test_success(self):

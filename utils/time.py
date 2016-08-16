@@ -1,3 +1,6 @@
+"""
+Provides time related classes and functions
+"""
 import logging as log
 from datetime import timedelta
 import time
@@ -11,6 +14,9 @@ _MARKERS = {
 
 
 def parse_period(txt):
+    """
+    parses time period
+    """
     values = {}
     while txt:
         for num, ch in enumerate(txt):

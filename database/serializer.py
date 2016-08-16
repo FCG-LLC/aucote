@@ -1,3 +1,6 @@
+"""
+Provides serializers for database
+"""
 from enum import Enum
 from utils.kudu_queue import KuduMsg
 
@@ -15,7 +18,8 @@ class Serializer:
     Class for serializing objects
     """
 
-    def serialize_port_vuln(self, port, vuln):
+    @classmethod
+    def serialize_port_vuln(cls, port, vuln):
         """
         Function which return serialized port and vuln objects
         Args:
@@ -41,7 +45,8 @@ class Serializer:
         msg.add_datetime(vuln.when_discovered if vuln is not None else None)
         return msg
 
-    def serialize_exploit(self, exploit):
+    @classmethod
+    def serialize_exploit(cls, exploit):
         """
         Function which return serialized exploit object
         Args:

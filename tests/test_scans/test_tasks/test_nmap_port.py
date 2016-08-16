@@ -40,6 +40,8 @@ class NmapPortScanTaskTest(unittest.TestCase):
         Prepare some internal variables:
             exploit, port, exploits, script, vulnerability, scan_task
         """
+        self.executor = MagicMock()
+
         self.exploit = Exploit()
         self.exploit.app = 'nmap'
         self.exploit.name = 'test'
@@ -61,10 +63,13 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.port.transport_protocol = TransportProtocol.from_nmap_name("TCP")
         self.port.number = 22
         self.port.service_name = 'ssh'
-        self.scan_task = NmapPortScanTask(self.port, [self.script])
-        self.scan_task.exploits = self.exploits
 
-        self.scan_task.kudu_queue = MagicMock()
+        self.scan_task = NmapPortScanTask(executor=self.executor, port=self.port, script_classes=[self.script])
+
+    def test_init(self):
+        self.assertEqual(self.scan_task.executor, self.executor)
+        self.assertEqual(self.scan_task.port, self.port)
+        self.assertEqual(self.scan_task.script_classes, [self.script])
 
     def test_tcp_scan(self):
         """

@@ -5,6 +5,7 @@ Module responsible for Kudu communication
 import logging as log
 from ipaddress import IPv4Address, IPv6Address
 
+from utils.database_interface import DbInterface
 from utils.string import bytes_str
 from nanomsg import Socket, PUSH
 
@@ -86,7 +87,7 @@ class KuduMsg:
         self._data.extend(val.packed)
 
 
-class KuduQueue:
+class KuduQueue(DbInterface):
     """
     Represents kudu queue
     """
@@ -95,6 +96,7 @@ class KuduQueue:
         init variables
         """
         self._address = address
+        self._socket = None
 
     def connect(self):
         """
@@ -109,19 +111,6 @@ class KuduQueue:
         """
         self._socket.close()
         self._socket = None
-
-    def __enter__(self):
-        """
-        Connect to kudu while entering by with statement
-        """
-        self.connect()
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        """
-        Disonnect from kudu while exiting from with statement
-        """
-        self.close()
 
     def send_msg(self, msg):
         """

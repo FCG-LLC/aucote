@@ -48,7 +48,8 @@ class Config:
             if self._cfg is None:
                 self._cfg = {}
 
-    def _dict_get(self, keys, curr):
+    @classmethod
+    def _dict_get(cls, keys, curr):
         for key in keys:
             #can raise KeyError
             curr = curr[key]

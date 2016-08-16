@@ -14,7 +14,7 @@ from structs import Node, Scan
 from .tasks import NmapPortInfoTask
 
 
-class Executor:
+class Executor(object):
     """
     Gets the information about nodes and starts the tasks
     """
@@ -32,7 +32,7 @@ class Executor:
         """
         scan = Scan()
         scan.start = datetime.datetime.utcnow()
-        scanner = MasscanPorts()
+        scanner = MasscanPorts(executor=self)
         ports = scanner.scan_ports(self.nodes)
 
         if self._exploits is None:
@@ -56,9 +56,6 @@ class Executor:
         Add task for executing
         """
         log.debug('Added task: %s', task)
-        task.kudu_queue = self._kudu_queue
-        task.executor = self
-        task.exploits = self._exploits
         self._thread_pool.add_task(task)
 
     @property
