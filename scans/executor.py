@@ -63,10 +63,16 @@ class Executor:
 
     @property
     def exploits(self):
+        """
+        Returns: exploits
+        """
         return self._exploits
 
     @property
     def kudu_queue(self):
+        """
+        Returns: kudu_queue
+        """
         return self._kudu_queue
 
     @classmethod
