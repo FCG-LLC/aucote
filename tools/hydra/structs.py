@@ -33,6 +33,7 @@ class HydraResults(object):
             match = self.regex_all.match(line)
 
             if match.group('success_match'):
+                log.debug("Hydra: {0}".format(line))
                 self._results.append(HydraResult.from_re_match(match, port))
 
             elif match.group('summary_match'):
@@ -84,5 +85,9 @@ class HydraResult(object):
             service=match.group('service'),
             host=match.group('host'),
             login=match.group('login'),
-            password=match.group('password'),
+            password=match.group('password')
         )
+
+    def __str__(self):
+        return "login: {2}\tpassword: {3}".format(self.host, self.port.number, self.login,
+                                                                       self.password)

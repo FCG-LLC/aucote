@@ -1,7 +1,12 @@
 """
 Provides basic integrations of THC Hydra
 """
+import logging
+
 from aucote_cfg import cfg
+from database.serializer import Serializer
+from fixtures.exploits import Exploit
+from structs import Vulnerability
 from tools.common import Command
 from tools.hydra.structs import HydraResults
 
@@ -10,7 +15,7 @@ class HydraBase(Command):
     """
     Hydra base class
     """
-    COMMON_ARGS = ('-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'))
+    COMMON_ARGS = ('-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'), '-t', '4')
     NAME = 'hydra'
 
     SUPORTED_SERVICES = ['asterisk', 'cisco', 'cisco-enable', 'cvs', 'firebird', 'ftp', 'ftps', 'http-get', 'http-post',
@@ -46,6 +51,18 @@ class HydraScriptTask(HydraBase):
         Call command, parse output and send to kudu_queue
         @TODO: Sending to kudu
         """
-        result = self.call([str(self._port.node.ip), self._port.service_name, ])
-        parsed = self.parse(result)
-        return parsed
+        results = self.call([str(self._port.node.ip), self._port.service_name, ])
+        if not results:
+            return None
+
+        serializer = Serializer()
+        for result in results:
+            vuln = Vulnerability()
+            vuln.exploit = self.exploits.find('hydra', 'hydra')
+            vuln.port = self._port
+            vuln.output = str(result)
+
+            logging.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
+            msg = serializer.serialize_port_vuln(vuln.port, vuln)
+            self.kudu_queue.send_msg(msg)
+        return results
