@@ -50,6 +50,8 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 </nmaprun>'''
 
     def setUp(self):
+        self.executor = MagicMock()
+
         self.port = Port()
         self.port.node = Node()
         self.port.node.ip = '127.0.0.1'
@@ -57,13 +59,15 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 
         self.port.transport_protocol = TransportProtocol.from_nmap_name("TCP")
 
-        self.port_info = NmapPortInfoTask(self.port)
+        self.port_info = NmapPortInfoTask(executor=self.executor, port=self.port)
         self.port_info.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
-        self.port_info.executor = Mock()
 
     def test_tcp_scan(self):
         self.port_info.call = MagicMock(side_effect=self.check_args_tcp)
         self.port_info()
+
+    def test_init(self):
+        self.assertEqual(self.port_info.executor, self.executor)
 
     def check_args_tcp(self, args):
         self.assertIn('-p', args)

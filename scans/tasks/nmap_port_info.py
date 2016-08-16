@@ -1,4 +1,6 @@
 import logging as log
+
+from scans import executor
 from tools.nmap import NmapBase
 from ..task_mapper import TaskMapper
 
@@ -7,7 +9,8 @@ class NmapPortInfoTask(NmapBase):
     Scans one port using provided vulnerability scan
     """
 
-    def __init__(self, port):
+    def __init__(self, port, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._port = port
 
     def __call__(self):

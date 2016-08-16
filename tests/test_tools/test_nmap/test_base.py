@@ -12,7 +12,7 @@ class NmapBaseTest(TestCase):
 
     def setUp(self):
         self.executor = MagicMock()
-        self.base = NmapBase(self.executor)
+        self.base = NmapBase(executor=self.executor)
 
     def test_create(self):
         self.assertEqual(self.base.executor, self.executor)
@@ -29,6 +29,7 @@ class NmapScriptTest(TestCase):
 
     def test_handle_no_vuln(self):
         script = ET.fromstring(self.SCRIPT_XML)
-        self.ns.get_vulnerability = MagicMock(return_value=None)
+        vuln_mock = MagicMock()
+        self.ns.get_vulnerability = MagicMock(return_value=vuln_mock)
         vuln = self.ns.handle(script)
-        self.assertIsNone(vuln)
+        self.assertEqual(vuln, vuln_mock)

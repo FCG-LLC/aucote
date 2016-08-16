@@ -45,7 +45,7 @@ class Executor(object):
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
 
         for port in ports:
-            self.add_task(NmapPortInfoTask(port))
+            self.add_task(NmapPortInfoTask(executor=self, port=port))
 
         self._thread_pool.start()
         self._thread_pool.join()
