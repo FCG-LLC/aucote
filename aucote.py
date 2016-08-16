@@ -8,11 +8,13 @@ from os import chdir
 from os.path import dirname, realpath
 
 from scans import Executor
+
 import utils.log as log_cfg
 from utils.time import PeriodicTimer, parse_period
+from utils.kudu_queue import KuduQueue
+
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
-from utils.kudu_queue import KuduQueue
 
 #constants
 VERSION = (0, 1, 0)
@@ -89,7 +91,7 @@ def run_syncdb():
 # =================== start app =================
 
 if __name__ == "__main__":
-    dir_path = dirname(realpath(__file__))
-    chdir(dir_path)
+    PATH = dirname(realpath(__file__))
+    chdir(PATH)
 
     main()

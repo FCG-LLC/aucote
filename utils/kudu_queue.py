@@ -118,4 +118,4 @@ class KuduQueue(DbInterface):
         """
         assert isinstance(msg, KuduMsg)
         log.debug('sending bytes to kuduworker: %s', bytes_str(msg._data))
-        # self._socket.send(msg._data)
+        self._socket.send(msg._data)
