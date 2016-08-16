@@ -1,6 +1,5 @@
 import logging as log
 
-from scans import executor
 from tools.nmap import NmapBase
 from ..task_mapper import TaskMapper
 
