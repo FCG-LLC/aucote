@@ -41,6 +41,7 @@ class AucoteTest(TestCase):
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
+    @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('scans.executor.Executor.run')
     def test_scan(self, mock_executor):
         run_scan()

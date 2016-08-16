@@ -24,6 +24,7 @@ class Executor:
 
     def __init__(self, kudu_queue):
         self._kudu_queue = kudu_queue
+        self.nodes = self._get_nodes()
 
     def run(self):
         """
@@ -31,9 +32,8 @@ class Executor:
         """
         scan = Scan()
         scan.start = datetime.datetime.utcnow()
-        nodes = self._get_nodes()
         scanner = MasscanPorts()
-        ports = scanner.scan_ports(nodes)
+        ports = scanner.scan_ports(self.nodes)
 
         if self._exploits is None:
             from fixtures.exploits import read_exploits

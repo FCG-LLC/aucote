@@ -2,7 +2,6 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from scans import Executor
-from structs import Port
 
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
@@ -70,6 +69,7 @@ class ExecutorTest(TestCase):
   ]
 }"""
 
+    @patch('scans.executor.Executor._get_nodes', MagicMock(return_value=False))
     def setUp(self):
         self.executor = Executor(kudu_queue=MagicMock())
         self.urllib_response = MagicMock()
@@ -77,6 +77,15 @@ class ExecutorTest(TestCase):
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
 
         self.urllib_response.headers.get_content_charset = MagicMock(return_value='utf-8')
+
+    @patch('scans.executor.Executor._get_nodes')
+    def test_init(self, mock_get_nodes):
+        return_value = 'Test'
+        mock_get_nodes.return_value=return_value
+        executor = Executor(kudu_queue=MagicMock())
+        mock_get_nodes.assert_called_once_with()
+
+        self.assertEqual(executor.nodes, return_value)
 
     @patch('urllib.request.urlopen')
     def test_getting_nodes(self, urllib):

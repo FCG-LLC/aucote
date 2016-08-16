@@ -38,7 +38,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
     def setUp(self):
         """
         Prepare some internal variables:
-            exploit, port, exploits, script, vunerability, scan_task
+            exploit, port, exploits, script, vulnerability, scan_task
         """
         self.exploit = Exploit()
         self.exploit.app = 'nmap'

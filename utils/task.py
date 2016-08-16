@@ -12,3 +12,6 @@ class Task(object):
 
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
+
+    def send_msg(self, msg):
+        return self.kudu_queue.send_msg(msg)

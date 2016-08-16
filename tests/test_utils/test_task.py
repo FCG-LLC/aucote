@@ -1,7 +1,6 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from scans import Executor
 from utils.task import Task
 
 
@@ -33,3 +32,10 @@ class TaskTest(TestCase):
         Test call
         """
         self.assertRaises(NotImplementedError, self.task)
+
+    def test_send_msg(self):
+        """
+        Task sending message
+        """
+        self.task.send_msg("TEST")
+        self.executor.kudu_queue.send_msg.assert_called_once_with("TEST")
