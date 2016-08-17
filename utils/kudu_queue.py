@@ -25,7 +25,7 @@ class KuduMsg:
         """
         Add boolean value to data
         """
-        assert isinstance(val, (True, False))
+        assert isinstance(val, bool)
         self._data.extend(val.to_bytes(1, self._ENDIANNESS))
 
     def add_byte(self, val):
@@ -86,6 +86,10 @@ class KuduMsg:
             val = IPv6Address(txt)
         self._data.extend(val.packed)
 
+    @property
+    def data(self):
+        return self._data
+
 
 class KuduQueue(DbInterface):
     """
@@ -117,5 +121,5 @@ class KuduQueue(DbInterface):
         Send message to queue
         """
         assert isinstance(msg, KuduMsg)
-        log.debug('sending bytes to kuduworker: %s', bytes_str(msg._data))
-        self._socket.send(msg._data)
+        log.debug('sending bytes to kuduworker: %s', bytes_str(msg.data))
+        self._socket.send(msg.data)
