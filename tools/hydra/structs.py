@@ -75,9 +75,9 @@ class HydraResult(object):
         if not port:
             port = Port()
             port.number = int(match.group('port'))
-            port.transport_protocol = TransportProtocol.from_nmap_name("TCP")
+            port.transport_protocol = TransportProtocol.TCP
         elif port.number != int(match.group('port')) \
-                or port.transport_protocol != TransportProtocol.from_nmap_name("TCP"):
+                or port.transport_protocol != TransportProtocol.TCP:
             raise HydraPortMismatchException
 
         return cls(

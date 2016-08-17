@@ -60,7 +60,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.vulnerability = Vulnerability()
         self.script.get_vulnerability = MagicMock(return_value=self.vulnerability)
 
-        self.port.transport_protocol = TransportProtocol.from_nmap_name("TCP")
+        self.port.transport_protocol = TransportProtocol.TCP
         self.port.number = 22
         self.port.service_name = 'ssh'
 
@@ -97,7 +97,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         """
         Test UDP scanning
         """
-        self.scan_task._port.transport_protocol = TransportProtocol.from_nmap_name("UDP")
+        self.scan_task._port.transport_protocol = TransportProtocol.UDP
         self.scan_task.call = MagicMock(side_effect=self.check_args_udp)
         self.scan_task()
 

@@ -5,10 +5,8 @@ This file provides structures for project.
 from enum import Enum
 import datetime
 
-from utils.database import DbObject
 
-
-class Scan(DbObject):
+class Scan(object):
     """
     Scan object
     """
@@ -85,7 +83,7 @@ class RiskLevel(Enum):
         raise ValueError('Unsupported risk level name: %s'%name)
 
 
-class Port(DbObject):
+class Port(object):
     """
     Port object
     """
@@ -106,7 +104,7 @@ class Port(DbObject):
         return '%s:%s'%(self.node.ip, self.number)
 
 
-class Vulnerability(DbObject):
+class Vulnerability(object):
     """
     Vulnerability object
     """

@@ -31,12 +31,12 @@ PORT_TO_SCRIPTS = {
 class TaskMapperTest(unittest.TestCase):
 
     UDP = Port()
-    UDP.transport_protocol = TransportProtocol.from_nmap_name("UDP")
+    UDP.transport_protocol = TransportProtocol.UDP
     UDP.number = 21
     UDP.service_name = 'ftp'
 
     TCP = Port()
-    TCP.transport_protocol = TransportProtocol.from_nmap_name("TCP")
+    TCP.transport_protocol = TransportProtocol.TCP
     TCP.number = 22
     TCP.service_name = 'ssh'
 

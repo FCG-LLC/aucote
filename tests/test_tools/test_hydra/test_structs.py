@@ -14,7 +14,7 @@ class HydraResultTest(TestCase):
     def setUp(self):
         self.port = Port()
         self.port.number = 80
-        self.port.transport_protocol = TransportProtocol.from_nmap_name("TCP")
+        self.port.transport_protocol = TransportProtocol.TCP
 
     def test_init(self):
         self.hydra_result = HydraResult.from_output(self.OUTPUT_LINE, self.port)
@@ -65,7 +65,7 @@ Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 15:46:32
     def setUp(self):
         self.port = Port()
         self.port.number = 22
-        self.port.transport_protocol = TransportProtocol.from_nmap_name("TCP")
+        self.port.transport_protocol = TransportProtocol.TCP
 
     def test_init(self):
         hydra_results = HydraResults(output=self.OUTPUT, port=self.port)

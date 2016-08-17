@@ -1,11 +1,10 @@
 """
 Provides basic integrations of THC Hydra
 """
-import logging
+import logging as log
 
 from aucote_cfg import cfg
 from database.serializer import Serializer
-from fixtures.exploits import Exploit
 from structs import Vulnerability
 from tools.common import Command
 from tools.hydra.structs import HydraResults
@@ -62,7 +61,7 @@ class HydraScriptTask(HydraBase):
             vuln.port = self._port
             vuln.output = str(result)
 
-            logging.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
+            log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
             msg = serializer.serialize_port_vuln(vuln.port, vuln)
             self.kudu_queue.send_msg(msg)
         return results

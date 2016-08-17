@@ -23,7 +23,7 @@ class SerializerTest(TestCase):
         port.node = node
         port.number = 22
         port.service_name = 'ssh'
-        port.transport_protocol = TransportProtocol.from_nmap_name("TCP")
+        port.transport_protocol = TransportProtocol.TCP
         port.scan = Scan()
         port.scan.start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc)
         port.when_discovered = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc)

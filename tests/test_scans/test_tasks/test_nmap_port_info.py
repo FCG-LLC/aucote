@@ -57,7 +57,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port.node.ip = '127.0.0.1'
         self.port.number = '22'
 
-        self.port.transport_protocol = TransportProtocol.from_nmap_name("TCP")
+        self.port.transport_protocol = TransportProtocol.TCP
 
         self.port_info = NmapPortInfoTask(executor=self.executor, port=self.port)
         self.port_info.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
@@ -80,7 +80,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         return ElementTree.fromstring(self.XML)
 
     def test_udp_scan(self):
-        self.port_info._port.transport_protocol = TransportProtocol.from_nmap_name("UDP")
+        self.port_info._port.transport_protocol = TransportProtocol.UDP
         self.port_info.call = MagicMock(side_effect=self.check_args_udp)
         self.port_info()
 
