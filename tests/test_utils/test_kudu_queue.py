@@ -3,11 +3,10 @@ from datetime import datetime
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
-import nanomsg
-
-import utils
+from tests.time.test_utils import UTC
 from utils.kudu_queue import KuduMsg, KuduQueue
 
+utc = UTC()
 
 class KuduMsgTest(TestCase):
     def setUp(self):
@@ -44,9 +43,9 @@ class KuduMsgTest(TestCase):
         self.assertEqual(self.kudu_msg.data, bytearray(b'\x04\x00Test'))
 
     def test_add_datetime(self):
-        self.kudu_msg.add_datetime(datetime(2016, 8, 16, 15, 23, 10, 183095))
+        self.kudu_msg.add_datetime(datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc))
 
-        self.assertEqual(self.kudu_msg.data, bytearray(b'\xe7\x1e\x85\x93V\x01\x00\x00'))
+        self.assertEqual(self.kudu_msg.data, bytearray(b'\xe7\xfb\xf2\x93V\x01\x00\x00'))
 
     def test_add_empty_datetime(self):
         self.kudu_msg.add_datetime(None)
