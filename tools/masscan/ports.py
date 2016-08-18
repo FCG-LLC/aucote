@@ -9,8 +9,8 @@ class MasscanPorts(MasscanBase):
     '''
 
     def scan_ports(self, nodes):
-        args = ['--rate', str(cfg.get('tools.masscan.rate')),
-                '--ports', str(cfg.get('tools.masscan.ports'))]
+        args = ['--rate', str(cfg.get('service.scans.rate')),
+                '--ports', str(cfg.get('service.scans.ports'))]
 
         args.extend(cfg.get('tools.masscan.args'))
 

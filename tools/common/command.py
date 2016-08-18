@@ -30,7 +30,7 @@ class Command(Task):
                 f.seek(0)
                 log.warning("Command '%s' Failed:\n\n%s", " ".join(all_args),
                             "".join([line.decode() for line in f.readlines()]))
-                exit(1)
+                raise e
 
     @classmethod
     def parser(cls, output):

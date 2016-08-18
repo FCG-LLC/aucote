@@ -49,10 +49,13 @@ class AucoteTest(TestCase):
 
     @patch('aucote.run_scan', MagicMock())
     @patch('utils.time.parse_period', MagicMock())
-    @patch('utils.time.PeriodicTimer.loop')
-    def test_service(self, mock_timer_loop):
-        run_service()
-        self.assertEqual(mock_timer_loop.call_count, 1)
+    @patch('sched.scheduler.run')
+    @patch('sched.scheduler.enter')
+    def test_service(self, mock_sched_enter, mock_sched_run):
+        mock_sched_run.side_effect = NotImplementedError('test')
+        self.assertRaises(NotImplementedError, run_service)
+        self.assertEqual(mock_sched_enter.call_count, 1)
+        self.assertEqual(mock_sched_run.call_count, 1)
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))

@@ -8,7 +8,10 @@ from utils import Config
 _DEFAULT = {
     'logging':{
         'file': lambda: path.join(path.dirname(__file__), 'aucote.log'),
-        'level': 'info'
+        'level': 'info',
+        'max_file_size': 10*1024*1024,
+        'max_files': 5,
+        'format': '%(levelname)s %(asctime)s %(threadName)s: %(message)s'
     },
     'database': {
         'migration':{
@@ -30,8 +33,6 @@ _DEFAULT = {
         },
         'masscan': {
             'cmd': 'masscan',
-            'rate': 1000,
-            'ports': '0-65535,U:0-65535',
             'args': ''
         },
         'hydra': {
@@ -44,6 +45,8 @@ _DEFAULT = {
         'scans': {
             'period': '12h',
             'threads': 10,
+            'ports': '0-65535,U:0-65535',
+            'rate': 1000,
         },
         "api":{
             'v1': {
@@ -69,4 +72,4 @@ def load(file_name):
         file_name = path.join(path.dirname(__file__), 'aucote_cfg.yaml')
     #at this point logs do not work, print info to stdout
     print("Reading configuration from file:", file_name)
-    cfg.load(file_name)
+    cfg.load(file_name, _DEFAULT)

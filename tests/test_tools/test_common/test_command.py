@@ -31,6 +31,10 @@ class CommandTest(TestCase):
         result = self.command.call()
         self.assertEqual(result, self.SCRIPT_XML.decode("utf-8"))
 
+    @patch('subprocess.check_output', MagicMock(side_effect=subprocess.CalledProcessError(returncode=1, cmd='masscan')))
+    def test_stderr(self):
+        self.assertRaises(subprocess.CalledProcessError, self.command.call)
+
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
 class CommandXMLTest(TestCase):
@@ -54,10 +58,6 @@ class CommandXMLTest(TestCase):
         result = self.command_xml.call()
         self.assertIsInstance(result, Element)
         self.assertEqual(result.tag, 'script')
-
-    @patch('subprocess.check_output', MagicMock(side_effect=subprocess.CalledProcessError(returncode=1, cmd='test')))
-    def test_stderr(self):
-        self.assertRaises(SystemExit, self.command_xml.call)
 
     @patch('subprocess.check_output', MagicMock(return_value=b''))
     def test_empty_output(self):

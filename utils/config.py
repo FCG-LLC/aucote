@@ -1,56 +1,80 @@
-"""
-Config related code
-"""
 import yaml
 
-
 class Config:
-    """
+    '''
     Creates a configuration using data from YAML file.
     Has ability to provide default values (including dynamic ones)
-
     Except for loading data, this class is read-only and therefore may be used from multiple threads.
-    """
-    def __init__(self, default=None):
-        """
-        Args:
-            default(dict) - structure with default values.
-            Values may be both constand or callable (used in dynamic manner)
-        """
-        self._cfg = {}
-        self._default = default if default else {}
+    '''
+    def __init__(self, cfg={}):
+        self._cfg = cfg
+
+    def __len__(self):
+        return len(self._cfg)
+
+    def __getitem__(self, key):
+        ''' Works like "get()" '''
+        return self.get(key)
 
     def get(self, key):
-        """
+        '''
         Gets data from multilevel dictionary using keys with dots.
         i.e. key="logging.file"
-
         Raises KeyError if there is no configured value and no default value for the given key.
-        """
+        '''
 
         keys = key.split('.')
-        try:
-            val = self._dict_get(keys, self._cfg)
-            return val
-        except KeyError:
-            pass
+        curr = self._cfg
+        for k in keys:
+            if isinstance(curr, dict):
+                curr = curr[k]
+            elif isinstance(curr, list):
+                curr = curr[int(k)]
+            else:
+                KeyError(k)
+        if isinstance(curr, dict) or isinstance(curr, list):
+            return Config(curr)
+        else:
+            return curr
 
-        val = self._dict_get(keys, self._default)
-        return val() if callable(val) else val
 
-    def load(self, file_name):
-        """
+    def load(self, file_name, defaults={}):
+        '''
         Loads configuration from provided file name.
-        Needs to be called before other functions are used.
-        """
+        
+        Args:
+            file_name(str) - YAML file name with configuration
+            defaults(dict) - default values in a form of multilevel dictionary with optional callable objects
+        '''
+        defaults = self._simplify_defaults(defaults)
         with open(file_name, 'r') as stream:
-            self._cfg = yaml.load(stream.read())
-            if self._cfg is None:
-                self._cfg = {}
+            cfg = yaml.load(stream.read())
+            self._cfg = self._recursive_merge(cfg, defaults)
 
-    @classmethod
-    def _dict_get(cls, keys, curr):
-        for key in keys:
-            #can raise KeyError
-            curr = curr[key]
-        return curr
+    def _recursive_merge(self, data, defaults):
+        #recursively replace defaults with configured data
+        if isinstance(defaults, dict) and isinstance(data, dict):
+            output = defaults.copy()
+            for key,val in data.items():
+                if key in output:
+                    output[key] = self._recursive_merge(data[key], output[key])
+                else:
+                    output[key] = val
+            return output
+        elif isinstance(data, list) and isinstance(defaults, list):
+            common = min(len(data), len(defaults))
+            output = [self._recursive_merge(data[i], defaults[i]) for i in range(common)]
+            output.extend(data[common:])
+            output.extend(defaults[common:])
+            return output
+        else:
+            return data
+
+    def _simplify_defaults(self, defaults):
+        if callable(defaults):
+            return defaults()
+        if isinstance(defaults, dict):
+            return {key: self._simplify_defaults(val) for key, val in defaults.items()}
+        if isinstance(defaults, list):
+            return [self._simplify_defaults(val) for val in defaults]
+        return defaults

@@ -14,7 +14,7 @@ class HydraBase(Command):
     """
     Hydra base class
     """
-    COMMON_ARGS = ('-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'), '-t', '4')
+    COMMON_ARGS = ('-t', '4')
     NAME = 'hydra'
 
     SUPORTED_SERVICES = ['asterisk', 'cisco', 'cisco-enable', 'cvs', 'firebird', 'ftp', 'ftps', 'http-get', 'http-post',
@@ -50,7 +50,8 @@ class HydraScriptTask(HydraBase):
         Call command, parse output and send to kudu_queue
         @TODO: Sending to kudu
         """
-        results = self.call([str(self._port.node.ip), self._port.service_name, ])
+        results = self.call(['-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'),
+                             str(self._port.node.ip), self._port.service_name, ])
         if not results:
             return None
 

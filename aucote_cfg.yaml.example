@@ -13,8 +13,21 @@ kuduworker:
         address: ipc:///tmp/skaza-pipeline.ipc
 service:
     scans:
-        threads: 30
+        threads: 30,
+        rate: 1000
+        period: 12h
+        ports: T:0-65535,U:0-65535,S:65535 # TCP, UDP, SCTP: full range
 topdis:
     api:
         host: 10.12.1.175
         port: 1234
+tools:
+    nmap
+        cmd: nmap
+    masscan:
+        cmd: masscan
+        args:
+    hydra:
+        cmd: hydra
+        loginfile: static/logins.hydra.txt
+        passwordfile: static/passwords.hydra.txt

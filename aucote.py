@@ -4,13 +4,16 @@ This is executable file of aucote project.
 
 import argparse
 import logging as log
+import sched
 from os import chdir
 from os.path import dirname, realpath
+
+import time
 
 from scans import Executor
 
 import utils.log as log_cfg
-from utils.time import PeriodicTimer, parse_period
+from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
 
 from database.serializer import Serializer
@@ -41,7 +44,7 @@ def main():
     # read configuration
     cfg_load(args.cfg)
 
-    log_cfg.config(cfg.get('logging.file'), cfg.get('logging.level'))
+    log_cfg.config(cfg.get('logging'))
     log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
 
     if args.cmd == 'scan':
@@ -69,9 +72,12 @@ def run_service():
     Returns:
 
     """
+    scheduler = sched.scheduler(time.time)
     scan_period = parse_period(cfg.get('service.scans.period'))
-    timer = PeriodicTimer(scan_period, run_scan)
-    timer.loop()
+    scheduler.enter(0, 1, run_scan)
+    while True:
+        scheduler.run()
+        scheduler.enter(scan_period, 1, run_scan)
 
 
 def run_syncdb():
@@ -91,7 +97,6 @@ def run_syncdb():
 # =================== start app =================
 
 if __name__ == "__main__":
-    PATH = dirname(realpath(__file__))
-    chdir(PATH)
+    chdir(dirname(realpath(__file__)))
 
     main()

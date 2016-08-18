@@ -45,10 +45,9 @@ class MasscanPortsTest(TestCase):
         ports = self.masscanports.scan_ports(self.nodes)
         self.assertEqual(len(ports), 2)
 
-
     @patch('subprocess.check_output', MagicMock(side_effect=subprocess.CalledProcessError(returncode=1, cmd='masscan')))
     def test_stderr(self):
-        self.assertRaises(SystemExit, self.masscanports.scan_ports, self.nodes)
+        self.assertRaises(subprocess.CalledProcessError, self.masscanports.scan_ports, self.nodes)
 
     @patch('subprocess.check_output', MagicMock(return_value=NON_XML))
     def test_without_xml_output(self):
