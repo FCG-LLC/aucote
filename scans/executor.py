@@ -20,7 +20,6 @@ class Executor(object):
     """
 
     _thread_pool = None
-    _slow_thread_pool = None
     _exploits = None
 
     def __init__(self, kudu_queue):
@@ -53,23 +52,12 @@ class Executor(object):
         self._thread_pool.join()
         self._thread_pool.stop()
 
-        self._slow_thread_pool.start()
-        self._slow_thread_pool.join()
-        self._slow_thread_pool.stop()
-
     def add_task(self, task):
         """
         Add task for executing
         """
         log.debug('Added task: %s', task)
         self._thread_pool.add_task(task)
-
-    def add_slow_task(self, task):
-        """
-        Add task for executing
-        """
-        log.debug('Added task: %s', task)
-        self._slow_thread_pool.add_task(task)
 
     @property
     def exploits(self):

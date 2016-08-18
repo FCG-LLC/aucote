@@ -109,7 +109,7 @@ class ExecutorTest(TestCase):
 
         self.executor._get_nodes = MagicMock()
         self.executor.run()
-        self.assertEqual(mock_start.call_count, 2)
-        self.assertEqual(mock_join.call_count, 2)
-        self.assertEqual(mock_stop.call_count, 2)
+        self.assertEqual(mock_start.call_count, 1)
+        self.assertEqual(mock_join.call_count, 1)
+        self.assertEqual(mock_stop.call_count,1)
 

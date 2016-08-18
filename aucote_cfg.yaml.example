@@ -30,4 +30,4 @@ tools:
     hydra:
         cmd: hydra
         loginfile: static/logins.hydra.txt
-        passwordfile: static/passwords.hydra.txt
+        passwordfile: static/passwords.hydra.txt=

@@ -1,6 +1,8 @@
 """
 Class responsible for mapping scans and port, service
 """
+from aucote_cfg import cfg
+from scans.hydra_scripts_cfg import SERVICE_TO_SCRIPTS_HYDRA
 from scans.tasks import NmapPortScanTask
 from tools.hydra.base import HydraBase, HydraScriptTask
 from .nmap_scripts_cfg import SERVICE_TO_SCRIPTS, PORT_TO_SCRIPTS
@@ -24,5 +26,5 @@ class TaskMapper:
         self._executor.add_task(NmapPortScanTask(self._executor, port, all_scripts))
 
         # Hydra scanning
-        if port.service_name in HydraBase.SUPORTED_SERVICES:
-            self._executor.add_slow_task(HydraScriptTask(executor=self._executor, port=port))
+        if cfg.get('tools.hydra.enable') and port.service_name in SERVICE_TO_SCRIPTS_HYDRA.keys():
+            self._executor.add_task(SERVICE_TO_SCRIPTS_HYDRA[port.service_name](executor=self._executor, port=port))

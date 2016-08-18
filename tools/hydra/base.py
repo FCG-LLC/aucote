@@ -2,6 +2,7 @@
 Provides basic integrations of THC Hydra
 """
 import logging as log
+import subprocess
 
 from aucote_cfg import cfg
 from database.serializer import Serializer
@@ -50,8 +51,13 @@ class HydraScriptTask(HydraBase):
         Call command, parse output and send to kudu_queue
         @TODO: Sending to kudu
         """
-        results = self.call(['-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'),
+        try:
+            results = self.call(['-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'),
                              str(self._port.node.ip), self._port.service_name, ])
+        except subprocess.CalledProcessError as e:
+            log.warning("Exiting Hydra process")
+            return None
+
         if not results:
             return None
 
