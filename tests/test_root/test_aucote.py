@@ -59,7 +59,7 @@ class AucoteTest(TestCase):
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))
-    @patch('fixtures.exploits.read_exploits', MagicMock(return_value=range(5)))
+    @patch('fixtures.exploits.Exploits.read', MagicMock(return_value=range(5)))
     @patch('database.serializer.Serializer.serialize_exploit')
     def test_syncdb(self, mock_serializer):
         run_syncdb()

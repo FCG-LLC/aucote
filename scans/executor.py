@@ -8,6 +8,7 @@ import logging as log
 import json
 import datetime
 from aucote_cfg import cfg
+from fixtures.exploits import Exploits
 from utils.threads import ThreadPool
 from tools.masscan import MasscanPorts
 from structs import Node, Scan
@@ -36,8 +37,7 @@ class Executor(object):
         ports = scanner.scan_ports(self.nodes)
 
         if self._exploits is None:
-            from fixtures.exploits import read_exploits
-            self._exploits = read_exploits()
+            self._exploits = Exploits.read()
 
         for port in ports:
             port.scan = scan
