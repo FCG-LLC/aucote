@@ -21,7 +21,7 @@ class PortsScan(NmapBase):
             args.extend(('-p', port_str))
         args.extend( ('-sV', '--script', 'banner') )
         args.extend([str(node.ip) for node in nodes])
-        xml = self.call_nmap(args)
+        xml = self.call(args)
         for host in xml.findall('host'):
             ip = ipaddress.ip_address(host.find('address').get('addr'))
             ports = host.find('ports')

@@ -53,9 +53,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.port.node = Node()
         self.port.node.ip = '127.0.0.1'
 
-        self.script = NmapScript
-        self.script.NAME = 'test'
-        self.script.ARGS = 'test_args'
+        self.script = NmapScript(port=self.port, exploit=self.exploit, name='test', args='test_args')
 
         self.vulnerability = Vulnerability()
         self.script.get_vulnerability = MagicMock(return_value=self.vulnerability)
@@ -86,9 +84,9 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertIn('22', args)
         self.assertIn('-sV', args)
         self.assertIn('--script', args)
-        self.assertIn(self.script.NAME, args)
+        self.assertIn(self.script.name, args)
         self.assertIn('--script-args', args)
-        self.assertIn(self.script.ARGS, args)
+        self.assertIn(self.script.args, args)
         self.assertIn(self.port.node.ip, args)
 
         return ElementTree.fromstring(self.XML)

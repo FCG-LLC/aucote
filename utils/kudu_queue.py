@@ -88,6 +88,9 @@ class KuduMsg:
 
     @property
     def data(self):
+        """
+        Returns kudu data
+        """
         return self._data
 
 

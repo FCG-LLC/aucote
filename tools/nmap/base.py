@@ -10,13 +10,12 @@ class NmapBase(CommandXML):
     NAME = 'nmap'
 
 
-class NmapScript:
-    NAME = None
-    ARGS = None
-
-    def __init__(self, port, exploit):
+class NmapScript(object):
+    def __init__(self, port, exploit, name=None, args=None):
         self.exploit = exploit
         self.port = port
+        self.name = name
+        self.args = args
 
     def handle(self, script):
         vuln = self.get_vulnerability(script)

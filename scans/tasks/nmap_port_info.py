@@ -1,7 +1,8 @@
 import logging as log
 
-from tools.nmap import NmapBase
+from tools.nmap.base import NmapBase
 from ..task_mapper import TaskMapper
+
 
 class NmapPortInfoTask(NmapBase):
     """
@@ -32,6 +33,6 @@ class NmapPortInfoTask(NmapBase):
             self._port.service_name = service.get('name')
             self._port.service_version = service.get('version')
 
-        #assign tasks
+        # assign tasks
         tm = TaskMapper(self.executor)
         tm.assign_tasks(self._port)

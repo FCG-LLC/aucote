@@ -1,6 +1,7 @@
-from tools.nmap import NmapBase
 import logging as log
 from database.serializer import Serializer
+from tools.nmap.base import NmapBase
+
 
 class NmapPortScanTask(NmapBase):
     """
@@ -41,16 +42,16 @@ class NmapPortScanTask(NmapBase):
         """
         vulners = []
         if self._script_classes:
-            scripts = {cls.NAME:cls(self._port, self.exploits.find('nmap', cls.NAME)) for cls in self._script_classes}
+            scripts = {script.name: script for script in self._script_classes}
             args = ['-p', str(self._port.number), '-sV']
             if self._port.transport_protocol.name == "UDP":
                 args.append("-sU")
             for script in scripts.values():
                 args.append('--script')
-                args.append(script.NAME)
-                if script.ARGS is not None:
+                args.append(script.name)
+                if script.args is not None:
                     args.append('--script-args')
-                    args.append(script.ARGS)
+                    args.append(script.args)
             args.append(str(self._port.node.ip))
             xml = self.call(args)
             for script in xml.findall('host/ports/port/script'):

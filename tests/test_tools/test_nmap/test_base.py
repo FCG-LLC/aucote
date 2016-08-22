@@ -25,7 +25,9 @@ class NmapScriptTest(TestCase):
     def setUp(self):
         self.port = Mock()
         self.exploit = Mock()
-        self.ns = NmapScript(self.port, self.exploit)
+        self.name = 'test'
+        self.args='test_args'
+        self.ns = NmapScript(self.port, self.exploit, name=self.name, args=self.args)
 
     def test_handle_no_vuln(self):
         script = ET.fromstring(self.SCRIPT_XML)

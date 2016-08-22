@@ -60,7 +60,7 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.port.node.ip = '127.0.0.1'
         self.port.service_name = 'ssh'
 
-        self.hydra_script_task = HydraScriptTask(executor=self.executor, port=self.port)
+        self.hydra_script_task = HydraScriptTask(executor=self.executor, port=self.port, service=self.port.service_name)
 
     def test_init(self):
         self.assertEqual(self.hydra_script_task.executor, self.executor)

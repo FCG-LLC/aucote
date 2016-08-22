@@ -39,12 +39,13 @@ class HydraScriptTask(HydraBase):
     """
     This class is callable
     """
-    def __init__(self, executor, port):
+    def __init__(self, executor, port, service):
         """
         Initialize variables
         """
         super().__init__(executor=executor)
         self._port = port
+        self.service = service
 
     def __call__(self):
         """
@@ -53,7 +54,7 @@ class HydraScriptTask(HydraBase):
         """
         try:
             results = self.call(['-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'),
-                             str(self._port.node.ip), self._port.service_name, ])
+                             str(self._port.node.ip), self.service, ])
         except subprocess.CalledProcessError as e:
             log.warning("Exiting Hydra process")
             return None

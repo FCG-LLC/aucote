@@ -1,4 +1,5 @@
 import datetime
+from unittest import TestCase
 
 ZERO = datetime.timedelta(0)
 
@@ -7,11 +8,14 @@ ZERO = datetime.timedelta(0)
 class UTC(datetime.tzinfo):
     """UTC"""
 
-    def utcoffset(self, dt):
+    @classmethod
+    def utcoffset(cls, dt=None):
         return ZERO
 
-    def tzname(self, dt):
+    @classmethod
+    def tzname(cls, dt=None):
         return "UTC"
 
-    def dst(self, dt):
+    @classmethod
+    def dst(cls, dt=None):
         return ZERO

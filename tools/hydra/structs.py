@@ -17,7 +17,6 @@ class HydraResults(object):
     ALL_PATTERN = "((?P<message_match>{1})|(?P<success_match>{2})|(?P<summary_match>{3})|(?P<info_match>{0}))".format(
         INFO_PATTERN, MESSAGE_PATTERN, SUCCESS_PATTERN, SUMMARY_PATTERN)
 
-    regex_info = re.compile(INFO_PATTERN)
     regex_message = re.compile(MESSAGE_PATTERN)
     regex_success = re.compile(SUCCESS_PATTERN)
     regex_summary = re.compile(SUMMARY_PATTERN)
@@ -44,7 +43,7 @@ class HydraResults(object):
 
             elif match.group('message_match'):
                 log.debug("Hydra: {0}".format(match.group('message')))
-            elif line and not match.group('info_match'):
+            elif line:
                 log.debug("Hydra: Unrecognized message: {0}".format(line))
 
     def __getitem__(self, item):

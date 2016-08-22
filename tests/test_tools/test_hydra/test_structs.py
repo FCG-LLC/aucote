@@ -1,7 +1,9 @@
 from unittest import TestCase
+from unittest.mock import MagicMock
 
 from structs import Port, TransportProtocol
 from tools.hydra.structs import HydraResult, HydraResults
+from utils.exceptions import HydraPortMismatchException
 
 
 class HydraResultTest(TestCase):
@@ -45,6 +47,11 @@ class HydraResultTest(TestCase):
 
     def test_output_data_line(self):
         self.assertEqual(HydraResult.from_output(self.OUTPUT_DATA_LINE, port=self.port), None)
+
+    def test_from_re_match_exceptions(self):
+        match = MagicMock()
+        port = Port()
+        self.assertRaises(HydraPortMismatchException, HydraResult.from_re_match, match=match, port=port)
 
 
 class HydraResultsTest(TestCase):

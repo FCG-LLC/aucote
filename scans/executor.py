@@ -24,6 +24,9 @@ class Executor(object):
     _exploits = None
 
     def __init__(self, kudu_queue):
+        """
+        Init executor. Sets kudu_queue and nodes
+        """
         self._kudu_queue = kudu_queue
         self.nodes = self._get_nodes()
 
@@ -43,7 +46,6 @@ class Executor(object):
             port.scan = scan
 
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
-        self._slow_thread_pool = ThreadPool(1)
 
         for port in ports:
             self.add_task(NmapPortInfoTask(executor=self, port=port))
