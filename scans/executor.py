@@ -9,6 +9,7 @@ import json
 import datetime
 from aucote_cfg import cfg
 from fixtures.exploits import Exploits
+from scans.task_mapper import TaskMapper
 from utils.threads import ThreadPool
 from tools.masscan import MasscanPorts
 from structs import Node, Scan
@@ -29,6 +30,7 @@ class Executor(object):
         """
         self._kudu_queue = kudu_queue
         self.nodes = self._get_nodes()
+        self.task_mapper = TaskMapper(self)
 
     def run(self):
         """
