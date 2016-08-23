@@ -8,6 +8,7 @@ from aucote_cfg import cfg
 from database.serializer import Serializer
 from structs import Vulnerability
 from tools.common import Command
+from tools.hydra.parsers import HydraParser
 from tools.hydra.structs import HydraResults
 
 
@@ -32,7 +33,7 @@ class HydraBase(Command):
         """
         Parse output and return HydraResults object
         """
-        return HydraResults(output)
+        return HydraParser.parse(output)
 
 
 class HydraScriptTask(HydraBase):

@@ -35,3 +35,18 @@ class HydraToolTest(TestCase):
         self.nmap_tool()
         hydra_task_mock.assert_called_once_with(executor=self.executor, service='ssh', port=self.port)
 
+    @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
+    def test_disable(self):
+        config = MagicMock()
+        HydraTool(MagicMock(), MagicMock(), MagicMock(), config=config)()
+        self.assertEqual(config.get.call_count, 0)
+
+    @patch('aucote_cfg.cfg.get', MagicMock(return_value=True))
+    def test_non_implemented_service(self):
+        executor = MagicMock()
+        self.config['mapper']['test'] = 'test'
+        HydraTool(port=MagicMock(), exploits=MagicMock(), executor=executor, config=self.config)()
+        self.assertEqual(executor.add_task.call_count, 0)
+
+
+

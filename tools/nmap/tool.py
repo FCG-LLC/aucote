@@ -17,4 +17,4 @@ class NmapTool(Tool):
                 task = VulnNmapScript(exploit=exploit, port=self.port, name=name, args=args)
             tasks.append(task)
 
-        self.executor.add_task(NmapPortScanTask(self.executor, self.port, tasks))
+        self.executor.add_task(NmapPortScanTask(executor=self.executor, port=self.port, script_classes=tasks))

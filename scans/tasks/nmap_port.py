@@ -8,7 +8,7 @@ class NmapPortScanTask(NmapBase):
     Scans one port using provided vulnerability scan
     """
 
-    def __init__(self, executor, port, script_classes):
+    def __init__(self, port, script_classes, *args, **kwargs):
         """
         Initialize variables
         Args:
@@ -16,7 +16,7 @@ class NmapPortScanTask(NmapBase):
             port:
             script_clases:
         """
-        super().__init__(executor=executor)
+        super().__init__(*args, **kwargs)
         self._port = port
         self._script_classes = script_classes
 
@@ -41,26 +41,25 @@ class NmapPortScanTask(NmapBase):
         send serialized vulnerabilities to kudu queue
         """
         vulners = []
-        if self._script_classes:
-            scripts = {script.name: script for script in self._script_classes}
-            args = ['-p', str(self._port.number), '-sV']
-            if self._port.transport_protocol.name == "UDP":
-                args.append("-sU")
-            for script in scripts.values():
-                args.append('--script')
-                args.append(script.name)
-                if script.args is not None:
-                    args.append('--script-args')
-                    args.append(script.args)
-            args.append(str(self._port.node.ip))
-            xml = self.call(args)
-            for script in xml.findall('host/ports/port/script'):
-                found_handler = scripts.get(script.get('id'))
-                if found_handler is None: continue
-                log.debug('Parsing output from script %s', script.get('id'))
-                vuln = found_handler.handle(script)
-                if vuln is not None:
-                    vulners.append(vuln)
+        scripts = {script.name: script for script in self._script_classes}
+        args = ['-p', str(self._port.number), '-sV']
+        if self._port.transport_protocol.name == "UDP":
+            args.append("-sU")
+        for script in scripts.values():
+            args.append('--script')
+            args.append(script.name)
+            if script.args is not None:
+                args.append('--script-args')
+                args.append(script.args)
+        args.append(str(self._port.node.ip))
+        xml = self.call(args)
+        for script in xml.findall('host/ports/port/script'):
+            found_handler = scripts.get(script.get('id'))
+            if found_handler is None: continue
+            log.debug('Parsing output from script %s', script.get('id'))
+            vuln = found_handler.handle(script)
+            if vuln is not None:
+                vulners.append(vuln)
         serializer = Serializer()
         if vulners:
             for vuln in vulners:

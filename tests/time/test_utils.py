@@ -5,7 +5,7 @@ ZERO = datetime.timedelta(0)
 
 # A UTC class.
 
-class UTC(datetime.tzinfo):
+class UTC(datetime.tzinfo): # pragma: no cover
     """UTC"""
 
     @classmethod

@@ -9,13 +9,11 @@ class PortsScan(NmapBase):
     '''
 
     def scan_ports(self, nodes, ports=None):
-        node_by_ip = {node.ip: node for node in nodes}
+        node_by_ip = {str(node.ip): node for node in nodes}
         result = []   
         args = list(self.COMMON_ARGS)
         if ports is None:
-            pass
-            args.extend(('-p', '443,80,22'))
-            #args.extend(('-p', '1-65535')) #TODO: disabled for increased speed of tests
+            args.extend(('-p', '0-65535'))
         else:
             port_str = ','.join([str(port) for port in ports])
             args.extend(('-p', port_str))
@@ -45,6 +43,6 @@ class PortsScan(NmapBase):
                 port.service_version = service_version
                 port.number = port_id
                 port.banner = banner
-                port.node = node_by_ip[ip]
+                port.node = node_by_ip[str(ip)]
                 result.append(port)
         return result

@@ -27,7 +27,8 @@ EXECUTOR_CONFIG = {
                          'smtp-enum', 'snmp', 'socks5', 'ssh', 'sshkey', 'svn', 'teamspeak', 'telnet', 'telnets',
                          'vmauthd', 'vnc', 'xmpp'},
             'mapper': {
-
+                'http': 'http-get',
+                'https': 'https-get',
             },
         }
     }
