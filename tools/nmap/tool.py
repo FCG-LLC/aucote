@@ -1,7 +1,7 @@
-from scans.tasks import NmapPortScanTask
 from structs import RiskLevel
 from tools.base import Tool
 from tools.nmap.base import InfoNmapScript, VulnNmapScript
+from tools.nmap.tasks.port_scan import NmapPortScanTask
 
 
 class NmapTool(Tool):

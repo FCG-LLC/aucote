@@ -1,6 +1,6 @@
 from aucote_cfg import cfg
 from tools.base import Tool
-from tools.hydra.base import HydraScriptTask
+from tools.hydra.tasks import HydraScriptTask
 
 
 class HydraTool(Tool):

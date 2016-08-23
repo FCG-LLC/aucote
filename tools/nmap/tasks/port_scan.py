@@ -1,4 +1,5 @@
 import logging as log
+
 from database.serializer import Serializer
 from tools.nmap.base import NmapBase
 

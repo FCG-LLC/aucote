@@ -10,10 +10,10 @@ import datetime
 from aucote_cfg import cfg
 from fixtures.exploits import Exploits
 from scans.task_mapper import TaskMapper
+from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.threads import ThreadPool
 from tools.masscan import MasscanPorts
 from structs import Node, Scan
-from .tasks import NmapPortInfoTask
 
 
 class Executor(object):

@@ -22,9 +22,8 @@ class ScanTask:
             name = name[:-4]
         return '%s %s(%s)'%(name, self.node.name, self.node.id)
 
+
 class PortTask(ScanTask):
     def __init__(self, port):
         super().__init__(port.node)
         self.port = port
-    
-
