@@ -52,10 +52,16 @@ class AucoteTest(TestCase):
     @patch('sched.scheduler.run')
     @patch('sched.scheduler.enter')
     def test_service(self, mock_sched_enter, mock_sched_run):
-        mock_sched_run.side_effect = NotImplementedError('test')
+        mock_sched_run.side_effect = self.check_service # NotImplementedError('test')
+        self._mock = mock_sched_run
         self.assertRaises(NotImplementedError, run_service)
-        self.assertEqual(mock_sched_enter.call_count, 1)
-        self.assertEqual(mock_sched_run.call_count, 1)
+        self.assertEqual(mock_sched_enter.call_count, 3)
+        self.assertEqual(mock_sched_run.call_count, 3)
+
+    def check_service(self):
+        if self._mock.call_count == 3:
+            raise NotImplementedError
+
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))

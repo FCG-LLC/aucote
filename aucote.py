@@ -96,7 +96,7 @@ def run_syncdb():
 
 # =================== start app =================
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     chdir(dirname(realpath(__file__)))
 
     main()
