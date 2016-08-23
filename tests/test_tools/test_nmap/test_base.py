@@ -31,13 +31,6 @@ class NmapScriptTest(TestCase):
         self.args='test_args'
         self.ns = NmapScript(self.port, self.exploit, name=self.name, args=self.args)
 
-    def test_handle_no_vuln(self):
-        script = ET.fromstring(self.SCRIPT_XML)
-        vuln_mock = MagicMock()
-        self.ns.get_vulnerability = MagicMock(return_value=vuln_mock)
-        vuln = self.ns.handle(script)
-        self.assertEqual(vuln, vuln_mock)
-
     def test_get_vulnerability(self):
         self.assertRaises(NotImplementedError, self.ns.get_vulnerability, None)
 

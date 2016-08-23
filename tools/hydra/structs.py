@@ -1,10 +1,3 @@
-import re
-import logging as log
-
-from structs import TransportProtocol, Port
-from utils.exceptions import HydraPortMismatchException
-
-
 class HydraResults(object):
 
     def __init__(self):

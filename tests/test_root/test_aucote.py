@@ -2,7 +2,7 @@
 Test main aucote file
 """
 from unittest import TestCase
-from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
+from unittest.mock import patch, Mock, MagicMock, PropertyMock
 
 from aucote import main, run_scan, run_service, run_syncdb
 

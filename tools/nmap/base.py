@@ -17,14 +17,6 @@ class NmapScript(object):
         self.name = name
         self.args = args
 
-    def handle(self, script):
-        vuln = self.get_vulnerability(script)
-        if vuln == None: return None
-        vuln.exploit = self.exploit
-        vuln.port = self.port
-        vuln.output = script.get('output').strip()
-        return vuln
-
     def get_vulnerability(self, script):
         raise NotImplementedError
 

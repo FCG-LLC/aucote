@@ -53,14 +53,23 @@ class NmapPortScanTask(NmapBase):
                 args.append('--script-args')
                 args.append(script.args)
         args.append(str(self._port.node.ip))
+
         xml = self.call(args)
+
         for script in xml.findall('host/ports/port/script'):
             found_handler = scripts.get(script.get('id'))
-            if found_handler is None: continue
+            if found_handler is None:
+                continue
             log.debug('Parsing output from script %s', script.get('id'))
-            vuln = found_handler.handle(script)
-            if vuln is not None:
-                vulners.append(vuln)
+            vuln = found_handler.get_vulnerability(script)
+            if vuln is None:
+                continue
+
+            vuln.exploit = found_handler.exploit
+            vuln.port = self.port
+            vuln.output = script.get('output').strip()
+            vulners.append(vuln)
+
         serializer = Serializer()
         if vulners:
             for vuln in vulners:
