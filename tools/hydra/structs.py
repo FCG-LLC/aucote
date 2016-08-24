@@ -23,6 +23,9 @@ class HydraResults(object):
     def fail(self):
         return self.all - self.success
 
+    def __str__(self):
+        return "\n".join([str(result) for result in self._results])
+
 
 class HydraResult(object):
 

@@ -36,13 +36,12 @@ class HydraScriptTask(HydraBase):
             return None
 
         serializer = Serializer()
-        for result in results:
-            vuln = Vulnerability()
-            vuln.exploit = self.exploits.find('hydra', 'hydra')
-            vuln.port = self._port
-            vuln.output = str(result)
+        vuln = Vulnerability()
+        vuln.exploit = self.exploits.find('hydra', 'hydra')
+        vuln.port = self._port
+        vuln.output = str(results)
 
-            log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
-            msg = serializer.serialize_port_vuln(vuln.port, vuln)
-            self.kudu_queue.send_msg(msg)
+        log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
+        msg = serializer.serialize_port_vuln(vuln.port, vuln)
+        self.kudu_queue.send_msg(msg)
         return results
