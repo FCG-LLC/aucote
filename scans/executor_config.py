@@ -13,6 +13,12 @@ EXECUTOR_CONFIG = {
                 'http-slowloris-check': {
                     'args': 'http-slowloris.threads=500,http-slowloris.timeout=200'
                 },
+                'smtp-vuln-cve2010-4344': {
+                    'args': 'smtp-vuln-cve2010-4344.exploit'
+                },
+                'smtp-vuln-cve2011-1720': {
+                    'args': 'smtp.domain=test'
+                }
             }
         },
         'hydra': {
@@ -29,6 +35,9 @@ EXECUTOR_CONFIG = {
             'mapper': {
                 'http': 'http-get',
                 'https': 'https-get',
+                'microsoft-ds': 'smb',
+                'microsoft-ssn': 'smb',
+                'microsoft-sn': 'smb',
             },
         }
     }

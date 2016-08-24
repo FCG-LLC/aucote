@@ -24,9 +24,10 @@ class HydraScriptTask(HydraBase):
         Call command, parse output and send to kudu_queue
         @TODO: Sending to kudu
         """
+
         try:
             results = self.call(['-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'),
-                             str(self._port.node.ip), self.service, ])
+                             '-s', str(self._port.number), str(self._port.node.ip), self.service, ])
         except subprocess.CalledProcessError as e:
             log.warning("Exiting Hydra process")
             return None
