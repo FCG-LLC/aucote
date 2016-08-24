@@ -26,3 +26,6 @@ class HydraResultTest(TestCase):
         self.hydra_results.add(result_2)
 
         self.assertEqual(str(self.hydra_results), "\n".join([str(result_1), str(result_2)]))
+
+        for result in self.hydra_results:
+            self.assertIn(result, self.hydra_results._results)
