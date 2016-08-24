@@ -10,21 +10,12 @@ class NmapBase(CommandXML):
     NAME = 'nmap'
 
 
-class NmapScript:
-    NAME = None
-    ARGS = None
-
-    def __init__(self, port, exploit):
+class NmapScript(object):
+    def __init__(self, port, exploit, name=None, args=None):
         self.exploit = exploit
         self.port = port
-
-    def handle(self, script):
-        vuln = self.get_vulnerability(script)
-        if vuln == None: return None
-        vuln.exploit = self.exploit
-        vuln.port = self.port
-        vuln.output = script.get('output').strip()
-        return vuln
+        self.name = name
+        self.args = args
 
     def get_vulnerability(self, script):
         raise NotImplementedError

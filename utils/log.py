@@ -14,7 +14,11 @@ _LOG_LEVEL = {
     'debug': log.DEBUG
 }
 
+
 def config(cfg):
+    """
+    Logging configuration
+    """
     print("Logging to the file: %s"%cfg['file'])
     err_handler = log.StreamHandler(sys.__stderr__)
     err_handler.setLevel(log.WARNING)

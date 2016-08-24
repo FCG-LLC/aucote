@@ -2,7 +2,7 @@
 Test main aucote file
 """
 from unittest import TestCase
-from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
+from unittest.mock import patch, Mock, MagicMock, PropertyMock
 
 from aucote import main, run_scan, run_service, run_syncdb
 
@@ -52,14 +52,20 @@ class AucoteTest(TestCase):
     @patch('sched.scheduler.run')
     @patch('sched.scheduler.enter')
     def test_service(self, mock_sched_enter, mock_sched_run):
-        mock_sched_run.side_effect = NotImplementedError('test')
+        mock_sched_run.side_effect = self.check_service # NotImplementedError('test')
+        self._mock = mock_sched_run
         self.assertRaises(NotImplementedError, run_service)
-        self.assertEqual(mock_sched_enter.call_count, 1)
-        self.assertEqual(mock_sched_run.call_count, 1)
+        self.assertEqual(mock_sched_enter.call_count, 3)
+        self.assertEqual(mock_sched_run.call_count, 3)
+
+    def check_service(self):
+        if self._mock.call_count == 3:
+            raise NotImplementedError
+
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))
-    @patch('fixtures.exploits.read_exploits', MagicMock(return_value=range(5)))
+    @patch('fixtures.exploits.Exploits.read', MagicMock(return_value=range(5)))
     @patch('database.serializer.Serializer.serialize_exploit')
     def test_syncdb(self, mock_serializer):
         run_syncdb()

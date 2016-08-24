@@ -2,11 +2,13 @@ import unittest
 from unittest.mock import MagicMock, patch, Mock
 from xml.etree import ElementTree
 
-from scans.tasks import NmapPortInfoTask
 from structs import Port, TransportProtocol, Node
 
 
 # TODO: This tests are complicated because of nesting and many mocking. Should be refactored.
+from tools.nmap.tasks.port_info import NmapPortInfoTask
+
+
 @patch('scans.task_mapper.TaskMapper', MagicMock)
 class NmapPortInfoTaskTest(unittest.TestCase):
     XML = '''<?xml version="1.0" encoding="UTF-8"?>

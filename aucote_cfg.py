@@ -62,7 +62,7 @@ _DEFAULT = {
 cfg = Config(_DEFAULT)
 
 
-def load(file_name):
+def load(file_name=None):
     '''
     Initializes this module.
     Needs to be called before other functions are used.

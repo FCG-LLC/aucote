@@ -8,10 +8,12 @@ import logging as log
 import json
 import datetime
 from aucote_cfg import cfg
-from utils.threads import ThreadPool
+from fixtures.exploits import Exploits
+from scans.task_mapper import TaskMapper
+from tools.nmap.tasks.port_info import NmapPortInfoTask
 from tools.masscan import MasscanPorts
+from utils.threads import ThreadPool
 from structs import Node, Scan
-from .tasks import NmapPortInfoTask
 
 
 class Executor(object):
@@ -23,8 +25,12 @@ class Executor(object):
     _exploits = None
 
     def __init__(self, kudu_queue):
+        """
+        Init executor. Sets kudu_queue and nodes
+        """
         self._kudu_queue = kudu_queue
         self.nodes = self._get_nodes()
+        self.task_mapper = TaskMapper(self)
 
     def run(self):
         """
@@ -36,14 +42,12 @@ class Executor(object):
         ports = scanner.scan_ports(self.nodes)
 
         if self._exploits is None:
-            from fixtures.exploits import read_exploits
-            self._exploits = read_exploits()
+            self._exploits = Exploits.read()
 
         for port in ports:
             port.scan = scan
 
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
-        self._slow_thread_pool = ThreadPool(1)
 
         for port in ports:
             self.add_task(NmapPortInfoTask(executor=self, port=port))

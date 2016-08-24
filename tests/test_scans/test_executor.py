@@ -113,3 +113,7 @@ class ExecutorTest(TestCase):
         self.assertEqual(mock_join.call_count, 1)
         self.assertEqual(mock_stop.call_count,1)
 
+    def test_properties(self):
+        self.assertEqual(self.executor.exploits, self.executor._exploits)
+        self.assertEqual(self.executor.kudu_queue, self.executor._kudu_queue)
+

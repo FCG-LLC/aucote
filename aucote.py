@@ -10,6 +10,7 @@ from os.path import dirname, realpath
 
 import time
 
+from fixtures.exploits import Exploits
 from scans import Executor
 
 import utils.log as log_cfg
@@ -87,8 +88,7 @@ def run_syncdb():
 
     """
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-        from fixtures.exploits import read_exploits
-        exploits = read_exploits()
+        exploits = Exploits.read()
         serializer = Serializer()
         for exploit in exploits:
             kudu_queue.send_msg(serializer.serialize_exploit(exploit))
@@ -96,7 +96,7 @@ def run_syncdb():
 
 # =================== start app =================
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     chdir(dirname(realpath(__file__)))
 
     main()

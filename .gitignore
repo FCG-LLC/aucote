@@ -91,3 +91,7 @@ ENV/
 .idea
 stderr
 aucote_cfg.yaml
+aucote.log*
+
+# Tools related files
+hydra.restore
