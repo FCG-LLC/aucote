@@ -1,5 +1,6 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
+from urllib.error import URLError
 
 from scans import Executor
 
@@ -97,6 +98,19 @@ class ExecutorTest(TestCase):
         self.assertEqual(nodes[0].id, 573)
         self.assertEqual(nodes[0].ip.exploded, '10.3.3.99')
         self.assertEqual(nodes[0].name, 'EPSON1B0407')
+
+    @patch('urllib.request.urlopen')
+    @patch('urllib.error.URLError.__init__', MagicMock(return_value=None))
+    def test_getting_nodes_cannot_connect_to_topdis(self, urllib):
+        urllib.side_effect = URLError
+
+        self.assertRaises(URLError, Executor._get_nodes)
+
+    @patch('urllib.request.urlopen')
+    def test_getting_nodes_unknown_exception(self, urllib):
+        urllib.side_effect = Exception
+
+        self.assertRaises(Exception, Executor._get_nodes)
 
     @patch('tools.masscan.MasscanPorts.scan_ports', MagicMock(return_value=[MagicMock()]))
     @patch('utils.threads.ThreadPool.stop')

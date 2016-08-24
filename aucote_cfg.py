@@ -33,7 +33,7 @@ _DEFAULT = {
         },
         'masscan': {
             'cmd': 'masscan',
-            'args': ''
+            'args': []
         },
         'hydra': {
             'cmd': 'hydra',

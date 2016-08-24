@@ -2,11 +2,13 @@
 This is main module of aucote scanning functionality.
 """
 
-import urllib.request as http
 import ipaddress
 import logging as log
 import json
 import datetime
+from urllib.error import URLError
+import urllib.request as http
+
 from aucote_cfg import cfg
 from fixtures.exploits import Exploits
 from scans.task_mapper import TaskMapper
@@ -83,7 +85,12 @@ class Executor(object):
         Get nodes from todis application
         """
         url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
-        resource = http.urlopen(url)
+        try:
+            resource = http.urlopen(url)
+        except URLError as exception:
+            log.error('Cannot connect to topdis')
+            raise exception
+
         charset = resource.headers.get_content_charset() or 'utf-8'
         nodes_txt = resource.read().decode(charset)
         nodes_cfg = json.loads(nodes_txt)

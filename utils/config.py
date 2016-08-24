@@ -43,6 +43,13 @@ class Config:
         else:
             return curr
 
+    @property
+    def cfg(self):
+        '''
+        Return list or dict configuration
+        '''
+        return self._cfg
+
     def load(self, file_name, defaults=None):
         '''
         Loads configuration from provided file name.
