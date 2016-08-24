@@ -1,48 +1,46 @@
-from aucote_cfg import cfg
-from xml.etree import ElementTree
-import logging as log
-from scans.structs import Port, TransportProtocol
-import subprocess
+from structs import Vulnerability
+from tools.common.command import CommandXML
 
 
-class NmapBase:
+class NmapBase(CommandXML):
     '''
     Base for all classes using nmap application.
     '''
     COMMON_ARGS = ('-n', '--privileged', '-oX', '-', '-T4')
-    def call_nmap(self, args):
-        nmap_args = [cfg.get('tools.nmap.cmd')]
-        nmap_args.extend(args)
-        log.debug('Executing: %s', ' '.join(nmap_args))
-        xml_txt = subprocess.check_output(nmap_args, stderr=subprocess.DEVNULL)
-        return ElementTree.fromstring(xml_txt)
+    NAME = 'nmap'
 
-class NmapScript(NmapBase):
+
+class NmapScript:
     NAME = None
-    def __init__(self, port):
+    ARGS = None
+
+    def __init__(self, port, exploit):
+        self.exploit = exploit
         self.port = port
 
-    def run(self):
-        args = self.COMMON_ARGS + ( '-p', str(self.port.number), '-sV', '--script', self.NAME, str(self.port.node.ip))
-        xml = self.call_nmap(args)
-        host = xml.find('host')
-        if host is not None:
-            ports = host.find('ports')
-            if ports is not None:
-                port = ports.find('port')
-                if port is not None:
-                    for script in port.findall('script'):
-                        if script.get('id') == self.NAME:
-                            log.debug('Parsing output from script %s', self.NAME)
-                            try:
-                                return self.handle_script(script)
-                            except Exception as err:
-                                log.warning('Exception while parsing output from script %s', self.NAME, exc_info=err)
-                                log.debug('Problematic XML: %s', ElementTree.dump(script))
-        log.debug('Did not found output of script %s', self.NAME)
-        return None
+    def handle(self, script):
+        vuln = self.get_vulnerability(script)
+        if vuln == None: return None
+        vuln.exploit = self.exploit
+        vuln.port = self.port
+        vuln.output = script.get('output').strip()
+        return vuln
 
-    def handle_script(self, script):
+    def get_vulnerability(self, script):
         raise NotImplementedError
+
+
+class VulnNmapScript(NmapScript):
+    def get_vulnerability(self, script):
+        table = script.find('table')
+        if table is None: return None #no data, probably no response from server, so no problem detected
+        state = table.find("./elem[@key='state']").text
+        if state not in ('VULNERABLE', 'LIKELY VULNERABLE'): return None #TODO: add likelihood to vulnerability
+        return Vulnerability()
+
+
+class InfoNmapScript(NmapScript):
+    def get_vulnerability(self, script):
+        return Vulnerability()
 
 

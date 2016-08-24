@@ -87,3 +87,7 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+.idea
+stderr
+aucote_cfg.yaml

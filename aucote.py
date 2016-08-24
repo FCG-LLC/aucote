@@ -1,68 +1,102 @@
-from aucote_cfg import cfg, load as cfg_load
+"""
+This is executable file of aucote project.
+"""
+
 import argparse
-from database.facades import ScanDb
-from utils.database import MigrationManager
-import datetime
-from scans import Executor
 import logging as log
+import sched
+from os import chdir
+from os.path import dirname, realpath
+
+import time
+
+from scans import Executor
+
 import utils.log as log_cfg
-from utils.time import PeriodicTimer
-from threading import Thread
+from utils.time import parse_period
+from utils.kudu_queue import KuduQueue
+
+from database.serializer import Serializer
+from aucote_cfg import cfg, load as cfg_load
 
 #constants
-VERSION = (0,1,0)
+VERSION = (0, 1, 0)
 APP_NAME = 'Automated Compliance Tests'
 
-def api_thread():
-    from api import app
-    app.run(cfg)
 
-def run_api():
-    api_thread()
+# ============== main app ==============
+def main():
+    """
+    Main function of aucote project
+    Returns:
+
+    """
+    print("%s, version: %s.%s.%s" % ((APP_NAME,) + VERSION))
+
+    # parse arguments
+    parser = argparse.ArgumentParser(description='Tests compliance of devices.')
+    parser.add_argument("--cfg", help="config file path")
+    parser.add_argument('cmd', help="aucote command", type=str, default='service',
+                        choices=['scan', 'service', 'syncdb'],
+                        nargs='?')
+    args = parser.parse_args()
+
+    # read configuration
+    cfg_load(args.cfg)
+
+    log_cfg.config(cfg.get('logging'))
+    log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
+
+    if args.cmd == 'scan':
+        run_scan()
+    elif args.cmd == 'service':
+        run_service()
+    elif args.cmd == 'syncdb':
+        run_syncdb()
+
+# =============== functions ==============
 
 def run_scan():
-    start = datetime.datetime.utcnow()
-    with ScanDb(cfg.get("database.credentials")) as scan_db:
-        scan_id = scan_db.insert_scan(start)
-        executor = Executor(scan_db, scan_id)
+    """
+    Start scanning ports.
+    Returns: None
+    """
+    with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
+        executor = Executor(kudu_queue)
         executor.run()
-        end = datetime.datetime.utcnow()
-        scan_db.update_scan(scan_id, end)
-        
+
+
 def run_service():
-    thread = Thread(target=api_thread)
-    thread.start()
-    #scanning
+    """
+    Run service for periodic scanning
+    Returns:
+
+    """
+    scheduler = sched.scheduler(time.time)
     scan_period = parse_period(cfg.get('service.scans.period'))
-    timer = PeriodicTimer(scan_period, run_scan())
-    timer.loop()
+    scheduler.enter(0, 1, run_scan)
+    while True:
+        scheduler.run()
+        scheduler.enter(scan_period, 1, run_scan)
+
 
 def run_syncdb():
-    mm = MigrationManager(cfg.get("database.credentials"), cfg.get("database.migration.path"))
-    mm.migrate()
+    """
+    Synchronize local exploits database with Kudu
+    Returns:
+
+    """
+    with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
+        from fixtures.exploits import read_exploits
+        exploits = read_exploits()
+        serializer = Serializer()
+        for exploit in exploits:
+            kudu_queue.send_msg(serializer.serialize_exploit(exploit))
 
 
+# =================== start app =================
 
-#============== main app ==============
-print("%s, version: %s.%s.%s"%((APP_NAME,) + VERSION));
+if __name__ == "__main__":
+    chdir(dirname(realpath(__file__)))
 
-#parse arguments
-parser = argparse.ArgumentParser(description='Tests compliance of devices.')
-parser.add_argument("--cfg", help="config file path")
-parser.add_argument('cmd', help="aucote command", type=str, default='service', choices=['scan','syncdb', 'service', 'api'], nargs='?')
-args = parser.parse_args()
-
-#read configuration
-cfg_load(args.cfg)
-
-log_cfg.config(cfg.get('logging.file'), cfg.get('logging.level'))
-log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
-
-if args.cmd == 'scan':
-    run_scan()
-elif args.cmd == 'service':
-    run_service()
-elif args.cmd == 'api':
-    run_api()
-elif args.cmd == 'syncdb':
-    run_syncdb()
+    main()

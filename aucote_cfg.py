@@ -8,7 +8,10 @@ from utils import Config
 _DEFAULT = {
     'logging':{
         'file': lambda: path.join(path.dirname(__file__), 'aucote.log'),
-        'level': 'info'
+        'level': 'info',
+        'max_file_size': 10*1024*1024,
+        'max_files': 5,
+        'format': '%(levelname)s %(asctime)s %(threadName)s: %(message)s'
     },
     'database': {
         'migration':{
@@ -26,19 +29,25 @@ _DEFAULT = {
     },
     'tools':{
         'nmap':{
-            'cmd': 'nmap',
-            'runs_as_root': False,
-            'max_network_scan_size':{
-                'full': 0,
-                'normal': 1024,
-                'fast': 65536
-            }
+            'cmd': 'nmap'
+        },
+        'masscan': {
+            'cmd': 'masscan',
+            'args': ''
+        },
+        'hydra': {
+            'cmd': 'hydra',
+            'loginfile': 'static/logins.hydra.txt',
+            'passwordfile': 'static/passwords.hydra.txt',
+            'enable': True,
         }
     },
     'service': {
         'scans': {
             'period': '12h',
             'threads': 10,
+            'ports': '0-65535,U:0-65535',
+            'rate': 1000,
         },
         "api":{
             'v1': {
@@ -51,6 +60,8 @@ _DEFAULT = {
 
 #global cfg
 cfg = Config(_DEFAULT)
+
+
 def load(file_name):
     '''
     Initializes this module.
@@ -62,4 +73,4 @@ def load(file_name):
         file_name = path.join(path.dirname(__file__), 'aucote_cfg.yaml')
     #at this point logs do not work, print info to stdout
     print("Reading configuration from file:", file_name)
-    cfg.load(file_name)
+    cfg.load(file_name, _DEFAULT)

@@ -2,6 +2,7 @@
 Configures logging subsystem.
 '''
 import logging as log
+from logging.handlers import RotatingFileHandler
 import sys
 
 
@@ -13,12 +14,15 @@ _LOG_LEVEL = {
     'debug': log.DEBUG
 }
 
-def config(file_name, level):
-    log_level = _LOG_LEVEL[level]
-    print("Logging to the file: %s"%file_name)
-    FORMAT = '%(levelname)s %(asctime)s %(threadName)s: %(message)s'
-    err_handler = log.StreamHandler( sys.__stderr__ )
+def config(cfg):
+    print("Logging to the file: %s"%cfg['file'])
+    err_handler = log.StreamHandler(sys.__stderr__)
     err_handler.setLevel(log.WARNING)
-    log.basicConfig(filename=file_name,level=log_level, format=FORMAT)
     log.getLogger().addHandler(err_handler)
+    file_handler = RotatingFileHandler(cfg['file'], maxBytes=cfg['max_file_size'], backupCount=cfg['max_files'])
+    formatter = log.Formatter(cfg['format'])
+    file_handler.setFormatter(formatter)
+    log.getLogger().addHandler(file_handler)
+    log_level = _LOG_LEVEL[cfg['level']]
+    log.getLogger().setLevel(log_level)
     log.info("========================= Starting application =========================")

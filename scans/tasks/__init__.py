@@ -1,2 +1,3 @@
 from .base import ScanTask
-from .ports import PortScanTask
+from .nmap_port import NmapPortScanTask
+from .nmap_port_info import NmapPortInfoTask
