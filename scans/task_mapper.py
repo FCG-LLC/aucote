@@ -17,7 +17,7 @@ class TaskMapper:
         Assign tasks for a provided port
         """
 
-        scripts = self._executor.exploits.find_all(port)
+        scripts = self._executor.exploits.find_all_matches(port)
         for app, exploits in scripts.items():
             task = EXECUTOR_CONFIG['apps'][app]['class'](executor=self._executor, exploits=exploits, port=port,
                                                          config=EXECUTOR_CONFIG['apps'][app])

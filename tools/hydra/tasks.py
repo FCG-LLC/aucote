@@ -28,11 +28,13 @@ class HydraScriptTask(HydraBase):
         try:
             results = self.call(['-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'),
                              '-s', str(self._port.number), str(self._port.node.ip), self.service, ])
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError as exception:
+            log.error(str(exception))
             log.warning("Exiting Hydra process")
             return None
 
         if not results:
+            log.debug("Hydra does not find any password.")
             return None
 
         serializer = Serializer()

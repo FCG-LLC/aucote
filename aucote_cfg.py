@@ -13,6 +13,11 @@ _DEFAULT = {
         'max_files': 5,
         'format': '%(levelname)s %(asctime)s %(threadName)s: %(message)s'
     },
+    'fixtures': {
+        'exploits': {
+            'filename': 'fixtures/exploits/exploits.csv'
+        }
+    },
     'database': {
         'migration':{
             'path': lambda: path.join(path.dirname(__file__), 'migrations'),

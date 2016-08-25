@@ -24,15 +24,15 @@ class Executor(object):
     """
 
     _thread_pool = None
-    _exploits = None
 
-    def __init__(self, kudu_queue):
+    def __init__(self, kudu_queue, exploits):
         """
         Init executor. Sets kudu_queue and nodes
         """
         self._kudu_queue = kudu_queue
         self.nodes = self._get_nodes()
         self.task_mapper = TaskMapper(self)
+        self._exploits = exploits
 
     def run(self):
         """
@@ -42,9 +42,6 @@ class Executor(object):
         scan.start = datetime.datetime.utcnow()
         scanner = MasscanPorts(executor=self)
         ports = scanner.scan_ports(self.nodes)
-
-        if self._exploits is None:
-            self._exploits = Exploits.read()
 
         for port in ports:
             port.scan = scan

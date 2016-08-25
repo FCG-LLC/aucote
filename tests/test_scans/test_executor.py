@@ -72,7 +72,7 @@ class ExecutorTest(TestCase):
 
     @patch('scans.executor.Executor._get_nodes', MagicMock(return_value=False))
     def setUp(self):
-        self.executor = Executor(kudu_queue=MagicMock())
+        self.executor = Executor(kudu_queue=MagicMock(), exploits=MagicMock())
         self.urllib_response = MagicMock()
         self.urllib_response.read = MagicMock()
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
@@ -83,7 +83,7 @@ class ExecutorTest(TestCase):
     def test_init(self, mock_get_nodes):
         return_value = 'Test'
         mock_get_nodes.return_value=return_value
-        executor = Executor(kudu_queue=MagicMock())
+        executor = Executor(kudu_queue=MagicMock(), exploits=MagicMock())
         mock_get_nodes.assert_called_once_with()
 
         self.assertEqual(executor.nodes, return_value)

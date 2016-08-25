@@ -48,26 +48,30 @@ def main():
     log_cfg.config(cfg.get('logging'))
     log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
 
+    exploit_filename = cfg.get('fixtures.exploits.filename')
+    exploits = Exploits.read(file_name=exploit_filename)
+
     if args.cmd == 'scan':
-        run_scan()
+        run_scan(exploits)
     elif args.cmd == 'service':
-        run_service()
+        run_service(exploits)
     elif args.cmd == 'syncdb':
-        run_syncdb()
+        run_syncdb(exploits)
+
 
 # =============== functions ==============
 
-def run_scan():
+def run_scan(exploits):
     """
     Start scanning ports.
     Returns: None
     """
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-        executor = Executor(kudu_queue)
+        executor = Executor(kudu_queue=kudu_queue, exploits=exploits)
         executor.run()
 
 
-def run_service():
+def run_service(exploits):
     """
     Run service for periodic scanning
     Returns:
@@ -75,20 +79,19 @@ def run_service():
     """
     scheduler = sched.scheduler(time.time)
     scan_period = parse_period(cfg.get('service.scans.period'))
-    scheduler.enter(0, 1, run_scan)
+    scheduler.enter(0, 1, run_scan, (exploits,))
     while True:
         scheduler.run()
-        scheduler.enter(scan_period, 1, run_scan)
+        scheduler.enter(scan_period, 1, run_scan, (exploits,))
 
 
-def run_syncdb():
+def run_syncdb(exploits):
     """
     Synchronize local exploits database with Kudu
     Returns:
 
     """
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-        exploits = Exploits.read()
         serializer = Serializer()
         for exploit in exploits:
             kudu_queue.send_msg(serializer.serialize_exploit(exploit))
@@ -98,5 +101,4 @@ def run_syncdb():
 
 if __name__ == "__main__": # pragma: no cover
     chdir(dirname(realpath(__file__)))
-
     main()

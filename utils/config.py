@@ -37,7 +37,7 @@ class Config:
             elif isinstance(curr, list):
                 curr = curr[int(k)]
             else:
-                KeyError(k)
+                raise KeyError(k)
         if isinstance(curr, dict) or isinstance(curr, list):
             return Config(curr)
         else:
