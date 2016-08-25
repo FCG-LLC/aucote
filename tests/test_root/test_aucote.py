@@ -5,6 +5,7 @@ from unittest import TestCase
 from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
 
 from aucote import main, run_scan, run_service, run_syncdb
+from utils.exceptions import NmapUnsupported
 
 
 @patch('aucote_cfg.cfg.get', Mock(return_value=""))
@@ -21,6 +22,16 @@ class AucoteTest(TestCase):
                 main()
 
         self.assertEqual(mock.call_count, 1)
+
+    @patch('fixtures.exploits.Exploits.read', MagicMock(side_effect=NmapUnsupported))
+    @patch('builtins.open', mock_open())
+    def test_main_exploits_exception(self):
+        args = PropertyMock()
+        args.configure_mock(cmd='scan')
+
+        with patch('argparse.ArgumentParser.parse_args', return_value=args):
+            with patch('aucote.run_scan'):
+                self.assertRaises(SystemExit, main)
 
     @patch('builtins.open', mock_open())
     def test_main_service(self):

@@ -14,6 +14,7 @@ from fixtures.exploits import Exploits
 from scans import Executor
 
 import utils.log as log_cfg
+from utils.exceptions import NmapUnsupported
 from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
 
@@ -49,7 +50,12 @@ def main():
     log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
 
     exploit_filename = cfg.get('fixtures.exploits.filename')
-    exploits = Exploits.read(file_name=exploit_filename)
+    try:
+        exploits = Exploits.read(file_name=exploit_filename)
+    except NmapUnsupported as exception:
+        log.error("Cofiguration seems to be invalid. Check ports and services or contact with collective-sense",
+                  exc_info=exception)
+        exit(1)
 
     if args.cmd == 'scan':
         run_scan(exploits)

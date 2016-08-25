@@ -17,7 +17,6 @@ EXECUTOR_CONFIG = {
 }
 
 
-@patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
 class TaskMapperTest(unittest.TestCase):
 
     UDP = Port()
@@ -42,9 +41,12 @@ class TaskMapperTest(unittest.TestCase):
         }
         self.task_mapper = TaskMapper(self.executor)
 
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     def test_properties(self):
         self.assertEqual(self.task_mapper.exploits, self.executor.exploits)
+        self.assertEqual(self.task_mapper.executor, self.executor)
 
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     def test_app_running(self):
         self.task_mapper.assign_tasks(self.UDP)
         self.assertEqual(EXECUTOR_CONFIG['apps']['test']['class'].call_count, 1)

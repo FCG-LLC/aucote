@@ -9,7 +9,7 @@ from tools.hydra.base import HydraBase
 
 class HydraScriptTask(HydraBase):
     """
-    This class is callable
+    This is task for Hydra tool. Call Hydra and parse output
     """
     def __init__(self, executor, port, service):
         """
@@ -22,15 +22,13 @@ class HydraScriptTask(HydraBase):
     def __call__(self):
         """
         Call command, parse output and send to kudu_queue
-        @TODO: Sending to kudu
         """
 
         try:
             results = self.call(['-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'),
                              '-s', str(self._port.number), str(self._port.node.ip), self.service, ])
         except subprocess.CalledProcessError as exception:
-            log.error(str(exception))
-            log.warning("Exiting Hydra process")
+            log.warning("Exiting Hydra process", exc_info=exception)
             return None
 
         if not results:

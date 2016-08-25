@@ -14,19 +14,24 @@ class HydraPortMismatchException(BaseException):
     """
 
 
-class ServiceUnsupporedByNmapException(NameError):
+class NmapUnsupported(NameError):
+    """
+    abstract class for exception raised if protocols, ports or services are unsupported by nmap
+    """
+
+class ServiceUnsupporedByNmapException(NmapUnsupported):
     """
     Raise if service name does not exist in nmap services file
     """
 
 
-class PortUnsupportedException(NameError):
+class PortUnsupportedException(NmapUnsupported):
     """
     Raise if service name does not exist in nmap services file
     """
 
 
-class ProtocolUnsupporedByNmapException(NameError):
+class ProtocolUnsupporedByNmapException(NmapUnsupported):
     """
     Raise if service name does not exist in nmap services file
     """

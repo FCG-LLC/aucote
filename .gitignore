@@ -95,3 +95,5 @@ aucote.log*
 
 # Tools related files
 hydra.restore
+paused.conf
+scan.txt

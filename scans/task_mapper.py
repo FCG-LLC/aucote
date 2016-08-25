@@ -21,7 +21,17 @@ class TaskMapper:
         for app, exploits in scripts.items():
             task = EXECUTOR_CONFIG['apps'][app]['class'](executor=self._executor, exploits=exploits, port=port,
                                                          config=EXECUTOR_CONFIG['apps'][app])
-            task()
+
+            self.executor.add_task(task)
+
+    @property
+    def executor(self):
+        '''
+
+        Returns: Executor
+
+        '''
+        return self._executor
 
     @property
     def exploits(self):
