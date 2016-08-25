@@ -32,7 +32,7 @@ class TaskMapperTest(unittest.TestCase):
 
     def setUp(self):
         self.executor = Mock()
-        self.executor.exploits.find_all_matches.return_value = {
+        self.executor.exploits.find_all_matching.return_value = {
             'test': [
                 Exploit()
             ],

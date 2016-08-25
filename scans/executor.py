@@ -10,7 +10,6 @@ from urllib.error import URLError
 import urllib.request as http
 
 from aucote_cfg import cfg
-from fixtures.exploits import Exploits
 from scans.task_mapper import TaskMapper
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from tools.masscan import MasscanPorts

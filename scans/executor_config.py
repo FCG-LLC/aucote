@@ -37,7 +37,7 @@ EXECUTOR_CONFIG = {
                 'https': 'https-get',
                 'microsoft-ds': 'smb',
                 'microsoft-ssn': 'smb',
-                'microsoft-sn': 'smb',
+                'microsoft-ns': 'smb',
             },
         }
     }
