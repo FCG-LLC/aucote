@@ -18,6 +18,9 @@ EXECUTOR_CONFIG = {
                 },
                 'smtp-vuln-cve2011-1720': {
                     'args': 'smtp.domain=test'
+                },
+                'http-barracuda-dir-traversal': {
+                    'args': 'http-max-cache-size=5000000'
                 }
             }
         },
