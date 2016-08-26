@@ -7,7 +7,7 @@ from threading import Thread
 import time
 
 
-class ThreadPool:
+class ThreadPool(object):
     """
     Provides a pool of threads and a queue to execute callable tasks.
     """

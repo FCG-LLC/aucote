@@ -22,11 +22,10 @@ topdis:
         host: 10.12.1.175
         port: 1234
 tools:
-    nmap
+    nmap:
         cmd: nmap
     masscan:
         cmd: masscan
-        args:
     hydra:
         cmd: hydra
         loginfile: static/logins.hydra.txt

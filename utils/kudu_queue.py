@@ -7,7 +7,7 @@ from ipaddress import IPv4Address, IPv6Address
 
 from utils.database_interface import DbInterface
 from utils.string import bytes_str
-from nanomsg import Socket, PUSH
+from nanomsg import Socket, PUSH #pylint: disable=no-name-in-module
 
 
 class KuduMsg:
@@ -88,6 +88,9 @@ class KuduMsg:
 
     @property
     def data(self):
+        """
+        Returns kudu data
+        """
         return self._data
 
 

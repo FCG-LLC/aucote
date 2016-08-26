@@ -6,10 +6,37 @@ class NonXMLOutputException(BaseException):
     """
     Raise if output should be xml but it isn't
     """
-    pass
+
 
 class HydraPortMismatchException(BaseException):
     """
     Raise if port number from output is different than expected
     """
-    pass
+
+
+class NmapUnsupported(NameError):
+    """
+    abstract class for exception raised if protocols, ports or services are unsupported by nmap
+    """
+
+class ServiceUnsupporedByNmapException(NmapUnsupported):
+    """
+    Raise if service name does not exist in nmap services file
+    """
+
+
+class PortUnsupportedException(NmapUnsupported):
+    """
+    Raise if service name does not exist in nmap services file
+    """
+
+
+class ProtocolUnsupporedByNmapException(NmapUnsupported):
+    """
+    Raise if service name does not exist in nmap services file
+    """
+
+class PortRangeUnsupported(NmapUnsupported):
+    """
+    Raise if port range is not supported, eg. 23-13 instead of 13-23
+    """

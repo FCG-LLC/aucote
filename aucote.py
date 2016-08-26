@@ -10,9 +10,11 @@ from os.path import dirname, realpath
 
 import time
 
+from fixtures.exploits import Exploits
 from scans import Executor
 
 import utils.log as log_cfg
+from utils.exceptions import NmapUnsupported
 from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
 
@@ -47,26 +49,35 @@ def main():
     log_cfg.config(cfg.get('logging'))
     log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
 
+    exploit_filename = cfg.get('fixtures.exploits.filename')
+    try:
+        exploits = Exploits.read(file_name=exploit_filename)
+    except NmapUnsupported as exception:
+        log.error("Cofiguration seems to be invalid. Check ports and services or contact with collective-sense",
+                  exc_info=exception)
+        exit(1)
+
     if args.cmd == 'scan':
-        run_scan()
+        run_scan(exploits)
     elif args.cmd == 'service':
-        run_service()
+        run_service(exploits)
     elif args.cmd == 'syncdb':
-        run_syncdb()
+        run_syncdb(exploits)
+
 
 # =============== functions ==============
 
-def run_scan():
+def run_scan(exploits):
     """
     Start scanning ports.
     Returns: None
     """
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-        executor = Executor(kudu_queue)
+        executor = Executor(kudu_queue=kudu_queue, exploits=exploits)
         executor.run()
 
 
-def run_service():
+def run_service(exploits):
     """
     Run service for periodic scanning
     Returns:
@@ -74,21 +85,19 @@ def run_service():
     """
     scheduler = sched.scheduler(time.time)
     scan_period = parse_period(cfg.get('service.scans.period'))
-    scheduler.enter(0, 1, run_scan)
+    scheduler.enter(0, 1, run_scan, (exploits,))
     while True:
         scheduler.run()
-        scheduler.enter(scan_period, 1, run_scan)
+        scheduler.enter(scan_period, 1, run_scan, (exploits,))
 
 
-def run_syncdb():
+def run_syncdb(exploits):
     """
     Synchronize local exploits database with Kudu
     Returns:
 
     """
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-        from fixtures.exploits import read_exploits
-        exploits = read_exploits()
         serializer = Serializer()
         for exploit in exploits:
             kudu_queue.send_msg(serializer.serialize_exploit(exploit))
@@ -96,7 +105,6 @@ def run_syncdb():
 
 # =================== start app =================
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     chdir(dirname(realpath(__file__)))
-
     main()

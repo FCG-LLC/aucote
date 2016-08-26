@@ -13,6 +13,11 @@ _DEFAULT = {
         'max_files': 5,
         'format': '%(levelname)s %(asctime)s %(threadName)s: %(message)s'
     },
+    'fixtures': {
+        'exploits': {
+            'filename': 'fixtures/exploits/exploits.csv'
+        }
+    },
     'database': {
         'migration':{
             'path': lambda: path.join(path.dirname(__file__), 'migrations'),
@@ -33,7 +38,7 @@ _DEFAULT = {
         },
         'masscan': {
             'cmd': 'masscan',
-            'args': ''
+            'args': []
         },
         'hydra': {
             'cmd': 'hydra',
@@ -62,7 +67,7 @@ _DEFAULT = {
 cfg = Config(_DEFAULT)
 
 
-def load(file_name):
+def load(file_name=None):
     '''
     Initializes this module.
     Needs to be called before other functions are used.

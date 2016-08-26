@@ -1,3 +1,7 @@
+"""
+Configuration related module
+"""
+
 import yaml
 
 class Config:
@@ -6,7 +10,9 @@ class Config:
     Has ability to provide default values (including dynamic ones)
     Except for loading data, this class is read-only and therefore may be used from multiple threads.
     '''
-    def __init__(self, cfg={}):
+    def __init__(self, cfg=None):
+        if not cfg:
+            cfg = {}
         self._cfg = cfg
 
     def __len__(self):
@@ -31,21 +37,29 @@ class Config:
             elif isinstance(curr, list):
                 curr = curr[int(k)]
             else:
-                KeyError(k)
+                raise KeyError(k)
         if isinstance(curr, dict) or isinstance(curr, list):
             return Config(curr)
         else:
             return curr
 
+    @property
+    def cfg(self):
+        '''
+        Return list or dict configuration
+        '''
+        return self._cfg
 
-    def load(self, file_name, defaults={}):
+    def load(self, file_name, defaults=None):
         '''
         Loads configuration from provided file name.
-        
+
         Args:
             file_name(str) - YAML file name with configuration
             defaults(dict) - default values in a form of multilevel dictionary with optional callable objects
         '''
+        if not defaults:
+            defaults = {}
         defaults = self._simplify_defaults(defaults)
         with open(file_name, 'r') as stream:
             cfg = yaml.load(stream.read())
@@ -55,7 +69,7 @@ class Config:
         #recursively replace defaults with configured data
         if isinstance(defaults, dict) and isinstance(data, dict):
             output = defaults.copy()
-            for key,val in data.items():
+            for key, val in data.items():
                 if key in output:
                     output[key] = self._recursive_merge(data[key], output[key])
                 else:

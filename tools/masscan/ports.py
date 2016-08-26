@@ -12,7 +12,7 @@ class MasscanPorts(MasscanBase):
         args = ['--rate', str(cfg.get('service.scans.rate')),
                 '--ports', str(cfg.get('service.scans.ports'))]
 
-        args.extend(cfg.get('tools.masscan.args'))
+        args.extend(cfg.get('tools.masscan.args').cfg)
 
         args.extend([str(node.ip) for node in nodes])
         try:

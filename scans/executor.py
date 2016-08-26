@@ -2,16 +2,19 @@
 This is main module of aucote scanning functionality.
 """
 
-import urllib.request as http
 import ipaddress
 import logging as log
 import json
 import datetime
+from urllib.error import URLError
+import urllib.request as http
+
 from aucote_cfg import cfg
-from utils.threads import ThreadPool
+from scans.task_mapper import TaskMapper
+from tools.nmap.tasks.port_info import NmapPortInfoTask
 from tools.masscan import MasscanPorts
+from utils.threads import ThreadPool
 from structs import Node, Scan
-from .tasks import NmapPortInfoTask
 
 
 class Executor(object):
@@ -20,11 +23,15 @@ class Executor(object):
     """
 
     _thread_pool = None
-    _exploits = None
 
-    def __init__(self, kudu_queue):
+    def __init__(self, kudu_queue, exploits):
+        """
+        Init executor. Sets kudu_queue and nodes
+        """
         self._kudu_queue = kudu_queue
         self.nodes = self._get_nodes()
+        self.task_mapper = TaskMapper(self)
+        self._exploits = exploits
 
     def run(self):
         """
@@ -35,15 +42,10 @@ class Executor(object):
         scanner = MasscanPorts(executor=self)
         ports = scanner.scan_ports(self.nodes)
 
-        if self._exploits is None:
-            from fixtures.exploits import read_exploits
-            self._exploits = read_exploits()
-
         for port in ports:
             port.scan = scan
 
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
-        self._slow_thread_pool = ThreadPool(1)
 
         for port in ports:
             self.add_task(NmapPortInfoTask(executor=self, port=port))
@@ -79,7 +81,12 @@ class Executor(object):
         Get nodes from todis application
         """
         url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
-        resource = http.urlopen(url)
+        try:
+            resource = http.urlopen(url)
+        except URLError as exception:
+            log.error('Cannot connect to topdis')
+            raise exception
+
         charset = resource.headers.get_content_charset() or 'utf-8'
         nodes_txt = resource.read().decode(charset)
         nodes_cfg = json.loads(nodes_txt)
