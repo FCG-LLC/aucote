@@ -35,3 +35,8 @@ class ProtocolUnsupporedByNmapException(NmapUnsupported):
     """
     Raise if service name does not exist in nmap services file
     """
+
+class PortRangeUnsupported(NmapUnsupported):
+    """
+    Raise if port range is not supported, eg. 23-13 instead of 13-23
+    """

@@ -10,6 +10,12 @@ class Tool(object):
     def __init__(self, executor, exploits, port, config):
         """
         Init values needed to run and proceed command
+
+        Args:
+            executor: tasks executor
+            exploits: list of exploits for using by tool
+            port: port used by tool
+            config: tool configuration
         """
         self.executor = executor
         self.exploits = exploits

@@ -8,11 +8,7 @@ class HydraResultTest(TestCase):
         self.hydra_results = HydraResults()
 
     def test_add_none(self):
-        self.assertEqual(len(self.hydra_results), 0)
-        self.hydra_results.add('nothing')
-        self.assertEqual(len(self.hydra_results), 0)
-        self.hydra_results.add(HydraResult())
-        self.assertEqual(len(self.hydra_results), 1)
+        self.assertRaises(TypeError, self.hydra_results.add, None)
 
     def test_result_str(self):
         result_1 = HydraResult(port='23', host='127.0.0.1', login='test_1', password='test_1', service='ssh')

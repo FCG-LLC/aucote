@@ -13,7 +13,7 @@ class HydraResults(object):
 
     def add(self, result):
         if not isinstance(result, HydraResult):
-            return
+            raise TypeError("Pass {0}, but expected HydraResult.".format(type(result)))
         self._results.append(result)
 
     def __iter__(self):
