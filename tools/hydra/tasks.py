@@ -11,22 +11,27 @@ class HydraScriptTask(HydraBase):
     """
     This is task for Hydra tool. Call Hydra and parse output
     """
-    def __init__(self, executor, port, service):
+    def __init__(self, executor, port, service, login=True):
         """
         Initialize variables
         """
         super().__init__(executor=executor)
         self._port = port
         self.service = service
+        self.login = login
 
     def __call__(self):
         """
         Call command, parse output and send to kudu_queue
         """
+        args = []
+        if self.login:
+            args.extend(['-L', cfg.get('tools.hydra.loginfile')])
+        args.extend(['-P', cfg.get('tools.hydra.passwordfile'), '-s', str(self._port.number), str(self._port.node.ip),
+                     self.service, ])
 
         try:
-            results = self.call(['-L', cfg.get('tools.hydra.loginfile'), '-P', cfg.get('tools.hydra.passwordfile'),
-                             '-s', str(self._port.number), str(self._port.node.ip), self.service, ])
+            results = self.call(args)
         except subprocess.CalledProcessError as exception:
             log.warning("Exiting Hydra process", exc_info=exception)
             return None

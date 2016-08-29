@@ -17,23 +17,37 @@ class HydraToolTest(TestCase):
         self.exploit2.risk_level = RiskLevel.HIGH
 
         self.config = {
-            'services': ['ssh'],
+            'services': ['ssh', 'vnc'],
             'mapper': {
                 'test': 'ssh'
-            }
+            },
+            'without-login': 'vnc'
         }
 
         self.exploits = [self.exploit, self.exploit2]
+
         self.port = MagicMock()
         self.port.service_name = 'test'
+        self.port_nologin = MagicMock()
+        self.port_nologin.service_name = 'vnc'
+
         self.executor = MagicMock()
         self.nmap_tool = HydraTool(executor=self.executor, exploits=self.exploits, port=self.port, config=self.config)
+        self.nmap_tool_without_login = HydraTool(executor=self.executor, exploits=self.exploits, port=self.port_nologin,
+                                                 config=self.config)
 
     @patch('tools.hydra.tool.HydraScriptTask')
     def test_call(self, hydra_task_mock):
 
         self.nmap_tool()
-        hydra_task_mock.assert_called_once_with(executor=self.executor, service='ssh', port=self.port)
+        hydra_task_mock.assert_called_once_with(executor=self.executor, service='ssh', port=self.port, login=True)
+
+    @patch('tools.hydra.tool.HydraScriptTask')
+    def test_call_without_login(self, hydra_task_mock):
+
+        self.nmap_tool_without_login()
+        hydra_task_mock.assert_called_once_with(executor=self.executor, service='vnc', port=self.port_nologin,
+                                                login=False)
 
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
     def test_disable(self):

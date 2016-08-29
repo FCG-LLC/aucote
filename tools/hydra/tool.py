@@ -13,4 +13,10 @@ class HydraTool(Tool):
         if not service_name in self.config.get('services', set()):
             return
 
-        self.executor.add_task(HydraScriptTask(executor=self.executor, port=self.port, service=service_name))
+        if service_name in self.config.get('without-login', []):
+            login = False
+        else:
+            login = True
+
+        self.executor.add_task(HydraScriptTask(executor=self.executor, port=self.port, service=service_name,
+                                               login=login))

@@ -39,6 +39,7 @@ EXECUTOR_CONFIG = {
                 'microsoft-ssn': 'smb',
                 'microsoft-ns': 'smb',
             },
+            'without-login': ['redis', 'cisco', 'oracle-listener', 's7-300', 'snmp', 'vnc']
         }
     }
 }
