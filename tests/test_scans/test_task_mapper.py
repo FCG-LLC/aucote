@@ -5,19 +5,18 @@ from fixtures.exploits import Exploit
 from scans.task_mapper import TaskMapper
 from structs import Port, TransportProtocol
 
-EXECUTOR_CONFIG = {
-    'apps': {
-        'test': {
-            'class': MagicMock()
-        },
-        'test2':{
-            'class': MagicMock()
-        }
-    }
-}
-
 
 class TaskMapperTest(unittest.TestCase):
+    EXECUTOR_CONFIG = {
+        'apps': {
+            'test': {
+                'class': MagicMock()
+            },
+            'test2': {
+                'class': MagicMock()
+            }
+        }
+    }
 
     UDP = Port()
     UDP.transport_protocol = TransportProtocol.UDP
@@ -47,6 +46,17 @@ class TaskMapperTest(unittest.TestCase):
         self.assertEqual(self.task_mapper.executor, self.executor)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
+    @patch('aucote_cfg.cfg.get', MagicMock(return_value=True))
     def test_app_running(self):
         self.task_mapper.assign_tasks(self.UDP)
-        self.assertEqual(EXECUTOR_CONFIG['apps']['test']['class'].call_count, 1)
+        self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 1)
+
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
+    @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
+    def test_disable_app_running(self):
+        self.task_mapper.assign_tasks(self.UDP)
+        self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 0)
+
+    def tearDown(self):
+        self.EXECUTOR_CONFIG['apps']['test']['class'].reset_mock()
+        self.EXECUTOR_CONFIG['apps']['test2']['class'].reset_mock()

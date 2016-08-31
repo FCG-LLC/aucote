@@ -6,7 +6,6 @@ from tools.nmap.tasks.port_scan import NmapPortScanTask
 
 class NmapTool(Tool):
     def __call__(self, *args, **kwargs):
-
         tasks = []
         for exploit in self.exploits:
             name = exploit.name

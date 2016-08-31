@@ -1,6 +1,7 @@
 """make install
 Class responsible for mapping scans and port, service
 """
+from aucote_cfg import cfg
 from scans.executor_config import EXECUTOR_CONFIG
 
 
@@ -19,6 +20,8 @@ class TaskMapper:
 
         scripts = self._executor.exploits.find_all_matching(port)
         for app, exploits in scripts.items():
+            if not cfg.get('tools.{0}.enable'.format(app)):
+                return
             task = EXECUTOR_CONFIG['apps'][app]['class'](executor=self._executor, exploits=exploits, port=port,
                                                          config=EXECUTOR_CONFIG['apps'][app])
 

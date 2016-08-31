@@ -34,7 +34,8 @@ _DEFAULT = {
     },
     'tools':{
         'nmap':{
-            'cmd': 'nmap'
+            'cmd': 'nmap',
+            'enable': True
         },
         'masscan': {
             'cmd': 'masscan',
@@ -45,6 +46,12 @@ _DEFAULT = {
             'loginfile': 'static/logins.hydra.txt',
             'passwordfile': 'static/passwords.hydra.txt',
             'enable': True,
+        },
+        'skipfish': {
+            'cmd': 'skipfish',
+            'enable': True,
+            'limit': '0:10:00',
+            'wordlist': 'static/minimal.wl'
         }
     },
     'service': {

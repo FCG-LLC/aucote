@@ -4,6 +4,7 @@ Provides configuration for tools. Configuration is implicit and shouldn't be mod
 
 from tools.hydra.tool import HydraTool
 from tools.nmap.tool import NmapTool
+from tools.skipfish.tool import SkipfishTool
 
 EXECUTOR_CONFIG = {
     'apps': {
@@ -39,6 +40,9 @@ EXECUTOR_CONFIG = {
                 'microsoft-ssn': 'smb',
                 'microsoft-ns': 'smb',
             },
+        },
+        'skipfish': {
+            'class': SkipfishTool
         }
     }
 }
