@@ -3,7 +3,6 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 from xml.etree import ElementTree
 
-from scans import Executor
 from tools.nmap.ports import PortsScan
 
 

@@ -21,7 +21,7 @@ class TaskMapper:
         scripts = self._executor.exploits.find_all_matching(port)
         for app, exploits in scripts.items():
             if not cfg.get('tools.{0}.enable'.format(app)):
-                return
+                continue
             task = EXECUTOR_CONFIG['apps'][app]['class'](executor=self._executor, exploits=exploits, port=port,
                                                          config=EXECUTOR_CONFIG['apps'][app])
 
