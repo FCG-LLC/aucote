@@ -2,7 +2,10 @@
 This module provids parsers used by Skipfish tool
 """
 import json
+from ast import literal_eval
 from os.path import sep, dirname
+
+from shutil import rmtree
 
 from tools.common.parsers import Parser
 from tools.skipfish.structs import SkipfishIssuesDesc, SkipfishIssues, SkipfishIssueSample
@@ -47,7 +50,9 @@ class SkipfishResultsParser(Parser):
 
     def parse(self, output=None):
         self.parse_index()
-        return self.parse_samples()
+        return_value = self.parse_samples()
+        rmtree(self.dir)
+        return return_value
 
     def parse_issues(self, text):
         return_value = SkipfishIssues()
@@ -55,7 +60,8 @@ class SkipfishResultsParser(Parser):
         cut_start = text.index('[', cut_pre_start)
         cut_end = text.index('];', cut_start)
         cut_text = text[cut_start:cut_end+1]
-        issues = json.loads(cut_text.replace("'", '"'))
+        issues = literal_eval(cut_text)
+
         for issue in issues:
             for sample in issue['samples']:
                 return_value.add(SkipfishIssueSample(url=sample['url'], extra=sample['extra'], directory=sample['dir'],

@@ -24,13 +24,12 @@ class SkipfishScanTask(SkipfishBase):
         """
         Call command, parse output and send to kudu_queue
         """
-        args = ['-k', cfg.get('tools.skipfish.limit')]
-        args.extend(['-S', cfg.get('tools.skipfish.wordlist'), '-o', 'tmp/skipfish_{0}'.format(time.time()),
+        args = ['-m', str(cfg.get('tools.skipfish.threads')), '-k', cfg.get('tools.skipfish.limit')]
+        args.extend(['-o', 'tmp/skipfish_{0}'.format(time.time()),
                      "{0}://{1}:{2}/".format(self._port.service_name, self._port.node.ip, self._port.number)])
 
         try:
             results = self.call(args)
-            log.debug(results)
         except subprocess.CalledProcessError as exception:
             log.warning("Exiting process", exc_info=exception)
             return None

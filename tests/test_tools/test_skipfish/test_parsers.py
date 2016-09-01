@@ -64,6 +64,12 @@ function H(str) { return str.replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
     }];
     some additional text'''
 
+    ISSUE_SAMPLES_OCTAL_ESCAPED = r'''var issue_samples = [{'severity': 1, 'type': 40909, 'samples': [
+    {'url': 'http://10.12.1.253/sfi9876', 'extra': 'during 404 response checks', 'sid': '0', 'dir': '_i3/0' },
+    {'url': 'http://10.12.1.253/sfish\x3e\x27\x3e\x22\x3e\x3c%2Fsfish\x3e\x3csfish\x3e', 'extra': 'XML injection', 'sid': '0', 'dir': '_i3/1' },
+    {'url': 'http://10.12.1.253/dav/?C=git;O=D', 'extra': 'during parameter brute-force tests', 'sid': '0', 'dir': '_i3/2' }]
+}];'''
+
     def setUp(self):
         self.parser = SkipfishResultsParser(directory='test_dir')
 
@@ -102,7 +108,22 @@ function H(str) { return str.replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
         self.assertEqual(result._issues[0].severity, 3)
         self.assertEqual(result._issues[0].type, severities_data["40909"])
 
-    def test_parse(self):
+    def test_issue_samples_octal_escaped(self):
+        severities_data = {
+            "40909": "severity_40909",
+            "40402": "severity_40402"
+        }
+        severities = SkipfishIssuesDesc()
+        severities.add(severities_data)
+
+        self.parser.severities = severities
+        result = self.parser.parse_issues(self.ISSUE_SAMPLES_OCTAL_ESCAPED)
+
+        self.assertEqual(result._issues[1].severity, 1)
+        self.assertEqual(result._issues[1].type, severities_data["40909"])
+
+    @patch('tools.skipfish.parsers.rmtree')
+    def test_parse(self, rmtree_mock):
         self.parser.parse_index = MagicMock()
         self.parser.parse_samples = MagicMock(return_value='test')
 
@@ -111,6 +132,7 @@ function H(str) { return str.replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
         self.assertEqual(result, 'test')
         self.parser.parse_index.assert_called_once_with()
         self.parser.parse_samples.assert_called_once_with()
+        rmtree_mock.assert_called_once_with('test_dir')
 
 
 

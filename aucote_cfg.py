@@ -51,7 +51,7 @@ _DEFAULT = {
             'cmd': 'skipfish',
             'enable': True,
             'limit': '0:10:00',
-            'wordlist': 'static/minimal.wl'
+            'threads': 5
         }
     },
     'service': {

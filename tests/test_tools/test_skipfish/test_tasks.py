@@ -48,3 +48,9 @@ class SkipfishScanTaskTest(TestCase):
         result = self.task()
 
         self.assertEqual(result, None)
+
+    def test_call_without_results(self):
+        self.task.call = MagicMock(return_value=None)
+        result = self.task()
+
+        self.assertEqual(result, None)

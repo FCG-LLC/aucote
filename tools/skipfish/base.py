@@ -9,7 +9,7 @@ class SkipfishBase(Command):
     """
     Skipfish base class
     """
-    COMMON_ARGS = ('-u', '-m', '2')
+    COMMON_ARGS = ('-u',)
     NAME = 'skipfish'
 
     @classmethod
