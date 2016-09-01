@@ -99,15 +99,8 @@ class SkipfishIssuesTest(TestCase):
         {2}
 {3}:
     {4}:
-        {5}
-{6}:
-    {7}:
-        {8}
-{9}:
-    {10}:
-        {11}'''.format(severities[3], self.pre_data[3]['severity_type'], self.pre_data[3]['url'], severities[2],
-                       self.pre_data[2]['severity_type'], self.pre_data[2]['url'], severities[1], self.pre_data[1]['severity_type'],
-                       self.pre_data[1]['url'], severities[0], self.pre_data[0]['severity_type'], self.pre_data[0]['url'])
+        {5}'''.format(severities[3], self.pre_data[3]['severity_type'], self.pre_data[3]['url'], severities[2],
+                       self.pre_data[2]['severity_type'], self.pre_data[2]['url'])
 
         self.assertEqual(result, expected)
 

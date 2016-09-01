@@ -36,6 +36,10 @@ class SkipfishScanTask(SkipfishBase):
             return None
 
         serializer = Serializer()
+
+        if not results:
+            return results
+
         vuln = Vulnerability()
         vuln.exploit = self.exploits.find('skipfish', 'skipfish')
         vuln.port = self._port

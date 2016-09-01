@@ -81,5 +81,7 @@ class SkipfishOutputParser(Parser):
 
         """
         for line in output.split("\n"):
-            if line.startswith('[+] Report saved'):
-                return dirname(line.split('\'')[1])
+            if 'Report saved' in line:
+                start_cut = line.index('tmp/')
+                end_cut = line.index('/index.html')
+                return line[start_cut:end_cut]

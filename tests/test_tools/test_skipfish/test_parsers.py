@@ -126,12 +126,75 @@ class SkipfishOutputParserTest(TestCase):
 [+] Writing scan description...
 [+] Writing crawl tree: 16
 [+] Generating summary views...
-[+] Report saved to '/tmp/skipfish_Tue Aug 30 14:17:33 CEST 2016/index.html' [0x7951b064].
+[+] Report saved to 'tmp/skipfish_Tue Aug 30 14:17:33 CEST 2016/index.html' [0x7951b064].
 [+] This was a great day for science!'''
+
+    OUTPUT_FETCHED = '''skipfish web application scanner - version 2.10b
+[1;32m[*] [1;37mScan in progress, please stay tuned...
+
+[1;33m[!] [1;37mScan aborted by user, bailing out![0;37m
+[1;32m[+] [0;37mCopying static resources...
+[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 1[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 51[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 101[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 151[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 201[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 251[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 301[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 351[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 401[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 451[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 501[1;32m
+[+] [0;37mSorting and annotating crawl nodes: 537
+[1;32m
+[+] [0;37mLooking for duplicate entries: 1[1;32m
+[+] [0;37mLooking for duplicate entries: 51[1;32m
+[+] [0;37mLooking for duplicate entries: 101[1;32m
+[+] [0;37mLooking for duplicate entries: 151[1;32m
+[+] [0;37mLooking for duplicate entries: 201[1;32m
+[+] [0;37mLooking for duplicate entries: 251[1;32m
+[+] [0;37mLooking for duplicate entries: 301[1;32m
+[+] [0;37mLooking for duplicate entries: 351[1;32m
+[+] [0;37mLooking for duplicate entries: 401[1;32m
+[+] [0;37mLooking for duplicate entries: 451[1;32m
+[+] [0;37mLooking for duplicate entries: 501[1;32m
+[+] [0;37mLooking for duplicate entries: 537
+[1;32m
+[+] [0;37mCounting unique nodes: 1[1;32m
+[+] [0;37mCounting unique nodes: 51[1;32m
+[+] [0;37mCounting unique nodes: 101[1;32m
+[+] [0;37mCounting unique nodes: 151[1;32m
+[+] [0;37mCounting unique nodes: 201[1;32m
+[+] [0;37mCounting unique nodes: 251[1;32m
+[+] [0;37mCounting unique nodes: 301[1;32m
+[+] [0;37mCounting unique nodes: 351[1;32m
+[+] [0;37mCounting unique nodes: 401[1;32m
+[+] [0;37mCounting unique nodes: 451[1;32m
+[+] [0;37mCounting unique nodes: 501[1;32m
+[+] [0;37mCounting unique nodes: 536
+[1;32m[+] [0;37mSaving pivot data for third-party tools...
+[1;32m[+] [0;37mWriting scan description...
+[1;32m
+[+] [0;37mWriting crawl tree: 1[1;32m
+[+] [0;37mWriting crawl tree: 51[1;32m
+[+] [0;37mWriting crawl tree: 101[1;32m
+[+] [0;37mWriting crawl tree: 151[1;32m
+[+] [0;37mWriting crawl tree: 201[1;32m
+[+] [0;37mWriting crawl tree: 251[1;32m
+[+] [0;37mWriting crawl tree: 301[1;32m
+[+] [0;37mWriting crawl tree: 351[1;32m
+[+] [0;37mWriting crawl tree: 401[1;32m
+[+] [0;37mWriting crawl tree: 451[1;32m
+[+] [0;37mWriting crawl tree: 501[1;32m
+[+] [0;37mWriting crawl tree: 537
+[1;32m[+] [0;37mGenerating summary views...
+[1;32m[+] [0;37mReport saved to '[1;34mtmp/skipfish_1472650914.8062923/index.html[0;37m' [[1;34m0xdeae3458[0;37m].
+[1;32m[+] [1;37mThis was a great day for science![0m'''
 
     def test_get_log_dir(self):
 
-        expected = '/tmp/skipfish_Tue Aug 30 14:17:33 CEST 2016'
+        expected = 'tmp/skipfish_Tue Aug 30 14:17:33 CEST 2016'
         result = SkipfishOutputParser.get_log_dir(output=self.OUTPUT)
 
         self.assertEqual(result, expected)
@@ -143,3 +206,10 @@ class SkipfishOutputParserTest(TestCase):
 
         parser_mock.assert_called_once_with(directory='test')
         parser_mock.return_value.parse.assert_called_once_with()
+
+    def test_get_log_dir_from_fetched_output(self):
+
+        expected = 'tmp/skipfish_1472650914.8062923'
+        result = SkipfishOutputParser.get_log_dir(output=self.OUTPUT_FETCHED)
+
+        self.assertEqual(result, expected)

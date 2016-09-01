@@ -88,7 +88,7 @@ class SkipfishIssues(object):
 
     def __str__(self):
         return_value = ''
-        for i in range(4, -1, -1):
+        for i in range(4, 1, -1):
             if self._sorted_issues[i].keys():
                 return_value += '''
 {0}:'''.format(self.SEVERITIES[i])

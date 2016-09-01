@@ -31,15 +31,14 @@ class TaskMapperTest(unittest.TestCase):
 
     def setUp(self):
         self.executor = Mock()
-        self.executor.exploits.find_all_matching.return_value = OrderedDict({
+        self.exploits = OrderedDict({
             'test': [
                 Exploit(),
                 Exploit()
-            ],
-            'test2': [
-                Exploit()
             ]
         })
+        self.exploits.update(test2=Exploit())
+        self.executor.exploits.find_all_matching.return_value = self.exploits
         self.task_mapper = TaskMapper(self.executor)
 
     def tearDown(self):
@@ -66,8 +65,12 @@ class TaskMapperTest(unittest.TestCase):
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 0)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    @patch('aucote_cfg.cfg.get', MagicMock(side_effect=[False, True]))
+    @patch('aucote_cfg.cfg.get', MagicMock(side_effect=(False, True)))
     def test_disable_first_app_running(self):
         self.task_mapper.assign_tasks(self.UDP)
+        print(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count)
+        print(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count)
+        print(self.executor.exploits.find_all_matching.return_value)
+        print(self.exploits)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 0)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 1)
