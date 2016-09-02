@@ -34,7 +34,6 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
     def test_call(self):
         self.hydra_script_task.call = MagicMock(return_value=HydraParser.parse(self.OUTPUT_SUCCESSFUL))
         result = self.hydra_script_task()
-        self.hydra_script_task.executor._kudu_queue = MagicMock()
 
         self.assertEqual(result[0].host, '192.168.56.102')
         self.assertEqual(result[0].login, 'msfadmin')

@@ -41,3 +41,9 @@ class NmapToolTest(TestCase):
                                                  args='test_args')
         self.assertEqual(port_scan_mock.call_count, 1)
 
+    def test_enable(self):
+        config = MagicMock()
+        executor = MagicMock()
+        NmapTool(executor, MagicMock(), MagicMock(), config=config)()
+        self.assertEqual(executor.add_task.call_count, 1)
+

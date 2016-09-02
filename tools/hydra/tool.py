@@ -5,12 +5,10 @@ from tools.hydra.tasks import HydraScriptTask
 
 class HydraTool(Tool):
     def __call__(self, *args, **kwargs):
-        if not cfg.get('tools.hydra.enable'):
-            return
-
         service_name = self.config.get('mapper').get(self.port.service_name, None) or self.port.service_name
 
-        if not service_name in self.config.get('services', set()):
+        if service_name not in self.config.get('services', set()) or\
+           service_name in cfg.get('tools.hydra.disable_services').cfg:
             return
 
         if service_name in self.config.get('without-login', []):
