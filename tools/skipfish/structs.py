@@ -23,7 +23,7 @@ class SkipfishIssuesDesc(object):
 
         """
         assert isinstance(data, dict)
-        self._issues = {**self._issues, **data}
+        self._issues.update(data)
 
     def __getitem__(self, item):
         """
