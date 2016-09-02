@@ -37,14 +37,14 @@ class HydraToolTest(TestCase):
                                                   config=self.config)
 
     @patch('tools.hydra.tool.HydraScriptTask')
-    @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=[]))
+    @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=[])))
     def test_call(self, hydra_task_mock):
 
         self.hydra_tool()
         hydra_task_mock.assert_called_once_with(executor=self.executor, service='ssh', port=self.port, login=True)
 
     @patch('tools.hydra.tool.HydraScriptTask')
-    @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=[]))
+    @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=[])))
     def test_call_without_login(self, hydra_task_mock):
         self.hydra_tool_without_login()
         hydra_task_mock.assert_called_once_with(executor=self.executor, service='vnc', port=self.port_nologin,
@@ -55,7 +55,7 @@ class HydraToolTest(TestCase):
         HydraTool(port=MagicMock(), exploits=MagicMock(), executor=self.executor, config=self.config)()
         self.assertEqual(self.executor.add_task.call_count, 0)
 
-    @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=['vnc']))
+    @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=['vnc'])))
     @patch('tools.hydra.tool.HydraScriptTask')
     def test_disabled_service(self, hydra_task_mock):
         self.hydra_tool_without_login()
