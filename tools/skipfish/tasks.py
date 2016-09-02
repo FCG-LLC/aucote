@@ -1,49 +1,48 @@
 import subprocess
 import logging as log
 
+import time
+
 from aucote_cfg import cfg
 from database.serializer import Serializer
 from structs import Vulnerability
-from tools.hydra.base import HydraBase
+from tools.skipfish.base import SkipfishBase
 
 
-class HydraScriptTask(HydraBase):
+class SkipfishScanTask(SkipfishBase):
     """
-    This is task for Hydra tool. Call Hydra and parse output
+    This is task for Skipfish tool. Call skipfish and parse output
     """
-    def __init__(self, executor, port, service, login=True):
+    def __init__(self, executor, port):
         """
         Initialize variables
         """
         super().__init__(executor=executor)
         self._port = port
-        self.service = service
-        self.login = login
 
     def __call__(self):
         """
         Call command, parse output and send to kudu_queue
         """
-        args = []
-        if self.login:
-            args.extend(['-L', cfg.get('tools.hydra.loginfile')])
-        args.extend(['-P', cfg.get('tools.hydra.passwordfile'), '-s', str(self._port.number), str(self._port.node.ip),
-                     self.service, ])
+        args = ['-m', str(cfg.get('tools.skipfish.threads')), '-k', cfg.get('tools.skipfish.limit')]
+        args.extend(['-o', 'tmp/skipfish_{0}'.format(time.time()),
+                     "{0}://{1}:{2}/".format(self._port.service_name, self._port.node.ip, self._port.number)])
 
         try:
             results = self.call(args)
         except subprocess.CalledProcessError as exception:
-            log.warning("Exiting Hydra process", exc_info=exception)
-            return None
-
-        if not results:
-            log.debug("Hydra does not find any password.")
+            log.warning("Exiting process", exc_info=exception)
             return None
 
         serializer = Serializer()
+
+        if not results:
+            return results
+
         vuln = Vulnerability()
-        vuln.exploit = self.exploits.find('hydra', 'hydra')
+        vuln.exploit = self.exploits.find('skipfish', 'skipfish')
         vuln.port = self._port
+        
         vuln.output = str(results)
 
         log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)

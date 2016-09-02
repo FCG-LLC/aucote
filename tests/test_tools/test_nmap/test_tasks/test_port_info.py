@@ -57,7 +57,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port = Port()
         self.port.node = Node()
         self.port.node.ip = '127.0.0.1'
-        self.port.number = '22'
+        self.port.number = 22
 
         self.port.transport_protocol = TransportProtocol.TCP
 
