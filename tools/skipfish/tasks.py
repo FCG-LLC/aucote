@@ -13,11 +13,11 @@ class SkipfishScanTask(SkipfishBase):
     """
     This is task for Skipfish tool. Call skipfish and parse output
     """
-    def __init__(self, executor, port):
+    def __init__(self, port, *args, **kwargs):
         """
         Initialize variables
         """
-        super().__init__(executor=executor)
+        super().__init__(*args, **kwargs)
         self._port = port
 
     def __call__(self):
