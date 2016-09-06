@@ -1,6 +1,12 @@
 logging:
     file: aucote.log
     level: debug
+    max_file_size: 10485760
+    max_files: 5
+    format: "%(levelname)s %(asctime)s %(threadName)s: %(message)s"
+fixtures:
+    exploits:
+        filename: fixtures/exploits/exploits.csv
 database:
     credentials:
         host: localhost
@@ -17,6 +23,10 @@ service:
         rate: 1000
         period: 12h
         ports: T:0-65535,U:0-65535,S:65535 # TCP, UDP, SCTP: full range
+    api:
+        v1:
+            host: 0.0.0.0
+            port: 1235
 topdis:
     api:
         host: 10.12.1.175
@@ -24,9 +34,24 @@ topdis:
 tools:
     nmap:
         cmd: nmap
+        enable: True
     masscan:
         cmd: masscan
+#        args:
+#            - arg1
+#            - arg2
     hydra:
         cmd: hydra
         loginfile: static/logins.hydra.txt
         passwordfile: static/passwords.hydra.txt
+        enable: True
+        disable_services:
+            - vnc
+            - http
+            - https
+    skipfish:
+        cmd: skipfish
+        enable: True
+        limit: 0:10:00
+        threads: 5
+        tmp_directory: /tmp

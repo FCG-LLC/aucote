@@ -52,7 +52,8 @@ _DEFAULT = {
             'cmd': 'skipfish',
             'enable': True,
             'limit': '0:10:00',
-            'threads': 5
+            'threads': 5,
+            'tmp_directory': '/tmp'
         }
     },
     'service': {

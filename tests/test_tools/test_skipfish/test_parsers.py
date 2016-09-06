@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import mock_open, patch, MagicMock
 
 from tools.skipfish.parsers import SkipfishResultsParser, SkipfishOutputParser
-from tools.skipfish.structs import SkipfishIssuesDesc
+from tools.skipfish.structs import SkipfishIssuesDesc, SkipfishRisk
 
 
 class SkipfishResultsParserTest(TestCase):
@@ -82,17 +82,17 @@ function H(str) { return str.replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
             "10204": "New 'X-*' header value seen",
             "10205": "New 404 signature seen"
         }
-        result = self.parser.parse_issues_desc(self.ISSUES_DESC)._issues
+        result = self.parser._parse_issues_desc(self.ISSUES_DESC)._issues
 
         self.assertDictEqual(result, expected)
 
     def test_parse_index(self):
         with patch('builtins.open', mock_open(read_data=self.ISSUES_DESC)) as mock_index:
-            self.parser.parse_index()
+            self.parser._parse_index()
 
     def test_parse_samples(self):
         with patch('builtins.open', mock_open(read_data=self.ISSUE_SAMPLES)) as mock_sample:
-            self.parser.parse_samples()
+            self.parser._parse_samples()
 
     def test_issue_samples(self):
         severities_data = {
@@ -103,9 +103,9 @@ function H(str) { return str.replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
         severities.add(severities_data)
 
         self.parser.severities = severities
-        result = self.parser.parse_issues(self.ISSUE_SAMPLES)
+        result = self.parser._parse_issues(self.ISSUE_SAMPLES)
 
-        self.assertEqual(result._issues[0].severity, 3)
+        self.assertEqual(result._issues[0].severity, SkipfishRisk.MEDIUM_RISK)
         self.assertEqual(result._issues[0].type, severities_data["40909"])
 
     def test_issue_samples_octal_escaped(self):
@@ -117,21 +117,21 @@ function H(str) { return str.replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
         severities.add(severities_data)
 
         self.parser.severities = severities
-        result = self.parser.parse_issues(self.ISSUE_SAMPLES_OCTAL_ESCAPED)
+        result = self.parser._parse_issues(self.ISSUE_SAMPLES_OCTAL_ESCAPED)
 
-        self.assertEqual(result._issues[1].severity, 1)
+        self.assertEqual(result._issues[1].severity, SkipfishRisk.WARNING)
         self.assertEqual(result._issues[1].type, severities_data["40909"])
 
     @patch('tools.skipfish.parsers.rmtree')
     def test_parse(self, rmtree_mock):
-        self.parser.parse_index = MagicMock()
-        self.parser.parse_samples = MagicMock(return_value='test')
+        self.parser._parse_index = MagicMock()
+        self.parser._parse_samples = MagicMock(return_value='test')
 
         result = self.parser.parse()
 
         self.assertEqual(result, 'test')
-        self.parser.parse_index.assert_called_once_with()
-        self.parser.parse_samples.assert_called_once_with()
+        self.parser._parse_index.assert_called_once_with()
+        self.parser._parse_samples.assert_called_once_with()
         rmtree_mock.assert_called_once_with('test_dir')
 
 
@@ -217,12 +217,12 @@ class SkipfishOutputParserTest(TestCase):
     def test_get_log_dir(self):
 
         expected = 'tmp/skipfish_Tue Aug 30 14:17:33 CEST 2016'
-        result = SkipfishOutputParser.get_log_dir(output=self.OUTPUT)
+        result = SkipfishOutputParser._get_log_dir(output=self.OUTPUT)
 
         self.assertEqual(result, expected)
 
     @patch('tools.skipfish.parsers.SkipfishResultsParser')
-    @patch('tools.skipfish.parsers.SkipfishOutputParser.get_log_dir', MagicMock(return_value='test'))
+    @patch('tools.skipfish.parsers.SkipfishOutputParser._get_log_dir', MagicMock(return_value='test'))
     def test_parse(self, parser_mock):
         SkipfishOutputParser.parse(self.OUTPUT)
 
@@ -232,6 +232,6 @@ class SkipfishOutputParserTest(TestCase):
     def test_get_log_dir_from_fetched_output(self):
 
         expected = 'tmp/skipfish_1472650914.8062923'
-        result = SkipfishOutputParser.get_log_dir(output=self.OUTPUT_FETCHED)
+        result = SkipfishOutputParser._get_log_dir(output=self.OUTPUT_FETCHED)
 
         self.assertEqual(result, expected)

@@ -3,12 +3,12 @@ This module provids parsers used by Skipfish tool
 """
 import json
 from ast import literal_eval
-from os.path import sep, dirname
+from os.path import sep
 
 from shutil import rmtree
 
 from tools.common.parsers import Parser
-from tools.skipfish.structs import SkipfishIssuesDesc, SkipfishIssues, SkipfishIssueSample
+from tools.skipfish.structs import SkipfishIssuesDesc, SkipfishIssues, SkipfishIssueSample, SkipfishRisk
 
 
 class SkipfishResultsParser(Parser):
@@ -20,14 +20,15 @@ class SkipfishResultsParser(Parser):
         self.dir = directory
         self.severities = SkipfishIssuesDesc()
 
-    def parse_issues_desc(self, text):
+    def _parse_issues_desc(self, text):
         """
         Parses text and return SkipfishIssues object
+
         Args:
-            text:
+            text(str): content of index.html
 
         Returns:
-
+            SkipfishIssuesDesc - description of skipfish issues
         """
         return_value = SkipfishIssuesDesc()
         cut_pre_start = text.index('var issue_desc=')
@@ -40,21 +41,49 @@ class SkipfishResultsParser(Parser):
         self.severities = return_value
         return return_value
 
-    def parse_index(self):
-        with open(sep.join((self.dir, 'index.html')), 'r') as f:
-            self.parse_issues_desc(f.read())
+    def _parse_index(self):
+        """
+        Parses index.html from skipfish log directory
 
-    def parse_samples(self):
+        Returns:
+            SkipfishIssuesDesc object
+        """
+
+        with open(sep.join((self.dir, 'index.html')), 'r') as f:
+            self._parse_issues_desc(f.read())
+
+    def _parse_samples(self):
+        """
+        Parses sample.js from skipfish log directory
+
+        Returns:
+            SkipfishIssues object
+        """
+
         with open(sep.join((self.dir, 'samples.js')), 'r') as f:
-            return self.parse_issues(f.read())
+            return self._parse_issues(f.read())
 
     def parse(self, output=None):
-        self.parse_index()
-        return_value = self.parse_samples()
+        """
+        Parses skipfish report. output variable is not used
+        """
+
+        self._parse_index()
+        return_value = self._parse_samples()
         rmtree(self.dir)
         return return_value
 
-    def parse_issues(self, text):
+    def _parse_issues(self, text):
+        """
+        Parses issues basing on text variable
+
+        Args:
+            text(str): content of sample.js
+
+        Returns:
+            SkipfishIssues object
+        """
+
         return_value = SkipfishIssues()
         cut_pre_start = text.index('var issue_samples')
         cut_start = text.index('[', cut_pre_start)
@@ -66,26 +95,42 @@ class SkipfishResultsParser(Parser):
             for sample in issue['samples']:
                 return_value.add(SkipfishIssueSample(url=sample['url'], extra=sample['extra'], directory=sample['dir'],
                                                      severity_type=self.severities[issue['type']],
-                                                     severity=issue['severity'], sid=sample['sid']))
+                                                     severity=SkipfishRisk.from_id(issue['severity']), sid=sample['sid']))
         return return_value
 
 
 class SkipfishOutputParser(Parser):
+    """
+    Provides functions for parsing skipfish stdout
+    """
+
     @classmethod
     def parse(cls, output):
-        parser = SkipfishResultsParser(directory=cls.get_log_dir(output))
+        """
+        Prepares skipfish's report parser
+
+        Args:
+            output (str): skipfish's stdout
+
+        Returns:
+            SkipfishIssues object
+        """
+
+        parser = SkipfishResultsParser(directory=cls._get_log_dir(output))
         return parser.parse()
 
     @classmethod
-    def get_log_dir(cls, output):
+    def _get_log_dir(cls, output):
         """
         Parse skipfish output and return path to log directory
+
         Args:
-            output:
+            output(str): stdout from skipfish
 
         Returns:
-
+            path to the logs directory
         """
+
         for line in output.split("\n"):
             if 'Report saved' in line:
                 start_cut = line.index('tmp/')

@@ -14,17 +14,21 @@ class KuduMsg:
     """
     Class which represents message for Kudu
     """
+
     _ENDIANNESS = 'little'
+
     def __init__(self):
         """
         init variables
         """
+
         self._data = bytearray()
 
     def add_bool(self, val):
         """
         Add boolean value to data
         """
+
         assert isinstance(val, bool)
         self._data.extend(val.to_bytes(1, self._ENDIANNESS))
 
@@ -32,6 +36,7 @@ class KuduMsg:
         """
         Add byte to data
         """
+
         assert isinstance(val, int)
         self._data.extend(val.to_bytes(1, self._ENDIANNESS))
 
@@ -39,6 +44,7 @@ class KuduMsg:
         """
         Add short value to data
         """
+
         assert isinstance(val, int)
         self._data.extend(val.to_bytes(2, self._ENDIANNESS))
 
@@ -46,6 +52,7 @@ class KuduMsg:
         """
         Add int value to data
         """
+
         assert isinstance(val, int)
         self._data.extend(val.to_bytes(4, self._ENDIANNESS))
 
@@ -53,6 +60,7 @@ class KuduMsg:
         """
         Add long value to data
         """
+
         assert isinstance(val, int)
         self._data.extend(val.to_bytes(8, self._ENDIANNESS))
 
@@ -60,6 +68,7 @@ class KuduMsg:
         """
         Add string value to data
         """
+
         assert isinstance(val, str)
         bytestring = val.encode('utf-8')
         self.add_short(len(bytestring))
@@ -69,6 +78,7 @@ class KuduMsg:
         """
         Add datetime value to data
         """
+
         if val is None:
             self.add_long(0)
             return
@@ -80,6 +90,7 @@ class KuduMsg:
         """
         Add ip value to data
         """
+
         assert isinstance(val, (IPv4Address, IPv6Address))
         if isinstance(val, IPv4Address):
             txt = '2002:%02x%02x:%02x%02x::'%tuple(val.packed)
@@ -91,6 +102,7 @@ class KuduMsg:
         """
         Returns kudu data
         """
+
         return self._data
 
 
@@ -98,10 +110,12 @@ class KuduQueue(DbInterface):
     """
     Represents kudu queue
     """
+
     def __init__(self, address):
         """
         init variables
         """
+
         self._address = address
         self._socket = None
 
@@ -109,6 +123,7 @@ class KuduQueue(DbInterface):
         """
         Connect to kudu
         """
+
         self._socket = Socket(PUSH)
         self._socket.connect(self._address)
 
@@ -116,6 +131,7 @@ class KuduQueue(DbInterface):
         """
         Disconnect from kudu
         """
+
         self._socket.close()
         self._socket = None
 
@@ -123,6 +139,7 @@ class KuduQueue(DbInterface):
         """
         Send message to queue
         """
+
         assert isinstance(msg, KuduMsg)
         log.debug('sending bytes to kuduworker: %s', bytes_str(msg.data))
         self._socket.send(msg.data)

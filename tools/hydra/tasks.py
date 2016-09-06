@@ -2,7 +2,6 @@ import subprocess
 import logging as log
 
 from aucote_cfg import cfg
-from database.serializer import Serializer
 from structs import Vulnerability
 from tools.hydra.base import HydraBase
 
@@ -11,10 +10,12 @@ class HydraScriptTask(HydraBase):
     """
     This is task for Hydra tool. Call Hydra and parse output
     """
+
     def __init__(self, executor, port, service, login=True):
         """
         Initialize variables
         """
+
         super().__init__(executor=executor)
         self._port = port
         self.service = service
@@ -22,8 +23,9 @@ class HydraScriptTask(HydraBase):
 
     def __call__(self):
         """
-        Call command, parse output and send to kudu_queue
+        Call command, parse output and store vulnerability
         """
+
         args = []
         if self.login:
             args.extend(['-L', cfg.get('tools.hydra.loginfile')])
@@ -40,13 +42,6 @@ class HydraScriptTask(HydraBase):
             log.debug("Hydra does not find any password.")
             return None
 
-        serializer = Serializer()
-        vuln = Vulnerability()
-        vuln.exploit = self.exploits.find('hydra', 'hydra')
-        vuln.port = self._port
-        vuln.output = str(results)
-
-        log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
-        msg = serializer.serialize_port_vuln(vuln.port, vuln)
-        self.kudu_queue.send_msg(msg)
+        self.store_vulnerability(Vulnerability(exploit=self.exploits.find('hydra', 'hydra'), port = self._port,
+                                               output=results))
         return results

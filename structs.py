@@ -88,6 +88,7 @@ class Port(object):
     Port object
     """
     TABLE = 'ports'
+
     def __init__(self):
         self.vulnerabilities = []
         self.when_discovered = datetime.datetime.utcnow()
@@ -108,9 +109,15 @@ class Vulnerability(object):
     """
     Vulnerability object
     """
-    def __init__(self):
+    def __init__(self, exploit=None, port=None, output=None):
+        """
+        Init values
+        Args:
+            exploit(Exploit): Exploit used to detect vulnerability
+            port(Port): Vulnerable port
+            output(str): string or stringable output
+        """
         self.when_discovered = datetime.datetime.utcnow()
-    exploit = None
-    port = None
-    output = None
-    when_discovered = None
+        self.output = str(output)
+        self.exploit = exploit
+        self.port = port

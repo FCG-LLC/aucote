@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from tools.skipfish.structs import SkipfishIssuesDesc, SkipfishIssueSample, SkipfishIssues
+from tools.skipfish.structs import SkipfishIssuesDesc, SkipfishIssueSample, SkipfishIssues, SkipfishRisk
 
 
 class SkipfishIssuesDescTest(TestCase):
@@ -35,7 +35,7 @@ class SkipfishIssuesDescTest(TestCase):
 
 class SkipfishIssueSampleTest(TestCase):
 
-    severity = 0
+    severity = SkipfishRisk.NOTE
     severity_type = MagicMock()
     url = 'test_url'
     extra = 'test_extra'
@@ -58,38 +58,30 @@ class SkipfishIssueSampleTest(TestCase):
 class SkipfishIssuesTest(TestCase):
 
     def setUp(self):
-        self.pre_data = [{'severity': 0, 'severity_type': 'test', 'directory': '', 'extra': '', 'sid': '', 'url': 'a'},
-                    {'severity': 1, 'severity_type': 'test', 'directory': '', 'extra': '', 'sid': '', 'url': 'b'},
-                    {'severity': 2, 'severity_type': 'test2', 'directory': '', 'extra': '', 'sid': '', 'url': 'c'},
-                    {'severity': 3, 'severity_type': 'test2', 'directory': '', 'extra': '', 'sid': '', 'url': 'd'},]
+        self.pre_data = [{'severity': SkipfishRisk.NOTE, 'severity_type': 'test', 'directory': '', 'extra': '', 'sid': '', 'url': 'a'},
+                    {'severity': SkipfishRisk.WARNING, 'severity_type': 'test', 'directory': '', 'extra': '', 'sid': '', 'url': 'b'},
+                    {'severity': SkipfishRisk.LOW_RISK, 'severity_type': 'test2', 'directory': '', 'extra': '', 'sid': '', 'url': 'c'},
+                    {'severity': SkipfishRisk.MEDIUM_RISK, 'severity_type': 'test2', 'directory': '', 'extra': '', 'sid': '', 'url': 'd'},]
 
         self.data = [SkipfishIssueSample(**pre) for pre in self.pre_data]
         self.issues = SkipfishIssues()
 
     def test_add(self):
         severity_type = 'Severity description'
-        pre_data = {'severity': 0, 'severity_type': severity_type, 'directory': '', 'extra': '', 'sid': '', 'url': ''}
+        pre_data = {'severity': SkipfishRisk.NOTE, 'severity_type': severity_type, 'directory': '', 'extra': '', 'sid': '', 'url': ''}
         data = SkipfishIssueSample(**pre_data)
         self.issues.add(data)
 
         self.assertListEqual(self.issues._issues, [data])
-        self.assertListEqual(self.issues._sorted_issues[0][severity_type], [data])
+        self.assertListEqual(self.issues._sorted_issues[SkipfishRisk.NOTE][severity_type], [data])
 
     def test_get_by_severity(self):
         for issue in self.data:
             self.issues.add(issue)
 
-        self.assertListEqual(self.issues.get_by_severity(severity=2), [self.data[2]])
+        self.assertListEqual(self.issues.get_by_severity(severity=SkipfishRisk.LOW_RISK), [self.data[2]])
 
     def test_str(self):
-        severities ={
-            0: "Informational note",
-            1: "Internal warning",
-            2: "Low risk or low specificity",
-            3: "Medium risk - data compromise",
-            4: "High risk: system compromise",
-        }
-
         for issue in self.data:
             self.issues.add(issue)
 
@@ -99,8 +91,8 @@ class SkipfishIssuesTest(TestCase):
         {2}
 {3}:
     {4}:
-        {5}'''.format(severities[3], self.pre_data[3]['severity_type'], self.pre_data[3]['url'], severities[2],
-                       self.pre_data[2]['severity_type'], self.pre_data[2]['url'])
+        {5}'''.format(SkipfishRisk.MEDIUM_RISK.description, self.pre_data[3]['severity_type'], self.pre_data[3]['url'],
+                      SkipfishRisk.LOW_RISK.description, self.pre_data[2]['severity_type'], self.pre_data[2]['url'])
 
         self.assertEqual(result, expected)
 
@@ -113,3 +105,8 @@ class SkipfishIssuesTest(TestCase):
         self.assertTrue(False or self.issues)
         self.issues.add(self.data[3])
         self.assertTrue(False or self.issues)
+
+
+class SkipfishRiskTesk(TestCase):
+    def test_value_error(self):
+        self.assertRaises(ValueError, SkipfishRisk.from_id, -1)

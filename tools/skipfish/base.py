@@ -2,7 +2,7 @@
 Provides basic integrations of Skipfish
 """
 from tools.common import Command
-from tools.skipfish.parsers import SkipfishResultsParser, SkipfishOutputParser
+from tools.skipfish.parsers import SkipfishOutputParser
 
 
 class SkipfishBase(Command):
@@ -15,6 +15,10 @@ class SkipfishBase(Command):
     @classmethod
     def parser(cls, output):
         """
-        Parse output and return HydraResults object
+        Args:
+            output: stdout of command execution
+
+        Returns: SkipfishIssues object
+
         """
         return SkipfishOutputParser.parse(output)
