@@ -55,10 +55,10 @@ class HydraToolTest(TestCase):
         HydraTool(port=MagicMock(), exploits=MagicMock(), executor=self.executor, config=self.config)()
         self.assertEqual(self.executor.add_task.call_count, 0)
 
-    @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=['vnc'])))
+    @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=['test'])))
     @patch('tools.hydra.tool.HydraScriptTask')
     def test_disabled_service(self, hydra_task_mock):
-        self.hydra_tool_without_login()
+        self.hydra_tool()
         self.assertEqual(self.executor.add_task.call_count, 0)
 
     def tearDown(self):
