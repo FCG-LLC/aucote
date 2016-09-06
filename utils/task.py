@@ -6,7 +6,7 @@ class Task(object):
     """
     Base class for tasks, e.g. scan, nmap, hydra
     """
-    def __init__(self, executor):
+    def __init__(self, executor, *args, **kwargs):
         """
         Assign executor
         """

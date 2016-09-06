@@ -13,11 +13,10 @@ class NmapPortScanTask(NmapBase):
     def __init__(self, port, script_classes, *args, **kwargs):
         """
         Initialize variables
-
         Args:
-            executor (Executor): executor od scripts
-            port (Port): port to test
-            script_clases (list): list of nmap scripts
+            executor (Executor):
+            port:
+            script_clases:
         """
 
         super().__init__(*args, **kwargs)

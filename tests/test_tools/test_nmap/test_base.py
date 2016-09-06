@@ -1,9 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock, MagicMock
 
-from structs import Vulnerability
 from tools.nmap.base import NmapBase, NmapScript, VulnNmapScript, InfoNmapScript
-import xml.etree.ElementTree as ET
 
 
 class NmapBaseTest(TestCase):
@@ -80,3 +78,10 @@ class InfoNmapScriptTest(TestCase):
         result = self.script.get_result(None)
 
         self.assertFalse(result)
+
+    def test_get_result_vulnerable(self):
+        script = MagicMock()
+        script.get = MagicMock(return_value='  test   ')
+        result = self.script.get_result(script)
+
+        self.assertEqual(result, 'test')

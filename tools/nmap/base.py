@@ -32,8 +32,11 @@ class VulnNmapScript(NmapScript):
 
 
 class InfoNmapScript(NmapScript):
+    def get_vulnerability(self, script):
+        return Vulnerability()
+
     @classmethod
     def get_result(cls, script):
-        return ''
-
-
+        if not script:
+            return ''
+        return script.get('output').strip()
