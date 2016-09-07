@@ -7,6 +7,7 @@ from os.path import sep
 
 from shutil import rmtree
 
+from aucote_cfg import cfg
 from tools.common.parsers import Parser
 from tools.skipfish.structs import SkipfishIssuesDesc, SkipfishIssues, SkipfishIssueSample, SkipfishRisk
 
@@ -14,6 +15,7 @@ from tools.skipfish.structs import SkipfishIssuesDesc, SkipfishIssues, SkipfishI
 class SkipfishResultsParser(Parser):
     """
     Parser for skipfish issues
+
     """
 
     def __init__(self, directory):
@@ -29,6 +31,7 @@ class SkipfishResultsParser(Parser):
 
         Returns:
             SkipfishIssuesDesc - description of skipfish issues
+
         """
         return_value = SkipfishIssuesDesc()
         cut_pre_start = text.index('var issue_desc=')
@@ -47,6 +50,7 @@ class SkipfishResultsParser(Parser):
 
         Returns:
             SkipfishIssuesDesc object
+
         """
 
         with open(sep.join((self.dir, 'index.html')), 'r') as f:
@@ -58,6 +62,7 @@ class SkipfishResultsParser(Parser):
 
         Returns:
             SkipfishIssues object
+
         """
 
         with open(sep.join((self.dir, 'samples.js')), 'r') as f:
@@ -66,6 +71,7 @@ class SkipfishResultsParser(Parser):
     def parse(self, output=None):
         """
         Parses skipfish report. output variable is not used
+
         """
 
         self._parse_index()
@@ -82,6 +88,7 @@ class SkipfishResultsParser(Parser):
 
         Returns:
             SkipfishIssues object
+
         """
 
         return_value = SkipfishIssues()
@@ -102,6 +109,7 @@ class SkipfishResultsParser(Parser):
 class SkipfishOutputParser(Parser):
     """
     Provides functions for parsing skipfish stdout
+
     """
 
     @classmethod
@@ -114,25 +122,30 @@ class SkipfishOutputParser(Parser):
 
         Returns:
             SkipfishIssues object
-        """
 
-        parser = SkipfishResultsParser(directory=cls._get_log_dir(output))
+        """
+        parser = SkipfishResultsParser(directory=cls._get_log_dir(output=output,
+                                                                  directory=cfg.get('tools.skipfish.tmp_directory')
+                                                                  )
+                                       )
         return parser.parse()
 
     @classmethod
-    def _get_log_dir(cls, output):
+    def _get_log_dir(cls, output, directory):
         """
         Parse skipfish output and return path to log directory
 
         Args:
-            output(str): stdout from skipfish
+            output (str): stdout from skipfish
+            directory (str): path to the skipfish reports directory
 
         Returns:
             path to the logs directory
+
         """
 
         for line in output.split("\n"):
             if 'Report saved' in line:
-                start_cut = line.index('tmp/')
+                start_cut = line.index(directory)
                 end_cut = line.index('/index.html')
                 return line[start_cut:end_cut]

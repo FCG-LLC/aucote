@@ -77,7 +77,7 @@ class InfoNmapScriptTest(TestCase):
     def test_get_result_empty(self):
         result = self.script.get_result(None)
 
-        self.assertFalse(result)
+        self.assertIsNone(result)
 
     def test_get_result_vulnerable(self):
         script = MagicMock()

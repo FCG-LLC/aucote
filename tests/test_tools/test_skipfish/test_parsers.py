@@ -211,27 +211,41 @@ class SkipfishOutputParserTest(TestCase):
 [+] [0;37mWriting crawl tree: 501[1;32m
 [+] [0;37mWriting crawl tree: 537
 [1;32m[+] [0;37mGenerating summary views...
-[1;32m[+] [0;37mReport saved to '[1;34mtmp/skipfish_1472650914.8062923/index.html[0;37m' [[1;34m0xdeae3458[0;37m].
+[1;32m[+] [0;37mReport saved to '[1;34m/tmp/skipfish_1472650914.8062923/index.html[0;37m' [[1;34m0xdeae3458[0;37m].
 [1;32m[+] [1;37mThis was a great day for science![0m'''
 
     def test_get_log_dir(self):
 
         expected = 'tmp/skipfish_Tue Aug 30 14:17:33 CEST 2016'
-        result = SkipfishOutputParser._get_log_dir(output=self.OUTPUT)
+        result = SkipfishOutputParser._get_log_dir(output=self.OUTPUT, directory='tmp')
 
         self.assertEqual(result, expected)
 
     @patch('tools.skipfish.parsers.SkipfishResultsParser')
-    @patch('tools.skipfish.parsers.SkipfishOutputParser._get_log_dir', MagicMock(return_value='test'))
-    def test_parse(self, parser_mock):
+    @patch('tools.skipfish.parsers.SkipfishOutputParser._get_log_dir')
+    @patch('tools.skipfish.parsers.cfg.get', MagicMock(return_value='tmp/'))
+    def test_parse(self, get_dir_mock, parser_mock):
+        get_dir_mock.return_value = 'test'
         SkipfishOutputParser.parse(self.OUTPUT)
 
         parser_mock.assert_called_once_with(directory='test')
         parser_mock.return_value.parse.assert_called_once_with()
+        get_dir_mock.assert_called_once_with(output=self.OUTPUT, directory='tmp/')
 
     def test_get_log_dir_from_fetched_output(self):
 
-        expected = 'tmp/skipfish_1472650914.8062923'
-        result = SkipfishOutputParser._get_log_dir(output=self.OUTPUT_FETCHED)
+        expected = '/tmp/skipfish_1472650914.8062923'
+        result = SkipfishOutputParser._get_log_dir(output=self.OUTPUT_FETCHED, directory='/tmp')
 
         self.assertEqual(result, expected)
+
+    @patch('tools.skipfish.parsers.SkipfishResultsParser')
+    @patch('tools.skipfish.parsers.SkipfishOutputParser._get_log_dir')
+    @patch('tools.skipfish.parsers.cfg.get', MagicMock(return_value='/tmp/'))
+    def test_parse_fetched_output(self, get_dir_mock, parser_mock):
+        get_dir_mock.return_value = 'test'
+        SkipfishOutputParser.parse(self.OUTPUT_FETCHED)
+
+        parser_mock.assert_called_once_with(directory='test')
+        parser_mock.return_value.parse.assert_called_once_with()
+        get_dir_mock.assert_called_once_with(output=self.OUTPUT_FETCHED, directory='/tmp/')
