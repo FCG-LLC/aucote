@@ -3,9 +3,3 @@ argparse
 nanomsg
 netaddr
 python-dateutil
-
-
-
-yoyo-migrations
-psycopg2
-flask
