@@ -1,8 +1,11 @@
 pyaml
 argparse
-yoyo-migrations
-psycopg2
 nanomsg
 netaddr
-flask
 python-dateutil
+
+
+
+yoyo-migrations
+psycopg2
+flask
