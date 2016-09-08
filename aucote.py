@@ -3,6 +3,7 @@ This is executable file of aucote project.
 """
 
 import argparse
+import ipaddress
 import logging as log
 import sched
 from os import chdir
@@ -14,6 +15,7 @@ from fixtures.exploits import Exploits
 from scans import Executor
 
 import utils.log as log_cfg
+from structs import Node
 from utils.exceptions import NmapUnsupported
 from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
@@ -39,8 +41,10 @@ def main():
     parser = argparse.ArgumentParser(description='Tests compliance of devices.')
     parser.add_argument("--cfg", help="config file path")
     parser.add_argument('cmd', help="aucote command", type=str, default='service',
-                        choices=['scan', 'service', 'syncdb'],
+                        choices=['scan', 'service', 'syncdb', 'single-scan'],
                         nargs='?')
+    parser.add_argument("--host_ip", help="Host ip for single scan")
+    parser.add_argument("--host_id", help="Host id for single scan")
     args = parser.parse_args()
 
     # read configuration
@@ -57,50 +61,76 @@ def main():
                   exc_info=exception)
         exit(1)
 
+    aucote = Aucote(exploits)
+
     if args.cmd == 'scan':
-        run_scan(exploits)
+        aucote.run_scan()
     elif args.cmd == 'service':
-        run_service(exploits)
+        aucote.run_service()
     elif args.cmd == 'syncdb':
-        run_syncdb(exploits)
+        aucote.run_syncdb()
+    elif args.cmd == 'single-scan':
+        node = Node()
+        node.ip = args.host_ip
+        node.id = args.host_id
+
+        aucote.run_single_scan(node)
 
 
 # =============== functions ==============
 
-def run_scan(exploits):
-    """
-    Start scanning ports.
-    Returns: None
-    """
-    with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-        executor = Executor(kudu_queue=kudu_queue, exploits=exploits)
-        executor.run()
+class Aucote(object):
+    def __init__(self, exploits):
+        self.exploits = exploits
+
+    def run_scan(self):
+        """
+        Start scanning ports.
+        Returns: None
+        """
+        with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
+            executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits)
+            executor.run()
 
 
-def run_service(exploits):
-    """
-    Run service for periodic scanning
-    Returns:
+    def run_service(self):
+        """
+        Run service for periodic scanning
+        Returns:
 
-    """
-    scheduler = sched.scheduler(time.time)
-    scan_period = parse_period(cfg.get('service.scans.period'))
-    scheduler.enter(0, 1, run_scan, (exploits,))
-    while True:
-        scheduler.run()
-        scheduler.enter(scan_period, 1, run_scan, (exploits,))
+        """
+        scheduler = sched.scheduler(time.time)
+        scan_period = parse_period(cfg.get('service.scans.period'))
+        scheduler.enter(0, 1, self.run_scan)
+        while True:
+            scheduler.run()
+            scheduler.enter(scan_period, 1, self.run_scan)
 
 
-def run_syncdb(exploits):
-    """
-    Synchronize local exploits database with Kudu
-    Returns:
+    def run_syncdb(self):
+        """
+        Synchronize local exploits database with Kudu
+        Returns:
 
-    """
-    with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-        serializer = Serializer()
-        for exploit in exploits:
-            kudu_queue.send_msg(serializer.serialize_exploit(exploit))
+        """
+        with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
+            serializer = Serializer()
+            for exploit in self.exploits:
+                kudu_queue.send_msg(serializer.serialize_exploit(exploit))
+
+
+    def run_single_scan(self, node):
+        """
+        Start scanning ports for defined host.
+
+        Returns:
+            None
+
+        """
+
+        with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
+            executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits, nodes=[node])
+            executor.run()
 
 
 # =================== start app =================
