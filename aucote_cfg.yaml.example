@@ -1,45 +1,99 @@
+# This is an example configuration file, which provides information about configurable options of aucote.
+#
+# logging: Aucote logs a most of events in configuration files
+#   file: <str> - This is path to the aucote log file
+#   level: (debug|info|warning|error|critical) - This is the level of logging (default: info)
+#   max_file_size: <int> - Maximum log file's size. After reach the limit, new file is created and old is archived.
+#   max_files: <int> - Maximum amount of log files (with archived).
+#   format: <str> - Format of log line. There are some variables which could be used:
+#                   levelname - levelname of log line
+#                   asctime - time of log line
+#                   threadName - name of thred, which generate log line
+#                   message - log message
+
 logging:
     file: aucote.log
     level: debug
     max_file_size: 10485760
     max_files: 5
     format: "%(levelname)s %(asctime)s %(threadName)s: %(message)s"
+
+# fixtures:
+#   exploits:
+#     filename: <str> - Path to the exploits database
+
 fixtures:
     exploits:
         filename: fixtures/exploits/exploits.csv
-database:
-    credentials:
-        host: localhost
-        database: aucote
-        user: postgres
-        password: postgres
-        port: 5433
+
+# kuduworker: Configuration of kudu.
+#   queue:
+#     address: <str> - URL to the kudu worker
+
 kuduworker:
     queue:
         address: ipc:///tmp/skaza-pipeline.ipc
+
+# This section provides configurations related to aucote as a service
+# service:
+#   scans:
+#     threads: <int> - Number of threads to be running
+#     rate: <int> - Rate in packets per seconds for scanning tool (e.g. masscan)
+#     period: <str> - If aucote runs in service mode it scans network every "period" time.
+#                     Period should be set up in special format:
+#                     <int>d<int>h<int>m<int>s, where letters mean: days, hours, minutes, seconds
+#     ports: <str> - Port range in format suit to the used tool eg. T:0-65535 for nmap/masscan
+
 service:
     scans:
         threads: 30,
         rate: 1000
         period: 12h
         ports: T:0-65535,U:0-65535,S:65535 # TCP, UDP, SCTP: full range
-    api:
-        v1:
-            host: 0.0.0.0
-            port: 1235
+
+# This section contains configuration related to topdis service
+# topdis:
+#   api:
+#     host: <str|ipaddress> - host of api
+#     port: <int> - port of api
+
 topdis:
     api:
-        host: 10.12.1.175
+        host: 127.0.0.1
         port: 1234
+
+# In this section there is configuration related to the tools used by the aucote
+# tools:
+#   nmap: - This subsection contains nmap configuration
+#     cmd: <str> - Command used to run nmap
+#     enable: (True|False) - It is possible to disable this tool
+#   masscan: - This subsection contains masscan configuration
+#     cmd: <str> - Command used to run masscan
+#     args: additional arguments for masscan e.g. outpu interface
+#       - <str>
+#       - <str>
+#   hydra: - This subsection contains thc-hydra configuration
+#     cmd: <str> - Command used to run nmap
+#     loginfile: static/logins.hydra.txt
+#     passwordfile: static/passwords.hydra.txt
+#     enable: (True|False) - It is possible to disable this tool
+#     disable_services: - List of disabled services, e.g. vnc
+#       - <str>
+#       - <str>
+#   skipfish:
+#     cmd: <str> - Command used to run skipfish
+#     enable: (True|False) - It is possible to disable this tool
+#     limit: 0:10:00 - Time limit of skipfish scan
+#     threads: 5 - Amount of thread used by skipfish
+#     tmp_directory: /tmp - Path to the temporary directory for reports processing
+
+
 tools:
     nmap:
         cmd: nmap
         enable: True
     masscan:
         cmd: masscan
-#        args:
-#            - arg1
-#            - arg2
     hydra:
         cmd: hydra
         loginfile: static/logins.hydra.txt
