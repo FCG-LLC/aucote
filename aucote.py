@@ -87,7 +87,7 @@ def run_service(exploits):
 
     """
     scheduler = sched.scheduler(time.time)
-    scan_period = parse_period(cfg.get('service.scans.period'))
+    scan_period = parse_period(cfg.get('service.scans.period')).total_seconds()
     scheduler.enter(0, 1, run_scan, (exploits,))
     while True:
         scheduler.run()

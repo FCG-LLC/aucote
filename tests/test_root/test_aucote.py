@@ -62,15 +62,16 @@ class AucoteTest(TestCase):
         self.assertEqual(mock_executor.call_count, 1)
 
     @patch('aucote.run_scan', MagicMock())
-    @patch('utils.time.parse_period', MagicMock())
+    @patch('aucote.parse_period')
     @patch('sched.scheduler.run')
     @patch('sched.scheduler.enter')
-    def test_service(self, mock_sched_enter, mock_sched_run):
+    def test_service(self, mock_sched_enter, mock_sched_run, mock_parse_period):
         mock_sched_run.side_effect = self.check_service # NotImplementedError('test')
         self._mock = mock_sched_run
         self.assertRaises(NotImplementedError, run_service, MagicMock())
         self.assertEqual(mock_sched_enter.call_count, 3)
         self.assertEqual(mock_sched_run.call_count, 3)
+        mock_parse_period.return_value.total_seconds.assert_called_once_with()
 
     def check_service(self):
         if self._mock.call_count == 3:
