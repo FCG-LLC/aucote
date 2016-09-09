@@ -89,6 +89,6 @@ class AucoteTest(TestCase):
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
     @patch('scans.executor.Executor.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
     @patch('scans.executor.Executor.run')
-    def test_scan(self, mock_executor):
+    def test_scan_with_exception(self, mock_executor):
         run_scan(exploits=MagicMock())
         self.assertEqual(mock_executor.call_count, 0)
