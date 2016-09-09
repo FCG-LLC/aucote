@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 from urllib.error import URLError
 
 from scans import Executor
+from utils.exceptions import TopdisConnectionException
 
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
@@ -104,7 +105,7 @@ class ExecutorTest(TestCase):
     def test_getting_nodes_cannot_connect_to_topdis(self, urllib):
         urllib.side_effect = URLError
 
-        self.assertRaises(URLError, Executor._get_nodes)
+        self.assertRaises(TopdisConnectionException, Executor._get_nodes)
 
     @patch('urllib.request.urlopen')
     def test_getting_nodes_unknown_exception(self, urllib):

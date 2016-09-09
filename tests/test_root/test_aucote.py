@@ -5,7 +5,7 @@ from unittest import TestCase
 from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
 
 from aucote import main, run_scan, run_service, run_syncdb
-from utils.exceptions import NmapUnsupported
+from utils.exceptions import NmapUnsupported, TopdisConnectionException
 
 
 @patch('aucote_cfg.cfg.get', Mock(return_value=""))
@@ -83,3 +83,11 @@ class AucoteTest(TestCase):
     def test_syncdb(self, mock_serializer):
         run_syncdb(range(5))
         self.assertEqual(mock_serializer.call_count, 5)
+
+    @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
+    @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
+    @patch('scans.executor.Executor.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
+    @patch('scans.executor.Executor.run')
+    def test_scan(self, mock_executor):
+        run_scan(exploits=MagicMock())
+        self.assertEqual(mock_executor.call_count, 0)
