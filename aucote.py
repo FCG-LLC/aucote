@@ -64,12 +64,14 @@ def main():
     aucote = Aucote(exploits)
 
     if args.cmd == 'scan':
-        node = None
+        nodes = []
         if args.host_ip and args.host_id:
             node = Node()
             node.ip = args.host_ip
             node.id = args.host_id
-        aucote.run_scan([node])
+            nodes.append(node)
+
+        aucote.run_scan(nodes=nodes)
     elif args.cmd == 'service':
         aucote.run_service()
     elif args.cmd == 'syncdb':
@@ -82,14 +84,15 @@ class Aucote(object):
     def __init__(self, exploits):
         self.exploits = exploits
 
-    def run_scan(self):
+    def run_scan(self, nodes=None):
         """
         Start scanning ports.
         Returns: None
         """
+
         with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
             try:
-                executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits)
+                executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits, nodes=nodes)
                 executor.run()
             except TopdisConnectionException:
                 log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)
