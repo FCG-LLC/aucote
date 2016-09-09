@@ -1,4 +1,3 @@
-from structs import Vulnerability
 from tools.common.command import CommandXML
 
 

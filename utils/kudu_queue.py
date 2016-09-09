@@ -76,15 +76,13 @@ class KuduMsg:
 
     def add_datetime(self, val):
         """
-        Add datetime value to data
+        Add timestamp value to data
         """
 
         if val is None:
             self.add_long(0)
             return
-        num_timestamp = val.timestamp() #seconds
-        num_timestamp = round(1000*num_timestamp) #miliseconds
-        self.add_long(num_timestamp)
+        self.add_long(round(1000*val))
 
     def add_ip(self, val):
         """

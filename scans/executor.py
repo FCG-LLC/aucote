@@ -5,7 +5,7 @@ This is main module of aucote scanning functionality.
 import ipaddress
 import logging as log
 import json
-import datetime
+import time
 from urllib.error import URLError
 import urllib.request as http
 
@@ -39,7 +39,7 @@ class Executor(object):
         Start tasks: scanning nodes and ports
         """
         scan = Scan()
-        scan.start = datetime.datetime.utcnow()
+        scan.start = time.time()
         scanner = MasscanPorts(executor=self)
         ports = scanner.scan_ports(self.nodes)
 
