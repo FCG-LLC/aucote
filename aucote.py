@@ -16,7 +16,7 @@ from scans import Executor
 
 import utils.log as log_cfg
 from structs import Node
-from utils.exceptions import NmapUnsupported
+from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
 
@@ -82,14 +82,17 @@ class Aucote(object):
     def __init__(self, exploits):
         self.exploits = exploits
 
-    def run_scan(self, node=None):
+    def run_scan(self):
         """
         Start scanning ports.
         Returns: None
         """
         with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-            executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits, nodes=[node])
-            executor.run()
+            try:
+                executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits)
+                executor.run()
+            except TopdisConnectionException:
+                log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)
 
     def run_service(self):
         """
@@ -98,7 +101,7 @@ class Aucote(object):
 
         """
         scheduler = sched.scheduler(time.time)
-        scan_period = parse_period(cfg.get('service.scans.period'))
+        scan_period = parse_period(cfg.get('service.scans.period')).total_seconds()
         scheduler.enter(0, 1, self.run_scan)
         while True:
             scheduler.run()

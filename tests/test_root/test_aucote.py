@@ -5,7 +5,7 @@ from unittest import TestCase
 from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
 
 from aucote import main, Aucote
-from utils.exceptions import NmapUnsupported
+from utils.exceptions import NmapUnsupported, TopdisConnectionException
 
 
 @patch('aucote_cfg.cfg.get', Mock(return_value=""))
@@ -65,15 +65,16 @@ class AucoteTest(TestCase):
         self.assertEqual(mock_executor.call_count, 1)
 
     @patch('aucote.Aucote.run_scan', MagicMock())
-    @patch('utils.time.parse_period', MagicMock())
+    @patch('aucote.parse_period')
     @patch('sched.scheduler.run')
     @patch('sched.scheduler.enter')
-    def test_service(self, mock_sched_enter, mock_sched_run):
+    def test_service(self, mock_sched_enter, mock_sched_run, mock_parse_period):
         mock_sched_run.side_effect = self.check_service # NotImplementedError('test')
         self._mock = mock_sched_run
         self.assertRaises(NotImplementedError, self.aucote.run_service)
         self.assertEqual(mock_sched_enter.call_count, 3)
         self.assertEqual(mock_sched_run.call_count, 3)
+        mock_parse_period.return_value.total_seconds.assert_called_once_with()
 
     def check_service(self):
         if self._mock.call_count == 3:
@@ -87,3 +88,11 @@ class AucoteTest(TestCase):
         self.aucote.exploits = range(5)
         self.aucote.run_syncdb()
         self.assertEqual(mock_serializer.call_count, 5)
+
+    @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
+    @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
+    @patch('scans.executor.Executor.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
+    @patch('scans.executor.Executor.run')
+    def test_scan(self, mock_executor):
+        self.aucote.run_scan()
+        self.assertEqual(mock_executor.call_count, 0)

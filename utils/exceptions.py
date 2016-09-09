@@ -40,3 +40,8 @@ class PortRangeUnsupported(NmapUnsupported):
     """
     Raise if port range is not supported, eg. 23-13 instead of 13-23
     """
+
+class TopdisConnectionException(BaseException):
+    """
+    Raises if topdis connection error occurred
+    """

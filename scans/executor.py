@@ -13,6 +13,7 @@ from aucote_cfg import cfg
 from scans.task_mapper import TaskMapper
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from tools.masscan import MasscanPorts
+from utils.exceptions import TopdisConnectionException
 from utils.threads import ThreadPool
 from structs import Node, Scan
 
@@ -83,9 +84,9 @@ class Executor(object):
         url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
         try:
             resource = http.urlopen(url)
-        except URLError as exception:
+        except URLError:
             log.error('Cannot connect to topdis')
-            raise exception
+            raise TopdisConnectionException
 
         charset = resource.headers.get_content_charset() or 'utf-8'
         nodes_txt = resource.read().decode(charset)
