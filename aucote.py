@@ -41,7 +41,7 @@ def main():
     parser = argparse.ArgumentParser(description='Tests compliance of devices.')
     parser.add_argument("--cfg", help="config file path")
     parser.add_argument('cmd', help="aucote command", type=str, default='service',
-                        choices=['scan', 'service', 'syncdb', 'single-scan'],
+                        choices=['scan', 'service', 'syncdb'],
                         nargs='?')
     parser.add_argument("--host_ip", help="Host ip for single scan")
     parser.add_argument("--host_id", help="Host id for single scan")
@@ -64,17 +64,16 @@ def main():
     aucote = Aucote(exploits)
 
     if args.cmd == 'scan':
-        aucote.run_scan()
+        node = None
+        if args.host_ip and args.host_id:
+            node = Node()
+            node.ip = args.host_ip
+            node.id = args.host_id
+        aucote.run_scan([node])
     elif args.cmd == 'service':
         aucote.run_service()
     elif args.cmd == 'syncdb':
         aucote.run_syncdb()
-    elif args.cmd == 'single-scan':
-        node = Node()
-        node.ip = args.host_ip
-        node.id = args.host_id
-
-        aucote.run_single_scan(node)
 
 
 # =============== functions ==============
@@ -83,15 +82,14 @@ class Aucote(object):
     def __init__(self, exploits):
         self.exploits = exploits
 
-    def run_scan(self):
+    def run_scan(self, node=None):
         """
         Start scanning ports.
         Returns: None
         """
         with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-            executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits)
+            executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits, nodes=[node])
             executor.run()
-
 
     def run_service(self):
         """
@@ -106,7 +104,6 @@ class Aucote(object):
             scheduler.run()
             scheduler.enter(scan_period, 1, self.run_scan)
 
-
     def run_syncdb(self):
         """
         Synchronize local exploits database with Kudu
@@ -117,20 +114,6 @@ class Aucote(object):
             serializer = Serializer()
             for exploit in self.exploits:
                 kudu_queue.send_msg(serializer.serialize_exploit(exploit))
-
-
-    def run_single_scan(self, node):
-        """
-        Start scanning ports for defined host.
-
-        Returns:
-            None
-
-        """
-
-        with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-            executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits, nodes=[node])
-            executor.run()
 
 
 # =================== start app =================
