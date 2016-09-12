@@ -2,11 +2,10 @@ import unittest
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
-from database.serializer import Serializer
 from fixtures.exploits import Exploit
 from fixtures.exploits import Exploits
 from structs import Port, TransportProtocol, Node, Vulnerability
-from tools.nmap.base import NmapScript, InfoNmapScript, VulnNmapScript
+from tools.nmap.base import InfoNmapScript, VulnNmapScript
 
 # TODO: This tests are complicated because of nesting and many mocking. Should be refactored.
 from tools.nmap.tasks.port_scan import NmapPortScanTask
