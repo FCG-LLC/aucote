@@ -1,4 +1,3 @@
-from structs import Vulnerability
 from tools.common.command import CommandXML
 
 
@@ -17,21 +16,23 @@ class NmapScript(object):
         self.name = name
         self.args = args
 
-    def get_vulnerability(self, script):
+    def get_result(self, script):
         raise NotImplementedError
 
 
 class VulnNmapScript(NmapScript):
-    def get_vulnerability(self, script):
+    @classmethod
+    def get_result(cls, script):
         table = script.find('table')
         if table is None: return None #no data, probably no response from server, so no problem detected
         state = table.find("./elem[@key='state']").text
         if state not in ('VULNERABLE', 'LIKELY VULNERABLE'): return None #TODO: add likelihood to vulnerability
-        return Vulnerability()
+        return script.get('output').strip()
 
 
 class InfoNmapScript(NmapScript):
-    def get_vulnerability(self, script):
-        return Vulnerability()
-
-
+    @classmethod
+    def get_result(cls, script):
+        if not script:
+            return None
+        return script.get('output').strip()

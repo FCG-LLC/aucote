@@ -48,7 +48,6 @@ class HydraParser(Parser):
     def from_output(cls, output, port=None):
         return cls.from_re_match(cls.regex_success.match(output))
 
-
     @classmethod
     def from_re_match(cls, match):
         if not match:

@@ -14,7 +14,7 @@ from fixtures.exploits import Exploits
 from scans import Executor
 
 import utils.log as log_cfg
-from utils.exceptions import NmapUnsupported
+from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
 
@@ -73,8 +73,11 @@ def run_scan(exploits):
     Returns: None
     """
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-        executor = Executor(kudu_queue=kudu_queue, exploits=exploits)
-        executor.run()
+        try:
+            executor = Executor(kudu_queue=kudu_queue, exploits=exploits)
+            executor.run()
+        except TopdisConnectionException:
+            log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)
 
 
 def run_service(exploits):
@@ -84,7 +87,7 @@ def run_service(exploits):
 
     """
     scheduler = sched.scheduler(time.time)
-    scan_period = parse_period(cfg.get('service.scans.period'))
+    scan_period = parse_period(cfg.get('service.scans.period')).total_seconds()
     scheduler.enter(0, 1, run_scan, (exploits,))
     while True:
         scheduler.run()

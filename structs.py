@@ -3,7 +3,7 @@ This file provides structures for project.
 """
 
 from enum import Enum
-import datetime
+import time
 
 
 class Scan(object):
@@ -88,9 +88,10 @@ class Port(object):
     Port object
     """
     TABLE = 'ports'
+
     def __init__(self):
         self.vulnerabilities = []
-        self.when_discovered = datetime.datetime.utcnow()
+        self.when_discovered = time.time()
 
     node = None
     number = None
@@ -108,9 +109,15 @@ class Vulnerability(object):
     """
     Vulnerability object
     """
-    def __init__(self):
-        self.when_discovered = datetime.datetime.utcnow()
-    exploit = None
-    port = None
-    output = None
-    when_discovered = None
+    def __init__(self, exploit=None, port=None, output=None):
+        """
+        Init values
+        Args:
+            exploit(Exploit): Exploit used to detect vulnerability
+            port(Port): Vulnerable port
+            output(str): string or stringable output
+        """
+        self.when_discovered = time.time()
+        self.output = str(output)
+        self.exploit = exploit
+        self.port = port

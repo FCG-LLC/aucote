@@ -4,6 +4,7 @@ Provides configuration for tools. Configuration is implicit and shouldn't be mod
 
 from tools.hydra.tool import HydraTool
 from tools.nmap.tool import NmapTool
+from tools.skipfish.tool import SkipfishTool
 
 EXECUTOR_CONFIG = {
     'apps': {
@@ -18,6 +19,9 @@ EXECUTOR_CONFIG = {
                 },
                 'smtp-vuln-cve2011-1720': {
                     'args': 'smtp.domain=test'
+                },
+                'http-barracuda-dir-traversal': {
+                    'args': 'http-max-cache-size=5000000'
                 }
             }
         },
@@ -39,6 +43,10 @@ EXECUTOR_CONFIG = {
                 'microsoft-ssn': 'smb',
                 'microsoft-ns': 'smb',
             },
+            'without-login': ['redis', 'cisco', 'oracle-listener', 's7-300', 'snmp', 'vnc']
+        },
+        'skipfish': {
+            'class': SkipfishTool
         }
     }
 }

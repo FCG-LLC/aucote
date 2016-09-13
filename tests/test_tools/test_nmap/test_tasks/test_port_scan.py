@@ -89,7 +89,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
                                       args='test_args')
 
         self.vulnerability = Vulnerability()
-        self.script.get_vulnerability = MagicMock(return_value=self.vulnerability)
+        self.script.get_result = MagicMock(return_value=self.vulnerability)
 
         self.port.transport_protocol = TransportProtocol.TCP
         self.port.number = 22

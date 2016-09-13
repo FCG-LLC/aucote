@@ -4,6 +4,7 @@ import logging as log
 from aucote_cfg import cfg
 import subprocess
 
+from database.serializer import Serializer
 from utils.exceptions import NonXMLOutputException
 from utils.task import Task
 
@@ -35,6 +36,11 @@ class Command(Task):
     @classmethod
     def parser(cls, output):
         return output
+
+    def store_vulnerability(self, vuln):
+        log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
+        msg = Serializer.serialize_port_vuln(vuln.port, vuln)
+        self.kudu_queue.send_msg(msg)
 
 
 class CommandXML(Command):

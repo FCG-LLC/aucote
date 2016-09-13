@@ -22,12 +22,12 @@ class NmapPortInfoTask(NmapBase):
         xml = self.call(args)
         banner = xml.find("host/ports/port/script[@id='banner']")
         if banner is None:
-            log.warning('No banner for %s', self._port.node.ip)
+            log.warning('No banner for %s:%i', self._port.node.ip, self._port.number)
         else:
             self._port.banner = banner.get('output')
         service = xml.find("host/ports/port/service")
         if service is None:
-            log.warning('No service for %s', self._port.node.id)
+            log.warning('No service for %s:%i', self._port.node.ip, self._port.number)
         else:
             self._port.service_name = service.get('name')
             self._port.service_version = service.get('version')

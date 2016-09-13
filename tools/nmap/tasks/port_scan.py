@@ -1,6 +1,7 @@
 import logging as log
 
 from database.serializer import Serializer
+from structs import Vulnerability
 from tools.nmap.base import NmapBase
 
 
@@ -13,10 +14,11 @@ class NmapPortScanTask(NmapBase):
         """
         Initialize variables
         Args:
-            executor:
+            executor (Executor):
             port:
             script_clases:
         """
+
         super().__init__(*args, **kwargs)
         self._port = port
         self._script_classes = script_classes
@@ -26,6 +28,7 @@ class NmapPortScanTask(NmapBase):
         """
         Returns port
         """
+
         return self._port
 
     @property
@@ -33,6 +36,7 @@ class NmapPortScanTask(NmapBase):
         """
         Returns script classes
         """
+
         return self._script_classes
 
     def __call__(self):
@@ -41,6 +45,7 @@ class NmapPortScanTask(NmapBase):
         scans port used nmap and provided script classes
         send serialized vulnerabilities to kudu queue
         """
+
         vulners = []
         scripts = {script.name: script for script in self._script_classes}
         args = ['-p', str(self._port.number), '-sV']
@@ -61,21 +66,16 @@ class NmapPortScanTask(NmapBase):
             if found_handler is None:
                 continue
             log.debug('Parsing output from script %s', script.get('id'))
-            vuln = found_handler.get_vulnerability(script)
-            if vuln is None:
+
+            result = found_handler.get_result(script)
+            if result is None:
                 continue
 
-            vuln.exploit = found_handler.exploit
-            vuln.port = self.port
-            vuln.output = script.get('output').strip()
-            vulners.append(vuln)
+            vulners.append(Vulnerability(exploit=found_handler.exploit, port=self._port, output=result))
 
-        serializer = Serializer()
         if vulners:
             for vuln in vulners:
-                log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
-                msg = serializer.serialize_port_vuln(vuln.port, vuln)
-                self.kudu_queue.send_msg(msg)
+                self.store_vulnerability(vuln)
         else:
-            msg = serializer.serialize_port_vuln(self._port, None)
+            msg = Serializer.serialize_port_vuln(self._port, None)
             self.kudu_queue.send_msg(msg)

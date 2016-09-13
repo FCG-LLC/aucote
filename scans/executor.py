@@ -5,7 +5,7 @@ This is main module of aucote scanning functionality.
 import ipaddress
 import logging as log
 import json
-import datetime
+import time
 from urllib.error import URLError
 import urllib.request as http
 
@@ -13,6 +13,7 @@ from aucote_cfg import cfg
 from scans.task_mapper import TaskMapper
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from tools.masscan import MasscanPorts
+from utils.exceptions import TopdisConnectionException
 from utils.threads import ThreadPool
 from structs import Node, Scan
 
@@ -38,7 +39,7 @@ class Executor(object):
         Start tasks: scanning nodes and ports
         """
         scan = Scan()
-        scan.start = datetime.datetime.utcnow()
+        scan.start = time.time()
         scanner = MasscanPorts(executor=self)
         ports = scanner.scan_ports(self.nodes)
 
@@ -83,9 +84,9 @@ class Executor(object):
         url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
         try:
             resource = http.urlopen(url)
-        except URLError as exception:
+        except URLError:
             log.error('Cannot connect to topdis')
-            raise exception
+            raise TopdisConnectionException
 
         charset = resource.headers.get_content_charset() or 'utf-8'
         nodes_txt = resource.read().decode(charset)
