@@ -1,6 +1,8 @@
 """
 Defines abstract Tool class
 """
+from aucote_cfg import cfg
+from utils.exceptions import ImproperConfigurationException
 
 
 class Tool(object):
@@ -27,3 +29,10 @@ class Tool(object):
         Called by task managers
         """
         raise NotImplementedError
+
+    @classmethod
+    def get_config(cls, key):
+        try:
+            return cfg.get(key).cfg
+        except KeyError:
+            raise ImproperConfigurationException(key)

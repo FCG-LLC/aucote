@@ -102,13 +102,6 @@ class NmapToolTest(TestCase):
         self.assertEqual(NmapTool.custom_args_dns_zone_transfer(), expected)
         mock_cfg.assert_called_once_with('tools.nmap.domains')
 
-    @patch('tools.nmap.tool.cfg.get')
-    def test_custom_args_dns_zone_transfer_exception(self, mock_cfg):
-        mock_cfg.side_effect = KeyError
-
-        self.assertRaises(ImproperConfigurationException, NmapTool.custom_args_dns_zone_transfer)
-
-
     @patch('tools.nmap.tool.VulnNmapScript')
     def test_improper_configure_args(self, vuln_scan_script):
         self.nmap_tool.exploits = [self.exploit_conf_args]
@@ -125,21 +118,9 @@ class NmapToolTest(TestCase):
         mock_cfg.assert_called_once_with('tools.nmap.domains')
 
     @patch('tools.nmap.tool.cfg.get')
-    def test_custom_args_dns_srv_enumsrv_enum_exception(self, mock_cfg):
-        mock_cfg.side_effect = KeyError
-
-        self.assertRaises(ImproperConfigurationException, NmapTool.custom_args_dns_srv_enum)
-
-    @patch('tools.nmap.tool.cfg.get')
     def test_custom_args_http_domino_enum_passwords(self, mock_cfg):
         mock_cfg.return_value.cfg = {"username": "test_usernm", "password": "test_passwd"}
         expected = "domino-enum-passwords.username='test_usernm',domino-enum-passwords.password=test_passwd"
 
         self.assertEqual(NmapTool.custom_args_http_domino_enum_passwords(), expected)
         mock_cfg.assert_called_once_with('tools.nmap.domino-http')
-
-    @patch('tools.nmap.tool.cfg.get')
-    def test_custom_args_http_domino_enum_passwords_exception(self, mock_cfg):
-        mock_cfg.side_effect = KeyError
-
-        self.assertRaises(ImproperConfigurationException, NmapTool.custom_args_http_domino_enum_passwords)

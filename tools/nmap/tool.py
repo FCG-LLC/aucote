@@ -76,26 +76,16 @@ class NmapTool(Tool):
 
     @classmethod
     def custom_args_dns_zone_transfer(cls):
-        try:
-            domains = cfg.get('tools.nmap.domains').cfg
-            return ['dns-zone-transfer.domain={0}'.format(domain) for domain in domains]
-        except KeyError:
-            raise ImproperConfigurationException("Please configure: tools.nmap.domains")
+        domains = cls.get_config('tools.nmap.domains')
+        return ['dns-zone-transfer.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
     def custom_args_dns_srv_enum(cls):
-        try:
-            domains = cfg.get('tools.nmap.domains').cfg
-            return ['dns-srv-enum.domain={0}'.format(domain) for domain in domains]
-        except KeyError:
-            raise ImproperConfigurationException("Please configure: tools.nmap.domains")
+        domains = cls.get_config('tools.nmap.domains')
+        return ['dns-srv-enum.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
     def custom_args_http_domino_enum_passwords(cls):
-        try:
-            domains = cfg.get('tools.nmap.domino-http').cfg
-            return "domino-enum-passwords.username='{0}',domino-enum-passwords.password={1}".format(
-                domains.get('username', None), domains.get('password', None))
-
-        except KeyError:
-            raise ImproperConfigurationException("Please configure: tools.nmap.domino")
+        domains = cls.get_config('tools.nmap.domino-http')
+        return "domino-enum-passwords.username='{0}',domino-enum-passwords.password={1}".format(
+            domains.get('username', None), domains.get('password', None))

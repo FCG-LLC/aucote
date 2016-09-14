@@ -1,7 +1,8 @@
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from tools.base import Tool
+from utils.exceptions import ImproperConfigurationException
 
 
 class ToolTest(TestCase):
@@ -21,3 +22,16 @@ class ToolTest(TestCase):
 
     def test_call(self):
         self.assertRaises(NotImplementedError, self.tool)
+
+    @patch('tools.nmap.tool.cfg.get')
+    def test_get_config_non_exist_key(self, mock_cfg):
+        mock_cfg.side_effect = KeyError
+
+        self.assertRaises(ImproperConfigurationException, Tool.get_config, 'non.exist.key')
+
+    @patch('tools.nmap.tool.cfg.get')
+    def test_get_config_exist_key(self, mock_cfg):
+        expected =  {"key": []}
+        mock_cfg.return_value.cfg = expected
+        result = Tool.get_config('key')
+        self.assertEqual(result, expected)
