@@ -61,6 +61,27 @@ class NmapPortScanTaskTest(unittest.TestCase):
 </runstats>
 </nmaprun>'''
 
+    PRESCRIPT_XML = '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.12 scan initiated Tue Aug  9 11:04:25 2016 as: nmap -oX - -sU -p 123 -&#45;script banner 192.168.2.1 -->
+<nmaprun scanner="nmap" args="nmap -oX - -sU -p 123 -&#45;script banner 192.168.2.1" start="1470733465" startstr="Tue Aug  9 11:04:25 2016" version="7.12" xmloutputversion="1.04">
+<scaninfo type="udp" protocol="udp" numservices="1" services="123"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<prescript><script id="test" output="test" /></prescript>
+<host starttime="1470733466" endtime="1470733467"><status state="up" reason="echo-reply" reason_ttl="253"/>
+<address addr="192.168.2.1" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="udp" portid="123"><state state="open" reason="udp-response" reason_ttl="253"/></port>
+</ports>
+<times srtt="255573" rttvar="196403" to="1041185"/>
+</host>
+<runstats><finished time="1470733467" timestr="Tue Aug  9 11:04:27 2016" elapsed="1.63" summary="Nmap done at Tue Aug  9 11:04:27 2016; 1 IP address (1 host up) scanned in 1.63 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>'''
+
     def setUp(self):
         """
         Prepare some internal variables:
@@ -113,14 +134,18 @@ class NmapPortScanTaskTest(unittest.TestCase):
         """
         Check if script is executing with proper arguments
         """
-        self.assertIn('-p', args)
+
         self.assertIn('22', args)
+        return self.check_args(args)
+
+    def check_args(self, args):
         self.assertIn('-sV', args)
         self.assertIn('--script', args)
         self.assertIn(self.script.name, args)
         self.assertIn('--script-args', args)
         self.assertIn(self.script.args, args)
         self.assertIn(self.port.node.ip, args)
+        self.assertIn('-p', args)
 
         return ElementTree.fromstring(self.XML)
 
@@ -145,3 +170,30 @@ class NmapPortScanTaskTest(unittest.TestCase):
         scan_task()
 
         scan_task.kudu_queue.send_msg.assert_called_once_with('test')
+
+    @patch('tools.nmap.tasks.port_scan.Vulnerability')
+    @patch('tools.nmap.tasks.port_scan.Serializer', MagicMock())
+    def test_prescript(self, mock_vulnerability):
+        scan_task = NmapPortScanTask(port=self.port, script_classes=[self.script], executor=self.executor)
+        self.script.get_result = MagicMock()
+        scan_task._kudu_queue = MagicMock()
+        scan_task.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
+        scan_task()
+
+        expected = 'test'
+
+    def check_args_dns(self, args):
+        """
+        Check if script is executing with proper arguments
+        """
+        self.assertIn('--dns-servers', args)
+
+        return self.check_args(args)
+
+    def test_dns_scan(self):
+        """
+        Test UDP scanning
+        """
+        self.port.number = 53
+        self.scan_task.call = MagicMock(side_effect=self.check_args_dns)
+        self.scan_task()

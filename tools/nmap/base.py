@@ -33,6 +33,6 @@ class VulnNmapScript(NmapScript):
 class InfoNmapScript(NmapScript):
     @classmethod
     def get_result(cls, script):
-        if not script:
+        if script is None:
             return None
         return script.get('output').strip()

@@ -25,6 +25,10 @@ EXECUTOR_CONFIG = {
                 },
                 'dns-zone-transfer': {
                     'args': NmapTool.custom_args_dns_zone_transfer
+                },
+                'dns-srv-enum': {
+                    'args': NmapTool.custom_args_dns_srv_enum,
+                    'singular': True
                 }
             }
         },

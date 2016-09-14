@@ -85,7 +85,8 @@ class Executor(object):
         try:
             resource = http.urlopen(url)
         except URLError:
-            log.error('Cannot connect to topdis')
+            log.error('Cannot connect to topdis: {0}:{1}'.format(cfg.get('topdis.api.host'),
+                                                                 cfg.get('topdis.api.port')))
             raise TopdisConnectionException
 
         charset = resource.headers.get_content_charset() or 'utf-8'

@@ -51,6 +51,10 @@ class NmapPortScanTask(NmapBase):
         args = ['-p', str(self._port.number), '-sV']
         if self._port.transport_protocol.name == "UDP":
             args.append("-sU")
+
+        if self._port.number == 53:
+            args.extend(["--dns-servers", str(self._port.node.ip)])
+
         for script in scripts.values():
             args.append('--script')
             args.append(script.name)
@@ -61,7 +65,10 @@ class NmapPortScanTask(NmapBase):
 
         xml = self.call(args)
 
-        for script in xml.findall('host/ports/port/script'):
+        tmp_scripts = xml.findall('host/ports/port/script') or []
+        tmp_scripts.extend(xml.findall('prescript/script') or [])
+
+        for script in tmp_scripts:
             found_handler = scripts.get(script.get('id'))
             if found_handler is None:
                 continue

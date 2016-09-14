@@ -67,6 +67,9 @@ topdis:
 #   nmap: - This subsection contains nmap configuration
 #     cmd: <str> - Command used to run nmap
 #     enable: (True|False) - It is possible to disable this tool
+#     domains: - List of domains used by some scripts
+#       - <str>
+#       - <str>
 #   masscan: - This subsection contains masscan configuration
 #     cmd: <str> - Command used to run masscan
 #     args: additional arguments for masscan e.g. outpu interface

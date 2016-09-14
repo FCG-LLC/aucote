@@ -50,10 +50,17 @@ class NmapToolTest(TestCase):
         self.assertEqual(port_scan_mock.call_count, 1)
 
     def test_enable(self):
-        config = MagicMock()
-        executor = MagicMock()
-        NmapTool(executor, MagicMock(), MagicMock(), config=config)()
-        self.assertEqual(executor.add_task.call_count, 1)
+        self.nmap_tool.executor = MagicMock()
+        self.exploit2.name = 'test_name2'
+        self.nmap_tool()
+        self.assertEqual(self.nmap_tool.executor.add_task.call_count, 1)
+
+    def test_single_mode(self):
+        self.nmap_tool.executor = MagicMock()
+        self.nmap_tool.config['services']['test_name']['singular'] = True
+        self.exploit2.name = 'test_name2'
+        self.nmap_tool()
+        self.assertEqual(self.nmap_tool.executor.add_task.call_count, 2)
 
     @patch('tools.nmap.tool.VulnNmapScript')
     def test_configurable_args(self, vuln_scan_script):
@@ -63,16 +70,40 @@ class NmapToolTest(TestCase):
         vuln_scan_script.assert_called_once_with(exploit=self.exploit_conf_args, port=self.port, name='test_name2',
                                                  args='dynamic_conf_test')
 
+    @patch('tools.nmap.tool.VulnNmapScript')
+    @patch('tools.nmap.tool.InfoNmapScript')
+    @patch('tools.nmap.tool.NmapPortScanTask')
+    def test_exploits_with_this_same_scripts_name(self, port_scan_mock, info_scan_script, vuln_scan_script):
+        """
+        Test executing exploits with this same script name
+        Args:
+            port_scan_mock (MagicMock):
+            info_scan_script (MagicMock):
+            vuln_scan_script (MagicMock):
+
+        Returns:
+
+        """
+
+        self.config['services']['test_name']['args'] = ['test', 'test2']
+        self.nmap_tool()
+        info_scan_script.assert_any_call(exploit=self.exploit, port=self.port, name='test_name',
+                                                 args='test')
+        info_scan_script.assert_any_call(exploit=self.exploit, port=self.port, name='test_name',
+                                                 args='test2')
+        self.assertEqual(info_scan_script.call_count, 2)
+        self.assertEqual(port_scan_mock.call_count, 2)
+
     @patch('tools.nmap.tool.cfg.get')
-    def test_customArgsDNSZoneTransfer(self, mock_cfg):
-        mock_cfg.return_value='test.host'
-        expected = 'dns-zone-transfer.domain=test.host'
+    def test_custom_args_dns_zone_transfer(self, mock_cfg):
+        mock_cfg.return_value.cfg = ['test.host', 'test.host2']
+        expected = ['dns-zone-transfer.domain=test.host', 'dns-zone-transfer.domain=test.host2']
 
         self.assertEqual(NmapTool.custom_args_dns_zone_transfer(), expected)
-        mock_cfg.assert_called_once_with('tools.nmap.domain')
+        mock_cfg.assert_called_once_with('tools.nmap.domains')
 
     @patch('tools.nmap.tool.cfg.get')
-    def test_customArgsDNSZoneTransfer_exception(self, mock_cfg):
+    def test_custom_args_dns_zone_transfer_exception(self, mock_cfg):
         mock_cfg.side_effect = KeyError
 
         self.assertRaises(ImproperConfigurationException, NmapTool.custom_args_dns_zone_transfer)
@@ -84,3 +115,17 @@ class NmapToolTest(TestCase):
         self.config['services']['test_name2']['args'].side_effect = ImproperConfigurationException()
         self.nmap_tool()
         self.assertEqual(vuln_scan_script.call_count, 0)
+
+    @patch('tools.nmap.tool.cfg.get')
+    def test_custom_args_dns_srv_enum(self, mock_cfg):
+        mock_cfg.return_value.cfg = ['test.host', 'test.host2']
+        expected = ['dns-srv-enum.domain=test.host', 'dns-srv-enum.domain=test.host2']
+
+        self.assertEqual(NmapTool.custom_args_dns_srv_enum(), expected)
+        mock_cfg.assert_called_once_with('tools.nmap.domains')
+
+    @patch('tools.nmap.tool.cfg.get')
+    def test_custom_args_dns_srv_enumsrv_enum_exception(self, mock_cfg):
+        mock_cfg.side_effect = KeyError
+
+        self.assertRaises(ImproperConfigurationException, NmapTool.custom_args_dns_srv_enum)
