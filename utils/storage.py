@@ -40,6 +40,11 @@ class Storage(DbInterface):
 
     @property
     def cursor(self):
+        """
+        Returns:
+            handler to the database cursor
+
+        """
         return self._cursor
 
     def save_node(self, node, commit=True):
@@ -55,7 +60,8 @@ class Storage(DbInterface):
         """
 
         try:
-            self.cursor.execute("INSERT INTO nodes (id, name, ip) VALUES (?, ?, ?)", (node.id, str(node.name), str(node.ip)))
+            self.cursor.execute("INSERT INTO nodes (id, name, ip) VALUES (?, ?, ?)", (node.id, str(node.name),
+                                                                                      str(node.ip)))
         except sqlite3.DatabaseError:
             self.cursor.execute("CREATE TABLE nodes(id int, name text, ip text)")
             self.conn.commit()
@@ -81,7 +87,14 @@ class Storage(DbInterface):
         self.conn.commit()
 
     def get_nodes(self):
+        """
+        Returns all nodes from local storage
+
+        Returns:
+            list
+
+        """
         nodes = []
-        for node in self.cursor.execute("SELECT * FROM nodes").fetchall():
+        for node in self.cursor.execute("SELECT * FROM nodes GROUP BY ip").fetchall():
             nodes.append(Node(id=node[0], name=node[1], ip=ipaddress.ip_address(node[2])))
         return nodes

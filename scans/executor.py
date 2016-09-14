@@ -30,10 +30,17 @@ class Executor(object):
         Init executor. Sets kudu_queue and nodes
         """
         self._kudu_queue = kudu_queue
-        self.nodes = self._get_nodes()
+        self.storage = storage
+
+        with self.storage as storage:
+            try:
+                self.nodes = self._get_nodes()
+                storage.save_nodes(self.nodes)
+            except:
+                self.nodes = storage.get_nodes()
+
         self.task_mapper = TaskMapper(self)
         self._exploits = exploits
-        self.storage = storage
 
     def run(self):
         """
