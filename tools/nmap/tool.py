@@ -80,7 +80,7 @@ class NmapTool(Tool):
             domains = cfg.get('tools.nmap.domains').cfg
             return ['dns-zone-transfer.domain={0}'.format(domain) for domain in domains]
         except KeyError:
-            raise ImproperConfigurationException("Please configure your domains in: tools.nmap.domains")
+            raise ImproperConfigurationException("Please configure: tools.nmap.domains")
 
     @classmethod
     def custom_args_dns_srv_enum(cls):
@@ -88,4 +88,14 @@ class NmapTool(Tool):
             domains = cfg.get('tools.nmap.domains').cfg
             return ['dns-srv-enum.domain={0}'.format(domain) for domain in domains]
         except KeyError:
-            raise ImproperConfigurationException("Please configure your domains in: tools.nmap.domains")
+            raise ImproperConfigurationException("Please configure: tools.nmap.domains")
+
+    @classmethod
+    def custom_args_http_domino_enum_passwords(cls):
+        try:
+            domains = cfg.get('tools.nmap.domino-http').cfg
+            return "domino-enum-passwords.username='{0}',domino-enum-passwords.password={1}".format(
+                domains.get('username', None), domains.get('password', None))
+
+        except KeyError:
+            raise ImproperConfigurationException("Please configure: tools.nmap.domino")

@@ -29,6 +29,9 @@ EXECUTOR_CONFIG = {
                 'dns-srv-enum': {
                     'args': NmapTool.custom_args_dns_srv_enum,
                     'singular': True
+                },
+                'http-domino-enum-passwords': {
+                    'args': NmapTool.custom_args_http_domino_enum_passwords
                 }
             }
         },
