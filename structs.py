@@ -17,15 +17,27 @@ class Scan(object):
 class Node:
     """
     Node object consist of name, id and ip
+
     """
-    name = None
-    ip = None
-    id = None
+
+    def __init__(self, name=None, ip=None, id=None):
+        """
+        Init values
+        Args:
+            name (str):
+            ip (IPv4Address):
+            id (int):
+
+        """
+        self.name = name
+        self.ip = ip
+        self.id = id
 
 
 class TransportProtocol(Enum):
     """
     Transport protocol object consist of db_val and IANA val
+
     """
     def __init__(self, db_val, iana):
         self.db_val = db_val
@@ -39,12 +51,16 @@ class TransportProtocol(Enum):
     def from_nmap_name(cls, name):
         """
         Create TransportProtocol object basing on string name
+
         Args:
             name: string representation of transport protocol, eg. "tcp", "udp"
 
-        Returns: TransportProtocol object
+        Returns:
+            TransportProtocol object
 
-        Raises: ValueError if not: tcp, udp or icmp
+        Raises:
+            ValueError if not: tcp, udp or icmp
+
         """
         name = name.upper()
         for val in cls:
@@ -56,6 +72,7 @@ class TransportProtocol(Enum):
 class RiskLevel(Enum):
     """
     Risk level object
+
     """
     def __init__(self, txt, number):
         self.txt = txt
@@ -70,12 +87,16 @@ class RiskLevel(Enum):
     def from_name(cls, name):
         """
         Create RiskLevel object basing on string name
+
         Args:
             name: string representation of risk level, eg. "medium"
 
-        Returns: RiskLevel object
+        Returns:
+            RiskLevel object
 
-        Raises: ValueError if not: High, Medium, Low or None
+        Raises:
+            ValueError if not: High, Medium, Low or None
+
         """
         for val in cls:
             if val.txt == name:
@@ -86,6 +107,7 @@ class RiskLevel(Enum):
 class Port(object):
     """
     Port object
+
     """
     TABLE = 'ports'
 
@@ -108,6 +130,7 @@ class Port(object):
 class Vulnerability(object):
     """
     Vulnerability object
+
     """
     def __init__(self, exploit=None, port=None, output=None):
         """
