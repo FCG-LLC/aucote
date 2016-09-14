@@ -15,6 +15,7 @@ from scans import Executor
 
 import utils.log as log_cfg
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
+from utils.storage import Storage
 from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
 
@@ -74,7 +75,7 @@ def run_scan(exploits):
     """
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
         try:
-            executor = Executor(kudu_queue=kudu_queue, exploits=exploits)
+            executor = Executor(kudu_queue=kudu_queue, exploits=exploits, storage=Storage())
             executor.run()
         except TopdisConnectionException:
             log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)

@@ -25,7 +25,7 @@ class Executor(object):
 
     _thread_pool = None
 
-    def __init__(self, kudu_queue, exploits):
+    def __init__(self, kudu_queue, exploits, storage):
         """
         Init executor. Sets kudu_queue and nodes
         """
@@ -33,6 +33,7 @@ class Executor(object):
         self.nodes = self._get_nodes()
         self.task_mapper = TaskMapper(self)
         self._exploits = exploits
+        self.storage = storage
 
     def run(self):
         """
