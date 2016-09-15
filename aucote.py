@@ -74,11 +74,12 @@ def run_scan(exploits):
     Returns: None
     """
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-        try:
-            executor = Executor(kudu_queue=kudu_queue, exploits=exploits, storage=Storage())
-            executor.run()
-        except TopdisConnectionException:
-            log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)
+        with Storage() as storage:
+            try:
+                executor = Executor(kudu_queue=kudu_queue, exploits=exploits, storage=storage)
+                executor.run()
+            except TopdisConnectionException:
+                log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)
 
 
 def run_service(exploits):

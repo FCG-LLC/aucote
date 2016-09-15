@@ -35,7 +35,8 @@ class Executor(object):
         self._kudu_queue = kudu_queue
         self.storage = storage
 
-        self.nodes = self._get_nodes()
+        self.nodes = self._get_nodes_for_scanning()
+        self.storage.save_nodes(self.nodes)
 
         self.task_mapper = TaskMapper(self)
         self._exploits = exploits

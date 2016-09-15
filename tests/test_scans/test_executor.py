@@ -74,6 +74,7 @@ class ExecutorTest(TestCase):
 }"""
 
     @patch('scans.executor.Executor._get_nodes', MagicMock(return_value=False))
+    @patch('scans.executor.Executor._get_nodes_for_scanning', MagicMock(return_value=False))
     def setUp(self):
         self.executor = Executor(kudu_queue=MagicMock(), exploits=MagicMock(), storage=MagicMock())
         self.urllib_response = MagicMock()

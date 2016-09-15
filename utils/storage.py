@@ -64,7 +64,7 @@ class Storage(DbInterface):
             self.cursor.execute("INSERT OR REPLACE INTO nodes (id, name, ip, time) VALUES (?, ?, ?, ?)",
                                 (node.id, str(node.name), str(node.ip), time.time()))
         except sqlite3.DatabaseError:
-            self.cursor.execute("CREATE TABLE nodes(id int primary key, name text, ip text, time int)")
+            self.cursor.execute("CREATE TABLE nodes(id int, name text, ip text, time int, primary key (id, ip))")
             self.conn.commit()
 
             self.save_node(node, commit)
@@ -95,7 +95,7 @@ class Storage(DbInterface):
             list
 
         """
-        timestamp = timestamp or time.time() - 1000
+        timestamp = timestamp or time.time() - 100
 
         nodes = []
         try:
@@ -104,4 +104,3 @@ class Storage(DbInterface):
             return nodes
         except sqlite3.DatabaseError:
             return []
-
