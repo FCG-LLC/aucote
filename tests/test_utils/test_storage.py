@@ -100,3 +100,23 @@ class StorageTest(TestCase):
         self.assertEqual(expected[1], '127.0.0.1')
         self.assertEqual(expected[2], 1)
         self.assertEqual(expected[3], TransportProtocol.TCP.iana)
+
+    def test_save_ports(self):
+        nodes = [Node(id=1, ip=ipaddress.ip_address('127.0.0.1')),
+                 Node(id=2, ip=ipaddress.ip_address('127.0.0.2')),
+                 Node(id=3, ip=ipaddress.ip_address('127.0.0.3'))]
+
+        ports = [Port(node=nodes[0], transport_protocol=TransportProtocol.TCP, number=5),
+                 Port(node=nodes[1], transport_protocol=TransportProtocol.UDP, number=65),
+                 Port(node=nodes[2], transport_protocol=TransportProtocol.ICMP, number=99),]
+
+        with self.storage as storage:
+            storage.save_ports(ports)
+
+            expected = storage.cursor.execute("SELECT * FROM ports").fetchall()
+
+        for i in range(3):
+            self.assertEqual(expected[i][0], ports[i].node.id)
+            self.assertEqual(expected[i][1], str(ports[i].node.ip))
+            self.assertEqual(expected[i][2], ports[i].number)
+            self.assertEqual(expected[i][3], ports[i].transport_protocol.iana)

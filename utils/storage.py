@@ -107,7 +107,17 @@ class Storage(DbInterface):
             return []
 
     def save_port(self, port, commit=True):
+        """
+        Saves port to local storage
 
+        Args:
+            port (Port): port to save into storage
+            commit (bool): commit to database switch
+
+        Returns:
+            None
+
+        """
         try:
             self.cursor.execute("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
                                 (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
@@ -121,3 +131,19 @@ class Storage(DbInterface):
 
         if commit:
             self.conn.commit()
+
+    def save_ports(self, ports):
+        """
+        Saves ports into local storage
+
+        Args:
+            ports (list):
+
+        Returns:
+            None
+
+        """
+        for port in ports:
+            self.save_port(port, False)
+
+        self.conn.commit()
