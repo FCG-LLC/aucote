@@ -3,6 +3,7 @@ This file contains class for storage temporary information like last date of sca
 """
 import ipaddress
 import sqlite3
+import time
 
 from sqlite3 import Connection
 
@@ -60,10 +61,10 @@ class Storage(DbInterface):
         """
 
         try:
-            self.cursor.execute("INSERT INTO nodes (id, name, ip) VALUES (?, ?, ?)", (node.id, str(node.name),
-                                                                                      str(node.ip)))
+            self.cursor.execute("INSERT OR REPLACE INTO nodes (id, name, ip, time) VALUES (?, ?, ?, ?)",
+                                (node.id, str(node.name), str(node.ip), time.time()))
         except sqlite3.DatabaseError:
-            self.cursor.execute("CREATE TABLE nodes(id int, name text, ip text)")
+            self.cursor.execute("CREATE TABLE nodes(id int primary key, name text, ip text, time int)")
             self.conn.commit()
 
             self.save_node(node, commit)
@@ -86,7 +87,7 @@ class Storage(DbInterface):
 
         self.conn.commit()
 
-    def get_nodes(self):
+    def get_nodes(self, timestamp=None):
         """
         Returns all nodes from local storage
 
@@ -94,7 +95,13 @@ class Storage(DbInterface):
             list
 
         """
+        timestamp = timestamp or time.time() - 1000
+
         nodes = []
-        for node in self.cursor.execute("SELECT * FROM nodes GROUP BY ip").fetchall():
-            nodes.append(Node(id=node[0], name=node[1], ip=ipaddress.ip_address(node[2])))
-        return nodes
+        try:
+            for node in self.cursor.execute("SELECT * FROM nodes where time > ? GROUP BY ip", (timestamp,)).fetchall():
+                nodes.append(Node(id=node[0], name=node[1], ip=ipaddress.ip_address(node[2])))
+            return nodes
+        except sqlite3.DatabaseError:
+            return []
+

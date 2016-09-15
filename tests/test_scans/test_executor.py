@@ -1,8 +1,10 @@
+import ipaddress
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from urllib.error import URLError
 
 from scans import Executor
+from structs import Node
 from utils.exceptions import TopdisConnectionException
 
 
@@ -132,3 +134,18 @@ class ExecutorTest(TestCase):
         self.assertEqual(self.executor.exploits, self.executor._exploits)
         self.assertEqual(self.executor.kudu_queue, self.executor._kudu_queue)
 
+    def test_get_nodes_for_scanning(self):
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), id=1, name='test')
+        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), id=2, name='test_2')
+        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), id=3, name='test_3')
+
+        nodes = [node_1, node_2, node_3]
+
+        self.executor._get_nodes = MagicMock(return_value=nodes)
+
+        self.executor.storage.get_nodes = MagicMock(return_value=[node_2, node_3])
+
+        result = self.executor._get_nodes_for_scanning()
+        expected = [node_1]
+
+        self.assertListEqual(result, expected)

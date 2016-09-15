@@ -1,9 +1,10 @@
 import ipaddress
 from unittest import TestCase
 
-from sqlite3 import Connection
+from sqlite3 import Connection, DatabaseError
 
 from sqlite3 import connect
+from unittest.mock import MagicMock
 
 from structs import Node
 from utils.storage import Storage
@@ -79,3 +80,10 @@ class StorageTest(TestCase):
                 self.assertEqual(expected[i].ip, nodes[i].ip)
                 self.assertEqual(expected[i].name, nodes[i].name)
                 self.assertEqual(expected[i].id, nodes[i].id)
+
+    def test_get_nodes_exception(self):
+        self.storage._cursor = MagicMock()
+        self.storage._cursor.execute = MagicMock(side_effect=DatabaseError)
+
+        result = self.storage.get_nodes()
+        self.assertEqual(result, [])

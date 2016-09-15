@@ -1,5 +1,6 @@
 """
 This is main module of aucote scanning functionality.
+
 """
 
 import ipaddress
@@ -21,6 +22,7 @@ from structs import Node, Scan
 class Executor(object):
     """
     Gets the information about nodes and starts the tasks
+
     """
 
     _thread_pool = None
@@ -28,16 +30,12 @@ class Executor(object):
     def __init__(self, kudu_queue, exploits, storage):
         """
         Init executor. Sets kudu_queue and nodes
+
         """
         self._kudu_queue = kudu_queue
         self.storage = storage
 
-        with self.storage as storage:
-            try:
-                self.nodes = self._get_nodes()
-                storage.save_nodes(self.nodes)
-            except:
-                self.nodes = storage.get_nodes()
+        self.nodes = self._get_nodes()
 
         self.task_mapper = TaskMapper(self)
         self._exploits = exploits
@@ -45,6 +43,7 @@ class Executor(object):
     def run(self):
         """
         Start tasks: scanning nodes and ports
+
         """
         scan = Scan()
         scan.start = time.time()
@@ -73,14 +72,18 @@ class Executor(object):
     @property
     def exploits(self):
         """
-        Returns: exploits
+        Returns:
+            exploits
+
         """
         return self._exploits
 
     @property
     def kudu_queue(self):
         """
-        Returns: kudu_queue
+        Returns:
+            kudu_queue
+
         """
         return self._kudu_queue
 
@@ -88,6 +91,7 @@ class Executor(object):
     def _get_nodes(cls):
         """
         Get nodes from todis application
+
         """
         url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
         try:
@@ -109,3 +113,24 @@ class Executor(object):
                 node.id = node_struct['id']
                 nodes.append(node)
         return nodes
+
+    def _get_nodes_for_scanning(self):
+        """
+        Returns:
+            list of nodes to be scan
+
+        """
+        topdis_nodes = self._get_nodes()
+        storage_nodes = self.storage.get_nodes()
+
+        to_remove = set()
+
+        for node in topdis_nodes:
+            for st_node in storage_nodes:
+                if node.id == st_node.id and str(node.ip) == str(st_node.ip):
+                    to_remove.add(node)
+
+        for node in to_remove:
+            topdis_nodes.remove(node)
+
+        return topdis_nodes
