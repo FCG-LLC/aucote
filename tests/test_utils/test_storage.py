@@ -6,7 +6,7 @@ from sqlite3 import Connection, DatabaseError
 from sqlite3 import connect
 from unittest.mock import MagicMock
 
-from structs import Node
+from structs import Node, Port, TransportProtocol
 from utils.storage import Storage
 
 
@@ -38,7 +38,7 @@ class StorageTest(TestCase):
         with self.storage as storage:
             storage.save_node(node)
 
-            expected = self.storage.cursor.execute("SELECT * FROM nodes").fetchone()
+            expected = storage.cursor.execute("SELECT * FROM nodes").fetchone()
 
             self.assertEqual(expected[0], 1)
             self.assertEqual(expected[1], 'localhost')
@@ -87,3 +87,16 @@ class StorageTest(TestCase):
 
         result = self.storage.get_nodes()
         self.assertEqual(result, [])
+
+    def test_save_port(self):
+        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), id=1), transport_protocol=TransportProtocol.TCP,
+                    number=1)
+        with Storage(":memory:") as storage:
+            storage.save_port(port)
+
+            expected = storage.cursor.execute("SELECT * FROM ports").fetchone()
+
+        self.assertEqual(expected[0], 1)
+        self.assertEqual(expected[1], '127.0.0.1')
+        self.assertEqual(expected[2], 1)
+        self.assertEqual(expected[3], TransportProtocol.TCP.iana)

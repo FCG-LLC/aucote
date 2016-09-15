@@ -111,17 +111,27 @@ class Port(object):
     """
     TABLE = 'ports'
 
-    def __init__(self):
+    def __init__(self, node=None, number=None, transport_protocol=None, service_name=None, service_version=None,
+                 banner=None):
+        """
+
+        Args:
+            node (Node):
+            number (int):
+            transport_protocol (TransportProtocol):
+            service_name (str):
+            service_version (str):
+            banner (str):
+
+        """
         self.vulnerabilities = []
         self.when_discovered = time.time()
-
-    node = None
-    number = None
-    transport_protocol = None
-    service_name = None
-    service_version = None
-    banner = None
-    when_discovered = None
+        self.node = node
+        self.number = number
+        self.transport_protocol = transport_protocol
+        self.service_name = service_name
+        self.service_version = service_version
+        self.banner = banner
 
     def __str__(self):
         return '%s:%s'%(self.node.ip, self.number)

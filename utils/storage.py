@@ -74,7 +74,8 @@ class Storage(DbInterface):
 
     def save_nodes(self, nodes):
         """
-        Save nodes into local storage
+        Saves nodes into local storage
+
         Args:
             nodes (list):
 
@@ -104,3 +105,19 @@ class Storage(DbInterface):
             return nodes
         except sqlite3.DatabaseError:
             return []
+
+    def save_port(self, port, commit=True):
+
+        try:
+            self.cursor.execute("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
+                                (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
+                                 time.time()))
+        except sqlite3.DatabaseError:
+            self.cursor.execute("CREATE TABLE ports (id int, ip text, port int, protocol int, time int,"
+                                "primary key (id, ip, port, protocol))")
+            self.conn.commit()
+
+            self.save_port(port, commit)
+
+        if commit:
+            self.conn.commit()
