@@ -98,3 +98,4 @@ hydra.restore
 paused.conf
 scan.txt
 .~lock*
+*.sqlite3
