@@ -120,3 +120,21 @@ class StorageTest(TestCase):
             self.assertEqual(expected[i][1], str(ports[i].node.ip))
             self.assertEqual(expected[i][2], ports[i].number)
             self.assertEqual(expected[i][3], ports[i].transport_protocol.iana)
+
+    def test_get_ports(self):
+        nodes = [Node(id=1, ip=ipaddress.ip_address('127.0.0.1')),
+                 Node(id=2, ip=ipaddress.ip_address('127.0.0.2')),
+                 Node(id=3, ip=ipaddress.ip_address('127.0.0.3'))]
+
+        ports = [Port(node=nodes[0], transport_protocol=TransportProtocol.TCP, number=5),
+                 Port(node=nodes[1], transport_protocol=TransportProtocol.UDP, number=65),
+                 Port(node=nodes[2], transport_protocol=TransportProtocol.ICMP, number=99),]
+
+        with self.storage as storage:
+            storage.save_ports(ports)
+
+            expected = storage.get_ports()
+
+            for i in range(3):
+                self.assertEqual(expected[i].node.ip, ports[i].node.ip)
+                self.assertEqual(expected[i].node.id, ports[i].node.id)

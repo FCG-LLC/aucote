@@ -7,7 +7,7 @@ import time
 
 from sqlite3 import Connection
 
-from structs import Node
+from structs import Node, Port, TransportProtocol
 from utils.database_interface import DbInterface
 
 
@@ -100,7 +100,7 @@ class Storage(DbInterface):
 
         nodes = []
         try:
-            for node in self.cursor.execute("SELECT * FROM nodes where time > ? GROUP BY ip", (timestamp,)).fetchall():
+            for node in self.cursor.execute("SELECT * FROM nodes where time > ?", (timestamp,)).fetchall():
                 nodes.append(Node(id=node[0], name=node[1], ip=ipaddress.ip_address(node[2])))
             return nodes
         except sqlite3.DatabaseError:
@@ -147,3 +147,22 @@ class Storage(DbInterface):
             self.save_port(port, False)
 
         self.conn.commit()
+
+    def get_ports(self, timestamp=None):
+        """
+        Returns all ports from local storage
+
+        Returns:
+            list
+
+        """
+        timestamp = timestamp or time.time() - 100
+
+        ports = []
+        try:
+            for port in self.cursor.execute("SELECT * FROM ports where time > ?", (timestamp,)).fetchall():
+                ports.append(Port(node=Node(id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
+                                  transport_protocol=TransportProtocol.from_iana(port[3])))
+            return ports
+        except sqlite3.DatabaseError:
+            return []
