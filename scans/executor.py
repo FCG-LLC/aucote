@@ -131,21 +131,15 @@ class Executor(object):
         topdis_nodes = self._get_nodes()
         storage_nodes = self.storage.get_nodes()
 
-        to_remove = set()
-
-        for node in topdis_nodes:
-            for st_node in storage_nodes:
-                if node.id == st_node.id and str(node.ip) == str(st_node.ip):
-                    to_remove.add(node)
-
-        for node in to_remove:
+        for node in storage_nodes:
             topdis_nodes.remove(node)
 
         return topdis_nodes
 
-    def _get_ports_for_scanning(self, ports, storage_ports):
+    @classmethod
+    def _get_ports_for_scanning(cls, ports, storage_ports):
         """
-        Diff ports for
+        Diff ports for scanning
 
         Args:
             ports (list):
@@ -156,17 +150,9 @@ class Executor(object):
 
         """
 
-        to_remove = set()
-
         ports = ports[:]
 
-        for port in ports:
-            for st_port in storage_ports:
-                if port.node.id == st_port.node.id and str(port.node.ip) == str(st_port.node.ip) and \
-                                port.number == st_port.number and port.transport_protocol == st_port.transport_protocol:
-                    to_remove.add(port)
-
-        for port in to_remove:
+        for port in storage_ports:
             ports.remove(port)
 
         return ports

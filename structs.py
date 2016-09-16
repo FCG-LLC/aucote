@@ -33,6 +33,21 @@ class Node:
         self.ip = ip
         self.id = id
 
+    def __eq__(self, other):
+        try:
+            return self.ip == other.ip and self.id == other.id
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        try:
+            return self.ip != other.ip or self.id != other.id
+        except AttributeError:
+            return True
+
+    def __hash__(self):
+        return hash("{id}_{ip}".format(id=self.id, ip=self.ip))
+
 
 class TransportProtocol(Enum):
     """
@@ -150,8 +165,26 @@ class Port(object):
         self.service_version = service_version
         self.banner = banner
 
+    def __eq__(self, other):
+        try:
+            return self.transport_protocol == other.transport_protocol and self.number == other.number \
+                   and self.node == other.node
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        try:
+            return self.transport_protocol != other.transport_protocol or self.number != other.number \
+                   or self.node != other.node
+        except AttributeError:
+            return True
+
+    def __hash__(self):
+        return hash("{protocol}:{number}:{node}".format(protocol=self.transport_protocol, number=self.number,
+                                                        node=hash(self.node)))
+
     def __str__(self):
-        return '%s:%s'%(self.node.ip, self.number)
+        return '%s:%s' % (self.node.ip, self.number)
 
 
 class Vulnerability(object):
