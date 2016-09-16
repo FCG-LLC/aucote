@@ -53,10 +53,10 @@ class Executor(object):
         ports = scanner.scan_ports(self.nodes)
         storage_ports = self.storage.get_ports(parse_period(cfg.get('service.scans.port_period')))
 
-        self.storage.save_ports(ports)
 
         ports = self._get_ports_for_scanning(ports, storage_ports)
         log.debug("Found %i recently not scanned ports", len(ports))
+        self.storage.save_ports(ports)
 
         for port in ports:
             port.scan = scan
