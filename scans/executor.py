@@ -17,6 +17,7 @@ from tools.masscan import MasscanPorts
 from utils.exceptions import TopdisConnectionException
 from utils.threads import ThreadPool
 from structs import Node, Scan
+from utils.time import parse_period
 
 
 class Executor(object):
@@ -38,8 +39,6 @@ class Executor(object):
         self.nodes = self._get_nodes()
         self.storage.save_nodes(self.nodes)
 
-        self.ports = self.storage.get_ports()
-
         self.task_mapper = TaskMapper(self)
         self._exploits = exploits
 
@@ -52,10 +51,11 @@ class Executor(object):
         scan.start = time.time()
         scanner = MasscanPorts(executor=self)
         ports = scanner.scan_ports(self.nodes)
+        storage_ports = self.storage.get_ports(parse_period(cfg.get('service.scans.port_period')))
 
         self.storage.save_ports(ports)
 
-        ports = self._get_ports_for_scanning(ports, self.ports)
+        ports = self._get_ports_for_scanning(ports, storage_ports)
         log.debug("Found %i recently not scanned ports", len(ports))
 
         for port in ports:

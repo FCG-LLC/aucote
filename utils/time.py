@@ -23,4 +23,4 @@ def parse_period(txt):
                 txt = txt[num+1:]
                 break
 
-    return timedelta(**values)
+    return timedelta(**values).total_seconds()

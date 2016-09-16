@@ -71,7 +71,6 @@ class AucoteTest(TestCase):
         self.assertRaises(NotImplementedError, run_service, MagicMock())
         self.assertEqual(mock_sched_enter.call_count, 3)
         self.assertEqual(mock_sched_run.call_count, 3)
-        mock_parse_period.return_value.total_seconds.assert_called_once_with()
 
     def check_service(self):
         if self._mock.call_count == 3:

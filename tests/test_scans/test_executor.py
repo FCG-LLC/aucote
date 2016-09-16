@@ -117,6 +117,7 @@ class ExecutorTest(TestCase):
         self.assertRaises(Exception, Executor._get_nodes)
 
     @patch('tools.masscan.MasscanPorts.scan_ports', MagicMock(return_value=[MagicMock()]))
+    @patch('scans.executor.parse_period', MagicMock(return_value=10))
     @patch('utils.threads.ThreadPool.stop')
     @patch('utils.threads.ThreadPool.join')
     @patch('utils.threads.ThreadPool.start')

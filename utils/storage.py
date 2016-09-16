@@ -88,7 +88,7 @@ class Storage(DbInterface):
 
         self.conn.commit()
 
-    def get_nodes(self, timestamp=None):
+    def get_nodes(self, pasttime=0):
         """
         Returns all nodes from local storage
 
@@ -96,7 +96,7 @@ class Storage(DbInterface):
             list
 
         """
-        timestamp = timestamp or time.time() - 900
+        timestamp = time.time() - pasttime
 
         nodes = []
         try:
@@ -148,7 +148,7 @@ class Storage(DbInterface):
 
         self.conn.commit()
 
-    def get_ports(self, timestamp=None):
+    def get_ports(self, pasttime=900):
         """
         Returns all ports from local storage
 
@@ -156,7 +156,7 @@ class Storage(DbInterface):
             list
 
         """
-        timestamp = timestamp or time.time() - 900
+        timestamp = time.time() - pasttime
 
         ports = []
         try:
