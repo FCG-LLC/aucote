@@ -138,3 +138,10 @@ class StorageTest(TestCase):
             for i in range(3):
                 self.assertEqual(expected[i].node.ip, ports[i].node.ip)
                 self.assertEqual(expected[i].node.id, ports[i].node.id)
+
+    def test_get_ports_exception(self):
+        self.storage._cursor = MagicMock()
+        self.storage._cursor.execute = MagicMock(side_effect=DatabaseError)
+
+        result = self.storage.get_ports()
+        self.assertEqual(result, [])
