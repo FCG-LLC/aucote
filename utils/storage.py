@@ -96,7 +96,7 @@ class Storage(DbInterface):
             list
 
         """
-        timestamp = timestamp or time.time() - 100
+        timestamp = timestamp or time.time() - 900
 
         nodes = []
         try:
@@ -156,7 +156,7 @@ class Storage(DbInterface):
             list
 
         """
-        timestamp = timestamp or time.time() - 100
+        timestamp = timestamp or time.time() - 900
 
         ports = []
         try:

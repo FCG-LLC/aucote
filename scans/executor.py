@@ -35,8 +35,10 @@ class Executor(object):
         self._kudu_queue = kudu_queue
         self.storage = storage
 
-        self.nodes = self._get_nodes_for_scanning()
+        self.nodes = self._get_nodes()
         self.storage.save_nodes(self.nodes)
+
+        self.ports = self.storage.get_ports()
 
         self.task_mapper = TaskMapper(self)
         self._exploits = exploits
@@ -50,6 +52,11 @@ class Executor(object):
         scan.start = time.time()
         scanner = MasscanPorts(executor=self)
         ports = scanner.scan_ports(self.nodes)
+
+        self.storage.save_ports(ports)
+
+        ports = self._get_ports_for_scanning(ports, self.ports)
+        log.debug("Found %i recently not scanned ports", len(ports))
 
         for port in ports:
             port.scan = scan
@@ -135,3 +142,20 @@ class Executor(object):
             topdis_nodes.remove(node)
 
         return topdis_nodes
+
+    def _get_ports_for_scanning(self, ports, storage_ports):
+
+        to_remove = set()
+
+        ports = ports[:]
+
+        for port in ports:
+            for st_port in storage_ports:
+                if port.node.id == st_port.node.id and str(port.node.ip) == str(st_port.node.ip) and \
+                                port.number == st_port.number and port.transport_protocol == st_port.transport_protocol:
+                    to_remove.add(port)
+
+        for port in to_remove:
+            ports.remove(port)
+
+        return ports

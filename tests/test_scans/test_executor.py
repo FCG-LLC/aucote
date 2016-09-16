@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 from urllib.error import URLError
 
 from scans import Executor
-from structs import Node
+from structs import Node, Port, TransportProtocol
 from utils.exceptions import TopdisConnectionException
 
 
@@ -148,5 +148,21 @@ class ExecutorTest(TestCase):
 
         result = self.executor._get_nodes_for_scanning()
         expected = [node_1]
+
+        self.assertListEqual(result, expected)
+
+    def test_get_ports_for_scanning(self):
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), id=1, name='test')
+        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), id=2, name='test_2')
+        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), id=3, name='test_3')
+
+        port_1 = Port(node=node_1, number=80, transport_protocol=TransportProtocol.TCP)
+        port_2 = Port(node=node_2, number=80, transport_protocol=TransportProtocol.TCP)
+        port_3 = Port(node=node_3, number=80, transport_protocol=TransportProtocol.TCP)
+
+        ports = [port_1, port_2, port_3]
+
+        result = self.executor._get_ports_for_scanning(ports, [port_2, port_3])
+        expected = [port_1]
 
         self.assertListEqual(result, expected)

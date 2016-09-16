@@ -76,7 +76,7 @@ class StorageTest(TestCase):
 
             expected = storage.get_nodes()
 
-            for i in range(3):
+            for i in range(len(expected)):
                 self.assertEqual(expected[i].ip, nodes[i].ip)
                 self.assertEqual(expected[i].name, nodes[i].name)
                 self.assertEqual(expected[i].id, nodes[i].id)
@@ -115,7 +115,7 @@ class StorageTest(TestCase):
 
             expected = storage.cursor.execute("SELECT * FROM ports").fetchall()
 
-        for i in range(3):
+        for i in range(len(expected)):
             self.assertEqual(expected[i][0], ports[i].node.id)
             self.assertEqual(expected[i][1], str(ports[i].node.ip))
             self.assertEqual(expected[i][2], ports[i].number)
