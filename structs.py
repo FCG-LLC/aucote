@@ -56,18 +56,11 @@ class TransportProtocol(Enum):
             name (str): string representation of transport protocol, eg. "tcp", "udp"
 
         Returns:
-<<<<<<< HEAD
             TransportProtocol object
 
         Raises:
             ValueError if not: tcp, udp or icmp
 
-=======
-            TransportProtocol
-
-        Raises: ValueError if not: tcp, udp or icmp
-
->>>>>>> dev
         """
         name = name.upper()
         for val in cls:

@@ -144,6 +144,17 @@ class Executor(object):
         return topdis_nodes
 
     def _get_ports_for_scanning(self, ports, storage_ports):
+        """
+        Diff ports for
+
+        Args:
+            ports (list):
+            storage_ports (list):
+
+        Returns:
+            list
+
+        """
 
         to_remove = set()
 
