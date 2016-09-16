@@ -53,20 +53,44 @@ class TransportProtocol(Enum):
         Create TransportProtocol object basing on string name
 
         Args:
-            name: string representation of transport protocol, eg. "tcp", "udp"
+            name (str): string representation of transport protocol, eg. "tcp", "udp"
 
         Returns:
+<<<<<<< HEAD
             TransportProtocol object
 
         Raises:
             ValueError if not: tcp, udp or icmp
 
+=======
+            TransportProtocol
+
+        Raises: ValueError if not: tcp, udp or icmp
+
+>>>>>>> dev
         """
         name = name.upper()
         for val in cls:
             if val.db_val == name:
                 return val
         raise ValueError('Invalid transport protocol name: %s'%name)
+
+    @classmethod
+    def from_iana(cls, number):
+        """
+        Create TransportProtocol object basing on protocol number
+
+        Args:
+            number (int): protocol number
+
+        Returns:
+            TransportProtocol
+
+        """
+        for val in cls:
+            if val.iana == number:
+                return val
+        raise ValueError('Invalid transport protocol number: %s' % number)
 
 
 class RiskLevel(Enum):
