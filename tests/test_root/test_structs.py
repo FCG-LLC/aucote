@@ -1,5 +1,6 @@
 import ipaddress
 from unittest import TestCase
+from unittest.mock import MagicMock
 
 from structs import RiskLevel, Node, Port
 from structs import TransportProtocol
@@ -48,6 +49,15 @@ class NodeTest(TestCase):
         self.assertNotEqual(node1, None)
         self.assertFalse(node1 == None)
 
+    def test_hash(self):
+        ip = MagicMock()
+        id = MagicMock()
+
+        expected = hash("{id}:{ip}".format(id=id, ip=ip))
+        result = hash(Node(ip=ip, id=id))
+
+        self.assertEqual(result, expected)
+
 
 class PortTest(TestCase):
     def test_ports_comparison_eq(self):
@@ -72,3 +82,14 @@ class PortTest(TestCase):
 
         self.assertNotEqual(port1, None)
         self.assertFalse(port1 == None)
+
+    def test_hash(self):
+        transport_protocol = MagicMock()
+        number = MagicMock()
+        node = MagicMock()
+
+        expected = hash("{protocol}:{number}:{node}".format(protocol=transport_protocol, number=number,
+                                                            node=hash(node)))
+        result = hash(Port(transport_protocol=transport_protocol, number=number, node=node))
+
+        self.assertEqual(result, expected)

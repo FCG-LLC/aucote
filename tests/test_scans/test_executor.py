@@ -141,7 +141,7 @@ class ExecutorTest(TestCase):
         node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), id=2, name='test_2')
         node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), id=3, name='test_3')
 
-        nodes = [node_1, node_2, node_3]
+        nodes = [node_1, node_2,]
 
         self.executor._get_nodes = MagicMock(return_value=nodes)
 
@@ -161,7 +161,7 @@ class ExecutorTest(TestCase):
         port_2 = Port(node=node_2, number=80, transport_protocol=TransportProtocol.TCP)
         port_3 = Port(node=node_3, number=80, transport_protocol=TransportProtocol.TCP)
 
-        ports = [port_1, port_2, port_3]
+        ports = [port_1, port_2]
 
         result = self.executor._get_ports_for_scanning(ports, [port_2, port_3])
         expected = [port_1]

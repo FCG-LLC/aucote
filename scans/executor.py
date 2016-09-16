@@ -132,7 +132,10 @@ class Executor(object):
         storage_nodes = self.storage.get_nodes()
 
         for node in storage_nodes:
-            topdis_nodes.remove(node)
+            try:
+                topdis_nodes.remove(node)
+            except ValueError:
+                continue
 
         return topdis_nodes
 
@@ -153,6 +156,9 @@ class Executor(object):
         ports = ports[:]
 
         for port in storage_ports:
-            ports.remove(port)
+            try:
+                ports.remove(port)
+            except ValueError:
+                continue
 
         return ports

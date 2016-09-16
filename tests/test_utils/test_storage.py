@@ -74,7 +74,7 @@ class StorageTest(TestCase):
         with self.storage as storage:
             storage.save_nodes(nodes)
 
-            expected = storage.get_nodes()
+            expected = storage.get_nodes(1000)
 
             for i in range(len(expected)):
                 self.assertEqual(expected[i].ip, nodes[i].ip)
@@ -85,7 +85,7 @@ class StorageTest(TestCase):
         self.storage._cursor = MagicMock()
         self.storage._cursor.execute = MagicMock(side_effect=DatabaseError)
 
-        result = self.storage.get_nodes()
+        result = self.storage.get_nodes(1000)
         self.assertEqual(result, [])
 
     def test_save_port(self):
@@ -133,7 +133,7 @@ class StorageTest(TestCase):
         with self.storage as storage:
             storage.save_ports(ports)
 
-            expected = storage.get_ports()
+            expected = storage.get_ports(1000)
 
             for i in range(3):
                 self.assertEqual(expected[i].node.ip, ports[i].node.ip)
@@ -143,5 +143,5 @@ class StorageTest(TestCase):
         self.storage._cursor = MagicMock()
         self.storage._cursor.execute = MagicMock(side_effect=DatabaseError)
 
-        result = self.storage.get_ports()
+        result = self.storage.get_ports(1000)
         self.assertEqual(result, [])

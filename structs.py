@@ -46,7 +46,7 @@ class Node:
             return True
 
     def __hash__(self):
-        return hash("{id}_{ip}".format(id=self.id, ip=self.ip))
+        return hash("{id}:{ip}".format(id=self.id, ip=self.ip))
 
 
 class TransportProtocol(Enum):

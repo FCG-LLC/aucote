@@ -43,6 +43,7 @@ kuduworker:
 #                     Period should be set up in special format:
 #                     <int>d<int>h<int>m<int>s, where letters mean: days, hours, minutes, seconds
 #     ports: <str> - Port range in format suit to the used tool eg. T:0-65535 for nmap/masscan
+        port_period: 15m
 
 service:
     scans:
