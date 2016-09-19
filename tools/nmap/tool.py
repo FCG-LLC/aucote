@@ -13,7 +13,7 @@ class NmapTool(Tool):
 
     """
 
-    def __call__(self, *args, **kwargs):
+    def call(self, *args, **kwargs):
         """
         Prepares nmap args, executes and manages nmap scripts.
 

@@ -30,6 +30,20 @@ class Tool(object):
     def __call__(self, *args, **kwargs):
         """
         Called by task managers
+
+        """
+        self.call(*args, **kwargs)
+
+    def call(self, *args, **kwargs):
+        """
+        It is main call for executor. Should be override by inherits classes
+
+        Args:
+            *args:
+            **kwargs:
+
+        Returns:
+
         """
         raise NotImplementedError
 
