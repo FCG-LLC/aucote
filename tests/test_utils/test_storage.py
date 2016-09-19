@@ -4,7 +4,7 @@ from unittest import TestCase
 from sqlite3 import Connection, DatabaseError
 
 from sqlite3 import connect
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
 from structs import Node, Port, TransportProtocol
@@ -146,3 +146,48 @@ class StorageTest(TestCase):
 
         result = self.storage.get_ports(1000)
         self.assertEqual(result, [])
+
+    def test_save_scan(self):
+        exploit = Exploit()
+        exploit.id = 14
+        exploit.name = 'test_name'
+        exploit.app = 'test_app'
+
+        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), id=3), number=12,
+                    transport_protocol=TransportProtocol.TCP)
+
+        start_scan = 17
+
+        with Storage(":memory:") as storage:
+            storage.save_scan(exploit=exploit, port=port, start_scan=start_scan)
+
+            result = storage.cursor.execute("SELECT * FROM scans").fetchall()
+
+        self.assertEqual(result[0][0], exploit.id)
+        self.assertEqual(result[0][1], exploit.app)
+        self.assertEqual(result[0][2], exploit.name)
+        self.assertEqual(result[0][3], port.node.id)
+        self.assertEqual(result[0][4], str(port.node.ip))
+        self.assertEqual(result[0][5], port.transport_protocol.iana)
+        self.assertEqual(result[0][6], port.number)
+        self.assertEqual(result[0][7], start_scan)
+        self.assertEqual(result[0][8], None)
+
+    def test_save_scan_without_changing_start_scan(self):
+        exploit = Exploit()
+        exploit.id = 14
+        exploit.name = 'test_name'
+        exploit.app = 'test_app'
+
+        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), id=3), number=12,
+                    transport_protocol=TransportProtocol.TCP)
+
+        start_scan = 17
+
+        with Storage(":memory:") as storage:
+            storage.save_scan(exploit=exploit, port=port, start_scan=start_scan)
+            storage.save_scan(exploit=exploit, port=port, finish_scan=start_scan)
+
+            result = storage.cursor.execute("SELECT * FROM scans").fetchall()
+
+        self.assertEqual(result[0][7], start_scan)
