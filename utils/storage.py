@@ -5,8 +5,6 @@ import ipaddress
 import sqlite3
 import time
 
-from sqlite3 import Connection
-
 from structs import Node, Port, TransportProtocol
 from utils.database_interface import DbInterface
 
@@ -34,7 +32,7 @@ class Storage(DbInterface):
         self._cursor = self.conn.cursor()
 
     def close(self):
-        assert isinstance(self.conn, Connection)
+        assert isinstance(self.conn, sqlite3.Connection)
         self.conn.close()
         self.conn = None
         self._cursor = None
@@ -199,8 +197,8 @@ class Storage(DbInterface):
             if finish_scan:
                 self.cursor.execute("UPDATE scans SET finish_scan = ? WHERE exploit_id=? AND exploit_app=? AND "
                                     "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                    (finish_scan, exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
-                                     port.transport_protocol.iana, port.number))
+                                    (finish_scan, exploit.id, exploit.app, exploit.name, port.node.id,
+                                     str(port.node.ip), port.transport_protocol.iana, port.number))
 
         except sqlite3.DatabaseError:
             self.cursor.execute("CREATE TABLE scans (exploit_id int, exploit_app text, exploit_name text, node_id int,"

@@ -16,8 +16,8 @@ from tools.nmap.tasks.port_info import NmapPortInfoTask
 from tools.masscan import MasscanPorts
 from utils.exceptions import TopdisConnectionException
 from utils.threads import ThreadPool
-from structs import Node, Scan
 from utils.time import parse_period
+from structs import Node, Scan
 
 
 class Executor(object):
