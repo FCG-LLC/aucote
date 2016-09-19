@@ -34,4 +34,5 @@ class ToolTest(TestCase):
         expected =  {"key": []}
         mock_cfg.return_value.cfg = expected
         result = Tool.get_config('key')
+
         self.assertEqual(result, expected)

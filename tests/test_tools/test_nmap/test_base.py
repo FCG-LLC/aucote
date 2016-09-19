@@ -22,6 +22,7 @@ class NmapScriptTest(TestCase):
     <script output="">
     </script>
     '''
+
     def setUp(self):
         self.port = Mock()
         self.exploit = Mock()
@@ -42,8 +43,9 @@ class VulnNmapScriptTest(TestCase):
         script.find.return_value = None
 
         result = self.script.get_result(script)
+        expected = None
 
-        self.assertEqual(result, None)
+        self.assertEqual(result, expected)
 
     def test_get_result_not_vulnerable(self):
         state = MagicMock()
@@ -54,8 +56,9 @@ class VulnNmapScriptTest(TestCase):
         script.find.return_value = state
 
         result = self.script.get_result(script)
+        expected = None
 
-        self.assertEqual(result, None)
+        self.assertEqual(result, expected)
 
     def test_get_result_vulnerable(self):
         state = MagicMock()
@@ -65,9 +68,11 @@ class VulnNmapScriptTest(TestCase):
         script = MagicMock()
         script.find.return_value = table
         script.get = MagicMock(return_value='  test   ')
-        result = self.script.get_result(script)
 
-        self.assertEqual(result, 'test')
+        result = self.script.get_result(script)
+        expected = 'test'
+
+        self.assertEqual(result, expected)
 
 
 class InfoNmapScriptTest(TestCase):
@@ -82,6 +87,8 @@ class InfoNmapScriptTest(TestCase):
     def test_get_result_vulnerable(self):
         script = MagicMock()
         script.get = MagicMock(return_value='  test   ')
-        result = self.script.get_result(script)
 
-        self.assertEqual(result, 'test')
+        result = self.script.get_result(script)
+        expected = 'test'
+
+        self.assertEqual(result, expected)

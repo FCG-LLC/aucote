@@ -44,16 +44,17 @@ class SerializerTest(TestCase):
 
     def test_vulnerability_serializer(self):
 
-        msg = self.serializer.serialize_port_vuln(self.vuln.port, self.vuln)
+        result = self.serializer.serialize_port_vuln(self.vuln.port, self.vuln).data
+        expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
+                             b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
+                             b'\x00\x00\x04\x00Test\x01\x00\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00')
 
-        self.assertEqual(msg.data, bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00'
-                                              b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00'
-                                              b'\x00\x00\x06\xe7\xfb\xf2\x93V\x01\x00\x00\x04\x00Test\x01\x00\x00\x00'
-                                              b'\xe7\xfb\xf2\x93V\x01\x00\x00'))
+        self.assertEqual(result, expected)
 
     def test_serialize_exploit(self):
 
-        msg = self.serializer.serialize_exploit(self.exploit)
+        result = self.serializer.serialize_exploit(self.exploit).data
+        expected = b'\x01\x00\x01\x00\x00\x00\x08\x00test_app\t\x00test_name\n\x00test_title\x10\x00test_description' \
+                   b'\x03'
 
-        self.assertEqual(msg.data, bytearray(b'\x01\x00\x01\x00\x00\x00\x08\x00test_app\t\x00test_name\n\x00test_title'
-                                              b'\x10\x00test_description\x03'))
+        self.assertEqual(result, expected)

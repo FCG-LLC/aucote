@@ -99,10 +99,13 @@ class SkipfishIssuesTest(TestCase):
     def test_bool(self):
         self.issues.add(self.data[0])
         self.assertFalse(False or self.issues)
+
         self.issues.add(self.data[1])
         self.assertFalse(False or self.issues)
+
         self.issues.add(self.data[2])
         self.assertTrue(False or self.issues)
+
         self.issues.add(self.data[3])
         self.assertTrue(False or self.issues)
 

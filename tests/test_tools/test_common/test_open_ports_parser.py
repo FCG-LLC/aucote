@@ -22,7 +22,7 @@ class OpenPortsParserTest(unittest.TestCase):
 </runstats>
 </nmaprun>
 """
-    MASSSCAN_OUTPUT = ET.fromstring(MASSSCAN_OUTPUT_XML)
+    MASSCAN_OUTPUT = ET.fromstring(MASSSCAN_OUTPUT_XML)
 
     def setUp(self):
         self.parser = OpenPortsParser()
@@ -32,7 +32,7 @@ class OpenPortsParserTest(unittest.TestCase):
         self.node_by_ip = {self.node.ip: self.node}
 
     def test_parse_masscan(self):
-        ports = self.parser.parse(self.MASSSCAN_OUTPUT, self.node_by_ip)
+        ports = self.parser.parse(self.MASSCAN_OUTPUT, self.node_by_ip)
 
         self.assertEqual(len(ports), 2)
 

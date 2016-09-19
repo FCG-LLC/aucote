@@ -41,12 +41,16 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
 
     def test_call_wihout_output(self):
         self.hydra_script_task.call = MagicMock(return_value=None)
+
         result = self.hydra_script_task()
-        self.hydra_script_task.executor._kudu_queue = MagicMock()
-        self.assertEqual(result, None)
+        expected = None
+
+        self.assertEqual(result, expected)
 
     def test_call_exception(self):
         self.hydra_script_task.call = MagicMock(side_effect=subprocess.CalledProcessError(MagicMock(), MagicMock()))
-        result = self.hydra_script_task()
 
-        self.assertEqual(result, None)
+        result = self.hydra_script_task()
+        expected = None
+
+        self.assertEqual(result, expected)

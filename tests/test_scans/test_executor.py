@@ -77,7 +77,6 @@ class ExecutorTest(TestCase):
         self.urllib_response = MagicMock()
         self.urllib_response.read = MagicMock()
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
-
         self.urllib_response.headers.get_content_charset = MagicMock(return_value='utf-8')
 
     @patch('scans.executor.Executor._get_nodes')
@@ -85,8 +84,8 @@ class ExecutorTest(TestCase):
         return_value = 'Test'
         mock_get_nodes.return_value=return_value
         executor = Executor(kudu_queue=MagicMock(), exploits=MagicMock())
-        mock_get_nodes.assert_called_once_with()
 
+        mock_get_nodes.assert_called_once_with()
         self.assertEqual(executor.nodes, return_value)
 
     @patch('urllib.request.urlopen')
@@ -124,6 +123,7 @@ class ExecutorTest(TestCase):
 
         self.executor._get_nodes = MagicMock()
         self.executor.run()
+
         self.assertEqual(mock_start.call_count, 1)
         self.assertEqual(mock_join.call_count, 1)
         self.assertEqual(mock_stop.call_count,1)

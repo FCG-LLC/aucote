@@ -17,15 +17,42 @@ class Scan(object):
 class Node:
     """
     Node object consist of name, id and ip
+
     """
-    name = None
-    ip = None
-    id = None
+
+    def __init__(self, name=None, ip=None, node_id=None):
+        """
+        Init values
+        Args:
+            name (str):
+            ip (IPv4Address):
+            node_id (int):
+
+        """
+        self.name = name
+        self.ip = ip
+        self.id = node_id
+
+    def __eq__(self, other):
+        try:
+            return self.ip == other.ip and self.id == other.id
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        try:
+            return self.ip != other.ip or self.id != other.id
+        except AttributeError:
+            return True
+
+    def __hash__(self):
+        return hash("{id}:{ip}".format(id=self.id, ip=self.ip))
 
 
 class TransportProtocol(Enum):
     """
     Transport protocol object consist of db_val and IANA val
+
     """
     def __init__(self, db_val, iana):
         self.db_val = db_val
@@ -44,9 +71,10 @@ class TransportProtocol(Enum):
             name (str): string representation of transport protocol, eg. "tcp", "udp"
 
         Returns:
-            TransportProtocol
+            TransportProtocol object
 
-        Raises: ValueError if not: tcp, udp or icmp
+        Raises:
+            ValueError if not: tcp, udp or icmp
 
         """
         name = name.upper()
@@ -76,6 +104,7 @@ class TransportProtocol(Enum):
 class RiskLevel(Enum):
     """
     Risk level object
+
     """
     def __init__(self, txt, number):
         self.txt = txt
@@ -90,12 +119,16 @@ class RiskLevel(Enum):
     def from_name(cls, name):
         """
         Create RiskLevel object basing on string name
+
         Args:
             name: string representation of risk level, eg. "medium"
 
-        Returns: RiskLevel object
+        Returns:
+            RiskLevel object
 
-        Raises: ValueError if not: High, Medium, Low or None
+        Raises:
+            ValueError if not: High, Medium, Low or None
+
         """
         for val in cls:
             if val.txt == name:
@@ -106,28 +139,59 @@ class RiskLevel(Enum):
 class Port(object):
     """
     Port object
+
     """
     TABLE = 'ports'
 
-    def __init__(self):
+    def __init__(self, node=None, number=None, transport_protocol=None, service_name=None, service_version=None,
+                 banner=None):
+        """
+
+        Args:
+            node (Node):
+            number (int):
+            transport_protocol (TransportProtocol):
+            service_name (str):
+            service_version (str):
+            banner (str):
+
+        """
         self.vulnerabilities = []
         self.when_discovered = time.time()
+        self.node = node
+        self.number = number
+        self.transport_protocol = transport_protocol
+        self.service_name = service_name
+        self.service_version = service_version
+        self.banner = banner
+        self.scan = None
 
-    node = None
-    number = None
-    transport_protocol = None
-    service_name = None
-    service_version = None
-    banner = None
-    when_discovered = None
+    def __eq__(self, other):
+        try:
+            return self.transport_protocol == other.transport_protocol and self.number == other.number \
+                   and self.node == other.node
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        try:
+            return self.transport_protocol != other.transport_protocol or self.number != other.number \
+                   or self.node != other.node
+        except AttributeError:
+            return True
+
+    def __hash__(self):
+        return hash("{protocol}:{number}:{node}".format(protocol=self.transport_protocol, number=self.number,
+                                                        node=hash(self.node)))
 
     def __str__(self):
-        return '%s:%s'%(self.node.ip, self.number)
+        return '%s:%s' % (self.node.ip, self.number)
 
 
 class Vulnerability(object):
     """
     Vulnerability object
+
     """
     def __init__(self, exploit=None, port=None, output=None):
         """
