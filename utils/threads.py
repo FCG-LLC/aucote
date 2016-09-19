@@ -25,6 +25,7 @@ class ThreadPool(object):
     def add_task(self, task):
         """
         Add thread task to queue
+
         """
         self._queue.put(task)
 

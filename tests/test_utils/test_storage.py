@@ -6,6 +6,7 @@ from sqlite3 import Connection, DatabaseError
 from sqlite3 import connect
 from unittest.mock import MagicMock
 
+from fixtures.exploits import Exploit
 from structs import Node, Port, TransportProtocol
 from utils.storage import Storage
 

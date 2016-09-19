@@ -8,9 +8,15 @@ from scans.executor_config import EXECUTOR_CONFIG
 class TaskMapper:
     """
     Assign tasks for a provided port
+
     """
 
     def __init__(self, executor):
+        """
+        Args:
+            executor (Executor): tasks executor
+
+        """
         self._executor = executor
 
     def assign_tasks(self, port):
