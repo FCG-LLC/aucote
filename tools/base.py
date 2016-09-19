@@ -4,6 +4,7 @@ Defines abstract Tool class
 """
 from aucote_cfg import cfg
 from utils.exceptions import ImproperConfigurationException
+from utils.storage import Storage
 
 
 class Tool(object):
@@ -32,6 +33,7 @@ class Tool(object):
         Called by task managers
 
         """
+        self.store_scan_info()
         self.call(*args, **kwargs)
 
     def call(self, *args, **kwargs):
@@ -46,6 +48,12 @@ class Tool(object):
 
         """
         raise NotImplementedError
+
+    def store_scan_info(self):
+        with Storage(filename=self.executor.storage.filename) as storage:
+            for exploit in self.exploits:
+                storage.save_scan(exploit=exploit, port=self.port, start_scan=self.port.scan.start)
+
 
     @classmethod
     def get_config(cls, key):

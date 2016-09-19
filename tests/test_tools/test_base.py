@@ -8,6 +8,7 @@ from utils.exceptions import ImproperConfigurationException
 class ToolTest(TestCase):
     def setUp(self):
         self.executor = MagicMock()
+        self.executor.storage.filename = ":memory:"
         self.exploits = MagicMock()
         self.config = MagicMock()
         self.port = MagicMock()

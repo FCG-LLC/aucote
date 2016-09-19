@@ -164,6 +164,7 @@ class Port(object):
         self.service_name = service_name
         self.service_version = service_version
         self.banner = banner
+        self.scan = None
 
     def __eq__(self, other):
         try:

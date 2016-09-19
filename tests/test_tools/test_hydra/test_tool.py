@@ -7,6 +7,7 @@ from tools.hydra.tool import HydraTool
 
 
 class HydraToolTest(TestCase):
+
     def setUp(self):
         self.exploit = Exploit()
         self.exploit.name = 'hydra'
