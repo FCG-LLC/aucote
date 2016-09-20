@@ -6,6 +6,8 @@ from xml.etree.ElementTree import Element
 from tools.common import Command
 from tools.common.command import CommandXML
 from utils.exceptions import NonXMLOutputException
+from utils.storage import Storage
+
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
 class CommandTest(TestCase):
@@ -19,7 +21,7 @@ class CommandTest(TestCase):
         '''
 
     def setUp(self):
-        self.executor = MagicMock()
+        self.executor = MagicMock(storage=Storage(":memory:"))
         self.command = Command(executor=self.executor)
         self.command.COMMON_ARGS = []
 
@@ -34,6 +36,23 @@ class CommandTest(TestCase):
     @patch('subprocess.check_output', MagicMock(side_effect=subprocess.CalledProcessError(returncode=1, cmd='masscan')))
     def test_stderr(self):
         self.assertRaises(subprocess.CalledProcessError, self.command.call)
+
+    @patch('tools.common.command.Storage')
+    @patch('tools.common.command.time.time')
+    def test_store_scan_end_info(self, mock_time, mock_storage):
+        port = MagicMock()
+
+        self.command.executor.exploits = range(5)
+        self.command.store_scan_end_info(port)
+
+        result = mock_storage.return_value.__enter__.return_value.save_scan.call_args_list
+
+        self.assertEqual(len(result), 5)
+
+        for exploit in self.command.executor.exploits:
+            self.assertEqual(result[exploit][1]['exploit'], exploit)
+            self.assertEqual(result[exploit][1]['port'], port)
+            self.assertEqual(result[exploit][1]['finish_scan'], mock_time.return_value)
 
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))

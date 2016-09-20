@@ -3,9 +3,11 @@ from xml.etree import ElementTree
 import logging as log
 from aucote_cfg import cfg
 import subprocess
+import time
 
 from database.serializer import Serializer
 from utils.exceptions import NonXMLOutputException
+from utils.storage import Storage
 from utils.task import Task
 
 
@@ -42,6 +44,11 @@ class Command(Task):
         log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
         msg = Serializer.serialize_port_vuln(vuln.port, vuln)
         self.kudu_queue.send_msg(msg)
+
+    def store_scan_end_info(self, port):
+        with Storage(filename=self.executor.storage.filename) as storage:
+            for exploit in self.exploits:
+                storage.save_scan(exploit=exploit, port=port, finish_scan=time.time())
 
 
 class CommandXML(Command):
