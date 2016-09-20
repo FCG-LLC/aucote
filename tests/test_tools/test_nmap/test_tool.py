@@ -50,7 +50,6 @@ class NmapToolTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_enable(self):
-        self.nmap_tool.executor = MagicMock()
         self.exploit2.name = 'test_name2'
         self.nmap_tool()
 
@@ -60,7 +59,6 @@ class NmapToolTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_single_mode(self):
-        self.nmap_tool.executor = MagicMock()
         self.nmap_tool.config['services']['test_name']['singular'] = True
         self.exploit2.name = 'test_name2'
         self.nmap_tool()
