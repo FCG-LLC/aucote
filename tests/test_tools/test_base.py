@@ -37,3 +37,6 @@ class ToolTest(TestCase):
         result = Tool.get_config('key')
 
         self.assertEqual(result, expected)
+
+    def test_filter_out_exploits(self):
+        pass

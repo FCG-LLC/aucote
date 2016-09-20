@@ -33,6 +33,7 @@ class Tool(object):
         Called by task managers
 
         """
+        self.filter_out_exploits()
         self.store_scan_info()
         self.call(*args, **kwargs)
 
@@ -53,6 +54,15 @@ class Tool(object):
         with Storage(filename=self.executor.storage.filename) as storage:
             for exploit in self.exploits:
                 storage.save_scan(exploit=exploit, port=self.port, start_scan=self.port.scan.start)
+
+    def filter_out_exploits(self):
+        """
+        Filters out exploits which shouldn't be executed
+
+        Returns:
+            None
+        """
+        pass
 
 
     @classmethod
