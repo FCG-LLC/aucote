@@ -9,9 +9,18 @@ import time
 class Scan(object):
     """
     Scan object
+
     """
-    start = None
-    end = None
+
+    def __init__(self, start=None, end=None):
+        """
+        Args:
+            start (int|float): start scan time
+            end (int|float): end scan time
+
+        """
+        self.start = start
+        self.end = end
 
 
 class Node:

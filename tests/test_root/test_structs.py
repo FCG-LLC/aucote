@@ -2,7 +2,7 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from structs import RiskLevel, Node, Port
+from structs import RiskLevel, Node, Port, Scan
 from structs import TransportProtocol
 
 
@@ -93,3 +93,14 @@ class PortTest(TestCase):
         result = hash(Port(transport_protocol=transport_protocol, number=number, node=node))
 
         self.assertEqual(result, expected)
+
+
+class ScanTest(TestCase):
+    def setUp(self):
+        self.start = 13
+        self.end = 14.6
+        self.scan = Scan(start=self.start, end=self.end)
+
+    def test_init(self):
+        self.assertEqual(self.scan.start, self.start)
+        self.assertEqual(self.scan.end, self.end)
