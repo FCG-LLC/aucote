@@ -34,9 +34,8 @@ class Node:
         """
         Init values
         Args:
-            name (str):
-            ip (IPv4Address):
             node_id (int):
+            ip (IPv4Address):
 
         """
         self.name = None
@@ -159,9 +158,6 @@ class Port(object):
             node (Node):
             number (int):
             transport_protocol (TransportProtocol):
-            service_name (str):
-            service_version (str):
-            banner (str):
 
         """
         self.vulnerabilities = []
