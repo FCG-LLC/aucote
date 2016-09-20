@@ -50,9 +50,10 @@ class Tool(object):
         raise NotImplementedError
 
     def store_scan_info(self):
-        with Storage(filename=self.executor.storage.filename) as storage:
-            for exploit in self.exploits:
-                storage.save_scan(exploit=exploit, port=self.port, start_scan=self.port.scan.start)
+        pass
+        # with Storage(filename=self.executor.storage.filename) as storage:
+        #     for exploit in self.exploits:
+        #         storage.save_scan(exploit=exploit, port=self.port, start_scan=self.port.scan.start)
 
 
     @classmethod

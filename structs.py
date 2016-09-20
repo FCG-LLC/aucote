@@ -20,18 +20,18 @@ class Node:
 
     """
 
-    def __init__(self, name=None, ip=None, id=None):
+    def __init__(self, name=None, ip=None, node_id=None):
         """
         Init values
         Args:
             name (str):
             ip (IPv4Address):
-            id (int):
+            node_id (int):
 
         """
         self.name = name
         self.ip = ip
-        self.id = id
+        self.id = node_id
 
     def __eq__(self, other):
         try:

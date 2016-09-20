@@ -132,6 +132,7 @@ function H(str) { return str.replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
         self.assertEqual(result, 'test')
         self.parser._parse_index.assert_called_once_with()
         self.parser._parse_samples.assert_called_once_with()
+
         rmtree_mock.assert_called_once_with('test_dir')
 
 

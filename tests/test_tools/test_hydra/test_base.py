@@ -7,9 +7,9 @@ from tools.hydra.structs import HydraResults
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
 class HydraBasetest(TestCase):
-    '''
+    """
     Test Hydra executing
-    '''
+    """
     OUTPUT_SUCCESSFUL = b'''Hydra v8.2 (c) 2016 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
 
 Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 14:19:36
@@ -32,16 +32,16 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:20:21'''
         self.hydra = HydraBase(executor=self.executor)
 
     def test_init(self):
-        '''
+        """
         Test if executor set up properly
-        '''
+        """
         self.assertEqual(self.hydra.executor, self.executor)
 
     @patch('subprocess.check_output', MagicMock(return_value=OUTPUT_SUCCESSFUL))
     def test_success(self):
-        '''
+        """
         Test with successful output
-        '''
-        self.hydra_result = self.hydra.call()
+        """
+        result = self.hydra.call()
 
-        self.assertIsInstance(self.hydra_result, HydraResults)
+        self.assertIsInstance(result, HydraResults)

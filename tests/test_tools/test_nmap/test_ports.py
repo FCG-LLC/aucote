@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 from xml.etree import ElementTree
 
+from structs import Node
 from tools.nmap.ports import PortsScan
 
 
@@ -42,8 +43,7 @@ class PortScanTest(TestCase):
         self.executor = MagicMock()
         self.kudu_queue = MagicMock()
         self.scanner = PortsScan(executor=self.executor)
-        node = MagicMock
-        node.ip = ipaddress.ip_address('192.168.1.5')
+        node = Node(ip = ipaddress.ip_address('192.168.1.5'))
         self.nodes = [node]
 
     def test_scan_ports(self):

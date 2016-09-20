@@ -80,7 +80,6 @@ class ExecutorTest(TestCase):
         self.urllib_response = MagicMock()
         self.urllib_response.read = MagicMock()
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
-
         self.urllib_response.headers.get_content_charset = MagicMock(return_value='utf-8')
 
     @patch('scans.executor.Executor._get_nodes')
@@ -88,8 +87,8 @@ class ExecutorTest(TestCase):
         return_value = 'Test'
         mock_get_nodes.return_value=return_value
         executor = Executor(kudu_queue=MagicMock(), exploits=MagicMock(), storage=MagicMock())
-        mock_get_nodes.assert_called_once_with()
 
+        mock_get_nodes.assert_called_once_with()
         self.assertEqual(executor.nodes, return_value)
 
     @patch('urllib.request.urlopen')
@@ -128,6 +127,7 @@ class ExecutorTest(TestCase):
 
         self.executor._get_nodes = MagicMock()
         self.executor.run()
+
         self.assertEqual(mock_start.call_count, 1)
         self.assertEqual(mock_join.call_count, 1)
         self.assertEqual(mock_stop.call_count,1)
@@ -137,9 +137,9 @@ class ExecutorTest(TestCase):
         self.assertEqual(self.executor.kudu_queue, self.executor._kudu_queue)
 
     def test_get_nodes_for_scanning(self):
-        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), id=1, name='test')
-        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), id=2, name='test_2')
-        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), id=3, name='test_3')
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1, name='test')
+        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2, name='test_2')
+        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3, name='test_3')
 
         nodes = [node_1, node_2,]
 
@@ -153,9 +153,9 @@ class ExecutorTest(TestCase):
         self.assertListEqual(result, expected)
 
     def test_get_ports_for_scanning(self):
-        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), id=1, name='test')
-        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), id=2, name='test_2')
-        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), id=3, name='test_3')
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1, name='test')
+        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2, name='test_2')
+        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3, name='test_3')
 
         port_1 = Port(node=node_1, number=80, transport_protocol=TransportProtocol.TCP)
         port_2 = Port(node=node_2, number=80, transport_protocol=TransportProtocol.TCP)

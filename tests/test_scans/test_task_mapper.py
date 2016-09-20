@@ -54,6 +54,7 @@ class TaskMapperTest(unittest.TestCase):
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=True))
     def test_app_running(self):
         self.task_mapper.assign_tasks(self.UDP)
+
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 1)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 1)
 
@@ -61,6 +62,7 @@ class TaskMapperTest(unittest.TestCase):
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
     def test_disable_all_app_running(self):
         self.task_mapper.assign_tasks(self.UDP)
+
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 0)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 0)
 
@@ -68,9 +70,6 @@ class TaskMapperTest(unittest.TestCase):
     @patch('aucote_cfg.cfg.get', MagicMock(side_effect=(False, True)))
     def test_disable_first_app_running(self):
         self.task_mapper.assign_tasks(self.UDP)
-        print(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count)
-        print(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count)
-        print(self.executor.exploits.find_all_matching.return_value)
-        print(self.exploits)
+
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 0)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 1)

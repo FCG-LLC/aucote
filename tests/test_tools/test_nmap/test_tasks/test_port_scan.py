@@ -1,3 +1,4 @@
+import ipaddress
 import unittest
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
@@ -7,7 +8,6 @@ from fixtures.exploits import Exploits
 from structs import Port, TransportProtocol, Node, Vulnerability
 from tools.nmap.base import InfoNmapScript, VulnNmapScript
 
-# TODO: This tests are complicated because of nesting and many mocking. Should be refactored.
 from tools.nmap.tasks.port_scan import NmapPortScanTask
 
 
@@ -89,34 +89,23 @@ class NmapPortScanTaskTest(unittest.TestCase):
         """
         self.executor = MagicMock()
 
-        self.exploit = Exploit()
-        self.exploit.app = 'nmap'
-        self.exploit.name = 'test'
-
-        self.exploit_vuln_non_exist = Exploit()
-        self.exploit_vuln_non_exist.app = 'nmap'
-        self.exploit_vuln_non_exist.name = 'test2'
-
+        self.exploit = Exploit(app='nmap', name='test')
+        self.exploit_vuln_non_exist = Exploit(app='nmap', name='test2')
         self.exploits = Exploits()
         self.exploits.add(self.exploit)
 
-        self.port = Port()
-        self.port.node = Node()
-        self.port.node.ip = '127.0.0.1'
+        self.port = Port(number=22, service_name='ssh', transport_protocol=TransportProtocol.TCP)
+        self.port.node = Node(ip=ipaddress.ip_address('127.0.0.1'))
 
         self.script = InfoNmapScript(port=self.port, exploit=self.exploit, name='test', args='test_args')
+        self.script.get_result = MagicMock(return_value='test')
         self.script2 = VulnNmapScript(port=self.port, exploit=self.exploit_vuln_non_exist, name='test2',
                                       args='test_args')
-
-        self.vulnerability = Vulnerability()
-        self.script.get_result = MagicMock(return_value=self.vulnerability)
-
-        self.port.transport_protocol = TransportProtocol.TCP
-        self.port.number = 22
-        self.port.service_name = 'ssh'
-
         self.scan_task = NmapPortScanTask(executor=self.executor, port=self.port,
                                           script_classes=[self.script, self.script2])
+
+        self.scan_task.call = MagicMock()
+        self.scan_task.call.return_value = ElementTree.fromstring(self.XML)
 
     def test_init(self):
         self.assertEqual(self.scan_task.executor, self.executor)
@@ -127,42 +116,37 @@ class NmapPortScanTaskTest(unittest.TestCase):
         """
         Test TCP scanning
         """
-        self.scan_task.call = MagicMock(side_effect=self.check_args_tcp)
         self.scan_task()
 
-    def check_args_tcp(self, args):
-        """
-        Check if script is executing with proper arguments
-        """
+        result = self.scan_task.call.call_args[1]['args']
 
-        self.assertIn('22', args)
-        return self.check_args(args)
-
-    def check_args(self, args):
-        self.assertIn('-sV', args)
-        self.assertIn('--script', args)
-        self.assertIn(self.script.name, args)
-        self.assertIn('--script-args', args)
-        self.assertIn(self.script.args, args)
-        self.assertIn(self.port.node.ip, args)
-        self.assertIn('-p', args)
-
-        return ElementTree.fromstring(self.XML)
+        self.assertIn('-sV', result)
+        self.assertIn('--script', result)
+        self.assertIn(self.script.name, result)
+        self.assertIn('--script-args', result)
+        self.assertIn(self.script.args, result)
+        self.assertIn(str(self.port.node.ip), result)
+        self.assertIn('-p', result)
+        self.assertIn('22', result)
 
     def test_udp_scan(self):
         """
         Test UDP scanning
         """
         self.scan_task._port.transport_protocol = TransportProtocol.UDP
-        self.scan_task.call = MagicMock(side_effect=self.check_args_udp)
         self.scan_task()
 
-    def check_args_udp(self, args):
-        """
-        Check if script is executing with proper arguments
-        """
-        self.assertIn('-sU', args)
-        return self.check_args_tcp(args)
+        result = self.scan_task.call.call_args[1]['args']
+
+        self.assertIn('-sV', result)
+        self.assertIn('--script', result)
+        self.assertIn(self.script.name, result)
+        self.assertIn('--script-args', result)
+        self.assertIn(self.script.args, result)
+        self.assertIn(str(self.port.node.ip), result)
+        self.assertIn('-p', result)
+        self.assertIn('22', result)
+        self.assertIn('-sU', result)
 
     def test_no_vulnerabilities(self):
         scan_task = NmapPortScanTask(port=self.port, script_classes=[], executor=self.executor)
@@ -175,25 +159,23 @@ class NmapPortScanTaskTest(unittest.TestCase):
     @patch('tools.nmap.tasks.port_scan.Serializer', MagicMock())
     def test_prescript(self, mock_vulnerability):
         scan_task = NmapPortScanTask(port=self.port, script_classes=[self.script], executor=self.executor)
-        self.script.get_result = MagicMock()
         scan_task._kudu_queue = MagicMock()
         scan_task.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
         scan_task()
 
         expected = 'test'
+        result = mock_vulnerability.call_args[1]['output']
 
-    def check_args_dns(self, args):
-        """
-        Check if script is executing with proper arguments
-        """
-        self.assertIn('--dns-servers', args)
-
-        return self.check_args(args)
+        self.assertEqual(result, expected)
 
     def test_dns_scan(self):
         """
         Test UDP scanning
         """
         self.port.number = 53
-        self.scan_task.call = MagicMock(side_effect=self.check_args_dns)
         self.scan_task()
+
+        result = self.scan_task.call.call_args[1]['args']
+        self.assertIn('-p', result)
+        self.assertIn('53', result)
+        self.assertIn('--dns-servers', result)

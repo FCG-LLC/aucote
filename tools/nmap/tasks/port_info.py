@@ -19,7 +19,7 @@ class NmapPortInfoTask(NmapBase):
             args.append("-sU")
         args.extend(('--script', 'banner'))
         args.append(str(self._port.node.ip))
-        xml = self.call(args)
+        xml = self.call(args=args)
         banner = xml.find("host/ports/port/script[@id='banner']")
         if banner is None:
             log.warning('No banner for %s:%i', self._port.node.ip, self._port.number)

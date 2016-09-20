@@ -63,7 +63,7 @@ class NmapPortScanTask(NmapBase):
                 args.append(script.args)
         args.append(str(self._port.node.ip))
 
-        xml = self.call(args)
+        xml = self.call(args=args)
 
         tmp_scripts = xml.findall('host/ports/port/script') or []
         tmp_scripts.extend(xml.findall('prescript/script') or [])

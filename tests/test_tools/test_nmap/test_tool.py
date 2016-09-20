@@ -9,13 +9,9 @@ from utils.exceptions import ImproperConfigurationException
 
 class NmapToolTest(TestCase):
     def setUp(self):
-        self.exploit = Exploit()
-        self.exploit.name = 'test_name'
-        self.exploit.risk_level = RiskLevel.NONE
+        self.exploit = Exploit(name='test_name', risk_level=RiskLevel.NONE)
 
-        self.exploit2 = Exploit()
-        self.exploit2.name = 'test_name'
-        self.exploit2.risk_level = RiskLevel.HIGH
+        self.exploit2 = Exploit(name='test_name', risk_level=RiskLevel.HIGH)
 
         self.exploit_conf_args = Exploit()
         self.exploit_conf_args.name = 'test_name2'
@@ -47,20 +43,32 @@ class NmapToolTest(TestCase):
                                                  args='test_args')
         vuln_scan_script.assert_called_once_with(exploit=self.exploit2, port=self.port, name='test_name',
                                                  args='test_args')
-        self.assertEqual(port_scan_mock.call_count, 1)
+
+        result = port_scan_mock.call_count
+        expected = 1
+
+        self.assertEqual(result, expected)
 
     def test_enable(self):
         self.nmap_tool.executor = MagicMock()
         self.exploit2.name = 'test_name2'
         self.nmap_tool()
-        self.assertEqual(self.nmap_tool.executor.add_task.call_count, 1)
+
+        result = self.nmap_tool.executor.add_task.call_count
+        expected = 1
+
+        self.assertEqual(result, expected)
 
     def test_single_mode(self):
         self.nmap_tool.executor = MagicMock()
         self.nmap_tool.config['services']['test_name']['singular'] = True
         self.exploit2.name = 'test_name2'
         self.nmap_tool()
-        self.assertEqual(self.nmap_tool.executor.add_task.call_count, 2)
+
+        result = self.nmap_tool.executor.add_task.call_count
+        expected = 2
+
+        self.assertEqual(result, expected)
 
     @patch('tools.nmap.tool.VulnNmapScript')
     def test_configurable_args(self, vuln_scan_script):
@@ -91,6 +99,7 @@ class NmapToolTest(TestCase):
                                                  args='test')
         info_scan_script.assert_any_call(exploit=self.exploit, port=self.port, name='test_name',
                                                  args='test2')
+
         self.assertEqual(info_scan_script.call_count, 2)
         self.assertEqual(port_scan_mock.call_count, 2)
 
@@ -107,7 +116,8 @@ class NmapToolTest(TestCase):
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.config['services']['test_name2']['args'].side_effect = ImproperConfigurationException()
         self.nmap_tool()
-        self.assertEqual(vuln_scan_script.call_count, 0)
+
+        self.assertFalse(vuln_scan_script.called)
 
     @patch('tools.nmap.tool.cfg.get')
     def test_custom_args_dns_srv_enum(self, mock_cfg):

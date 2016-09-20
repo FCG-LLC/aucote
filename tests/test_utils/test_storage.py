@@ -35,7 +35,7 @@ class StorageTest(TestCase):
         self.assertEqual(self.storage.conn, None)
 
     def test_save_node(self):
-        node = Node(id=1, ip=ipaddress.ip_address('127.0.0.1'), name='localhost')
+        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'), name='localhost')
         with self.storage as storage:
             storage.save_node(node)
 
@@ -46,9 +46,9 @@ class StorageTest(TestCase):
             self.assertEqual(expected[2], '127.0.0.1')
 
     def test_save_nodes(self):
-        nodes = [Node(id=1, ip=ipaddress.ip_address('127.0.0.1'), name='localhost'),
-                 Node(id=2, ip=ipaddress.ip_address('127.0.0.2'), name='localhost'),
-                 Node(id=3, ip=ipaddress.ip_address('127.0.0.3'), name='localhost')]
+        nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'), name='localhost'),
+                 Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2'), name='localhost'),
+                 Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'), name='localhost')]
 
         with self.storage as storage:
             storage.save_nodes(nodes)
@@ -68,9 +68,9 @@ class StorageTest(TestCase):
             self.assertEqual(expected[2][2], '127.0.0.3')
 
     def test_get_nodes(self):
-        nodes = [Node(id=1, ip=ipaddress.ip_address('127.0.0.1'), name='localhost'),
-                 Node(id=2, ip=ipaddress.ip_address('127.0.0.2'), name='localhost'),
-                 Node(id=3, ip=ipaddress.ip_address('127.0.0.3'), name='localhost')]
+        nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'), name='localhost'),
+                 Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2'), name='localhost'),
+                 Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'), name='localhost')]
 
         with self.storage as storage:
             storage.save_nodes(nodes)
@@ -90,7 +90,7 @@ class StorageTest(TestCase):
         self.assertEqual(result, [])
 
     def test_save_port(self):
-        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), id=1), transport_protocol=TransportProtocol.TCP,
+        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1), transport_protocol=TransportProtocol.TCP,
                     number=1)
         with Storage(":memory:") as storage:
             storage.save_port(port)
@@ -103,9 +103,9 @@ class StorageTest(TestCase):
         self.assertEqual(expected[3], TransportProtocol.TCP.iana)
 
     def test_save_ports(self):
-        nodes = [Node(id=1, ip=ipaddress.ip_address('127.0.0.1')),
-                 Node(id=2, ip=ipaddress.ip_address('127.0.0.2')),
-                 Node(id=3, ip=ipaddress.ip_address('127.0.0.3'))]
+        nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')),
+                 Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2')),
+                 Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))]
 
         ports = [Port(node=nodes[0], transport_protocol=TransportProtocol.TCP, number=5),
                  Port(node=nodes[1], transport_protocol=TransportProtocol.UDP, number=65),
@@ -123,9 +123,9 @@ class StorageTest(TestCase):
             self.assertEqual(expected[i][3], ports[i].transport_protocol.iana)
 
     def test_get_ports(self):
-        nodes = [Node(id=1, ip=ipaddress.ip_address('127.0.0.1')),
-                 Node(id=2, ip=ipaddress.ip_address('127.0.0.2')),
-                 Node(id=3, ip=ipaddress.ip_address('127.0.0.3'))]
+        nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')),
+                 Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2')),
+                 Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))]
 
         ports = [Port(node=nodes[0], transport_protocol=TransportProtocol.TCP, number=5),
                  Port(node=nodes[1], transport_protocol=TransportProtocol.UDP, number=65),
@@ -153,7 +153,7 @@ class StorageTest(TestCase):
         exploit.name = 'test_name'
         exploit.app = 'test_app'
 
-        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), id=3), number=12,
+        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=3), number=12,
                     transport_protocol=TransportProtocol.TCP)
 
         start_scan = 17
@@ -179,7 +179,7 @@ class StorageTest(TestCase):
         exploit.name = 'test_name'
         exploit.app = 'test_app'
 
-        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), id=3), number=12,
+        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=3), number=12,
                     transport_protocol=TransportProtocol.TCP)
 
         start_scan = 17

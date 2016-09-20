@@ -5,9 +5,9 @@ from utils import Config
 
 
 class ConfigTest(TestCase):
-    '''
+    """
     Test config
-    '''
+    """
 
     CONFIG = {
         'alice': {
@@ -41,7 +41,7 @@ class ConfigTest(TestCase):
     def test_len(self):
         self.assertEqual(len(self.config), 1)
 
-    def test_empty(self):
+    def test_empty_config_len(self):
         config = Config()
         self.assertEqual(len(config), 0)
 
@@ -59,7 +59,7 @@ class ConfigTest(TestCase):
         list_defaults = ['test', 'test2']
         self.assertListEqual(self.config._simplify_defaults(list_defaults), list_defaults)
 
-    def test_recursive_merge_not_dict_nor_list(self):
+    def test_recursive_merge_neither_dict_nor_list(self):
         data = 'config'
         result = self.config._recursive_merge(data, self.CONFIG)
 
@@ -81,7 +81,7 @@ class ConfigTest(TestCase):
         result = self.config._recursive_merge(data, defaults)
         self.assertDictEqual(result, expected)
 
-    def test_recursive(self):
+    def test_recursive_merge_dicts_with_adding_value(self):
         defaults = {'test1': [{'test1': 'test'}, {'test2':'test2'}], 'test2': 'test2'}
         data = {'test1': [{'test1': 'test3', 'test4': 'test'}]}
         expected = {'test1': [{'test1': 'test3', 'test4': 'test'}, {'test2':'test2'}], 'test2': 'test2'}
@@ -90,7 +90,7 @@ class ConfigTest(TestCase):
         self.assertDictEqual(result, expected)
 
     @patch('builtins.open', mock_open(read_data=YAML))
-    def test_load(self):
+    def test_load_yaml(self):
         expected = self.CONFIG.copy()
         expected['alice']['has']['a'] = 'dog'
 
@@ -101,7 +101,7 @@ class ConfigTest(TestCase):
         self.assertDictEqual(result, expected)
 
     @patch('builtins.open', mock_open(read_data=YAML))
-    def test_load_without_defaults(self):
+    def test_load_yaml_without_defaults(self):
         expected = {'alice': {'has': {'a': 'dog'}}}
 
         self.config.load('test')

@@ -99,7 +99,7 @@ class Storage(DbInterface):
         nodes = []
         try:
             for node in self.cursor.execute("SELECT * FROM nodes where time > ?", (timestamp,)).fetchall():
-                nodes.append(Node(id=node[0], name=node[1], ip=ipaddress.ip_address(node[2])))
+                nodes.append(Node(node_id=node[0], name=node[1], ip=ipaddress.ip_address(node[2])))
             return nodes
         except sqlite3.DatabaseError:
             return []
@@ -159,7 +159,7 @@ class Storage(DbInterface):
         ports = []
         try:
             for port in self.cursor.execute("SELECT * FROM ports where time > ?", (timestamp,)).fetchall():
-                ports.append(Port(node=Node(id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
+                ports.append(Port(node=Node(node_id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
                                   transport_protocol=TransportProtocol.from_iana(port[3])))
             return ports
         except sqlite3.DatabaseError:
