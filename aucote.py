@@ -3,7 +3,6 @@ This is executable file of aucote project.
 """
 
 import argparse
-import ipaddress
 import logging as log
 import sched
 from os import chdir
@@ -14,8 +13,8 @@ import time
 from fixtures.exploits import Exploits
 from scans import Executor
 
-import utils.log as log_cfg
 from structs import Node
+import utils.log as log_cfg
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
@@ -79,6 +78,10 @@ def main():
 # =============== functions ==============
 
 class Aucote(object):
+    """
+    Main aucote class. It Provides run functions (service, single instance, sync db)
+    """
+
     def __init__(self, exploits):
         self.exploits = exploits
 

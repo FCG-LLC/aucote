@@ -1,5 +1,6 @@
 """
 This file provides structures for project.
+
 """
 
 from enum import Enum
@@ -154,7 +155,6 @@ class Port(object):
 
     def __init__(self, node, number, transport_protocol):
         """
-
         Args:
             node (Node):
             number (int):
@@ -204,10 +204,12 @@ class Vulnerability(object):
     def __init__(self, exploit=None, port=None, output=None):
         """
         Init values
+
         Args:
             exploit(Exploit): Exploit used to detect vulnerability
             port(Port): Vulnerable port
             output(str): string or stringable output
+
         """
         self.when_discovered = time.time()
         self.output = str(output)
