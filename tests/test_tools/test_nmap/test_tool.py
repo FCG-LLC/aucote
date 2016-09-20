@@ -1,10 +1,12 @@
+import ipaddress
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from fixtures.exploits import Exploit
-from structs import RiskLevel
+from structs import RiskLevel, Port, TransportProtocol, Node, Scan
 from tools.nmap.tool import NmapTool
 from utils.exceptions import ImproperConfigurationException
+from utils.storage import Storage
 
 
 class NmapToolTest(TestCase):
@@ -29,8 +31,12 @@ class NmapToolTest(TestCase):
         }
 
         self.exploits = [self.exploit, self.exploit2]
-        self.port = MagicMock()
-        self.executor = MagicMock()
+        self.port = Port(number=13, transport_protocol=TransportProtocol.TCP,
+                         node=Node(node_id=1,ip=ipaddress.ip_address('127.0.0.1')))
+
+        self.port.scan = Scan(start=14, end=13)
+
+        self.executor = MagicMock(storage=Storage(":memory:"))
         self.nmap_tool = NmapTool(executor=self.executor, exploits=self.exploits, port=self.port, config=self.config)
 
     @patch('tools.nmap.tool.VulnNmapScript')

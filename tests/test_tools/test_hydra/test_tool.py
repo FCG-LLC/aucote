@@ -1,11 +1,14 @@
+import ipaddress
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from fixtures.exploits import Exploit
-from structs import RiskLevel, Port
+from structs import RiskLevel, Port, Scan, Node, TransportProtocol
 from tools.hydra.tool import HydraTool
+from utils.storage import Storage
 
 
+# @patch('tools.base.Storage', MagicMock())
 class HydraToolTest(TestCase):
 
     def setUp(self):
@@ -22,10 +25,16 @@ class HydraToolTest(TestCase):
 
         self.exploits = [self.exploit, self.exploit2]
 
-        self.port = Port(service_name='test')
-        self.port_no_login = Port(service_name='vnc')
+        self.port = Port(service_name='test', node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1), number=16,
+                         transport_protocol=TransportProtocol.UDP)
+        self.port.scan = Scan(start=14, end=12)
+
+        self.port_no_login = Port(service_name='vnc', node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1),
+                                  number=16, transport_protocol=TransportProtocol.UDP)
+        self.port_no_login.scan = Scan(start=14, end=12)
 
         self.executor = MagicMock()
+        self.executor.storage = Storage(":memory:")
         self.hydra_tool = HydraTool(executor=self.executor, exploits=self.exploits, port=self.port, config=self.config)
         self.hydra_tool_without_login = HydraTool(executor=self.executor, exploits=self.exploits,
                                                   port=self.port_no_login, config=self.config)

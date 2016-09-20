@@ -1,9 +1,14 @@
+import ipaddress
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from fixtures.exploits import Exploit
-from structs import RiskLevel
+from structs import RiskLevel, Port, Node, TransportProtocol, Scan
 from tools.skipfish.tool import SkipfishTool
+
+
+# @patch('tools.base.Storage', MagicMock())
+from utils.storage import Storage
 
 
 class SkipfishToolTest(TestCase):
@@ -15,9 +20,11 @@ class SkipfishToolTest(TestCase):
         self.config = {}
 
         self.exploits = [self.exploit]
-        self.port = MagicMock()
-        self.port.service_name = 'test'
-        self.executor = MagicMock()
+        self.port = Port(node=Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')), number=3,
+                         transport_protocol=TransportProtocol.TCP, service_name='test')
+        self.port.scan = Scan(start=13, end=45)
+
+        self.executor = MagicMock(storage=Storage(":memory:"))
         self.skipfish_tool = SkipfishTool(executor=self.executor, exploits=self.exploits, port=self.port,
                                           config=self.config)
 
@@ -30,6 +37,6 @@ class SkipfishToolTest(TestCase):
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
     def test_disable(self):
         config = MagicMock()
-        SkipfishTool(MagicMock(), MagicMock(), MagicMock(), config=config)()
+        SkipfishTool(exploits=MagicMock(), port=MagicMock(), executor=self.executor, config=config)()
 
         self.assertEqual(config.get.call_count, 0)
