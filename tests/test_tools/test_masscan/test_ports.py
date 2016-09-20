@@ -31,7 +31,7 @@ class MasscanPortsTest(TestCase):
     def setUp(self):
         self.executor = MagicMock()
         self.masscanports = MasscanPorts(executor=self.executor)
-        node = Node(ip=ipaddress.ip_address(self.NODE_IP))
+        node = Node(ip=ipaddress.ip_address(self.NODE_IP), node_id=None)
         self.nodes = [node]
 
     def test_init(self):

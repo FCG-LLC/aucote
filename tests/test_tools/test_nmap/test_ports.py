@@ -43,7 +43,7 @@ class PortScanTest(TestCase):
         self.executor = MagicMock()
         self.kudu_queue = MagicMock()
         self.scanner = PortsScan(executor=self.executor)
-        node = Node(ip = ipaddress.ip_address('192.168.1.5'))
+        node = Node(ip = ipaddress.ip_address('192.168.1.5'), node_id=None)
         self.nodes = [node]
 
     def test_scan_ports(self):

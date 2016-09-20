@@ -32,19 +32,22 @@ class RiskLevelTest(TestCase):
 
 class NodeTest(TestCase):
     def test_node_comparison_eq(self):
-        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1, name='test')
-        node2 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1, name='test')
+        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node2 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+
+        node1.name = 'test'
+        node2.name = 'test'
 
         self.assertEqual(node1, node2)
 
     def test_node_comparison_non_eq(self):
-        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1, name='test')
-        node2 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=2, name='test')
+        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node2 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=2)
 
         self.assertNotEqual(node1, node2)
 
     def test_node_comparison_none(self):
-        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1, name='test')
+        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 
         self.assertNotEqual(node1, None)
         self.assertFalse(node1 == None)
@@ -61,7 +64,7 @@ class NodeTest(TestCase):
 
 class PortTest(TestCase):
     def test_ports_comparison_eq(self):
-        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1, name='test')
+        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 
         port1 = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
         port2 = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
@@ -69,7 +72,7 @@ class PortTest(TestCase):
         self.assertEqual(port1, port2)
 
     def test_ports_comparison_non_eq(self):
-        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1, name='test')
+        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 
         port1 = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
         port2 = Port(node=node1, number=1, transport_protocol=TransportProtocol.UDP)
@@ -77,7 +80,7 @@ class PortTest(TestCase):
         self.assertNotEqual(port1, port2)
 
     def test_ports_comparison_none(self):
-        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1, name='test')
+        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         port1 = Port(node=node1, number=1, transport_protocol=TransportProtocol.UDP)
 
         self.assertNotEqual(port1, None)

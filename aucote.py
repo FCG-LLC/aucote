@@ -66,9 +66,7 @@ def main():
     if args.cmd == 'scan':
         nodes = []
         if args.host_ip and args.host_id:
-            node = Node()
-            node.ip = args.host_ip
-            node.id = args.host_id
+            node = Node(ip=args.host_ip, node_id=args.host_id)
             nodes.append(node)
 
         aucote.run_scan(nodes=nodes)

@@ -25,12 +25,9 @@ class SkipfishScanTaskTest(TestCase):
 
     def setUp(self):
         self.executor = MagicMock()
-        self.port = Port()
-        self.port.transport_protocol = TransportProtocol.TCP
-        self.port.node = Node()
-        self.port.node.id = 1
-        self.port.node.ip = ipaddress.ip_address('127.0.0.1')
-        self.port.number = 80
+
+        self.node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        self.port = Port(transport_protocol=TransportProtocol.TCP, number = 80, node=self.node)
         self.port.scan = Scan()
 
         self.task = SkipfishScanTask(executor=self.executor, port=self.port)

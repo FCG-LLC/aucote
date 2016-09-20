@@ -95,9 +95,7 @@ class Executor(object):
         nodes = []
         for node_struct in nodes_cfg['nodes']:
             for node_ip in node_struct['ips']:
-                node = Node()
-                node.ip = ipaddress.ip_address(node_ip)
+                node = Node(ip=ipaddress.ip_address(node_ip), node_id=node_struct['id'])
                 node.name = node_struct['displayName']
-                node.id = node_struct['id']
                 nodes.append(node)
         return nodes

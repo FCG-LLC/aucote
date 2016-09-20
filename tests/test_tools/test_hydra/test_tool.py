@@ -1,8 +1,9 @@
+import ipaddress
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from fixtures.exploits import Exploit
-from structs import RiskLevel, Port
+from structs import RiskLevel, Port, Node, TransportProtocol
 from tools.hydra.tool import HydraTool
 
 
@@ -21,8 +22,13 @@ class HydraToolTest(TestCase):
 
         self.exploits = [self.exploit, self.exploit2]
 
-        self.port = Port(service_name='test')
-        self.port_no_login = Port(service_name='vnc')
+        self.node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+
+        self.port = Port(number=12, transport_protocol=TransportProtocol.TCP, node=self.node)
+        self.port.service_name = 'test'
+
+        self.port_no_login = Port(number=12, transport_protocol=TransportProtocol.TCP, node=self.node)
+        self.port_no_login.service_name = 'vnc'
 
         self.executor = MagicMock()
         self.hydra_tool = HydraTool(executor=self.executor, exploits=self.exploits, port=self.port, config=self.config)

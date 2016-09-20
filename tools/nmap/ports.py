@@ -37,12 +37,13 @@ class PortsScan(NmapBase):
                 for script in port.findall('script'):
                     if script.get('id') == 'banner':
                         banner = script.get('output')
-                port = Port()
-                port.transport_protocol = TransportProtocol.from_nmap_name(port_protocol)
+
+                port = Port(transport_protocol=TransportProtocol.from_nmap_name(port_protocol), number=port_id,
+                            node=node_by_ip[str(ip)])
+
                 port.service_name = service_name
                 port.service_version = service_version
-                port.number = port_id
                 port.banner = banner
-                port.node = node_by_ip[str(ip)]
+
                 result.append(port)
         return result

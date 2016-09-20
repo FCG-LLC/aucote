@@ -29,7 +29,7 @@ class Node:
 
     """
 
-    def __init__(self, name=None, ip=None, node_id=None):
+    def __init__(self, node_id, ip):
         """
         Init values
         Args:
@@ -38,7 +38,7 @@ class Node:
             node_id (int):
 
         """
-        self.name = name
+        self.name = None
         self.ip = ip
         self.id = node_id
 
@@ -152,8 +152,7 @@ class Port(object):
     """
     TABLE = 'ports'
 
-    def __init__(self, node=None, number=None, transport_protocol=None, service_name=None, service_version=None,
-                 banner=None):
+    def __init__(self, node, number, transport_protocol):
         """
 
         Args:
@@ -170,9 +169,9 @@ class Port(object):
         self.node = node
         self.number = number
         self.transport_protocol = transport_protocol
-        self.service_name = service_name
-        self.service_version = service_version
-        self.banner = banner
+        self.service_name = None
+        self.service_version = None
+        self.banner = None
         self.scan = None
 
     def __eq__(self, other):
