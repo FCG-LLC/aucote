@@ -15,15 +15,11 @@ class SerializerTest(TestCase):
         self.serializer = Serializer()
         self.vuln = Vulnerability()
 
-        node = Node()
-        node.ip = ipaddress.ip_address('127.0.0.1')
-        node.id = 1
+        node = Node(ip = ipaddress.ip_address('127.0.0.1'), node_id=1)
 
-        port = Port()
-        port.node = node
-        port.number = 22
+        port = Port(node=node, number=22, transport_protocol=TransportProtocol.TCP)
         port.service_name = 'ssh'
-        port.transport_protocol = TransportProtocol.TCP
+
         port.scan = Scan()
         port.scan.start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
         port.when_discovered = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()

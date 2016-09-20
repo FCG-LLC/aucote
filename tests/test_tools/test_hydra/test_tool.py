@@ -8,7 +8,6 @@ from tools.hydra.tool import HydraTool
 from utils.storage import Storage
 
 
-# @patch('tools.base.Storage', MagicMock())
 class HydraToolTest(TestCase):
 
     def setUp(self):
@@ -25,13 +24,16 @@ class HydraToolTest(TestCase):
 
         self.exploits = [self.exploit, self.exploit2]
 
-        self.port = Port(service_name='test', node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1), number=16,
-                         transport_protocol=TransportProtocol.UDP)
-        self.port.scan = Scan(start=14, end=12)
+        self.node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
 
-        self.port_no_login = Port(service_name='vnc', node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1),
-                                  number=16, transport_protocol=TransportProtocol.UDP)
-        self.port_no_login.scan = Scan(start=14, end=12)
+        self.port = Port(number=12, transport_protocol=TransportProtocol.TCP, node=self.node)
+        self.port.service_name = 'test'
+        self.port.scan = Scan(start=14)
+
+
+        self.port_no_login = Port(number=12, transport_protocol=TransportProtocol.TCP, node=self.node)
+        self.port_no_login.service_name = 'vnc'
+        self.port_no_login.scan = Scan(start=14)
 
         self.executor = MagicMock()
         self.executor.storage = Storage(":memory:")

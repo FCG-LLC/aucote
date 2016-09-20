@@ -137,9 +137,9 @@ class ExecutorTest(TestCase):
         self.assertEqual(self.executor.kudu_queue, self.executor._kudu_queue)
 
     def test_get_nodes_for_scanning(self):
-        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1, name='test')
-        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2, name='test_2')
-        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3, name='test_3')
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
+        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
 
         nodes = [node_1, node_2,]
 
@@ -153,9 +153,9 @@ class ExecutorTest(TestCase):
         self.assertListEqual(result, expected)
 
     def test_get_ports_for_scanning(self):
-        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1, name='test')
-        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2, name='test_2')
-        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3, name='test_3')
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
+        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
 
         port_1 = Port(node=node_1, number=80, transport_protocol=TransportProtocol.TCP)
         port_2 = Port(node=node_2, number=80, transport_protocol=TransportProtocol.TCP)

@@ -21,7 +21,7 @@ class SkipfishToolTest(TestCase):
 
         self.exploits = [self.exploit]
         self.port = Port(node=Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')), number=3,
-                         transport_protocol=TransportProtocol.TCP, service_name='test')
+                         transport_protocol=TransportProtocol.TCP)
         self.port.scan = Scan(start=13, end=45)
 
         self.executor = MagicMock(storage=Storage(":memory:"))

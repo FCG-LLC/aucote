@@ -1,5 +1,6 @@
 """
 This file provides structures for project.
+
 """
 
 from enum import Enum
@@ -29,7 +30,7 @@ class Node:
 
     """
 
-    def __init__(self, name=None, ip=None, node_id=None):
+    def __init__(self, node_id, ip):
         """
         Init values
         Args:
@@ -38,7 +39,7 @@ class Node:
             node_id (int):
 
         """
-        self.name = name
+        self.name = None
         self.ip = ip
         self.id = node_id
 
@@ -152,10 +153,8 @@ class Port(object):
     """
     TABLE = 'ports'
 
-    def __init__(self, node=None, number=None, transport_protocol=None, service_name=None, service_version=None,
-                 banner=None):
+    def __init__(self, node, number, transport_protocol):
         """
-
         Args:
             node (Node):
             number (int):
@@ -170,9 +169,9 @@ class Port(object):
         self.node = node
         self.number = number
         self.transport_protocol = transport_protocol
-        self.service_name = service_name
-        self.service_version = service_version
-        self.banner = banner
+        self.service_name = None
+        self.service_version = None
+        self.banner = None
         self.scan = None
 
     def __eq__(self, other):
@@ -205,10 +204,12 @@ class Vulnerability(object):
     def __init__(self, exploit=None, port=None, output=None):
         """
         Init values
+
         Args:
             exploit(Exploit): Exploit used to detect vulnerability
             port(Port): Vulnerable port
             output(str): string or stringable output
+
         """
         self.when_discovered = time.time()
         self.output = str(output)

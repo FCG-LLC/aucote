@@ -53,8 +53,9 @@ class NmapPortInfoTaskTest(unittest.TestCase):
     def setUp(self):
         self.executor = MagicMock()
 
-        self.port = Port(number=22, transport_protocol=TransportProtocol.TCP)
-        self.port.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+
+        self.port = Port(number=22, transport_protocol=TransportProtocol.TCP, node=self.node)
 
         self.port_info = NmapPortInfoTask(executor=self.executor, port=self.port)
         self.port_info.call = MagicMock(return_value=ElementTree.fromstring(self.XML))

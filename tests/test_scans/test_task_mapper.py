@@ -19,14 +19,10 @@ class TaskMapperTest(unittest.TestCase):
         }
     }
 
-    UDP = Port()
-    UDP.transport_protocol = TransportProtocol.UDP
-    UDP.number = 21
+    UDP = Port(transport_protocol=TransportProtocol.UDP, number=21, node=None)
     UDP.service_name = 'ftp'
 
-    TCP = Port()
-    TCP.transport_protocol = TransportProtocol.TCP
-    TCP.number = 22
+    TCP = Port(transport_protocol=TransportProtocol.TCP, number = 22, node=None)
     TCP.service_name = 'ssh'
 
     def setUp(self):

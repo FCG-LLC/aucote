@@ -3,7 +3,6 @@ This is executable file of aucote project.
 """
 
 import argparse
-import ipaddress
 import logging as log
 import sched
 from os import chdir
@@ -14,8 +13,8 @@ import time
 from fixtures.exploits import Exploits
 from scans import Executor
 
-import utils.log as log_cfg
 from structs import Node
+import utils.log as log_cfg
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
 from utils.time import parse_period
@@ -67,9 +66,7 @@ def main():
     if args.cmd == 'scan':
         nodes = []
         if args.host_ip and args.host_id:
-            node = Node()
-            node.ip = args.host_ip
-            node.id = args.host_id
+            node = Node(ip=args.host_ip, node_id=args.host_id)
             nodes.append(node)
 
         aucote.run_scan(nodes=nodes)
@@ -83,6 +80,10 @@ def main():
 
 
 class Aucote(object):
+    """
+    Main aucote class. It Provides run functions (service, single instance, sync db)
+    """
+
     def __init__(self, exploits):
         self.exploits = exploits
 

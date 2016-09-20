@@ -94,8 +94,10 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.exploits = Exploits()
         self.exploits.add(self.exploit)
 
-        self.port = Port(number=22, service_name='ssh', transport_protocol=TransportProtocol.TCP)
-        self.port.node = Node(ip=ipaddress.ip_address('127.0.0.1'))
+        self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=None)
+
+        self.port = Port(number=22, node=self.node, transport_protocol=TransportProtocol.TCP)
+        self.port.service_name = 'ssh'
 
         self.script = InfoNmapScript(port=self.port, exploit=self.exploit, name='test', args='test_args')
         self.script.get_result = MagicMock(return_value='test')

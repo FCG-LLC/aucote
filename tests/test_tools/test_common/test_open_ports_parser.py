@@ -26,8 +26,7 @@ class OpenPortsParserTest(unittest.TestCase):
 
     def setUp(self):
         self.parser = OpenPortsParser()
-        self.node = Node()
-        self.node.ip = ipaddress.ip_address(self.NODE_IP)
+        self.node = Node(ip=ipaddress.ip_address(self.NODE_IP), node_id=None)
         self.node.name = self.NODE_NAME
         self.node_by_ip = {self.node.ip: self.node}
 

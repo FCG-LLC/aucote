@@ -35,52 +35,48 @@ class StorageTest(TestCase):
         self.assertEqual(self.storage.conn, None)
 
     def test_save_node(self):
-        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'), name='localhost')
+        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         with self.storage as storage:
             storage.save_node(node)
 
-            expected = storage.cursor.execute("SELECT * FROM nodes").fetchone()
+            result = storage.cursor.execute("SELECT * FROM nodes").fetchone()
 
-            self.assertEqual(expected[0], 1)
-            self.assertEqual(expected[1], 'localhost')
-            self.assertEqual(expected[2], '127.0.0.1')
+        self.assertEqual(result[0], 1)
+        self.assertEqual(result[1], '127.0.0.1')
 
     def test_save_nodes(self):
-        nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'), name='localhost'),
-                 Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2'), name='localhost'),
-                 Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'), name='localhost')]
+        nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')),
+                 Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2')),
+                 Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))]
 
         with self.storage as storage:
             storage.save_nodes(nodes)
 
-            expected = storage.cursor.execute("SELECT * FROM nodes").fetchall()
+            result = storage.cursor.execute("SELECT * FROM nodes").fetchall()
 
-            self.assertEqual(expected[0][0], 1)
-            self.assertEqual(expected[0][1], 'localhost')
-            self.assertEqual(expected[0][2], '127.0.0.1')
+        self.assertEqual(result[0][0], 1)
+        self.assertEqual(result[0][1], '127.0.0.1')
 
-            self.assertEqual(expected[1][0], 2)
-            self.assertEqual(expected[1][1], 'localhost')
-            self.assertEqual(expected[1][2], '127.0.0.2')
+        self.assertEqual(result[1][0], 2)
+        self.assertEqual(result[1][1], '127.0.0.2')
 
-            self.assertEqual(expected[2][0], 3)
-            self.assertEqual(expected[2][1], 'localhost')
-            self.assertEqual(expected[2][2], '127.0.0.3')
+        self.assertEqual(result[2][0], 3)
+        self.assertEqual(result[2][1], '127.0.0.3')
 
     def test_get_nodes(self):
-        nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'), name='localhost'),
-                 Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2'), name='localhost'),
-                 Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'), name='localhost')]
+        nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')),
+                 Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2')),
+                 Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))]
 
         with self.storage as storage:
             storage.save_nodes(nodes)
 
-            expected = storage.get_nodes(1000)
+            result = storage.get_nodes(1000)
 
-            for i in range(len(expected)):
-                self.assertEqual(expected[i].ip, nodes[i].ip)
-                self.assertEqual(expected[i].name, nodes[i].name)
-                self.assertEqual(expected[i].id, nodes[i].id)
+            for i in range(len(result)):
+                self.assertEqual(result[i].ip, nodes[i].ip)
+                self.assertEqual(result[i].name, nodes[i].name)
+                self.assertEqual(result[i].id, nodes[i].id)
 
     def test_get_nodes_exception(self):
         self.storage._cursor = MagicMock()
