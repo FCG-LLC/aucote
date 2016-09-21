@@ -11,8 +11,8 @@ from utils.storage import Storage
 class HydraToolTest(TestCase):
 
     def setUp(self):
-        self.exploit = Exploit(name='hydra', app='hydra', risk_level=RiskLevel.NONE)
-        self.exploit2 = Exploit(name='hydra', app='hydra', risk_level=RiskLevel.HIGH)
+        self.exploit = Exploit(exploit_id=1, name='hydra', app='hydra', risk_level=RiskLevel.NONE)
+        self.exploit2 = Exploit(exploit_id=2, name='hydra', app='hydra', risk_level=RiskLevel.HIGH)
 
         self.config = {
             'services': ['ssh', 'vnc'],

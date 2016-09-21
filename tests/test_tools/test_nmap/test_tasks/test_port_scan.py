@@ -89,8 +89,8 @@ class NmapPortScanTaskTest(unittest.TestCase):
         """
         self.executor = MagicMock()
 
-        self.exploit = Exploit(app='nmap', name='test')
-        self.exploit_vuln_non_exist = Exploit(app='nmap', name='test2')
+        self.exploit = Exploit(exploit_id=1, app='nmap', name='test')
+        self.exploit_vuln_non_exist = Exploit(exploit_id=2, app='nmap', name='test2')
         self.exploits = Exploits()
         self.exploits.add(self.exploit)
 

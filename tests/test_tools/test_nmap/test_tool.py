@@ -11,11 +11,11 @@ from utils.storage import Storage
 
 class NmapToolTest(TestCase):
     def setUp(self):
-        self.exploit = Exploit(name='test_name', risk_level=RiskLevel.NONE)
+        self.exploit = Exploit(exploit_id=1, name='test_name', risk_level=RiskLevel.NONE)
 
-        self.exploit2 = Exploit(name='test_name', risk_level=RiskLevel.HIGH)
+        self.exploit2 = Exploit(exploit_id=2, name='test_name', risk_level=RiskLevel.HIGH)
 
-        self.exploit_conf_args = Exploit()
+        self.exploit_conf_args = Exploit(exploit_id=3)
         self.exploit_conf_args.name = 'test_name2'
         self.exploit_conf_args.risk_level = RiskLevel.HIGH
 

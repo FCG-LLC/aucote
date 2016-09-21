@@ -13,7 +13,7 @@ from utils.storage import Storage
 
 class SkipfishToolTest(TestCase):
     def setUp(self):
-        self.exploit = Exploit()
+        self.exploit = Exploit(exploit_id=1)
         self.exploit.name = 'skipfish'
         self.exploit.risk_level = RiskLevel.NONE
 

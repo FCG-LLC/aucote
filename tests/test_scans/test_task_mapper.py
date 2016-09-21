@@ -29,11 +29,11 @@ class TaskMapperTest(unittest.TestCase):
         self.executor = Mock()
         self.exploits = OrderedDict({
             'test': [
-                Exploit(),
-                Exploit()
+                Exploit(exploit_id=1),
+                Exploit(exploit_id=2)
             ]
         })
-        self.exploits.update(test2=Exploit())
+        self.exploits.update(test2=Exploit(exploit_id=3))
         self.executor.exploits.find_all_matching.return_value = self.exploits
         self.task_mapper = TaskMapper(self.executor)
 
