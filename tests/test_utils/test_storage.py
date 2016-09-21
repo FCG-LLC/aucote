@@ -144,8 +144,7 @@ class StorageTest(TestCase):
         self.assertEqual(result, [])
 
     def test_save_scan(self):
-        exploit = Exploit()
-        exploit.id = 14
+        exploit = Exploit(exploit_id=14)
         exploit.name = 'test_name'
         exploit.app = 'test_app'
 
@@ -155,7 +154,7 @@ class StorageTest(TestCase):
         start_scan = 17
 
         with Storage(":memory:") as storage:
-            storage.save_scan(exploit=exploit, port=port, start_scan=start_scan)
+            storage.save_scan(exploit=exploit, port=port, scan_start=start_scan)
 
             result = storage.cursor.execute("SELECT * FROM scans").fetchall()
 
@@ -170,8 +169,7 @@ class StorageTest(TestCase):
         self.assertEqual(result[0][8], None)
 
     def test_save_scan_without_changing_start_scan(self):
-        exploit = Exploit()
-        exploit.id = 14
+        exploit = Exploit(exploit_id=14)
         exploit.name = 'test_name'
         exploit.app = 'test_app'
 
@@ -181,9 +179,62 @@ class StorageTest(TestCase):
         start_scan = 17
 
         with Storage(":memory:") as storage:
-            storage.save_scan(exploit=exploit, port=port, start_scan=start_scan)
-            storage.save_scan(exploit=exploit, port=port, finish_scan=start_scan)
+            storage.save_scan(exploit=exploit, port=port, scan_start=start_scan)
+            storage.save_scan(exploit=exploit, port=port, scan_end=start_scan)
 
             result = storage.cursor.execute("SELECT * FROM scans").fetchall()
 
         self.assertEqual(result[0][7], start_scan)
+
+    def test_get_scan_info(self):
+        exploits = [Exploit(exploit_id=14, name='test_name_1', app='test_app'),
+                    Exploit(exploit_id=20, name='test_name_2', app='test_app'),
+                    Exploit(exploit_id=25, name='test_name_3', app='test_app'),
+                    Exploit(exploit_id=30, name='test_name_4', app='test_app2'),
+                    Exploit(exploit_id=35, name='test_name_5', app='test_app2')]
+
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=3)
+
+        ports = [Port(node=node, number=12, transport_protocol=TransportProtocol.TCP),
+                 Port(node=node, number=15, transport_protocol=TransportProtocol.TCP)]
+
+        start_scan = 17.0
+        end_scan = 27.0
+
+        with Storage(":memory:") as storage:
+            for exploit in exploits:
+                for port in ports:
+                    storage.save_scan(exploit=exploit, port=port, scan_start=start_scan, scan_end=end_scan)
+
+            results = storage.get_scan_info(port=ports[0], app='test_app')
+
+        expected = [
+            {
+                "exploit": exploits[0],
+                "port": ports[0],
+                "scan_start": start_scan,
+                "scan_end": end_scan
+            },
+            {
+                "exploit": exploits[1],
+                "port": ports[0],
+                "scan_start": start_scan,
+                "scan_end": end_scan
+            },
+            {
+                "exploit": exploits[2],
+                "port": ports[0],
+                "scan_start": start_scan,
+                "scan_end": end_scan
+            }
+        ]
+
+        self.assertCountEqual(results, expected)
+
+    def test_get_scan_info_exception(self):
+        self.storage._cursor = MagicMock()
+        self.storage._cursor.execute = MagicMock(side_effect=DatabaseError)
+
+        result = self.storage.get_scan_info(port=Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1),
+                                                      number=1, transport_protocol=TransportProtocol.TCP), app=None)
+        self.assertEqual(result, [])

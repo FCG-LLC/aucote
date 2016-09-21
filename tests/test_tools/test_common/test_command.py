@@ -52,7 +52,7 @@ class CommandTest(TestCase):
         for exploit in self.command.executor.exploits:
             self.assertEqual(result[exploit][1]['exploit'], exploit)
             self.assertEqual(result[exploit][1]['port'], port)
-            self.assertEqual(result[exploit][1]['finish_scan'], mock_time.return_value)
+            self.assertEqual(result[exploit][1]['scan_end'], mock_time.return_value)
 
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))

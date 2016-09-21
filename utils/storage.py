@@ -5,6 +5,7 @@ import ipaddress
 import sqlite3
 import time
 
+from fixtures.exploits import Exploit
 from structs import Node, Port, TransportProtocol
 from utils.database_interface import DbInterface
 
@@ -165,15 +166,15 @@ class Storage(DbInterface):
         except sqlite3.DatabaseError:
             return []
 
-    def save_scan(self, exploit, port, start_scan=None, finish_scan=None, commit=True):
+    def save_scan(self, exploit, port, scan_start=None, scan_end=None, commit=True):
         """
         Saves scan informations into storage. Create table scans if not exists
 
         Args:
             exploit (Exploit): needs some exploit details to save into storage
             port (Port): needs some port details to save into storage
-            start_scan (float): timestamp of scan start
-            finish_scan (float): timestamp of scan finish
+            scan_start (float): timestamp of scan start
+            scan_end (float): timestamp of scan finish
             commit (bool): commit changes
 
         Returns:
@@ -188,25 +189,58 @@ class Storage(DbInterface):
                                 (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
                                  port.transport_protocol.iana, port.number))
 
-            if start_scan:
-                self.cursor.execute("UPDATE scans SET start_scan = ? WHERE exploit_id=? AND exploit_app=? AND "
+            if scan_start:
+                self.cursor.execute("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
                                     "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                    (start_scan, exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
+                                    (scan_start, exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
                                      port.transport_protocol.iana, port.number))
 
-            if finish_scan:
-                self.cursor.execute("UPDATE scans SET finish_scan = ? WHERE exploit_id=? AND exploit_app=? AND "
+            if scan_end:
+                self.cursor.execute("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
                                     "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                    (finish_scan, exploit.id, exploit.app, exploit.name, port.node.id,
+                                    (scan_end, exploit.id, exploit.app, exploit.name, port.node.id,
                                      str(port.node.ip), port.transport_protocol.iana, port.number))
 
         except sqlite3.DatabaseError:
             self.cursor.execute("CREATE TABLE scans (exploit_id int, exploit_app text, exploit_name text, node_id int,"
-                                "node_ip text, port_protocol int, port_number int, start_scan float, finish_scan float,"
+                                "node_ip text, port_protocol int, port_number int, scan_start float, scan_end float,"
                                 "PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, port_number))")
             self.conn.commit()
 
-            self.save_scan(exploit=exploit, port=port, start_scan=start_scan, finish_scan=finish_scan, commit=commit)
+            self.save_scan(exploit=exploit, port=port, scan_start=scan_start, scan_end=scan_end, commit=commit)
 
         if commit:
             self.conn.commit()
+
+    def get_scan_info(self, port, app):
+        """
+        Gets scan details based on provided port and app name
+
+        Args:
+            port (Port):
+            app (str): app name
+
+        Returns:
+            list - list of dictionaries with keys: exploit, node,
+
+        """
+        return_value = []
+
+        try:
+            for row in self.cursor.execute("SELECT * FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? "
+                                           "AND port_protocol = ? AND port_number = ?",
+                                           [app, port.node.id, str(port.node.ip), port.transport_protocol.iana,
+                                            port.number]
+                                           ):
+                return_value.append({
+                    "exploit": Exploit(exploit_id=row[0]),
+                    "port": Port(node=Node(node_id=row[3], ip=ipaddress.ip_address(row[4])), number=row[6],
+                                 transport_protocol=TransportProtocol.from_iana(row[5])),
+                    "scan_start": row[7],
+                    "scan_end": row[8],
+                })
+
+            return return_value
+
+        except sqlite3.DatabaseError:
+            return []

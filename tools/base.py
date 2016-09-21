@@ -53,7 +53,7 @@ class Tool(object):
     def store_scan_info(self):
         with Storage(filename=self.executor.storage.filename) as storage:
             for exploit in self.exploits:
-                storage.save_scan(exploit=exploit, port=self.port, start_scan=self.port.scan.start)
+                storage.save_scan(exploit=exploit, port=self.port, scan_start=self.port.scan.start)
 
     def filter_out_exploits(self):
         """

@@ -48,7 +48,7 @@ class Command(Task):
     def store_scan_end_info(self, port):
         with Storage(filename=self.executor.storage.filename) as storage:
             for exploit in self.exploits:
-                storage.save_scan(exploit=exploit, port=port, finish_scan=time.time())
+                storage.save_scan(exploit=exploit, port=port, scan_end=time.time())
 
 
 class CommandXML(Command):
