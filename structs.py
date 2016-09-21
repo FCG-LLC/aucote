@@ -43,16 +43,10 @@ class Node:
         self.id = node_id
 
     def __eq__(self, other):
-        try:
-            return isinstance(other, Node) and self.ip == other.ip and self.id == other.id
-        except AttributeError:
-            return False
+        return isinstance(other, Node) and self.ip == other.ip and self.id == other.id
 
     def __ne__(self, other):
-        try:
-            return (not isinstance(other, Node)) or self.ip != other.ip or self.id != other.id
-        except AttributeError:
-            return True
+        return (not isinstance(other, Node)) or self.ip != other.ip or self.id != other.id
 
     def __hash__(self):
         return hash("{id}:{ip}".format(id=self.id, ip=self.ip))
@@ -171,18 +165,12 @@ class Port(object):
         self.scan = None
 
     def __eq__(self, other):
-        try:
-            return isinstance(other, Port) and self.transport_protocol == other.transport_protocol \
+        return isinstance(other, Port) and self.transport_protocol == other.transport_protocol \
                    and self.number == other.number and self.node == other.node
-        except AttributeError:
-            return False
 
     def __ne__(self, other):
-        try:
-            return (not isinstance(other, Port)) or self.transport_protocol != other.transport_protocol \
+        return (not isinstance(other, Port)) or self.transport_protocol != other.transport_protocol \
             or self.number != other.number or self.node != other.node
-        except AttributeError:
-            return True
 
     def __hash__(self):
         return hash("{protocol}:{number}:{node}".format(protocol=self.transport_protocol, number=self.number,

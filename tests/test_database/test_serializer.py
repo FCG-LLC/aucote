@@ -27,8 +27,7 @@ class SerializerTest(TestCase):
         self.vuln.port = port
         self.vuln.output = 'Test'
 
-        self.exploit = Exploit()
-        self.exploit.id = 1
+        self.exploit = Exploit(exploit_id=1)
         self.exploit.app = 'test_app'
         self.exploit.name = 'test_name'
         self.exploit.title = 'test_title'
