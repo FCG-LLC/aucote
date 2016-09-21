@@ -44,13 +44,13 @@ class Node:
 
     def __eq__(self, other):
         try:
-            return self.ip == other.ip and self.id == other.id
+            return isinstance(other, Node) and self.ip == other.ip and self.id == other.id
         except AttributeError:
             return False
 
     def __ne__(self, other):
         try:
-            return self.ip != other.ip or self.id != other.id
+            return (not isinstance(other, Node)) or self.ip != other.ip or self.id != other.id
         except AttributeError:
             return True
 
@@ -172,15 +172,15 @@ class Port(object):
 
     def __eq__(self, other):
         try:
-            return self.transport_protocol == other.transport_protocol and self.number == other.number \
-                   and self.node == other.node
+            return isinstance(other, Port) and self.transport_protocol == other.transport_protocol \
+                   and self.number == other.number and self.node == other.node
         except AttributeError:
             return False
 
     def __ne__(self, other):
         try:
-            return self.transport_protocol != other.transport_protocol or self.number != other.number \
-                   or self.node != other.node
+            return (not isinstance(other, Port)) or self.transport_protocol != other.transport_protocol \
+            or self.number != other.number or self.node != other.node
         except AttributeError:
             return True
 

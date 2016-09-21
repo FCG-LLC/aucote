@@ -40,6 +40,12 @@ class NodeTest(TestCase):
 
         self.assertEqual(node1, node2)
 
+    def test_equality_different_types(self):
+        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node2 = MagicMock(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+
+        self.assertNotEqual(node1, node2)
+
     def test_node_comparison_non_eq(self):
         node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         node2 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=2)
@@ -70,6 +76,14 @@ class PortTest(TestCase):
         port2 = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
 
         self.assertEqual(port1, port2)
+
+    def test_equality_different_types(self):
+        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+
+        port1 = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
+        port2 = MagicMock(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
+
+        self.assertNotEqual(port1, port2)
 
     def test_ports_comparison_non_eq(self):
         node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
