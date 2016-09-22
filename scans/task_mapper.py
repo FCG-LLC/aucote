@@ -22,6 +22,7 @@ class TaskMapper:
     def assign_tasks(self, port):
         """
         Assign tasks for a provided port
+
         """
 
         scripts = self._executor.exploits.find_all_matching(port)
@@ -35,16 +36,16 @@ class TaskMapper:
 
     @property
     def executor(self):
-        '''
-
+        """
         Returns: Executor
 
-        '''
+        """
         return self._executor
 
     @property
     def exploits(self):
         """
         Executor's exploits
+
         """
         return self._executor.exploits

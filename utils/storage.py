@@ -221,7 +221,7 @@ class Storage(DbInterface):
             app (str): app name
 
         Returns:
-            list - list of dictionaries with keys: exploit, node,
+            list - list of dictionaries with keys: exploit, port, scan_start, scan_end
 
         """
         return_value = []
@@ -230,8 +230,7 @@ class Storage(DbInterface):
             for row in self.cursor.execute("SELECT * FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? "
                                            "AND port_protocol = ? AND port_number = ?",
                                            [app, port.node.id, str(port.node.ip), port.transport_protocol.iana,
-                                            port.number]
-                                           ):
+                                            port.number]):
                 return_value.append({
                     "exploit": Exploit(exploit_id=row[0]),
                     "port": Port(node=Node(node_id=row[3], ip=ipaddress.ip_address(row[4])), number=row[6],
