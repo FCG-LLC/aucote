@@ -213,19 +213,22 @@ class StorageTest(TestCase):
                 "exploit": exploits[0],
                 "port": ports[0],
                 "scan_start": start_scan,
-                "scan_end": end_scan
+                "scan_end": end_scan,
+                "exploit_name": "test_name_1"
             },
             {
                 "exploit": exploits[1],
                 "port": ports[0],
                 "scan_start": start_scan,
-                "scan_end": end_scan
+                "scan_end": end_scan,
+                "exploit_name": "test_name_2"
             },
             {
                 "exploit": exploits[2],
                 "port": ports[0],
                 "scan_start": start_scan,
-                "scan_end": end_scan
+                "scan_end": end_scan,
+                "exploit_name": "test_name_3"
             }
         ]
 

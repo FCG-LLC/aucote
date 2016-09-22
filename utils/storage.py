@@ -237,6 +237,7 @@ class Storage(DbInterface):
                                  transport_protocol=TransportProtocol.from_iana(row[5])),
                     "scan_start": row[7],
                     "scan_end": row[8],
+                    "exploit_name": row[2]
                 })
 
             return return_value
