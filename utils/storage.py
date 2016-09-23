@@ -4,6 +4,7 @@ This file contains class for storage temporary information like last date of sca
 import ipaddress
 import sqlite3
 import time
+import logging as log
 
 from fixtures.exploits import Exploit
 from structs import Node, Port, TransportProtocol
@@ -181,6 +182,9 @@ class Storage(DbInterface):
             None
 
         """
+
+        log.debug("Saving scan details: scan_start(%s), scan_end(%s), exploit_id(%s), node_id(%s), node(%s), port(%s)",
+                  scan_start, scan_end, exploit.id, port.node.id, str(port.node), str(port))
 
         try:
             self.cursor.execute("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"

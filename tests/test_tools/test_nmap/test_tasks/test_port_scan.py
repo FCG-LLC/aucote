@@ -5,7 +5,7 @@ from xml.etree import ElementTree
 
 from fixtures.exploits import Exploit
 from fixtures.exploits import Exploits
-from structs import Port, TransportProtocol, Node, Vulnerability
+from structs import Port, TransportProtocol, Node, Vulnerability, Scan
 from tools.nmap.base import InfoNmapScript, VulnNmapScript
 
 from tools.nmap.tasks.port_scan import NmapPortScanTask
@@ -15,6 +15,7 @@ from tools.nmap.tasks.port_scan import NmapPortScanTask
 class NmapPortScanTaskTest(unittest.TestCase):
     """
     Testing nmap port scanning task
+
     """
     XML = '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE nmaprun>
@@ -86,6 +87,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         """
         Prepare some internal variables:
             exploit, port, exploits, script, vulnerability, scan_task
+
         """
         self.executor = MagicMock()
 
@@ -98,6 +100,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
         self.port = Port(number=22, node=self.node, transport_protocol=TransportProtocol.TCP)
         self.port.service_name = 'ssh'
+        self.port.scan = Scan()
 
         self.script = InfoNmapScript(port=self.port, exploit=self.exploit, name='test', args='test_args')
         self.script.get_result = MagicMock(return_value='test')
@@ -105,6 +108,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
                                       args='test_args')
         self.scan_task = NmapPortScanTask(executor=self.executor, port=self.port,
                                           script_classes=[self.script, self.script2])
+        self.scan_task.store_scan_end = MagicMock()
 
         self.scan_task.call = MagicMock()
         self.scan_task.call.return_value = ElementTree.fromstring(self.XML)
@@ -117,6 +121,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
     def test_tcp_scan(self):
         """
         Test TCP scanning
+
         """
         self.scan_task()
 
@@ -134,6 +139,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
     def test_udp_scan(self):
         """
         Test UDP scanning
+
         """
         self.scan_task._port.transport_protocol = TransportProtocol.UDP
         self.scan_task()
@@ -151,19 +157,16 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertIn('-sU', result)
 
     def test_no_vulnerabilities(self):
-        scan_task = NmapPortScanTask(port=self.port, script_classes=[], executor=self.executor)
-        scan_task.call = MagicMock(return_value=ElementTree.fromstring(self.NO_VULNERABILITIES_XML))
-        scan_task()
+        self.scan_task.call = MagicMock(return_value=ElementTree.fromstring(self.NO_VULNERABILITIES_XML))
+        self.scan_task()
 
-        scan_task.kudu_queue.send_msg.assert_called_once_with('test')
+        self.scan_task.kudu_queue.send_msg.assert_called_once_with('test')
 
     @patch('tools.nmap.tasks.port_scan.Vulnerability')
     @patch('tools.nmap.tasks.port_scan.Serializer', MagicMock())
     def test_prescript(self, mock_vulnerability):
-        scan_task = NmapPortScanTask(port=self.port, script_classes=[self.script], executor=self.executor)
-        scan_task._kudu_queue = MagicMock()
-        scan_task.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
-        scan_task()
+        self.scan_task.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
+        self.scan_task()
 
         expected = 'test'
         result = mock_vulnerability.call_args[1]['output']
@@ -173,6 +176,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
     def test_dns_scan(self):
         """
         Test UDP scanning
+
         """
         self.port.number = 53
         self.scan_task()
@@ -181,3 +185,20 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertIn('-p', result)
         self.assertIn('53', result)
         self.assertIn('--dns-servers', result)
+
+    @patch('time.time', MagicMock(return_value=27.0))
+    @patch('tools.nmap.tasks.port_scan.Vulnerability', MagicMock())
+    @patch('tools.nmap.tasks.port_scan.Serializer', MagicMock())
+    def test_storage(self):
+        self.scan_task._script_classes = [self.script]
+        self.scan_task.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
+        self.scan_task()
+
+        result = self.scan_task.store_scan_end.call_args[1]
+        expected = {
+            'exploits': [self.script.exploit],
+            'port': self.port,
+        }
+
+        self.assertDictEqual(result, expected)
+        self.assertEqual(self.port.scan.end, 27.0)

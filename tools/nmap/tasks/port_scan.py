@@ -1,5 +1,7 @@
 import logging as log
 
+import time
+
 from database.serializer import Serializer
 from structs import Vulnerability
 from tools.nmap.base import NmapBase
@@ -79,6 +81,11 @@ class NmapPortScanTask(NmapBase):
                 continue
 
             vulners.append(Vulnerability(exploit=found_handler.exploit, port=self._port, output=result))
+
+        exploits = [script.exploit for script in self._script_classes]
+
+        self._port.scan.end = time.time()
+        self.store_scan_end(exploits=exploits, port=self._port)
 
         if vulners:
             for vuln in vulners:
