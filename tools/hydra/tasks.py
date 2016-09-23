@@ -1,6 +1,8 @@
 import subprocess
 import logging as log
 
+import time
+
 from aucote_cfg import cfg
 from structs import Vulnerability
 from tools.hydra.base import HydraBase
@@ -38,10 +40,15 @@ class HydraScriptTask(HydraBase):
             log.warning("Exiting Hydra process", exc_info=exception)
             return None
 
+        exploit = self.exploits.find('hydra', 'hydra')
+
+        self._port.scan.end = int(time.time())
+        self.store_scan_end(exploits=[exploit], port=self._port)
+
         if not results:
             log.debug("Hydra does not find any password.")
             return None
 
-        self.store_vulnerability(Vulnerability(exploit=self.exploits.find('hydra', 'hydra'), port = self._port,
+        self.store_vulnerability(Vulnerability(exploit=self.exploits.find('hydra', 'hydra'), port=self._port,
                                                output=results))
         return results

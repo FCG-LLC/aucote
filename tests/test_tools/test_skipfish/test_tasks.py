@@ -1,7 +1,7 @@
 import ipaddress
 import subprocess
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
 from structs import Port, TransportProtocol, Node, Scan
@@ -31,7 +31,9 @@ class SkipfishScanTaskTest(TestCase):
         self.port.scan = Scan()
 
         self.task = SkipfishScanTask(executor=self.executor, port=self.port)
-        self.task.executor.exploits.find.return_value = Exploit(exploit_id=1)
+        self.exploit = Exploit(exploit_id=1)
+        self.task.executor.exploits.find.return_value = self.exploit
+        self.task.store_scan_end = MagicMock()
 
     def test_call(self):
         expected = MagicMock()
@@ -51,3 +53,17 @@ class SkipfishScanTaskTest(TestCase):
         result = self.task()
 
         self.assertEqual(result, None)
+
+    @patch('time.time', MagicMock(return_value=27.0))
+    def test_storage(self):
+        self.task.call = MagicMock(return_value=MagicMock())
+        self.task()
+
+        result = self.task.store_scan_end.call_args[1]
+        expected = {
+            'exploits': [self.exploit],
+            'port': self.port,
+        }
+
+        self.assertDictEqual(result, expected)
+        self.assertEqual(self.port.scan.end, 27)

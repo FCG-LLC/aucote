@@ -2,6 +2,7 @@ import subprocess
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+from fixtures.exploits import Exploit
 from tools.hydra.parsers import HydraParser
 from tools.hydra.tasks import HydraScriptTask
 
@@ -25,6 +26,9 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.port.service_name = 'ssh'
 
         self.hydra_script_task = HydraScriptTask(executor=self.executor, port=self.port, service=self.port.service_name)
+        self.hydra_script_task.store_scan_end = MagicMock()
+        self.exploit = Exploit(exploit_id=1)
+        self.hydra_script_task.executor.exploits.find.return_value = self.exploit
 
     def test_init(self):
         self.assertEqual(self.hydra_script_task.executor, self.executor)
@@ -54,3 +58,19 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         expected = None
 
         self.assertEqual(result, expected)
+
+    @patch('time.time', MagicMock(return_value=27.0))
+    def test_storage(self):
+        self.hydra_script_task.call = MagicMock(return_value=MagicMock())
+        self.hydra_script_task.executor.kudu_queue = MagicMock()
+        self.hydra_script_task.store_vulnerability = MagicMock()
+        self.hydra_script_task()
+
+        result = self.hydra_script_task.store_scan_end.call_args[1]
+        expected = {
+            'exploits': [self.exploit],
+            'port': self.port,
+        }
+
+        self.assertDictEqual(result, expected)
+        self.assertEqual(self.port.scan.end, 27)

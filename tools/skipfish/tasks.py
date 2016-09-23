@@ -36,9 +36,13 @@ class SkipfishScanTask(SkipfishBase):
             log.warning("Exiting process", exc_info=exception)
             return None
 
+        exploit = self.exploits.find('skipfish', 'skipfish')
+
+        self._port.scan.end = int(time.time())
+        self.store_scan_end(exploits=[exploit], port=self._port)
+
         if not results:
             return results
 
-        self.store_vulnerability(Vulnerability(exploit=self.exploits.find('skipfish', 'skipfish'), port=self._port,
-                                               output=results))
+        self.store_vulnerability(Vulnerability(exploit=exploit, port=self._port, output=results))
         return results

@@ -37,23 +37,6 @@ class CommandTest(TestCase):
     def test_stderr(self):
         self.assertRaises(subprocess.CalledProcessError, self.command.call)
 
-    @patch('tools.common.command.Storage')
-    @patch('tools.common.command.time.time')
-    def test_store_scan_end_info(self, mock_time, mock_storage):
-        port = MagicMock()
-
-        self.command.executor.exploits = range(5)
-        self.command.store_scan_end_info(port)
-
-        result = mock_storage.return_value.__enter__.return_value.save_scan.call_args_list
-
-        self.assertEqual(len(result), 5)
-
-        for exploit in self.command.executor.exploits:
-            self.assertEqual(result[exploit][1]['exploit'], exploit)
-            self.assertEqual(result[exploit][1]['port'], port)
-            self.assertEqual(result[exploit][1]['scan_end'], mock_time.return_value)
-
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
 class CommandXMLTest(TestCase):

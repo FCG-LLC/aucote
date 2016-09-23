@@ -45,11 +45,6 @@ class Command(Task):
         msg = Serializer.serialize_port_vuln(vuln.port, vuln)
         self.kudu_queue.send_msg(msg)
 
-    def store_scan_end_info(self, port):
-        with Storage(filename=self.executor.storage.filename) as storage:
-            for exploit in self.exploits:
-                storage.save_scan(exploit=exploit, port=port, scan_end=time.time())
-
 
 class CommandXML(Command):
 
