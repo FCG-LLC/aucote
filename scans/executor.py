@@ -73,6 +73,12 @@ class Executor(object):
     def add_task(self, task):
         """
         Add task for executing
+
+        Args:
+            task (Task):
+
+        Returns:
+
         """
         log.debug('Added task: %s', task)
         self._thread_pool.add_task(task)

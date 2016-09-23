@@ -235,8 +235,8 @@ class Storage(DbInterface):
                     "exploit": Exploit(exploit_id=row[0]),
                     "port": Port(node=Node(node_id=row[3], ip=ipaddress.ip_address(row[4])), number=row[6],
                                  transport_protocol=TransportProtocol.from_iana(row[5])),
-                    "scan_start": row[7],
-                    "scan_end": row[8],
+                    "scan_start": row[7] or 0.,
+                    "scan_end": row[8] or 0.,
                     "exploit_name": row[2]
                 })
 

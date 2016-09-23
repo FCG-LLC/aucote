@@ -6,6 +6,7 @@ from xml.etree import ElementTree
 from structs import Port, TransportProtocol, Node
 
 from tools.nmap.tasks.port_info import NmapPortInfoTask
+from utils.storage import Storage
 
 
 @patch('scans.task_mapper.TaskMapper', MagicMock)
@@ -51,7 +52,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 </nmaprun>'''
 
     def setUp(self):
-        self.executor = MagicMock()
+        self.executor = MagicMock(storage=Storage(":memory:"))
 
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 

@@ -35,7 +35,8 @@ _DEFAULT = {
     'tools':{
         'nmap':{
             'cmd': 'nmap',
-            'enable': True
+            'enable': True,
+            'period': '1d'
         },
         'masscan': {
             'cmd': 'masscan',
@@ -46,14 +47,16 @@ _DEFAULT = {
             'loginfile': 'static/logins.hydra.txt',
             'passwordfile': 'static/passwords.hydra.txt',
             'enable': True,
-            'disable_services': ['vnc', 'http', 'https']
+            'disable_services': ['vnc', 'http', 'https'],
+            'period': '1d'
         },
         'skipfish': {
             'cmd': 'skipfish',
             'enable': True,
             'limit': '0:10:00',
             'threads': 5,
-            'tmp_directory': '/tmp'
+            'tmp_directory': '/tmp',
+            'period': '1d'
         }
     },
     'service': {

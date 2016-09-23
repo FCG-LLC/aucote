@@ -40,15 +40,3 @@ class ToolTest(TestCase):
         result = Tool.get_config('key')
 
         self.assertEqual(result, expected)
-
-    # def test_filter_out_exploits(self):
-    #     exploits = [
-    #         Exploit(exploit_id=1, period=5),
-    #         Exploit(exploit_id=2, period=10)
-    #     ]
-    #
-    #     tool = Tool(exploits=exploits, executor=MagicMock(storage=MagicMock),
-    #                 port=Port(number=80,transport_protocol=TransportProtocol.TCP,
-    #                           node=Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))), config=self.config)
-    #
-    #     tool.test_filter_out_exploits()
