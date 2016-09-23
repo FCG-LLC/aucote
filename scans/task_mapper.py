@@ -47,7 +47,8 @@ class TaskMapper:
             scans = storage.get_scan_info(port=port, app=app)
 
             for scan in scans:
-                period = parse_period(periods.get(scan['exploit_name'], None) or cfg.get('tools.{0}.period'.format(app)))
+                period = parse_period(periods.get(scan['exploit_name'], None) or
+                                      cfg.get('tools.{0}.period'.format(app)))
 
                 if scan['scan_end'] + period > time.time():
                     exploits.remove(scan['exploit'])
@@ -89,4 +90,4 @@ class TaskMapper:
             None
         """
         for exploit in exploits:
-           storage.save_scan(exploit=exploit, port=port, scan_start=port.scan.start)
+            storage.save_scan(exploit=exploit, port=port, scan_start=port.scan.start)

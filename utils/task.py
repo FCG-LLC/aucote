@@ -2,6 +2,7 @@
 Provide class for tasks
 
 """
+from utils.storage import Storage
 
 
 class Task(object):
@@ -45,3 +46,18 @@ class Task(object):
 
         """
         return self.kudu_queue.send_msg(msg)
+
+    def store_scan_end(self, exploits, port):
+        """
+        Stores scan end in local storage
+
+        Args:
+            exploits (Exploits):
+            port (Port):
+
+        Returns:
+            None
+        """
+        with Storage(filename=self.executor.storage.filename) as storage:
+            for exploit in exploits:
+                storage.save_scan(exploit=exploit, port=port, scan_end=port.scan.end)
