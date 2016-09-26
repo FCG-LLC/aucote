@@ -28,5 +28,5 @@ class OpenPortsParser:
 
                 log.debug('Found open port %s of %s, service is %s', port.number, str(ip), port.service_name)
                 result.append(port)
-        log.debug('Found %s open ports', len(result))
+        log.info('Found %s open ports', len(result))
         return result

@@ -109,10 +109,11 @@ class Aucote(object):
 
         """
         scheduler = sched.scheduler(time.time)
-        scan_period = parse_period(cfg.get('service.scans.period')).total_seconds()
+        scan_period = parse_period(cfg.get('service.scans.period'))
         scheduler.enter(0, 1, self.run_scan)
         while True:
             scheduler.run()
+            log.info("sleeping %s seconds", scan_period)
             scheduler.enter(scan_period, 1, self.run_scan)
 
     def run_syncdb(self):

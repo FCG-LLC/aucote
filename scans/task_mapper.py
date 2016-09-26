@@ -36,7 +36,7 @@ class TaskMapper:
             if not cfg.get('tools.{0}.enable'.format(app)):
                 continue
 
-            log.debug("Found %i exploits", len(exploits))
+            log.info("Found %i exploits", len(exploits))
 
             try:
                 periods = cfg.get('tools.{0}.periods'.format(app)).cfg
@@ -53,7 +53,7 @@ class TaskMapper:
                 if scan['scan_end'] + period > time.time():
                     exploits.remove(scan['exploit'])
 
-            log.debug("Using %i exploits", len(exploits))
+            log.info("Using %i exploits against %s", len(exploits), port)
             self.store_scan_details(port=port, exploits=exploits, storage=storage)
             task = EXECUTOR_CONFIG['apps'][app]['class'](executor=self._executor, exploits=exploits, port=port,
                                                          config=EXECUTOR_CONFIG['apps'][app])

@@ -1,10 +1,11 @@
+import ipaddress
 import unittest
 from collections import OrderedDict
 from unittest.mock import Mock, patch, MagicMock
 
 from fixtures.exploits import Exploit
 from scans.task_mapper import TaskMapper
-from structs import Port, TransportProtocol, Scan
+from structs import Port, TransportProtocol, Scan, Node
 from utils import Config
 
 
@@ -20,11 +21,13 @@ class TaskMapperTest(unittest.TestCase):
         }
     }
 
-    UDP = Port(transport_protocol=TransportProtocol.UDP, number=21, node=None)
+    NODE = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+
+    UDP = Port(transport_protocol=TransportProtocol.UDP, number=21, node=NODE)
     UDP.service_name = 'ftp'
     UDP.scan = Scan(start=19.0)
 
-    TCP = Port(transport_protocol=TransportProtocol.TCP, number = 22, node=None)
+    TCP = Port(transport_protocol=TransportProtocol.TCP, number = 22, node=NODE)
     TCP.service_name = 'ssh'
     TCP.scan = Scan(start=19.0)
 
