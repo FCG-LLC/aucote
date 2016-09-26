@@ -7,7 +7,7 @@ from sqlite3 import connect
 from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
-from structs import Node, Port, TransportProtocol
+from structs import Node, Port, TransportProtocol, Scan
 from utils.storage import Storage
 
 
@@ -152,9 +152,10 @@ class StorageTest(TestCase):
                     transport_protocol=TransportProtocol.TCP)
 
         start_scan = 17
+        port.scan = Scan(start=start_scan)
 
         with Storage(":memory:") as storage:
-            storage.save_scan(exploit=exploit, port=port, scan_start=start_scan)
+            storage.save_scan(exploit=exploit, port=port)
 
             result = storage.cursor.execute("SELECT * FROM scans").fetchall()
 
@@ -177,10 +178,10 @@ class StorageTest(TestCase):
                     transport_protocol=TransportProtocol.TCP)
 
         start_scan = 17
+        port.scan = Scan(start=start_scan, end=start_scan)
 
         with Storage(":memory:") as storage:
-            storage.save_scan(exploit=exploit, port=port, scan_start=start_scan)
-            storage.save_scan(exploit=exploit, port=port, scan_end=start_scan)
+            storage.save_scan(exploit=exploit, port=port)
 
             result = storage.cursor.execute("SELECT * FROM scans").fetchall()
 
@@ -204,7 +205,8 @@ class StorageTest(TestCase):
         with Storage(":memory:") as storage:
             for exploit in exploits:
                 for port in ports:
-                    storage.save_scan(exploit=exploit, port=port, scan_start=start_scan, scan_end=end_scan)
+                    port.scan = Scan(start=start_scan, end=end_scan)
+                    storage.save_scan(exploit=exploit, port=port)
 
             results = storage.get_scan_info(port=ports[0], app='test_app')
 
@@ -241,3 +243,41 @@ class StorageTest(TestCase):
         result = self.storage.get_scan_info(port=Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1),
                                                       number=1, transport_protocol=TransportProtocol.TCP), app=None)
         self.assertEqual(result, [])
+
+    def test_clear_scan_details(self):
+        exploit = Exploit(exploit_id=14)
+        exploit.name = 'test_name'
+        exploit.app = 'test_app'
+
+        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=3), number=12,
+                    transport_protocol=TransportProtocol.TCP)
+        port.scan = Scan()
+
+        start_scan = 17
+
+        with Storage(":memory:") as storage:
+            port.scan.start = start_scan
+            storage.save_scan(exploit=exploit, port=port)
+
+            port.number += 1
+            port.scan.end = start_scan -1
+            storage.save_scan(exploit=exploit, port=port)
+
+            port.number += 1
+            port.scan.end +=1
+            storage.save_scan(exploit=exploit, port=port)
+
+            port.number += 1
+            port.scan.end += 1
+            storage.save_scan(exploit=exploit, port=port)
+
+            port.number += 1
+            port.scan.start = None
+            storage.save_scan(exploit=exploit, port=port)
+            storage.clear_scan_details()
+
+            result = len(storage.cursor.execute("SELECT * FROM scans").fetchall())
+
+        expected = 1
+
+        self.assertEqual(result, expected)

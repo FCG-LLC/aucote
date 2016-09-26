@@ -60,4 +60,4 @@ class Task(object):
         """
         with Storage(filename=self.executor.storage.filename) as storage:
             for exploit in exploits:
-                storage.save_scan(exploit=exploit, port=port, scan_end=port.scan.end)
+                storage.save_scan(exploit=exploit, port=port)

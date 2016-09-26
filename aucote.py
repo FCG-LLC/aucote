@@ -95,12 +95,12 @@ class Aucote(object):
 
         with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
             with Storage() as storage:
+                storage.clear_scan_details()
                 try:
                     executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits, nodes=nodes, storage=storage)
                     executor.run()
                 except TopdisConnectionException:
                     log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)
-
 
     def run_service(self):
         """

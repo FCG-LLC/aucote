@@ -90,4 +90,4 @@ class TaskMapper:
             None
         """
         for exploit in exploits:
-            storage.save_scan(exploit=exploit, port=port, scan_start=port.scan.start)
+            storage.save_scan(exploit=exploit, port=port)

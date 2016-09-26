@@ -156,11 +156,11 @@ class TaskMapperTest(unittest.TestCase):
         result = self.executor.storage.save_scan.call_args[1]
         expected = {
             'exploit': self.exploits['test'][0],
-            'port': self.UDP,
-            'scan_start': 25.0
+            'port': self.UDP
         }
 
         self.assertDictEqual(result, expected)
+        self.assertEqual(result['port'].scan.start, self.UDP.scan.start)
 
     @patch('aucote_cfg.cfg.get', MagicMock(side_effect=(True, KeyError, False)))
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)

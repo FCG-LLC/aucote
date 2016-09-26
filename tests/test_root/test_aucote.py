@@ -8,7 +8,7 @@ from aucote import main, Aucote
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 
 
-@patch('aucote_cfg.cfg.get', Mock(return_value=""))
+@patch('aucote_cfg.cfg.get', Mock(return_value=":memory:"))
 @patch('aucote_cfg.cfg.load', Mock(return_value=""))
 @patch('utils.log.config', Mock(return_value=""))
 class AucoteTest(TestCase):
@@ -59,10 +59,12 @@ class AucoteTest(TestCase):
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
+    @patch('aucote.Storage')
     @patch('scans.executor.Executor.run')
-    def test_scan(self, mock_executor):
+    def test_scan(self, mock_executor, mock_storage):
         self.aucote.run_scan()
         self.assertEqual(mock_executor.call_count, 1)
+        self.assertTrue(mock_storage.return_value.__enter__.return_value.clear_scan_details.called)
 
     @patch('aucote.Aucote.run_scan', MagicMock())
     @patch('aucote.parse_period')

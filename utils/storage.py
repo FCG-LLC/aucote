@@ -167,15 +167,13 @@ class Storage(DbInterface):
         except sqlite3.DatabaseError:
             return []
 
-    def save_scan(self, exploit, port, scan_start=None, scan_end=None, commit=True):
+    def save_scan(self, exploit, port, commit=True):
         """
         Saves scan informations into storage. Create table scans if not exists
 
         Args:
             exploit (Exploit): needs some exploit details to save into storage
             port (Port): needs some port details to save into storage
-            scan_start (float): timestamp of scan start
-            scan_end (float): timestamp of scan finish
             commit (bool): commit changes
 
         Returns:
@@ -184,7 +182,7 @@ class Storage(DbInterface):
         """
 
         log.debug("Saving scan details: scan_start(%s), scan_end(%s), exploit_id(%s), node_id(%s), node(%s), port(%s)",
-                  scan_start, scan_end, exploit.id, port.node.id, str(port.node), str(port))
+                  port.scan.start, port.scan.end, exploit.id, port.node.id, str(port.node), str(port))
 
         try:
             self.cursor.execute("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
@@ -193,16 +191,16 @@ class Storage(DbInterface):
                                 (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
                                  port.transport_protocol.iana, port.number))
 
-            if scan_start:
+            if port.scan.start:
                 self.cursor.execute("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
                                     "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                    (scan_start, exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
+                                    (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
                                      port.transport_protocol.iana, port.number))
 
-            if scan_end:
+            if port.scan.end:
                 self.cursor.execute("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
                                     "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                    (scan_end, exploit.id, exploit.app, exploit.name, port.node.id,
+                                    (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
                                      str(port.node.ip), port.transport_protocol.iana, port.number))
 
         except sqlite3.DatabaseError:
@@ -211,7 +209,7 @@ class Storage(DbInterface):
                                 "PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, port_number))")
             self.conn.commit()
 
-            self.save_scan(exploit=exploit, port=port, scan_start=scan_start, scan_end=scan_end, commit=commit)
+            self.save_scan(exploit=exploit, port=port, commit=commit)
 
         if commit:
             self.conn.commit()
@@ -248,3 +246,18 @@ class Storage(DbInterface):
 
         except sqlite3.DatabaseError:
             return []
+
+    def clear_scan_details(self):
+        """
+        Remove unfinished scans from database
+
+        Returns:
+            None
+
+        """
+        try:
+            self.cursor.execute("DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL "
+                                "OR SCAN_END IS NULL")
+
+        except sqlite3.DatabaseError:
+            return

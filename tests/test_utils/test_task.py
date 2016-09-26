@@ -55,8 +55,8 @@ class TaskTest(TestCase):
 
         expected = {
             'exploit': exploit,
-            'port': port,
-            'scan_end': 25.0
+            'port': port
         }
 
         self.assertDictEqual(result, expected)
+        self.assertEqual(result['port'].scan.end, port.scan.end)
