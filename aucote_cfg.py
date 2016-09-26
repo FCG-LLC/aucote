@@ -65,7 +65,8 @@ _DEFAULT = {
             'threads': 10,
             'ports': '0-65535,U:0-65535',
             'rate': 1000,
-            'port_period': '12h'
+            'port_period': '12h',
+            'storage': 'storage.sqlite3'
         },
         "api":{
             'v1': {

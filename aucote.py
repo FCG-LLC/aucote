@@ -94,7 +94,7 @@ class Aucote(object):
         """
 
         with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
-            with Storage() as storage:
+            with Storage(filename=cfg.get('service.scans.storage')) as storage:
                 storage.clear_scan_details()
                 try:
                     executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits, nodes=nodes, storage=storage)
