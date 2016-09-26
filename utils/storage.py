@@ -194,8 +194,8 @@ class Storage(DbInterface):
             if port.scan.start:
                 self.cursor.execute("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
                                     "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                    (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
-                                     port.transport_protocol.iana, port.number))
+                                    (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
+                                     str(port.node.ip), port.transport_protocol.iana, port.number))
 
             if port.scan.end:
                 self.cursor.execute("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
