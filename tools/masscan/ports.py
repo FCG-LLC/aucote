@@ -4,6 +4,7 @@ from utils.exceptions import NonXMLOutputException
 from aucote_cfg import cfg
 import logging as log
 
+
 class MasscanPorts(MasscanBase):
     """
     Scans for open ports using masscan application

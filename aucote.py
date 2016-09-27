@@ -17,6 +17,7 @@ from structs import Node
 import utils.log as log_cfg
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
+from utils.threads import ThreadPool
 from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
 
@@ -86,6 +87,17 @@ class Aucote(object):
 
     def __init__(self, exploits):
         self.exploits = exploits
+        self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
+
+    @property
+    def thread_pool(self):
+        """
+        Returns aucote thread pool
+
+        Returns:
+            ThreadPool
+        """
+        return self._thread_pool
 
     def run_scan(self, nodes=None):
         """
@@ -97,8 +109,12 @@ class Aucote(object):
             with Storage(filename=cfg.get('service.scans.storage')) as storage:
                 storage.clear_scan_details()
                 try:
-                    executor = Executor(kudu_queue=kudu_queue, exploits=self.exploits, nodes=nodes, storage=storage)
+                    executor = Executor(kudu_queue=kudu_queue, aucote=self, nodes=nodes, storage=storage)
                     executor.run()
+
+                    self.thread_pool.start()
+                    self.thread_pool.join()
+                    self.thread_pool.stop()
                 except TopdisConnectionException:
                     log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)
 

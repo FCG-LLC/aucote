@@ -15,7 +15,6 @@ from scans.task_mapper import TaskMapper
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from tools.masscan import MasscanPorts
 from utils.exceptions import TopdisConnectionException
-from utils.threads import ThreadPool
 from utils.time import parse_period
 from structs import Node, Scan
 
@@ -26,9 +25,7 @@ class Executor(object):
 
     """
 
-    _thread_pool = None
-
-    def __init__(self, kudu_queue, exploits, storage, nodes=None):
+    def __init__(self, kudu_queue, aucote, storage, nodes=None):
         """
         Init executor. Sets kudu_queue and nodes
 
@@ -40,7 +37,8 @@ class Executor(object):
         self.storage.save_nodes(self.nodes)
 
         self.task_mapper = TaskMapper(self)
-        self._exploits = exploits
+        self._exploits = aucote.exploits
+        self._thread_pool = aucote.thread_pool
 
     def run(self):
         """
@@ -60,14 +58,8 @@ class Executor(object):
         for port in ports:
             port.scan = scan
 
-        self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
-
         for port in ports:
             self.add_task(NmapPortInfoTask(executor=self, port=port))
-
-        self._thread_pool.start()
-        self._thread_pool.join()
-        self._thread_pool.stop()
 
     def add_task(self, task):
         """

@@ -56,15 +56,28 @@ class AucoteTest(TestCase):
 
         self.assertEqual(mock.call_count, 1)
 
-    @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
-    @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
+    @patch('aucote.KuduQueue')
     @patch('aucote.Storage')
-    @patch('scans.executor.Executor.run')
-    def test_scan(self, mock_executor, mock_storage):
+    @patch('aucote.Executor')
+    def test_scan(self, mock_executor, mock_storage, mock_kudu):
+        self.aucote._thread_pool = MagicMock()
+
         self.aucote.run_scan()
+        result = mock_executor.call_args[1]
+        expected = {
+            'storage': mock_storage.return_value.__enter__.return_value,
+            'aucote': self.aucote,
+            'kudu_queue': mock_kudu.return_value.__enter__.return_value,
+            'nodes': None
+        }
+
         self.assertEqual(mock_executor.call_count, 1)
+        self.assertDictEqual(result, expected)
         self.assertTrue(mock_storage.return_value.__enter__.return_value.clear_scan_details.called)
+        self.aucote._thread_pool.start.called_once_with()
+        self.aucote._thread_pool.join.called_once_with()
+        self.aucote._thread_pool.stop.called_once_with()
 
     @patch('aucote.Aucote.run_scan', MagicMock())
     @patch('aucote.parse_period')

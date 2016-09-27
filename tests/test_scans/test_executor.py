@@ -6,6 +6,7 @@ from urllib.error import URLError
 from scans import Executor
 from structs import Node, Port, TransportProtocol
 from utils.exceptions import TopdisConnectionException
+from utils.threads import ThreadPool
 
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
@@ -76,7 +77,8 @@ class ExecutorTest(TestCase):
     @patch('scans.executor.Executor._get_nodes', MagicMock(return_value=False))
     @patch('scans.executor.Executor._get_nodes_for_scanning', MagicMock(return_value=False))
     def setUp(self):
-        self.executor = Executor(kudu_queue=MagicMock(), exploits=MagicMock(), storage=MagicMock())
+        self.aucote=MagicMock()
+        self.executor = Executor(kudu_queue=MagicMock(), aucote=self.aucote, storage=MagicMock())
         self.urllib_response = MagicMock()
         self.urllib_response.read = MagicMock()
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
@@ -86,10 +88,12 @@ class ExecutorTest(TestCase):
     def test_init(self, mock_get_nodes):
         return_value = 'Test'
         mock_get_nodes.return_value=return_value
-        executor = Executor(kudu_queue=MagicMock(), exploits=MagicMock(), storage=MagicMock())
+        executor = Executor(kudu_queue=MagicMock(), aucote=self.aucote, storage=MagicMock())
 
         mock_get_nodes.assert_called_once_with()
         self.assertEqual(executor.nodes, return_value)
+        self.assertEqual(executor.exploits, self.aucote.exploits)
+        self.assertEqual(executor._thread_pool, self.aucote.thread_pool)
 
     @patch('urllib.request.urlopen')
     def test_getting_nodes(self, urllib):
@@ -117,20 +121,14 @@ class ExecutorTest(TestCase):
 
     @patch('tools.masscan.MasscanPorts.scan_ports', MagicMock(return_value=[MagicMock()]))
     @patch('scans.executor.parse_period', MagicMock(return_value=10))
-    @patch('utils.threads.ThreadPool.stop')
-    @patch('utils.threads.ThreadPool.join')
-    @patch('utils.threads.ThreadPool.start')
-    def test_run_executor(self, mock_start, mock_join, mock_stop):
-        mock_thread_pool = MagicMock(return_value=None)
-        thread_pool = MagicMock()
-        mock_thread_pool.return_value = thread_pool
+    def test_run_executor(self,):
+        self.executor._thread_pool = ThreadPool()
 
         self.executor._get_nodes = MagicMock()
+        self.executor.add_task = MagicMock()
         self.executor.run()
 
-        self.assertEqual(mock_start.call_count, 1)
-        self.assertEqual(mock_join.call_count, 1)
-        self.assertEqual(mock_stop.call_count,1)
+        self.assertEqual(self.executor.add_task.call_count, 1)
 
     def test_properties(self):
         self.assertEqual(self.executor.exploits, self.executor._exploits)
@@ -167,3 +165,10 @@ class ExecutorTest(TestCase):
         expected = [port_1]
 
         self.assertListEqual(result, expected)
+
+    def test_add_task(self):
+        self.executor._thread_pool = MagicMock()
+        data = MagicMock()
+
+        self.executor.add_task(data)
+        self.executor._thread_pool.add_task.called_once_with(data)
