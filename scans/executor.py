@@ -15,6 +15,7 @@ from scans.task_mapper import TaskMapper
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from tools.masscan import MasscanPorts
 from utils.exceptions import TopdisConnectionException
+from utils.storage import Storage
 from utils.time import parse_period
 from structs import Node, Scan
 
@@ -37,6 +38,7 @@ class Executor(object):
         self.storage.save_nodes(self.nodes)
 
         self.task_mapper = TaskMapper(self)
+        self.aucote = aucote
         self._exploits = aucote.exploits
         self._thread_pool = aucote.thread_pool
 
@@ -53,7 +55,9 @@ class Executor(object):
 
         ports = self._get_ports_for_scanning(ports, storage_ports)
         log.info("Found %i recently not scanned ports", len(ports))
-        self.storage.save_ports(ports)
+
+        with Storage(filename=self.storage.filename) as storage:
+            storage.save_ports(ports)
 
         for port in ports:
             port.scan = scan
@@ -61,18 +65,30 @@ class Executor(object):
         for port in ports:
             self.add_task(NmapPortInfoTask(executor=self, port=port))
 
+    def __call__(self, *args, **kwargs):
+        """
+        Making executor callable for working as task
+
+        Args:
+            *args:
+            **kwargs:
+
+        Returns:
+
+        """
+        return self.run()
+
     def add_task(self, task):
         """
-        Add task for executing
+        Add task to aucote pool
 
         Args:
             task (Task):
 
         Returns:
-
+            None
         """
-        log.debug('Added task: %s', task)
-        self._thread_pool.add_task(task)
+        return self.aucote.add_task(task)
 
     @property
     def exploits(self):

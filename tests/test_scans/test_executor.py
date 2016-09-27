@@ -3,9 +3,11 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from urllib.error import URLError
 
+from aucote import Aucote
 from scans import Executor
 from structs import Node, Port, TransportProtocol
 from utils.exceptions import TopdisConnectionException
+from utils.storage import Storage
 from utils.threads import ThreadPool
 
 
@@ -74,11 +76,13 @@ class ExecutorTest(TestCase):
   ]
 }"""
 
-    @patch('scans.executor.Executor._get_nodes', MagicMock(return_value=False))
-    @patch('scans.executor.Executor._get_nodes_for_scanning', MagicMock(return_value=False))
+    @patch('scans.executor.Executor._get_nodes', MagicMock(return_value=[]))
+    @patch('scans.executor.Executor._get_nodes_for_scanning', MagicMock(return_value=[]))
     def setUp(self):
-        self.aucote=MagicMock()
-        self.executor = Executor(kudu_queue=MagicMock(), aucote=self.aucote, storage=MagicMock())
+        storage = Storage(":memory:")
+        storage.connect()
+        self.aucote = Aucote(exploits=None, storage=storage, kudu_queue=None)
+        self.executor = Executor(kudu_queue=MagicMock(), aucote=self.aucote, storage=self.aucote.storage)
         self.urllib_response = MagicMock()
         self.urllib_response.read = MagicMock()
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
@@ -121,7 +125,8 @@ class ExecutorTest(TestCase):
 
     @patch('tools.masscan.MasscanPorts.scan_ports', MagicMock(return_value=[MagicMock()]))
     @patch('scans.executor.parse_period', MagicMock(return_value=10))
-    def test_run_executor(self,):
+    @patch('scans.executor.Storage')
+    def test_run_executor(self, mock_storage):
         self.executor._thread_pool = ThreadPool()
 
         self.executor._get_nodes = MagicMock()

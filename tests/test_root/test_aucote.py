@@ -6,6 +6,7 @@ from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
 
 from aucote import main, Aucote
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
+from utils.storage import Storage
 
 
 @patch('aucote_cfg.cfg.get', Mock(return_value=":memory:"))
@@ -13,9 +14,12 @@ from utils.exceptions import NmapUnsupported, TopdisConnectionException
 @patch('utils.log.config', Mock(return_value=""))
 class AucoteTest(TestCase):
     def setUp(self):
-        self.aucote = Aucote(exploits=MagicMock())
+        storage = Storage(":memory:")
+        storage.connect()
+        self.aucote = Aucote(exploits=MagicMock(), storage=storage, kudu_queue=MagicMock())
 
     @patch('builtins.open', mock_open())
+    @patch('aucote.KuduQueue', MagicMock())
     def test_main_scan(self):
         args = PropertyMock()
         args.configure_mock(cmd='scan')
@@ -37,6 +41,7 @@ class AucoteTest(TestCase):
                 self.assertRaises(SystemExit, main)
 
     @patch('builtins.open', mock_open())
+    @patch('aucote.KuduQueue', MagicMock())
     def test_main_service(self):
         args = PropertyMock()
         args.configure_mock(cmd='service')
@@ -47,6 +52,7 @@ class AucoteTest(TestCase):
         self.assertEqual(mock.call_count, 1)
 
     @patch('builtins.open', mock_open())
+    @patch('aucote.KuduQueue', MagicMock())
     def test_main_syncdb(self):
         args = PropertyMock()
         args.configure_mock(cmd='syncdb')
@@ -57,24 +63,24 @@ class AucoteTest(TestCase):
         self.assertEqual(mock.call_count, 1)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
-    @patch('aucote.KuduQueue')
-    @patch('aucote.Storage')
     @patch('aucote.Executor')
-    def test_scan(self, mock_executor, mock_storage, mock_kudu):
+    def test_scan(self, mock_executor):
         self.aucote._thread_pool = MagicMock()
+        self.aucote._storage = MagicMock()
+        self.aucote._kudu_queue = MagicMock()
 
         self.aucote.run_scan()
         result = mock_executor.call_args[1]
         expected = {
-            'storage': mock_storage.return_value.__enter__.return_value,
+            'storage': self.aucote.storage,
             'aucote': self.aucote,
-            'kudu_queue': mock_kudu.return_value.__enter__.return_value,
+            'kudu_queue': self.aucote.kudu_queue,
             'nodes': None
         }
 
         self.assertEqual(mock_executor.call_count, 1)
         self.assertDictEqual(result, expected)
-        self.assertTrue(mock_storage.return_value.__enter__.return_value.clear_scan_details.called)
+        self.assertTrue(self.aucote.storage.clear_scan_details.called)
         self.aucote._thread_pool.start.called_once_with()
         self.aucote._thread_pool.join.called_once_with()
         self.aucote._thread_pool.stop.called_once_with()
@@ -83,6 +89,7 @@ class AucoteTest(TestCase):
     @patch('aucote.parse_period')
     @patch('sched.scheduler.run')
     @patch('sched.scheduler.enter')
+    @patch('aucote.KuduQueue', MagicMock())
     def test_service(self, mock_sched_enter, mock_sched_run, mock_parse_period):
         mock_sched_run.side_effect = self.check_service # NotImplementedError('test')
         self._mock = mock_sched_run
@@ -98,6 +105,7 @@ class AucoteTest(TestCase):
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))
     @patch('database.serializer.Serializer.serialize_exploit')
+    @patch('aucote.KuduQueue', MagicMock())
     def test_syncdb(self, mock_serializer):
         self.aucote.exploits = range(5)
         self.aucote.run_syncdb()
@@ -110,3 +118,10 @@ class AucoteTest(TestCase):
     def test_scan_with_exception(self, mock_executor):
         self.aucote.run_scan()
         self.assertEqual(mock_executor.call_count, 0)
+
+    def test_add_task(self):
+        self.aucote._thread_pool = MagicMock()
+        data = MagicMock()
+
+        self.aucote.add_task(data)
+        self.aucote._thread_pool.add_task.called_once_with(data)
