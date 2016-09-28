@@ -37,7 +37,6 @@ class Executor(object):
         self.nodes = nodes or self._get_nodes()
         self.storage.save_nodes(self.nodes)
 
-        self.task_mapper = TaskMapper(self)
         self.aucote = aucote
         self._exploits = aucote.exploits
         self._thread_pool = aucote.thread_pool
@@ -49,7 +48,7 @@ class Executor(object):
         """
         scan = Scan()
         scan.start = time.time()
-        scanner = MasscanPorts(executor=self)
+        scanner = MasscanPorts(executor=self.aucote)
         ports = scanner.scan_ports(self.nodes)
         storage_ports = self.storage.get_ports(parse_period(cfg.get('service.scans.port_period')))
 
@@ -63,7 +62,7 @@ class Executor(object):
             port.scan = scan
 
         for port in ports:
-            self.add_task(NmapPortInfoTask(executor=self, port=port))
+            self.add_task(NmapPortInfoTask(executor=self.aucote, port=port))
 
     def __call__(self, *args, **kwargs):
         """

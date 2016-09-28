@@ -13,12 +13,12 @@ class HydraScriptTask(HydraBase):
     This is task for Hydra tool. Call Hydra and parse output
     """
 
-    def __init__(self, executor, port, service, login=True):
+    def __init__(self, port, service, login=True, *args, **kwargs):
         """
         Initialize variables
         """
 
-        super().__init__(executor=executor)
+        super().__init__(*args, **kwargs)
         self._port = port
         self.service = service
         self.login = login

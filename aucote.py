@@ -12,6 +12,7 @@ import time
 
 from fixtures.exploits import Exploits
 from scans import Executor
+from scans.task_mapper import TaskMapper
 
 from structs import Node
 import utils.log as log_cfg
@@ -66,17 +67,17 @@ def main():
         with Storage(filename=cfg.get('service.scans.storage')) as storage:
             aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, storage=storage)
 
-    if args.cmd == 'scan':
-        nodes = []
-        if args.host_ip and args.host_id:
-            node = Node(ip=args.host_ip, node_id=args.host_id)
-            nodes.append(node)
+            if args.cmd == 'scan':
+                nodes = []
+                if args.host_ip is not None and args.host_id is not None:
+                    node = Node(ip=args.host_ip, node_id=args.host_id)
+                    nodes.append(node)
 
-        aucote.run_scan(nodes=nodes)
-    elif args.cmd == 'service':
-        aucote.run_service()
-    elif args.cmd == 'syncdb':
-        aucote.run_syncdb()
+                aucote.run_scan(nodes=nodes)
+            elif args.cmd == 'service':
+                aucote.run_service()
+            elif args.cmd == 'syncdb':
+                aucote.run_syncdb()
 
 
 # =============== functions ==============
@@ -92,6 +93,7 @@ class Aucote(object):
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
         self._storage = storage
+        self.task_mapper = TaskMapper(self)
 
     @property
     def kudu_queue(self):
