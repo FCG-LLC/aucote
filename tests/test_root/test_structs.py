@@ -62,7 +62,7 @@ class NodeTest(TestCase):
         ip = MagicMock()
         id = MagicMock()
 
-        expected = hash("{id}:{ip}".format(id=id, ip=ip))
+        expected = hash((id, ip))
         result = hash(Node(ip=ip, node_id=id))
 
         self.assertEqual(result, expected)
@@ -105,8 +105,7 @@ class PortTest(TestCase):
         number = MagicMock()
         node = MagicMock()
 
-        expected = hash("{protocol}:{number}:{node}".format(protocol=transport_protocol, number=number,
-                                                            node=hash(node)))
+        expected = hash((transport_protocol, number, node))
         result = hash(Port(transport_protocol=transport_protocol, number=number, node=node))
 
         self.assertEqual(result, expected)

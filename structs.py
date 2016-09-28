@@ -49,7 +49,7 @@ class Node:
         return (not isinstance(other, Node)) or self.ip != other.ip or self.id != other.id
 
     def __hash__(self):
-        return hash("{id}:{ip}".format(id=self.id, ip=self.ip))
+        return hash((self.id, self.ip))
 
 
 class TransportProtocol(Enum):
@@ -173,8 +173,7 @@ class Port(object):
             or self.number != other.number or self.node != other.node
 
     def __hash__(self):
-        return hash("{protocol}:{number}:{node}".format(protocol=self.transport_protocol, number=self.number,
-                                                        node=hash(self.node)))
+        return hash((self.transport_protocol, self.number, self.node))
 
     def __str__(self):
         return '%s:%s' % (self.node.ip, self.number)
