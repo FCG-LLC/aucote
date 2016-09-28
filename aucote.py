@@ -3,10 +3,14 @@ This is executable file of aucote project.
 """
 
 import argparse
+import ipaddress
+import json
 import logging as log
 import sched
 from os import chdir
 from os.path import dirname, realpath
+from urllib.error import URLError
+import urllib.request as http
 
 import time
 

@@ -11,7 +11,6 @@ from urllib.error import URLError
 import urllib.request as http
 
 from aucote_cfg import cfg
-from scans.task_mapper import TaskMapper
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from tools.masscan import MasscanPorts
 from utils.exceptions import TopdisConnectionException
@@ -26,20 +25,48 @@ class Executor(object):
 
     """
 
-    def __init__(self, kudu_queue, aucote, storage, nodes=None):
+    def __init__(self, aucote, nodes=None):
         """
         Init executor. Sets kudu_queue and nodes
 
         """
-        self._kudu_queue = kudu_queue
-        self.storage = storage
 
+        self.aucote = aucote
         self.nodes = nodes or self._get_nodes()
         self.storage.save_nodes(self.nodes)
 
-        self.aucote = aucote
-        self._exploits = aucote.exploits
-        self._thread_pool = aucote.thread_pool
+    @property
+    def storage(self):
+        """
+        Returns aucote's storage
+
+        Returns:
+            Storage
+
+        """
+        return self.aucote.storage
+
+    @property
+    def kudu_queue(self):
+        """
+        Returns aucote's kudu queue
+
+        Returns:
+            KuduQueue
+
+        """
+        return self.aucote.kudu_queue
+
+    @property
+    def thread_pool(self):
+        """
+        Returns aucote's thread pool
+
+        Returns:
+            ThreadPool
+
+        """
+        return self.aucote.thread_pool
 
     def run(self):
         """
@@ -86,6 +113,7 @@ class Executor(object):
 
         Returns:
             None
+
         """
         return self.aucote.add_task(task)
 
@@ -96,16 +124,7 @@ class Executor(object):
             exploits
 
         """
-        return self._exploits
-
-    @property
-    def kudu_queue(self):
-        """
-        Returns:
-            kudu_queue
-
-        """
-        return self._kudu_queue
+        return self.aucote.exploits
 
     @classmethod
     def _get_nodes(cls):

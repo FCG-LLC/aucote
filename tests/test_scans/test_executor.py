@@ -82,7 +82,7 @@ class ExecutorTest(TestCase):
         storage = Storage(":memory:")
         storage.connect()
         self.aucote = Aucote(exploits=None, storage=storage, kudu_queue=None)
-        self.executor = Executor(kudu_queue=MagicMock(), aucote=self.aucote, storage=self.aucote.storage)
+        self.executor = Executor(aucote=self.aucote)
         self.urllib_response = MagicMock()
         self.urllib_response.read = MagicMock()
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
@@ -90,14 +90,14 @@ class ExecutorTest(TestCase):
 
     @patch('scans.executor.Executor._get_nodes')
     def test_init(self, mock_get_nodes):
-        return_value = 'Test'
+        return_value = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))]
         mock_get_nodes.return_value=return_value
-        executor = Executor(kudu_queue=MagicMock(), aucote=self.aucote, storage=MagicMock())
+        executor = Executor(aucote=self.aucote)
 
         mock_get_nodes.assert_called_once_with()
         self.assertEqual(executor.nodes, return_value)
         self.assertEqual(executor.exploits, self.aucote.exploits)
-        self.assertEqual(executor._thread_pool, self.aucote.thread_pool)
+        self.assertEqual(executor.thread_pool, self.aucote.thread_pool)
 
     @patch('urllib.request.urlopen')
     def test_getting_nodes(self, urllib):
@@ -136,8 +136,8 @@ class ExecutorTest(TestCase):
         self.assertEqual(self.executor.add_task.call_count, 1)
 
     def test_properties(self):
-        self.assertEqual(self.executor.exploits, self.executor._exploits)
-        self.assertEqual(self.executor.kudu_queue, self.executor._kudu_queue)
+        self.assertEqual(self.executor.exploits, self.executor.aucote.exploits)
+        self.assertEqual(self.executor.kudu_queue, self.aucote.kudu_queue)
 
     def test_get_nodes_for_scanning(self):
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
