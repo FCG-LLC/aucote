@@ -3,14 +3,10 @@ This is executable file of aucote project.
 """
 
 import argparse
-import ipaddress
-import json
 import logging as log
 import sched
 from os import chdir
 from os.path import dirname, realpath
-from urllib.error import URLError
-import urllib.request as http
 
 import time
 
@@ -135,7 +131,7 @@ class Aucote(object):
 
         self.storage.clear_scan_details()
         try:
-            self.add_task(Executor(kudu_queue=self.kudu_queue, aucote=self, nodes=nodes, storage=self.storage))
+            self.add_task(Executor(aucote=self, nodes=nodes))
 
             self.thread_pool.start()
             self.thread_pool.join()

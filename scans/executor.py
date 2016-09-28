@@ -3,20 +3,16 @@ This is main module of aucote scanning functionality.
 
 """
 
-import ipaddress
 import logging as log
-import json
 import time
-from urllib.error import URLError
-import urllib.request as http
 
 from aucote_cfg import cfg
+from scans.scan_task import ScanTask
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from tools.masscan import MasscanPorts
-from utils.exceptions import TopdisConnectionException
 from utils.storage import Storage
 from utils.time import parse_period
-from structs import Node, Scan
+from structs import Scan
 
 
 class Executor(object):
@@ -32,7 +28,7 @@ class Executor(object):
         """
 
         self.aucote = aucote
-        self.nodes = nodes or self._get_nodes()
+        self.nodes = nodes or ScanTask._get_nodes()
         self.storage.save_nodes(self.nodes)
 
     @property
@@ -126,38 +122,13 @@ class Executor(object):
         """
         return self.aucote.exploits
 
-    @classmethod
-    def _get_nodes(cls):
-        """
-        Get nodes from todis application
-
-        """
-        url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
-        try:
-            resource = http.urlopen(url)
-        except URLError:
-            log.error('Cannot connect to topdis: %s:%s', cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
-            raise TopdisConnectionException
-
-        charset = resource.headers.get_content_charset() or 'utf-8'
-        nodes_txt = resource.read().decode(charset)
-        nodes_cfg = json.loads(nodes_txt)
-        log.debug('Got nodes: %s', nodes_cfg)
-        nodes = []
-        for node_struct in nodes_cfg['nodes']:
-            for node_ip in node_struct['ips']:
-                node = Node(ip=ipaddress.ip_address(node_ip), node_id=node_struct['id'])
-                node.name = node_struct['displayName']
-                nodes.append(node)
-        return nodes
-
     def _get_nodes_for_scanning(self):
         """
         Returns:
             list of nodes to be scan
 
         """
-        topdis_nodes = self._get_nodes()
+        topdis_nodes = ScanTask._get_nodes()
         storage_nodes = self.storage.get_nodes()
 
         for node in storage_nodes:

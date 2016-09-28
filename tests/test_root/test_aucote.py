@@ -72,9 +72,7 @@ class AucoteTest(TestCase):
         self.aucote.run_scan()
         result = mock_executor.call_args[1]
         expected = {
-            'storage': self.aucote.storage,
             'aucote': self.aucote,
-            'kudu_queue': self.aucote.kudu_queue,
             'nodes': None
         }
 
