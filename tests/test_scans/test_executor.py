@@ -177,3 +177,9 @@ class ExecutorTest(TestCase):
 
         self.executor.add_task(data)
         self.executor._thread_pool.add_task.called_once_with(data)
+
+    def test_call_method(self):
+        self.executor.run = MagicMock()
+        self.executor()
+
+        self.executor.run.assert_called_once_with()
