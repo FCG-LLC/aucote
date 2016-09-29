@@ -7,9 +7,7 @@ import logging as log
 import time
 
 from aucote_cfg import cfg
-from scans.scan_task import ScanTask
 from tools.nmap.tasks.port_info import NmapPortInfoTask
-from tools.masscan import MasscanPorts
 from utils.storage import Storage
 from utils.time import parse_period
 from structs import Scan
@@ -28,8 +26,7 @@ class Executor(object):
         """
 
         self.aucote = aucote
-        self.nodes = nodes or ScanTask._get_nodes()
-        self.storage.save_nodes(self.nodes)
+        self.ports = nodes
 
     @property
     def storage(self):
@@ -71,8 +68,8 @@ class Executor(object):
         """
         scan = Scan()
         scan.start = time.time()
-        scanner = MasscanPorts(executor=self.aucote)
-        ports = scanner.scan_ports(self.nodes)
+
+        ports = self.ports
         storage_ports = self.storage.get_ports(parse_period(cfg.get('service.scans.port_period')))
 
         ports = self._get_ports_for_scanning(ports, storage_ports)
@@ -121,23 +118,6 @@ class Executor(object):
 
         """
         return self.aucote.exploits
-
-    def _get_nodes_for_scanning(self):
-        """
-        Returns:
-            list of nodes to be scan
-
-        """
-        topdis_nodes = ScanTask._get_nodes()
-        storage_nodes = self.storage.get_nodes()
-
-        for node in storage_nodes:
-            try:
-                topdis_nodes.remove(node)
-            except ValueError:
-                continue
-
-        return topdis_nodes
 
     @classmethod
     def _get_ports_for_scanning(cls, ports, storage_ports):

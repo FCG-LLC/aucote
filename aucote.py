@@ -11,7 +11,7 @@ from os.path import dirname, realpath
 import time
 
 from fixtures.exploits import Exploits
-from scans import Executor
+from scans.scan_task import ScanTask
 from scans.task_mapper import TaskMapper
 
 from structs import Node
@@ -131,7 +131,8 @@ class Aucote(object):
 
         self.storage.clear_scan_details()
         try:
-            self.add_task(Executor(aucote=self, nodes=nodes))
+            self.add_task(ScanTask(executor=self, nodes=nodes))
+            # self.add_task(Executor(aucote=self, nodes=nodes))
 
             self.thread_pool.start()
             self.thread_pool.join()

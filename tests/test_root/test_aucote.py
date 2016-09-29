@@ -63,20 +63,20 @@ class AucoteTest(TestCase):
         self.assertEqual(mock.call_count, 1)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
-    @patch('aucote.Executor')
-    def test_scan(self, mock_executor):
+    @patch('aucote.ScanTask')
+    def test_scan(self, mock_scan_tasks):
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
 
         self.aucote.run_scan()
-        result = mock_executor.call_args[1]
+        result = mock_scan_tasks.call_args[1]
         expected = {
-            'aucote': self.aucote,
+            'executor': self.aucote,
             'nodes': None
         }
 
-        self.assertEqual(mock_executor.call_count, 1)
+        self.assertEqual(mock_scan_tasks.call_count, 1)
         self.assertDictEqual(result, expected)
         self.assertTrue(self.aucote.storage.clear_scan_details.called)
         self.aucote._thread_pool.start.called_once_with()
@@ -111,8 +111,8 @@ class AucoteTest(TestCase):
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
-    @patch('scans.executor.Executor.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
-    @patch('scans.executor.Executor.run')
+    @patch('aucote.ScanTask.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
+    @patch('scans.scan_task.Executor')
     def test_scan_with_exception(self, mock_executor):
         self.aucote.run_scan()
         self.assertEqual(mock_executor.call_count, 0)

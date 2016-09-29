@@ -83,6 +83,7 @@ class Storage(DbInterface):
             None
 
         """
+        log.debug("Saving nodes")
         for node in nodes:
             self.save_node(node, False)
 

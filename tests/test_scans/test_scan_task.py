@@ -1,9 +1,12 @@
+import ipaddress
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from urllib.error import URLError
 
 from scans.scan_task import ScanTask
+from structs import Node
 from utils.exceptions import TopdisConnectionException
+from utils.storage import Storage
 
 
 class ScanTaskTest(TestCase):
@@ -70,13 +73,15 @@ class ScanTaskTest(TestCase):
   ]
 }"""
 
+    @patch('scans.scan_task.ScanTask._get_nodes', MagicMock(return_value=[]))
     def setUp(self):
         self.urllib_response = MagicMock()
         self.urllib_response.read = MagicMock()
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
         self.urllib_response.headers.get_content_charset = MagicMock(return_value='utf-8')
+        self.scan_task = ScanTask(executor=MagicMock(storage=Storage(":memory:")))
 
-    @patch('urllib.request.urlopen')
+    @patch('scans.scan_task.http.urlopen')
     def test_getting_nodes(self, urllib):
         urllib.return_value = self.urllib_response
 
@@ -87,17 +92,59 @@ class ScanTaskTest(TestCase):
         self.assertEqual(nodes[0].ip.exploded, '10.3.3.99')
         self.assertEqual(nodes[0].name, 'EPSON1B0407')
 
-
-    @patch('urllib.request.urlopen')
-    @patch('urllib.error.URLError.__init__', MagicMock(return_value=None))
+    @patch('scans.scan_task.http.urlopen')
     def test_getting_nodes_cannot_connect_to_topdis(self, urllib):
-        urllib.side_effect = URLError
+        urllib.side_effect = URLError('')
 
         self.assertRaises(TopdisConnectionException, ScanTask._get_nodes)
 
-
-    @patch('urllib.request.urlopen')
+    @patch('scans.scan_task.http.urlopen')
     def test_getting_nodes_unknown_exception(self, urllib):
         urllib.side_effect = Exception
 
         self.assertRaises(Exception, ScanTask._get_nodes)
+
+    @patch('scans.scan_task.ScanTask._get_nodes')
+    def test_get_nodes_for_scanning(self, mock_get_nodes):
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
+        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
+
+        nodes = [node_1, node_2,]
+        mock_get_nodes.return_value=nodes
+
+        self.scan_task.storage = MagicMock()
+        self.scan_task.storage.get_nodes = MagicMock(return_value=[node_2, node_3])
+
+        result = self.scan_task._get_nodes_for_scanning()
+        expected = [node_1]
+
+        self.assertListEqual(result, expected)
+
+    @patch('scans.scan_task.Storage')
+    def test_call_magic(self, mock_storage):
+        self.scan_task.scheduler = MagicMock()
+        self.scan_task.run = MagicMock()
+
+        self.scan_task()
+
+        mock_storage.return_value.__enter__.assert_called_once_with()
+        self.scan_task.run.assert_called_once_with()
+        self.scan_task.scheduler.run.assert_called_once_with()
+
+    @patch('scans.scan_task.MasscanPorts')
+    @patch('scans.scan_task.Executor')
+    def test_run(self, mock_executor, mock_masscan):
+        self.scan_task.scheduler = MagicMock()
+        self.scan_task.executor.add_task = MagicMock()
+        self.scan_task._get_nodes_for_scanning = MagicMock()
+        self.scan_task.storage = MagicMock()
+
+        ports = [MagicMock()]
+        mock_masscan.return_value.scan_ports.return_value = ports
+
+        self.scan_task.run()
+
+        self.scan_task.scheduler.enter.assert_called_once_with(self.scan_task.scan_period, 1, self.scan_task.run)
+        mock_executor.called_once_with(aucote=self.scan_task.executor, nodes=ports)
+        self.scan_task.executor.add_task.called_once_with(mock_executor.return_value)
