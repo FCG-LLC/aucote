@@ -10,6 +10,10 @@ from os.path import dirname, realpath
 
 import time
 
+import sys
+
+import fcntl
+
 from fixtures.exploits import Exploits
 from scans.scan_task import ScanTask
 from scans.task_mapper import TaskMapper
@@ -183,4 +187,13 @@ class Aucote(object):
 
 if __name__ == "__main__": # pragma: no cover
     chdir(dirname(realpath(__file__)))
+
+    pid_file = 'aucote.pid'
+    fp = open(pid_file, 'w')
+    try:
+        fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        log.error("There is another Aucote instance already")
+        sys.exit(1)
+
     main()
