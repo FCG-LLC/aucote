@@ -15,7 +15,6 @@ from scans.executor import Executor
 from structs import Node
 from tools.masscan import MasscanPorts
 from utils.exceptions import TopdisConnectionException
-from utils.storage import Storage
 from utils.task import Task
 from utils.time import parse_period
 
@@ -30,7 +29,7 @@ class ScanTask(Task):
         self.nodes = nodes or self._get_nodes()
         self.scheduler = sched.scheduler(time.time)
         self.scan_period = parse_period(cfg.get('service.scans.period'))
-        self.storage = None
+        self.storage = self.executor.storage
 
     def run(self):
         """
@@ -48,10 +47,8 @@ class ScanTask(Task):
         self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
 
     def __call__(self, *args, **kwargs):
-        with Storage(filename=self.executor.storage.filename) as storage:
-            self.storage = storage
-            self.run()
-            self.scheduler.run()
+        self.run()
+        self.scheduler.run()
 
     @classmethod
     def _get_nodes(cls):

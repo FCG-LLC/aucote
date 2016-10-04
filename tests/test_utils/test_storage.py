@@ -15,6 +15,7 @@ class StorageTest(TestCase):
 
     def setUp(self):
         self.storage = Storage(":memory:")
+        self.storage.lock = MagicMock()
 
     def test_init(self):
         self.assertEqual(self.storage.filename, ":memory:")
@@ -85,6 +86,7 @@ class StorageTest(TestCase):
         result = self.storage.get_nodes(1000)
         self.assertEqual(result, [])
 
+    @patch('utils.storage.threading.Lock', MagicMock())
     def test_save_port(self):
         port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1), transport_protocol=TransportProtocol.TCP,
                     number=1)
@@ -143,6 +145,7 @@ class StorageTest(TestCase):
         result = self.storage.get_ports(1000)
         self.assertEqual(result, [])
 
+    @patch('utils.storage.threading.Lock', MagicMock())
     def test_save_scan(self):
         exploit = Exploit(exploit_id=14)
         exploit.name = 'test_name'
@@ -169,6 +172,7 @@ class StorageTest(TestCase):
         self.assertEqual(result[0][7], start_scan)
         self.assertEqual(result[0][8], None)
 
+    @patch('utils.storage.threading.Lock', MagicMock())
     def test_save_scan_without_changing_start_scan(self):
         exploit = Exploit(exploit_id=14)
         exploit.name = 'test_name'
@@ -187,6 +191,7 @@ class StorageTest(TestCase):
 
         self.assertEqual(result[0][7], start_scan)
 
+    @patch('utils.storage.threading.Lock', MagicMock())
     def test_get_scan_info(self):
         exploits = [Exploit(exploit_id=14, name='test_name_1', app='test_app'),
                     Exploit(exploit_id=20, name='test_name_2', app='test_app'),
@@ -244,6 +249,7 @@ class StorageTest(TestCase):
                                                       number=1, transport_protocol=TransportProtocol.TCP), app=None)
         self.assertEqual(result, [])
 
+    @patch('utils.storage.threading.Lock', MagicMock())
     def test_clear_scan_details(self):
         exploit = Exploit(exploit_id=14)
         exploit.name = 'test_name'

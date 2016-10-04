@@ -13,7 +13,7 @@ from utils.threads import ThreadPool
 class ExecutorTest(TestCase):
 
     def setUp(self):
-        storage = Storage(":memory:")
+        storage = MagicMock()
         storage.connect()
         self.aucote = Aucote(exploits=None, storage=storage, kudu_queue=None)
         self.executor = Executor(aucote=self.aucote)
@@ -26,9 +26,8 @@ class ExecutorTest(TestCase):
 
     @patch('tools.masscan.MasscanPorts.scan_ports', MagicMock(return_value=[MagicMock()]))
     @patch('scans.executor.parse_period', MagicMock(return_value=10))
-    @patch('scans.executor.Storage')
     @patch('scans.executor.Executor._get_ports_for_scanning')
-    def test_run_executor(self, mock_get_ports, mock_storage):
+    def test_run_executor(self, mock_get_ports):
         self.executor._thread_pool = ThreadPool()
         port = Port(node=None, number=12, transport_protocol=TransportProtocol)
         mock_get_ports.return_value = [port]

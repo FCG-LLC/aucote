@@ -64,6 +64,7 @@ def main():
         exit(1)
 
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
+
         with Storage(filename=cfg.get('service.scans.storage')) as storage:
             aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, storage=storage)
 

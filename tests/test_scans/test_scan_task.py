@@ -79,7 +79,7 @@ class ScanTaskTest(TestCase):
         self.urllib_response.read = MagicMock()
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
         self.urllib_response.headers.get_content_charset = MagicMock(return_value='utf-8')
-        self.scan_task = ScanTask(executor=MagicMock(storage=Storage(":memory:")))
+        self.scan_task = ScanTask(executor=MagicMock(storage=MagicMock()))
 
     @patch('scans.scan_task.http.urlopen')
     def test_getting_nodes(self, urllib):
@@ -121,14 +121,12 @@ class ScanTaskTest(TestCase):
 
         self.assertListEqual(result, expected)
 
-    @patch('scans.scan_task.Storage')
-    def test_call_magic(self, mock_storage):
+    def test_call_magic(self):
         self.scan_task.scheduler = MagicMock()
         self.scan_task.run = MagicMock()
 
         self.scan_task()
 
-        mock_storage.return_value.__enter__.assert_called_once_with()
         self.scan_task.run.assert_called_once_with()
         self.scan_task.scheduler.run.assert_called_once_with()
 

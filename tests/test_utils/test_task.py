@@ -43,15 +43,14 @@ class TaskTest(TestCase):
         self.task.send_msg("TEST")
         self.executor.kudu_queue.send_msg.assert_called_once_with("TEST")
 
-    @patch('utils.task.Storage')
-    def test_store_scan(self, mock_storage):
+    def test_store_scan(self):
         port = Port(node=None, number=80, transport_protocol=TransportProtocol.UDP)
         port.scan = Scan(end=25.0)
         exploit = Exploit(exploit_id=5)
 
         self.task.store_scan_end(exploits=[exploit], port=port)
 
-        result = mock_storage.return_value.__enter__.return_value.save_scan.call_args[1]
+        result = self.task.executor.storage.save_scan.call_args[1]
 
         expected = {
             'exploit': exploit,

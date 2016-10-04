@@ -2,8 +2,6 @@
 Provide class for tasks
 
 """
-from utils.storage import Storage
-
 
 class Task(object):
     """
@@ -58,6 +56,5 @@ class Task(object):
         Returns:
             None
         """
-        with Storage(filename=self.executor.storage.filename) as storage:
-            for exploit in exploits:
-                storage.save_scan(exploit=exploit, port=port)
+        for exploit in exploits:
+            self.executor.storage.save_scan(exploit=exploit, port=port)

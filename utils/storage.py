@@ -3,6 +3,7 @@ This file contains class for storage temporary information like last date of sca
 """
 import ipaddress
 import sqlite3
+import threading
 import time
 import logging as log
 
@@ -28,9 +29,10 @@ class Storage(DbInterface):
         self.filename = filename
         self.conn = None
         self._cursor = None
+        self.lock = threading.Lock()
 
     def connect(self):
-        self.conn = sqlite3.connect(self.filename)
+        self.conn = sqlite3.connect(self.filename, check_same_thread=False)
         self._cursor = self.conn.cursor()
 
     def close(self):
@@ -61,13 +63,18 @@ class Storage(DbInterface):
         """
 
         try:
+            self.lock.acquire(True)
             self.cursor.execute("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)",
                                 (node.id, str(node.ip), time.time()))
         except sqlite3.DatabaseError:
             self.cursor.execute("CREATE TABLE nodes(id int, ip text, time int, primary key (id, ip))")
             self.conn.commit()
-
+            self.lock.release()
             self.save_node(node, commit)
+            self.lock.acquire(True)
+
+        finally:
+            self.lock.release()
 
         if commit:
             self.conn.commit()
@@ -120,6 +127,7 @@ class Storage(DbInterface):
 
         """
         try:
+            self.lock.acquire(True)
             self.cursor.execute("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
                                 (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
                                  time.time()))
@@ -127,8 +135,13 @@ class Storage(DbInterface):
             self.cursor.execute("CREATE TABLE ports (id int, ip text, port int, protocol int, time int,"
                                 "primary key (id, ip, port, protocol))")
             self.conn.commit()
+            self.lock.release()
 
             self.save_port(port, commit)
+            self.lock.acquire(True)
+
+        finally:
+            self.lock.release()
 
         if commit:
             self.conn.commit()
@@ -186,6 +199,7 @@ class Storage(DbInterface):
                   port.scan.start, port.scan.end, exploit.id, port.node.id, str(port.node), str(port))
 
         try:
+            self.lock.acquire(True)
             self.cursor.execute("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
                                 "port_protocol, port_number)"
                                 "VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -209,8 +223,13 @@ class Storage(DbInterface):
                                 "node_ip text, port_protocol int, port_number int, scan_start float, scan_end float,"
                                 "PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, port_number))")
             self.conn.commit()
+            self.lock.release()
 
             self.save_scan(exploit=exploit, port=port, commit=commit)
+            self.lock.acquire(True)
+
+        finally:
+            self.lock.release()
 
         if commit:
             self.conn.commit()
@@ -257,8 +276,12 @@ class Storage(DbInterface):
 
         """
         try:
+            self.lock.acquire(True)
             self.cursor.execute("DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL "
                                 "OR SCAN_END IS NULL")
 
         except sqlite3.DatabaseError:
             return
+
+        finally:
+            self.lock.release()
