@@ -53,8 +53,8 @@ class SkipfishResultsParser(Parser):
 
         """
 
-        with open(sep.join((self.dir, 'index.html')), 'r') as f:
-            self._parse_issues_desc(f.read())
+        with open(sep.join((self.dir, 'index.html')), 'r') as report:
+            self._parse_issues_desc(report.read())
 
     def _parse_samples(self):
         """
@@ -65,8 +65,8 @@ class SkipfishResultsParser(Parser):
 
         """
 
-        with open(sep.join((self.dir, 'samples.js')), 'r') as f:
-            return self._parse_issues(f.read())
+        with open(sep.join((self.dir, 'samples.js')), 'r') as report:
+            return self._parse_issues(report.read())
 
     def parse(self, output=None):
         """

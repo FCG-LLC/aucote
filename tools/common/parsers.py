@@ -11,7 +11,7 @@ class Parser(object):
     """
 
     @classmethod
-    def parse(self, output):
+    def parse(cls, output):
         """
         Return output
 

@@ -5,9 +5,9 @@ Provides classes for executing and fetching output from system commands.
 import tempfile
 from xml.etree import ElementTree
 import logging as log
-from aucote_cfg import cfg
 import subprocess
 
+from aucote_cfg import cfg
 from database.serializer import Serializer
 from utils.exceptions import NonXMLOutputException
 from utils.task import Task
@@ -44,11 +44,11 @@ class Command(Task):
             temp_file.truncate()
             try:
                 return self.parser(subprocess.check_output(all_args, stderr=temp_file).decode('utf-8'))
-            except subprocess.CalledProcessError as e:
+            except subprocess.CalledProcessError as exception:
                 temp_file.seek(0)
                 log.warning("Command '%s' Failed:\n\n%s", " ".join(all_args),
                             "".join([line.decode() for line in temp_file.readlines()]))
-                raise e
+                raise exception
 
     @classmethod
     def parser(cls, output):

@@ -2,13 +2,12 @@
 Contains main class responsible for managing NMAP
 
 """
-
+import logging as log
 from structs import RiskLevel
 from tools.base import Tool
 from tools.nmap.base import InfoNmapScript, VulnNmapScript
 from tools.nmap.tasks.port_scan import NmapPortScanTask
 from utils.exceptions import ImproperConfigurationException
-import logging as log
 
 
 class NmapTool(Tool):
@@ -40,7 +39,7 @@ class NmapTool(Tool):
                 try:
                     args = args()
                 except ImproperConfigurationException as exception:
-                    log.warning("{0} is not configured!".format(name), exc_info=exception)
+                    log.warning("%s is not configured!", name, exc_info=exception)
                     continue
 
             if not isinstance(args, (list, set)):

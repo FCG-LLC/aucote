@@ -1,10 +1,11 @@
 """
 This module contains class responsible for scanning ports by using nmap
+
 """
-from .base import NmapBase
-from structs import Port, TransportProtocol
 import logging as log
 import ipaddress
+from structs import Port, TransportProtocol
+from .base import NmapBase
 
 
 class PortsScan(NmapBase):
@@ -39,10 +40,12 @@ class PortsScan(NmapBase):
         for host in xml.findall('host'):
             ip = ipaddress.ip_address(host.find('address').get('addr'))
             ports = host.find('ports')
-            if ports is None: continue
+            if ports is None:
+                continue
             for port in ports.findall('port'):
                 state = port.find('state').get('state')
-                if state not in ('open', 'filtered'): continue
+                if state not in ('open', 'filtered'):
+                    continue
                 port_id = int(port.get('portid'))
                 port_protocol = port.get('protocol')
                 service = port.find('service')

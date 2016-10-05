@@ -3,7 +3,6 @@ Contains class responsible for exploiting port by using nmap scripts
 
 """
 import logging as log
-
 import time
 
 from database.serializer import Serializer

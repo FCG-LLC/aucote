@@ -107,7 +107,7 @@ class NmapToolTest(TestCase):
         self.assertEqual(info_scan_script.call_count, 2)
         self.assertEqual(port_scan_mock.call_count, 2)
 
-    @patch('tools.nmap.tool.cfg.get')
+    @patch('tools.base.cfg.get')
     def test_custom_args_dns_zone_transfer(self, mock_cfg):
         mock_cfg.return_value.cfg = ['test.host', 'test.host2']
         expected = ['dns-zone-transfer.domain=test.host', 'dns-zone-transfer.domain=test.host2']
@@ -123,7 +123,7 @@ class NmapToolTest(TestCase):
 
         self.assertFalse(vuln_scan_script.called)
 
-    @patch('tools.nmap.tool.cfg.get')
+    @patch('tools.base.cfg.get')
     def test_custom_args_dns_srv_enum(self, mock_cfg):
         mock_cfg.return_value.cfg = ['test.host', 'test.host2']
         expected = ['dns-srv-enum.domain=test.host', 'dns-srv-enum.domain=test.host2']
@@ -131,7 +131,7 @@ class NmapToolTest(TestCase):
         self.assertEqual(NmapTool.custom_args_dns_srv_enum(), expected)
         mock_cfg.assert_called_once_with('tools.nmap.domains')
 
-    @patch('tools.nmap.tool.cfg.get')
+    @patch('tools.base.cfg.get')
     def test_custom_args_http_domino_enum_passwords(self, mock_cfg):
         mock_cfg.return_value.cfg = {"username": "test_usernm", "password": "test_passwd"}
         expected = "domino-enum-passwords.username='test_usernm',domino-enum-passwords.password=test_passwd"

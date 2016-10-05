@@ -66,9 +66,11 @@ class VulnNmapScript(NmapScript):
 
         """
         table = script.find('table')
-        if table is None: return None #no data, probably no response from server, so no problem detected
+        if table is None:
+            return None  # no data, probably no response from server, so no problem detected
         state = table.find("./elem[@key='state']").text
-        if state not in ('VULNERABLE', 'LIKELY VULNERABLE'): return None #TODO: add likelihood to vulnerability
+        if state not in ('VULNERABLE', 'LIKELY VULNERABLE'):
+            return None  # TODO: add likelihood to vulnerability
         return script.get('output').strip()
 
 
