@@ -66,6 +66,7 @@ _DEFAULT = {
             'ports': '0-65535,U:0-65535',
             'rate': 1000,
             'port_period': '12h',
+            'node_period': '1m',
             'storage': 'storage.sqlite3'
         },
         "api":{

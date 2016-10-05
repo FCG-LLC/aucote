@@ -105,6 +105,8 @@ class ScanTaskTest(TestCase):
         self.assertRaises(Exception, ScanTask._get_nodes)
 
     @patch('scans.scan_task.ScanTask._get_nodes')
+    @patch('scans.scan_task.cfg.get', MagicMock(return_value='5s'))
+    @patch('scans.scan_task.parse_period', MagicMock(return_value=5))
     def test_get_nodes_for_scanning(self, mock_get_nodes):
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
@@ -146,3 +148,8 @@ class ScanTaskTest(TestCase):
         self.scan_task.scheduler.enter.assert_called_once_with(self.scan_task.scan_period, 1, self.scan_task.run)
         mock_executor.called_once_with(aucote=self.scan_task.executor, nodes=ports)
         self.scan_task.executor.add_task.called_once_with(mock_executor.return_value)
+
+    def test_run_without_nodes(self):
+        self.scan_task._get_nodes_for_scanning = MagicMock(return_value=[])
+        self.scan_task.run()
+        self.assertFalse(self.scan_task.storage.save_nodes.called)

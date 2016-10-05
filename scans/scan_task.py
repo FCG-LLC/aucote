@@ -37,10 +37,17 @@ class ScanTask(Task):
 
         Returns:
             None
+
         """
         self.scheduler.enter(self.scan_period, 1, self.run)
         scanner = MasscanPorts(executor=self.executor)
         nodes = self._get_nodes_for_scanning()
+
+        log.info('Scanning %i nodes', len(nodes))
+
+        if not nodes:
+            return
+
         self.storage.save_nodes(nodes)
         ports = scanner.scan_ports(nodes)
 
@@ -82,7 +89,10 @@ class ScanTask(Task):
 
         """
         topdis_nodes = ScanTask._get_nodes()
-        storage_nodes = self.storage.get_nodes()
+
+        log.info('Found %i nodes total', len(topdis_nodes))
+
+        storage_nodes = self.storage.get_nodes(parse_period(cfg.get('service.scans.node_period')))
 
         for node in storage_nodes:
             try:

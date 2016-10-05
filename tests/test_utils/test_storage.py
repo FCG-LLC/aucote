@@ -324,3 +324,10 @@ class StorageTest(TestCase):
         self.assertCountEqual(nodes_result, nodes_expected)
         self.assertCountEqual(scans_result, scans_expected)
         self.assertCountEqual(ports_result, ports_expected)
+
+    def test_clear_scan_details_with_db_error(self):
+        with Storage(":memory:") as storage:
+            storage._cursor = MagicMock()
+            storage._cursor.execute = MagicMock(side_effect=DatabaseError)
+
+            self.assertIsNone(storage.clear_scan_details())
