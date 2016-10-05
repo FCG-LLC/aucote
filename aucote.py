@@ -43,6 +43,12 @@ def main():
     """
     print("%s, version: %s.%s.%s" % ((APP_NAME,) + VERSION))
 
+    try:
+        fcntl.lockf(open(cfg.get('pid_file'), 'w'), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        log.error("There is another Aucote instance running already")
+        sys.exit(1)
+
     # parse arguments
     parser = argparse.ArgumentParser(description='Tests compliance of devices.')
     parser.add_argument("--cfg", help="config file path")
@@ -187,13 +193,5 @@ class Aucote(object):
 
 if __name__ == "__main__": # pragma: no cover
     chdir(dirname(realpath(__file__)))
-
-    pid_file = 'aucote.pid'
-    fp = open(pid_file, 'w')
-    try:
-        fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        log.error("There is another Aucote instance already")
-        sys.exit(1)
 
     main()

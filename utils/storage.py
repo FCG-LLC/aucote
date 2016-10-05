@@ -285,3 +285,21 @@ class Storage(DbInterface):
 
         finally:
             self.lock.release()
+
+    def create_tables(self):
+        """
+        Create tables for local storage
+
+        Returns:
+            None
+
+        """
+
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, "
+                            "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
+                            "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, port_number))")
+
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
+                            "primary key (id, ip, port, protocol))")
+
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))")

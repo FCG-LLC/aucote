@@ -20,6 +20,7 @@ class AucoteTest(TestCase):
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
+    @patch('aucote.fcntl', MagicMock())
     def test_main_scan(self):
         args = PropertyMock()
         args.configure_mock(cmd='scan')
@@ -32,6 +33,7 @@ class AucoteTest(TestCase):
 
     @patch('fixtures.exploits.Exploits.read', MagicMock(side_effect=NmapUnsupported))
     @patch('builtins.open', mock_open())
+    @patch('aucote.fcntl', MagicMock())
     def test_main_exploits_exception(self):
         args = PropertyMock()
         args.configure_mock(cmd='scan')
@@ -42,6 +44,7 @@ class AucoteTest(TestCase):
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
+    @patch('aucote.fcntl', MagicMock())
     def test_main_service(self):
         args = PropertyMock()
         args.configure_mock(cmd='service')
@@ -53,6 +56,7 @@ class AucoteTest(TestCase):
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
+    @patch('aucote.fcntl', MagicMock())
     def test_main_syncdb(self):
         args = PropertyMock()
         args.configure_mock(cmd='syncdb')
@@ -123,3 +127,14 @@ class AucoteTest(TestCase):
 
         self.aucote.add_task(data)
         self.aucote._thread_pool.add_task.called_once_with(data)
+
+    @patch('builtins.open', mock_open())
+    @patch('aucote.KuduQueue', MagicMock())
+    @patch('aucote.fcntl')
+    def test_aucote_run_already(self, mock_fcntl):
+        mock_fcntl.lockf = MagicMock(side_effect=IOError())
+        args = PropertyMock()
+        args.configure_mock(cmd='service')
+        with patch('argparse.ArgumentParser.parse_args', return_value=args):
+            with patch('aucote.Aucote.run_service'):
+                self.assertRaises(SystemExit, main)

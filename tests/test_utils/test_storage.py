@@ -287,3 +287,40 @@ class StorageTest(TestCase):
         expected = 1
 
         self.assertEqual(result, expected)
+
+    def test_create_table(self):
+        with Storage(":memory:") as storage:
+            storage.create_tables()
+            nodes_result = storage.cursor.execute("PRAGMA table_info(nodes);").fetchall()
+            scans_result = storage.cursor.execute("PRAGMA table_info(scans);").fetchall()
+            ports_result = storage.cursor.execute("PRAGMA table_info(ports);").fetchall()
+
+        nodes_expected = [
+            (0, 'id', 'int', 0, None, 1),
+            (1, 'ip', 'text', 0, None, 2),
+            (2, 'time', 'int', 0, None, 0),
+        ]
+
+        scans_expected = [
+            (0, 'exploit_id', 'int', 0, None, 1),
+            (1, 'exploit_app', 'text', 0, None, 0),
+            (2, 'exploit_name', 'text', 0, None, 0),
+            (3, 'node_id', 'int', 0, None, 2),
+            (4, 'node_ip', 'text', 0, None, 3),
+            (5, 'port_protocol', 'int', 0, None, 4),
+            (6, 'port_number', 'int', 0, None, 5),
+            (7, 'scan_start', 'float', 0, None, 0),
+            (8, 'scan_end', 'float', 0, None, 0),
+        ]
+
+        ports_expected = [
+            (0, 'id', 'int', 0, None, 1),
+            (1, 'ip', 'text', 0, None, 2),
+            (2, 'port', 'int', 0, None, 3),
+            (3, 'protocol', 'int', 0, None, 4),
+            (4, 'time', 'int', 0, None, 0),
+        ]
+
+        self.assertCountEqual(nodes_result, nodes_expected)
+        self.assertCountEqual(scans_result, scans_expected)
+        self.assertCountEqual(ports_result, ports_expected)

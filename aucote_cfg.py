@@ -74,7 +74,8 @@ _DEFAULT = {
                 'port': 1235
             }
         }
-    }
+    },
+    'pid_file': 'aucote.pid'
 }
 
 #global cfg
