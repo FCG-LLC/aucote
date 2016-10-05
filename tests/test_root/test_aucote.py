@@ -103,7 +103,6 @@ class AucoteTest(TestCase):
         if self._mock.call_count == 3:
             raise NotImplementedError
 
-
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))
     @patch('database.serializer.Serializer.serialize_exploit')
@@ -138,3 +137,15 @@ class AucoteTest(TestCase):
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
             with patch('aucote.Aucote.run_service'):
                 self.assertRaises(SystemExit, main)
+
+    def test_init(self):
+        exploits = MagicMock()
+        kudu_queue = MagicMock()
+        storage = MagicMock()
+
+        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, storage=storage)
+
+        self.assertEqual(aucote.storage, storage)
+        self.assertTrue(storage.create_tables.called)
+        self.assertEqual(aucote.kudu_queue, kudu_queue)
+        self.assertEqual(aucote.storage, storage)

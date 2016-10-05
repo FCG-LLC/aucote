@@ -105,6 +105,7 @@ class Aucote(object):
         self._kudu_queue = kudu_queue
         self._storage = storage
         self.task_mapper = TaskMapper(self)
+        self.storage.create_tables()
 
     @property
     def kudu_queue(self):
@@ -131,13 +132,16 @@ class Aucote(object):
 
         Returns:
             ThreadPool
+
         """
         return self._thread_pool
 
     def run_scan(self, nodes=None):
         """
         Start scanning ports.
+
         Returns: None
+
         """
 
         self.storage.clear_scan_details()
@@ -154,7 +158,9 @@ class Aucote(object):
     def run_service(self):
         """
         Run service for periodic scanning
+
         Returns:
+            None
 
         """
         scheduler = sched.scheduler(time.time)
@@ -168,7 +174,9 @@ class Aucote(object):
     def run_syncdb(self):
         """
         Synchronize local exploits database with Kudu
+
         Returns:
+            None
 
         """
         serializer = Serializer()
@@ -183,6 +191,7 @@ class Aucote(object):
             task (Task):
 
         Returns:
+            None
 
         """
         log.debug('Added task: %s', task)
