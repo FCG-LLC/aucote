@@ -1,6 +1,9 @@
+"""
+This module provides tasks related to Hydra
+
+"""
 import subprocess
 import logging as log
-
 import time
 
 from aucote_cfg import cfg
@@ -11,11 +14,20 @@ from tools.hydra.base import HydraBase
 class HydraScriptTask(HydraBase):
     """
     This is task for Hydra tool. Call Hydra and parse output
+
     """
 
     def __init__(self, port, service, login=True, *args, **kwargs):
         """
         Initialize variables
+
+        Args:
+            port (Port): Port for scanning
+            service (str): Service name for scanning
+            login (bool): Define if hydra should use login or not
+            *args:
+            **kwargs:
+
         """
 
         super().__init__(*args, **kwargs)
@@ -25,7 +37,10 @@ class HydraScriptTask(HydraBase):
 
     def __call__(self):
         """
-        Call command, parse output and store vulnerability
+        Call command, parse output and stores vulnerabilities
+
+        Returns:
+
         """
 
         args = []

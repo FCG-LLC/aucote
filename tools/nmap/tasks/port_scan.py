@@ -1,3 +1,7 @@
+"""
+Contains class responsible for exploiting port by using nmap scripts
+
+"""
 import logging as log
 
 import time
@@ -10,15 +14,18 @@ from tools.nmap.base import NmapBase
 class NmapPortScanTask(NmapBase):
     """
     Scans one port using provided vulnerability scan
+
     """
 
     def __init__(self, port, script_classes, *args, **kwargs):
         """
-        Initialize variables
+        Init variables
+
         Args:
-            executor (Executor):
-            port:
-            script_clases:
+            port (Port):
+            script_classes (list):
+            *args:
+            **kwargs:
         """
 
         super().__init__(*args, **kwargs)
@@ -29,6 +36,7 @@ class NmapPortScanTask(NmapBase):
     def port(self):
         """
         Returns port
+
         """
 
         return self._port
@@ -37,6 +45,7 @@ class NmapPortScanTask(NmapBase):
     def script_classes(self):
         """
         Returns script classes
+
         """
 
         return self._script_classes
@@ -46,6 +55,7 @@ class NmapPortScanTask(NmapBase):
         Implement Tasks call method:
         scans port used nmap and provided script classes
         send serialized vulnerabilities to kudu queue
+
         """
 
         vulners = []

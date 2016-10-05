@@ -1,3 +1,7 @@
+"""
+Provides Skipfish tool
+
+"""
 from tools.base import Tool
 from tools.skipfish.tasks import SkipfishScanTask
 
@@ -5,6 +9,7 @@ from tools.skipfish.tasks import SkipfishScanTask
 class SkipfishTool(Tool):
     """
     Skipfish is an active web application security reconnaissance tool. This class integrate it with aucote.
+
     """
 
     def call(self, *args, **kwargs):

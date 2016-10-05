@@ -1,5 +1,5 @@
 """
-This module provids parsers used by Skipfish tool
+This module provides parsers used by Skipfish tool
 """
 import json
 from ast import literal_eval
@@ -37,7 +37,7 @@ class SkipfishResultsParser(Parser):
         cut_pre_start = text.index('var issue_desc=')
         cut_start = text.index('{', cut_pre_start)
         cut_end = text.index('}', cut_start)
-        cut_text = text[cut_start:cut_end+1]
+        cut_text = text[cut_start:cut_end + 1]
         issues = json.loads(cut_text)
 
         return_value.add(issues)
@@ -95,14 +95,15 @@ class SkipfishResultsParser(Parser):
         cut_pre_start = text.index('var issue_samples')
         cut_start = text.index('[', cut_pre_start)
         cut_end = text.index('];', cut_start)
-        cut_text = text[cut_start:cut_end+1]
+        cut_text = text[cut_start:cut_end + 1]
         issues = literal_eval(cut_text)
 
         for issue in issues:
             for sample in issue['samples']:
                 return_value.add(SkipfishIssueSample(url=sample['url'], extra=sample['extra'], directory=sample['dir'],
                                                      severity_type=self.severities[issue['type']],
-                                                     severity=SkipfishRisk.from_id(issue['severity']), sid=sample['sid']))
+                                                     severity=SkipfishRisk.from_id(issue['severity']),
+                                                     sid=sample['sid']))
         return return_value
 
 
@@ -125,9 +126,7 @@ class SkipfishOutputParser(Parser):
 
         """
         parser = SkipfishResultsParser(directory=cls._get_log_dir(output=output,
-                                                                  directory=cfg.get('tools.skipfish.tmp_directory')
-                                                                  )
-                                       )
+                                                                  directory=cfg.get('tools.skipfish.tmp_directory')))
         return parser.parse()
 
     @classmethod

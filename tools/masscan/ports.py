@@ -1,3 +1,7 @@
+"""
+Provides class for scanning ports
+
+"""
 from tools.common import OpenPortsParser
 from tools.masscan.base import MasscanBase
 from utils.exceptions import NonXMLOutputException

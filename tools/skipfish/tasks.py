@@ -1,7 +1,10 @@
-import subprocess
-import logging as log
+"""
+Contains all tasks related to the Skipfish tool
 
+"""
+import subprocess
 import time
+import logging as log
 
 from aucote_cfg import cfg
 from structs import Vulnerability
@@ -11,19 +14,26 @@ from tools.skipfish.base import SkipfishBase
 class SkipfishScanTask(SkipfishBase):
     """
     This is task for Skipfish tool. Call skipfish and parse output
+
     """
 
     def __init__(self, port, *args, **kwargs):
         """
         Initialize variables
-        """
 
+        Args:
+            port (Port):
+            *args:
+            **kwargs:
+
+        """
         super().__init__(*args, **kwargs)
         self._port = port
 
     def __call__(self):
         """
         Call command, parse output and send to kudu_queue
+
         """
 
         args = ['-m', str(cfg.get('tools.skipfish.threads')), '-k', cfg.get('tools.skipfish.limit')]

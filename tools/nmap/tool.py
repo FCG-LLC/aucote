@@ -1,8 +1,12 @@
+"""
+Contains main class responsible for managing NMAP
+
+"""
+
 from structs import RiskLevel
 from tools.base import Tool
 from tools.nmap.base import InfoNmapScript, VulnNmapScript
 from tools.nmap.tasks.port_scan import NmapPortScanTask
-from aucote_cfg import cfg
 from utils.exceptions import ImproperConfigurationException
 import logging as log
 
@@ -76,16 +80,37 @@ class NmapTool(Tool):
 
     @classmethod
     def custom_args_dns_zone_transfer(cls):
+        """
+        Parses configuration and convert it to the script argument
+
+        Returns:
+            list
+
+        """
         domains = cls.get_config('tools.nmap.domains')
         return ['dns-zone-transfer.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
     def custom_args_dns_srv_enum(cls):
+        """
+        Parses configuration and convert it to the script argument
+
+        Returns:
+            list
+
+        """
         domains = cls.get_config('tools.nmap.domains')
         return ['dns-srv-enum.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
     def custom_args_http_domino_enum_passwords(cls):
+        """
+        Parses configuration and convert it to the script argument
+
+        Returns:
+            list
+
+        """
         domains = cls.get_config('tools.nmap.domino-http')
         return "domino-enum-passwords.username='{0}',domino-enum-passwords.password={1}".format(
             domains.get('username', None), domains.get('password', None))

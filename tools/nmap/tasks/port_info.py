@@ -1,19 +1,38 @@
+"""
+Provides task responsible for obtain detailed information about port
+"""
 import logging as log
 
 from tools.nmap.base import NmapBase
-from utils.storage import Storage
 
 
 class NmapPortInfoTask(NmapBase):
     """
     Scans one port using provided vulnerability scan
+
     """
 
     def __init__(self, port, *args, **kwargs):
+        """
+        Initiazlize variables.
+
+        Args:
+            port (Port):
+            *args:
+            **kwargs:
+
+        """
         super().__init__(*args, **kwargs)
         self._port = port
 
     def __call__(self):
+        """
+        Scans port, parses output for obtain information about service name and version and pass it to the task mapper
+
+        Returns:
+            None
+
+        """
         args = list()
         args.extend(('-p', str(self._port.number), '-sV'))
         if self._port.transport_protocol.name == "UDP":

@@ -1,3 +1,7 @@
+"""
+Provides parser for open ports
+
+"""
 import ipaddress
 from structs import TransportProtocol, Port
 import logging as log
@@ -5,8 +9,19 @@ import logging as log
 class OpenPortsParser:
     """
     Parsers output of nmap (also masscan) to find open ports
+
     """
     def parse(self, xml, node_by_ip):
+        """
+        Gets Element Tree objects and based on it, creates Ports collection
+        Args:
+            xml (ElementTree.Element):
+            node_by_ip (dict):
+
+        Returns:
+            list
+
+        """
         result = []
         for host in xml.findall('host'):
             ip = ipaddress.ip_address(host.find('address').get('addr'))

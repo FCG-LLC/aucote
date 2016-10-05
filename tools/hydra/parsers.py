@@ -1,3 +1,8 @@
+"""
+Provides class for proceeding Hydra-THC output
+
+"""
+
 import re
 import logging as log
 
@@ -6,10 +11,15 @@ from tools.hydra.structs import HydraResults, HydraResult
 
 
 class HydraParser(Parser):
+    """
+    This class is responsible for parsing Hydra output
+
+    """
+
     INFO_PATTERN = r"(?P<info_message>.*)"
     MESSAGE_PATTERN = r"^\[(?P<type>(DATA|ERROR|WARNING))\] (?P<message>.*?)$"
     SUCCESS_PATTERN = r"^\[(?P<port>\d*?)\]\[(?P<service>[\w\-]*?)\]\s+host:\s(?P<host>[\w\.]*?)\s{3}login:\s" \
-                            r"(?P<login>.*?)\s{3}password:\s(?P<password>(.*?))$"
+                      r"(?P<login>.*?)\s{3}password:\s(?P<password>(.*?))$"
 
     SUMMARY_PATTERN = r"^(?P<success_number>\d+) of (?P<all_number>\d+) target (successfully |)completed, " \
                       r"(?P<valid_passwords>\d+) valid password(s|) found$"
@@ -24,6 +34,16 @@ class HydraParser(Parser):
 
     @classmethod
     def parse(cls, output):
+        """
+        Parses output and return collection of Hydra Results
+
+        Args:
+            output(str):
+
+        Returns:
+            HydraResults
+
+        """
         results = HydraResults()
         for line in output.split("\n"):
             match = cls.regex_all.match(line)
@@ -45,11 +65,31 @@ class HydraParser(Parser):
         return results
 
     @classmethod
-    def from_output(cls, output, port=None):
+    def from_output(cls, output):
+        """
+        Converts hydra output line to Hydra Result
+
+        Args:
+            output (str):
+
+        Returns:
+            HydraResult|None
+
+        """
         return cls.from_re_match(cls.regex_success.match(output))
 
     @classmethod
     def from_re_match(cls, match):
+        """
+        Converts matching regex to Hydra Result
+
+        Args:
+            match:
+
+        Returns:
+            HydraResult|None
+
+        """
         if not match:
             return None
 
