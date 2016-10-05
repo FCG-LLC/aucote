@@ -4,20 +4,17 @@ This is executable file of aucote project.
 
 import argparse
 import logging as log
-import sched
+import os
 from os import chdir
 from os.path import dirname, realpath
-
+import sched
 import time
-
 import sys
-
 import fcntl
 
 from fixtures.exploits import Exploits
 from scans.scan_task import ScanTask
 from scans.task_mapper import TaskMapper
-
 from structs import Node
 import utils.log as log_cfg
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
@@ -25,7 +22,6 @@ from utils.storage import Storage
 from utils.threads import ThreadPool
 from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
-
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
 
@@ -75,6 +71,11 @@ def main():
 
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
 
+        try:
+            os.remove(cfg.get('service.scans.storage'))
+        except FileNotFoundError:
+            pass
+
         with Storage(filename=cfg.get('service.scans.storage')) as storage:
             aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, storage=storage)
 
@@ -105,7 +106,6 @@ class Aucote(object):
         self._kudu_queue = kudu_queue
         self._storage = storage
         self.task_mapper = TaskMapper(self)
-        self.storage.create_tables()
 
     @property
     def kudu_queue(self):
@@ -147,7 +147,6 @@ class Aucote(object):
         self.storage.clear_scan_details()
         try:
             self.add_task(ScanTask(executor=self, nodes=nodes))
-            # self.add_task(Executor(aucote=self, nodes=nodes))
 
             self.thread_pool.start()
             self.thread_pool.join()

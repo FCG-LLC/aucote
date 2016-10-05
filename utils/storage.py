@@ -34,6 +34,7 @@ class Storage(DbInterface):
     def connect(self):
         self.conn = sqlite3.connect(self.filename, check_same_thread=False)
         self._cursor = self.conn.cursor()
+        self.create_tables()
 
     def close(self):
         assert isinstance(self.conn, sqlite3.Connection)
@@ -62,22 +63,14 @@ class Storage(DbInterface):
 
         """
 
-        try:
-            self.lock.acquire(True)
-            self.cursor.execute("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)",
-                                (node.id, str(node.ip), time.time()))
-        except sqlite3.DatabaseError:
-            self.cursor.execute("CREATE TABLE nodes(id int, ip text, time int, primary key (id, ip))")
-            self.conn.commit()
-            self.lock.release()
-            self.save_node(node, commit)
-            self.lock.acquire(True)
-
-        finally:
-            self.lock.release()
+        self.lock.acquire(True)
+        self.cursor.execute("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)",
+                            (node.id, str(node.ip), time.time()))
 
         if commit:
             self.conn.commit()
+
+        self.lock.release()
 
     def save_nodes(self, nodes):
         """
@@ -126,25 +119,15 @@ class Storage(DbInterface):
             None
 
         """
-        try:
-            self.lock.acquire(True)
-            self.cursor.execute("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
-                                (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
-                                 time.time()))
-        except sqlite3.DatabaseError:
-            self.cursor.execute("CREATE TABLE ports (id int, ip text, port int, protocol int, time int,"
-                                "primary key (id, ip, port, protocol))")
-            self.conn.commit()
-            self.lock.release()
-
-            self.save_port(port, commit)
-            self.lock.acquire(True)
-
-        finally:
-            self.lock.release()
+        self.lock.acquire(True)
+        self.cursor.execute("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
+                            (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
+                             time.time()))
 
         if commit:
             self.conn.commit()
+
+        self.lock.release()
 
     def save_ports(self, ports):
         """
@@ -198,41 +181,29 @@ class Storage(DbInterface):
         log.debug("Saving scan details: scan_start(%s), scan_end(%s), exploit_id(%s), node_id(%s), node(%s), port(%s)",
                   port.scan.start, port.scan.end, exploit.id, port.node.id, str(port.node), str(port))
 
-        try:
-            self.lock.acquire(True)
-            self.cursor.execute("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
-                                "port_protocol, port_number)"
-                                "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                                (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
-                                 port.transport_protocol.iana, port.number))
+        self.lock.acquire(True)
+        self.cursor.execute("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
+                            "port_protocol, port_number)"
+                            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
+                             port.transport_protocol.iana, port.number))
 
-            if port.scan.start:
-                self.cursor.execute("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
-                                    "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                    (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
-                                     str(port.node.ip), port.transport_protocol.iana, port.number))
+        if port.scan.start:
+            self.cursor.execute("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
+                                "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+                                (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
+                                 str(port.node.ip), port.transport_protocol.iana, port.number))
 
-            if port.scan.end:
-                self.cursor.execute("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
-                                    "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                    (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
-                                     str(port.node.ip), port.transport_protocol.iana, port.number))
-
-        except sqlite3.DatabaseError:
-            self.cursor.execute("CREATE TABLE scans (exploit_id int, exploit_app text, exploit_name text, node_id int,"
-                                "node_ip text, port_protocol int, port_number int, scan_start float, scan_end float,"
-                                "PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, port_number))")
-            self.conn.commit()
-            self.lock.release()
-
-            self.save_scan(exploit=exploit, port=port, commit=commit)
-            self.lock.acquire(True)
-
-        finally:
-            self.lock.release()
+        if port.scan.end:
+            self.cursor.execute("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
+                                "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+                                (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
+                                 str(port.node.ip), port.transport_protocol.iana, port.number))
 
         if commit:
             self.conn.commit()
+
+        self.lock.release()
 
     def get_scan_info(self, port, app):
         """

@@ -146,6 +146,5 @@ class AucoteTest(TestCase):
         aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, storage=storage)
 
         self.assertEqual(aucote.storage, storage)
-        self.assertTrue(storage.create_tables.called)
         self.assertEqual(aucote.kudu_queue, kudu_queue)
         self.assertEqual(aucote.storage, storage)

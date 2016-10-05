@@ -21,7 +21,7 @@ class StorageTest(TestCase):
         self.assertEqual(self.storage.filename, ":memory:")
 
     def test_context_manager(self):
-        with self.storage as storage:
+        with self.storage:
             self.assertTrue(True)
 
     def test_connect(self):

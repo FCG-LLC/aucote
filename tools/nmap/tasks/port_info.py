@@ -33,5 +33,4 @@ class NmapPortInfoTask(NmapBase):
             self._port.service_name = service.get('name')
             self._port.service_version = service.get('version')
 
-        with Storage(self.executor.storage.filename) as storage:
-            self.executor.task_mapper.assign_tasks(self._port, storage)
+        self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)
