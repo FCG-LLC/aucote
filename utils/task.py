@@ -3,6 +3,7 @@ Provide class for tasks
 
 """
 
+
 class Task(object):
     """
     Base class for tasks, e.g. scan, nmap, hydra

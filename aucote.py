@@ -12,6 +12,8 @@ import time
 import sys
 import fcntl
 
+import signal
+
 from fixtures.exploits import Exploits
 from scans.scan_task import ScanTask
 from scans.task_mapper import TaskMapper
@@ -106,6 +108,7 @@ class Aucote(object):
         self._kudu_queue = kudu_queue
         self._storage = storage
         self.task_mapper = TaskMapper(self)
+        signal.signal(signal.SIGINT, self.signal_handler)
 
     @property
     def kudu_queue(self):
@@ -195,6 +198,10 @@ class Aucote(object):
         """
         log.debug('Added task: %s', task)
         self.thread_pool.add_task(task)
+
+    def signal_handler(self, sig, frame):
+        log.info("Received signal. Exiting.")
+        sys.exit(1)
 
 
 # =================== start app =================

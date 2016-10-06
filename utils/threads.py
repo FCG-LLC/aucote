@@ -36,7 +36,7 @@ class ThreadPool(object):
         self._threads = [Thread(target=self._worker) for _ in range(0, self._num_threads)]
         for num, thread in enumerate(self._threads):
             thread.name = "%s%02d"%(self._name, num)
-            thread.deamon = True
+            thread.daemon = True
             thread.start()
 
     def stop(self):
@@ -48,6 +48,8 @@ class ThreadPool(object):
         for thread in self._threads:
             thread.join()
         self._threads = []
+
+
 
     def join(self):
         """
