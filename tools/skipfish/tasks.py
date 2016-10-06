@@ -7,7 +7,7 @@ import time
 import logging as log
 
 from aucote_cfg import cfg
-from structs import Vulnerability
+from structs import Vulnerability, Scan
 from tools.skipfish.base import SkipfishBase
 
 
@@ -29,6 +29,7 @@ class SkipfishScanTask(SkipfishBase):
         """
         super().__init__(*args, **kwargs)
         self._port = port
+        self.exploit = self.exploits.find('skipfish', 'skipfish')
 
     def __call__(self):
         """
@@ -43,16 +44,16 @@ class SkipfishScanTask(SkipfishBase):
         try:
             results = self.call(args)
         except subprocess.CalledProcessError as exception:
+            self._port.scan = Scan(0, 0)
+            self.executor.storage.save_scan(exploit=self.exploit, port=self._port)
             log.warning("Exiting process", exc_info=exception)
             return None
 
-        exploit = self.exploits.find('skipfish', 'skipfish')
-
         self._port.scan.end = int(time.time())
-        self.store_scan_end(exploits=[exploit], port=self._port)
+        self.store_scan_end(exploits=[self.exploit], port=self._port)
 
         if not results:
             return results
 
-        self.store_vulnerability(Vulnerability(exploit=exploit, port=self._port, output=results))
+        self.store_vulnerability(Vulnerability(exploit=self.exploit, port=self._port, output=results))
         return results

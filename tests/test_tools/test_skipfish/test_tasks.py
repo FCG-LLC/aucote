@@ -34,6 +34,7 @@ class SkipfishScanTaskTest(TestCase):
         self.exploit = Exploit(exploit_id=1)
         self.task.executor.exploits.find.return_value = self.exploit
         self.task.store_scan_end = MagicMock()
+        self.task.exploit = self.exploit
 
     def test_call(self):
         expected = MagicMock()
@@ -44,9 +45,15 @@ class SkipfishScanTaskTest(TestCase):
 
     def test_call_exception(self):
         self.task.call = MagicMock(side_effect=subprocess.CalledProcessError(MagicMock(), MagicMock()))
-        result = self.task()
 
+        result = self.task()
         self.assertEqual(result, None)
+
+        result = self.task.executor.storage.save_scan.call_args[1]
+
+        self.assertEqual(result['port'].scan.start, 0)
+        self.assertEqual(result['port'].scan.end, 0)
+        self.assertEqual(result['exploit'], self.exploit)
 
     def test_call_without_results(self):
         self.task.call = MagicMock(return_value=None)

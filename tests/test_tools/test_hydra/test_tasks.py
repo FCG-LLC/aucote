@@ -29,6 +29,7 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.hydra_script_task.store_scan_end = MagicMock()
         self.exploit = Exploit(exploit_id=1)
         self.hydra_script_task.executor.exploits.find.return_value = self.exploit
+        self.hydra_script_task.exploit = self.exploit
 
     def test_init(self):
         self.assertEqual(self.hydra_script_task.executor, self.executor)
@@ -58,6 +59,11 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         expected = None
 
         self.assertEqual(result, expected)
+        result = self.hydra_script_task.executor.storage.save_scan.call_args[1]
+
+        self.assertEqual(result['port'].scan.start, 0)
+        self.assertEqual(result['port'].scan.end, 0)
+        self.assertEqual(result['exploit'], self.exploit)
 
     @patch('time.time', MagicMock(return_value=27.0))
     def test_storage(self):

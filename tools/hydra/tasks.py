@@ -7,7 +7,7 @@ import logging as log
 import time
 
 from aucote_cfg import cfg
-from structs import Vulnerability
+from structs import Vulnerability, Scan
 from tools.hydra.base import HydraBase
 
 
@@ -34,6 +34,7 @@ class HydraScriptTask(HydraBase):
         self._port = port
         self.service = service
         self.login = login
+        self.exploit = self.exploits.find('hydra', 'hydra')
 
     def __call__(self):
         """
@@ -52,18 +53,18 @@ class HydraScriptTask(HydraBase):
         try:
             results = self.call(args)
         except subprocess.CalledProcessError as exception:
+            self._port.scan = Scan(0, 0)
+            self.executor.storage.save_scan(exploit=self.exploit, port=self._port)
             log.warning("Exiting Hydra process", exc_info=exception)
             return None
 
-        exploit = self.exploits.find('hydra', 'hydra')
-
         self._port.scan.end = int(time.time())
-        self.store_scan_end(exploits=[exploit], port=self._port)
+        self.store_scan_end(exploits=[self.exploit], port=self._port)
 
         if not results:
             log.debug("Hydra does not find any password.")
             return None
 
-        self.store_vulnerability(Vulnerability(exploit=self.exploits.find('hydra', 'hydra'), port=self._port,
+        self.store_vulnerability(Vulnerability(exploit=self.exploit, port=self._port,
                                                output=results))
         return results

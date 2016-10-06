@@ -74,7 +74,6 @@ class Executor(object):
         ports = self._get_ports_for_scanning(ports, storage_ports)
         log.info("Found %i recently not scanned ports", len(ports))
 
-        # with Storage(filename=self.storage.filename) as storage:
         self.storage.save_ports(ports)
 
         for port in ports:
