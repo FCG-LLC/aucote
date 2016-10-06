@@ -41,12 +41,6 @@ def main():
     """
     print("%s, version: %s.%s.%s" % ((APP_NAME,) + VERSION))
 
-    try:
-        fcntl.lockf(open(cfg.get('pid_file'), 'w'), fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        log.error("There is another Aucote instance running already")
-        sys.exit(1)
-
     # parse arguments
     parser = argparse.ArgumentParser(description='Tests compliance of devices.')
     parser.add_argument("--cfg", help="config file path")
@@ -62,6 +56,12 @@ def main():
 
     log_cfg.config(cfg.get('logging'))
     log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
+
+    try:
+        fcntl.lockf(open(cfg.get('pid_file'), 'w'), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        log.error("There is another Aucote instance running already")
+        sys.exit(1)
 
     exploit_filename = cfg.get('fixtures.exploits.filename')
     try:

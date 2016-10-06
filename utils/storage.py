@@ -51,7 +51,7 @@ class Storage(DbInterface):
         """
         return self._cursor
 
-    def save_node(self, node, commit=True):
+    def save_node(self, node, commit=True, lock=True):
         """
         Saves node into to the storage
 
@@ -62,15 +62,15 @@ class Storage(DbInterface):
             None
 
         """
-
-        self.lock.acquire(True)
+        if lock:
+            self.lock.acquire(True)
         self.cursor.execute("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)",
                             (node.id, str(node.ip), time.time()))
 
         if commit:
             self.conn.commit()
-
-        self.lock.release()
+        if lock:
+            self.lock.release()
 
     def save_nodes(self, nodes):
         """
@@ -84,10 +84,12 @@ class Storage(DbInterface):
 
         """
         log.debug("Saving nodes")
+        self.lock.acquire(True)
         for node in nodes:
-            self.save_node(node, False)
+            self.save_node(node, False, False)
 
         self.conn.commit()
+        self.lock.release()
 
     def get_nodes(self, pasttime=0):
         """
@@ -107,19 +109,21 @@ class Storage(DbInterface):
         except sqlite3.DatabaseError:
             return []
 
-    def save_port(self, port, commit=True):
+    def save_port(self, port, commit=True, lock=True):
         """
         Saves port to local storage
 
         Args:
             port (Port): port to save into storage
             commit (bool): commit to database switch
+            lock (bool): define if thread should be locked
 
         Returns:
             None
 
         """
-        self.lock.acquire(True)
+        if lock:
+            self.lock.acquire(True)
         self.cursor.execute("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
                             (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
                              time.time()))
@@ -127,7 +131,8 @@ class Storage(DbInterface):
         if commit:
             self.conn.commit()
 
-        self.lock.release()
+        if lock:
+            self.lock.release()
 
     def save_ports(self, ports):
         """
@@ -140,10 +145,12 @@ class Storage(DbInterface):
             None
 
         """
+        self.lock.acquire(True)
         for port in ports:
-            self.save_port(port, False)
+            self.save_port(port, False, False)
 
         self.conn.commit()
+        self.lock.release()
 
     def get_ports(self, pasttime=900):
         """
@@ -164,7 +171,7 @@ class Storage(DbInterface):
         except sqlite3.DatabaseError:
             return []
 
-    def save_scan(self, exploit, port, commit=True):
+    def save_scan(self, exploit, port, commit=True, lock=True):
         """
         Saves scan informations into storage. Create table scans if not exists
 
@@ -172,6 +179,7 @@ class Storage(DbInterface):
             exploit (Exploit): needs some exploit details to save into storage
             port (Port): needs some port details to save into storage
             commit (bool): commit changes
+            lock (bool): define if thread should be locked
 
         Returns:
             None
@@ -181,7 +189,9 @@ class Storage(DbInterface):
         log.debug("Saving scan details: scan_start(%s), scan_end(%s), exploit_id(%s), node_id(%s), node(%s), port(%s)",
                   port.scan.start, port.scan.end, exploit.id, port.node.id, str(port.node), str(port))
 
-        self.lock.acquire(True)
+        if lock:
+            self.lock.acquire(True)
+
         self.cursor.execute("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
                             "port_protocol, port_number)"
                             "VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -203,7 +213,8 @@ class Storage(DbInterface):
         if commit:
             self.conn.commit()
 
-        self.lock.release()
+        if lock:
+            self.lock.release()
 
     def get_scan_info(self, port, app):
         """
