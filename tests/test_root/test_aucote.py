@@ -148,3 +148,6 @@ class AucoteTest(TestCase):
         self.assertEqual(aucote.storage, storage)
         self.assertEqual(aucote.kudu_queue, kudu_queue)
         self.assertEqual(aucote.storage, storage)
+
+    def test_signal_handling(self):
+        self.assertRaises(SystemExit, self.aucote.signal_handler, 2, MagicMock())

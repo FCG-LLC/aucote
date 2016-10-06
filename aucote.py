@@ -199,8 +199,19 @@ class Aucote(object):
         log.debug('Added task: %s', task)
         self.thread_pool.add_task(task)
 
-    def signal_handler(self, sig, frame):
-        log.info("Received signal. Exiting.")
+    @classmethod
+    def signal_handler(cls, sig, frame):
+        """
+        Handling signals from operating system. Exits applications (kills all threads).
+
+        Args:
+            sig:
+            frame:
+
+        Returns:
+
+        """
+        log.error("Received signal %s at frame %s. Exiting.", sig, frame)
         sys.exit(1)
 
 
