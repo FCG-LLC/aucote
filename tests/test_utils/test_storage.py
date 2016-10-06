@@ -330,4 +330,4 @@ class StorageTest(TestCase):
             storage._cursor = MagicMock()
             storage._cursor.execute = MagicMock(side_effect=DatabaseError)
 
-            self.assertIsNone(storage.clear_scan_details())
+            self.assertRaises(DatabaseError, storage.clear_scan_details)

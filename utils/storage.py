@@ -247,12 +247,10 @@ class Storage(DbInterface):
 
         """
         try:
+            log.debug('Cleaning scan details')
             self.lock.acquire(True)
             self.cursor.execute("DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL "
                                 "OR SCAN_END IS NULL")
-
-        except sqlite3.DatabaseError:
-            return
 
         finally:
             self.lock.release()
