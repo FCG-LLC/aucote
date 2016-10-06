@@ -1,5 +1,9 @@
 # This is an example configuration file, which provides information about configurable options of aucote.
 #
+# pid_file: <str> - defines pid file path
+
+pid_file: tmp/aucote.pid
+
 # logging: Aucote logs a most of events in configuration files
 #   file: <str> - This is path to the aucote log file
 #   level: (debug|info|warning|error|critical) - This is the level of logging (default: info)
@@ -39,11 +43,13 @@ kuduworker:
 #   scans:
 #     threads: <int> - Number of threads to be running
 #     rate: <int> - Rate in packets per seconds for scanning tool (e.g. masscan)
-#     period: <str> - If aucote runs in service mode it scans network every "period" time.
+#     period: <period> - If aucote runs in service mode it scans network every "period" time.
 #                     Period should be set up in special format:
 #                     <int>d<int>h<int>m<int>s, where letters mean: days, hours, minutes, seconds
 #     ports: <str> - Port range in format suit to the used tool eg. T:0-65535 for nmap/masscan
-        port_period: 15m
+#       port_period: <period> - Minimal port scanning period
+#       node_period: <period> - Minimal node scanning period
+
 
 service:
     scans:
@@ -51,6 +57,8 @@ service:
         rate: 1000
         period: 12h
         ports: T:0-65535,U:0-65535,S:65535 # TCP, UDP, SCTP: full range
+        port_period: 15m
+        node_period: 0s
 
 # This section contains configuration related to topdis service
 # topdis:
@@ -74,8 +82,8 @@ topdis:
 #     period: <str> - Defines how often use application
 #     periods: - Defines how often using particalar application modules (e.g. nmap scripts).
 #                These values are higher priority than 'period'.
-#       module1: <str> - Period for module1
-#       module2: <str> - Period for module2
+#       module1: <period> - Period for module1
+#       module2: <period> - Period for module2
 #
 # This subsection provides app-specific options
 #
