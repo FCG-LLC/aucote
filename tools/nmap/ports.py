@@ -2,9 +2,6 @@
 This module contains class responsible for scanning ports by using nmap
 
 """
-import logging as log
-import ipaddress
-from structs import Port, TransportProtocol
 from tools.common import OpenPortsParser
 from .base import NmapBase
 
