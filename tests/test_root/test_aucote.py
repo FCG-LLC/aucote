@@ -14,9 +14,7 @@ from utils.storage import Storage
 @patch('utils.log.config', Mock(return_value=""))
 class AucoteTest(TestCase):
     def setUp(self):
-        storage = Storage(":memory:")
-        storage.connect()
-        self.aucote = Aucote(exploits=MagicMock(), storage=storage, kudu_queue=MagicMock())
+        self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock())
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
@@ -67,8 +65,9 @@ class AucoteTest(TestCase):
         self.assertEqual(mock.call_count, 1)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
+    @patch('aucote.StorageTask')
     @patch('aucote.ScanTask')
-    def test_scan(self, mock_scan_tasks):
+    def test_scan(self, mock_scan_tasks, mock_storage_task):
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
@@ -81,8 +80,8 @@ class AucoteTest(TestCase):
         }
 
         self.assertEqual(mock_scan_tasks.call_count, 1)
+        self.assertEqual(mock_storage_task.call_count, 1)
         self.assertDictEqual(result, expected)
-        self.assertTrue(self.aucote.storage.clear_scan_details.called)
         self.aucote._thread_pool.start.called_once_with()
         self.aucote._thread_pool.join.called_once_with()
         self.aucote._thread_pool.stop.called_once_with()

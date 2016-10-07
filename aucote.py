@@ -4,6 +4,7 @@ This is executable file of aucote project.
 
 import argparse
 import logging as log
+import threading
 import os
 from os import chdir
 from os.path import dirname, realpath
@@ -20,7 +21,7 @@ from scans.task_mapper import TaskMapper
 from structs import Node
 import utils.log as log_cfg
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
-from utils.storage import Storage
+from utils.storage_task import StorageTask
 from utils.threads import ThreadPool
 from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
@@ -78,20 +79,19 @@ def main():
         except FileNotFoundError:
             pass
 
-        with Storage(filename=cfg.get('service.scans.storage')) as storage:
-            aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, storage=storage)
+        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, storage=None)
 
-            if args.cmd == 'scan':
-                nodes = []
-                if args.host_ip is not None and args.host_id is not None:
-                    node = Node(ip=args.host_ip, node_id=args.host_id)
-                    nodes.append(node)
+        if args.cmd == 'scan':
+            nodes = []
+            if args.host_ip is not None and args.host_id is not None:
+                node = Node(ip=args.host_ip, node_id=args.host_id)
+                nodes.append(node)
 
-                aucote.run_scan(nodes=nodes)
-            elif args.cmd == 'service':
-                aucote.run_service()
-            elif args.cmd == 'syncdb':
-                aucote.run_syncdb()
+            aucote.run_scan(nodes=nodes)
+        elif args.cmd == 'service':
+            aucote.run_service()
+        elif args.cmd == 'syncdb':
+            aucote.run_syncdb()
 
 
 # =============== functions ==============
@@ -102,13 +102,15 @@ class Aucote(object):
     Main aucote class. It Provides run functions (service, single instance, sync db)
     """
 
-    def __init__(self, exploits, kudu_queue, storage):
+    def __init__(self, exploits, kudu_queue, storage=None):
         self.exploits = exploits
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
         self._storage = storage
         self.task_mapper = TaskMapper(self)
+        self.filename = cfg.get('service.scans.storage')
         signal.signal(signal.SIGINT, self.signal_handler)
+        self.lock = threading.Lock()
 
     @property
     def kudu_queue(self):
@@ -147,11 +149,15 @@ class Aucote(object):
 
         """
 
-        self.storage.clear_scan_details()
         try:
+            self.thread_pool.start()
+
+            self.add_task(StorageTask(filename=self.filename, executor=self))
+
+            self.lock.acquire(True)
+            self.lock.release()
             self.add_task(ScanTask(executor=self, nodes=nodes))
 
-            self.thread_pool.start()
             self.thread_pool.join()
             self.thread_pool.stop()
         except TopdisConnectionException:

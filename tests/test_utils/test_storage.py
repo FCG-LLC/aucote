@@ -1,7 +1,7 @@
 import ipaddress
 from unittest import TestCase
 
-from sqlite3 import Connection, DatabaseError
+from sqlite3 import Connection, DatabaseError, time
 
 from sqlite3 import connect
 from unittest.mock import MagicMock, patch
@@ -9,13 +9,13 @@ from unittest.mock import MagicMock, patch
 from fixtures.exploits import Exploit
 from structs import Node, Port, TransportProtocol, Scan
 from utils.storage import Storage
+from utils.storage_task import StorageTask
 
 
 class StorageTest(TestCase):
-
     def setUp(self):
-        self.storage = Storage(":memory:")
-        self.storage.lock = MagicMock()
+        self.task = MagicMock()
+        self.storage = Storage(self.task, filename=":memory:")
 
     def test_init(self):
         self.assertEqual(self.storage.filename, ":memory:")
@@ -35,34 +35,35 @@ class StorageTest(TestCase):
 
         self.assertEqual(self.storage.conn, None)
 
+    @patch("time.time", MagicMock(return_value=7))
     def test_save_node(self):
         node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        with self.storage as storage:
-            storage.save_node(node)
+        self.storage.save_node(node)
 
-            result = storage.cursor.execute("SELECT * FROM nodes").fetchone()
+        result = self.task.add_query.call_args[0]
+        expected = (("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)", (1, '127.0.0.1', 7)),)
 
-        self.assertEqual(result[0], 1)
-        self.assertEqual(result[1], '127.0.0.1')
+        self.assertCountEqual(result, expected)
 
+    @patch("time.time", MagicMock(return_value=17))
     def test_save_nodes(self):
         nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')),
                  Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2')),
                  Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))]
 
-        with self.storage as storage:
-            storage.save_nodes(nodes)
+        self.storage.save_node = MagicMock()
+        self.storage.save_nodes(nodes)
 
-            result = storage.cursor.execute("SELECT * FROM nodes").fetchall()
+        result = self.storage.save_node.call_args_list
+        expected = [
+            (nodes[0],),
+            (nodes[1],),
+            (nodes[2],),
+        ]
 
-        self.assertEqual(result[0][0], 1)
-        self.assertEqual(result[0][1], '127.0.0.1')
-
-        self.assertEqual(result[1][0], 2)
-        self.assertEqual(result[1][1], '127.0.0.2')
-
-        self.assertEqual(result[2][0], 3)
-        self.assertEqual(result[2][1], '127.0.0.3')
+        self.assertCountEqual(result[0][0], expected[0])
+        self.assertCountEqual(result[1][0], expected[1])
+        self.assertCountEqual(result[2][0], expected[2])
 
     def test_get_nodes(self):
         nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')),
@@ -70,7 +71,13 @@ class StorageTest(TestCase):
                  Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))]
 
         with self.storage as storage:
-            storage.save_nodes(nodes)
+            storage.cursor.execute("CREATE TABLE nodes (id int, ip text, time float)")
+            storage.cursor.execute("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)", (1, '127.0.0.1',
+                                                                                                    time.time()))
+            storage.cursor.execute("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)", (2, '127.0.0.2',
+                                                                                                    time.time()))
+            storage.cursor.execute("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)", (3, '127.0.0.3',
+                                                                                                    time.time()))
 
             result = storage.get_nodes(1000)
 
@@ -86,19 +93,18 @@ class StorageTest(TestCase):
         result = self.storage.get_nodes(1000)
         self.assertEqual(result, [])
 
-    @patch('utils.storage.threading.Lock', MagicMock())
+    @patch('time.time', MagicMock(return_value=13))
     def test_save_port(self):
-        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1), transport_protocol=TransportProtocol.TCP,
-                    number=1)
-        with Storage(":memory:") as storage:
-            storage.save_port(port)
+        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1),
+                    transport_protocol=TransportProtocol.TCP, number=1)
 
-            expected = storage.cursor.execute("SELECT * FROM ports").fetchone()
+        self.storage.save_port(port)
 
-        self.assertEqual(expected[0], 1)
-        self.assertEqual(expected[1], '127.0.0.1')
-        self.assertEqual(expected[2], 1)
-        self.assertEqual(expected[3], TransportProtocol.TCP.iana)
+        result = self.task.add_query.call_args[0]
+        expected = (("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
+                     (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana, 13)),)
+
+        self.assertCountEqual(result, expected)
 
     def test_save_ports(self):
         nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')),
@@ -107,18 +113,21 @@ class StorageTest(TestCase):
 
         ports = [Port(node=nodes[0], transport_protocol=TransportProtocol.TCP, number=5),
                  Port(node=nodes[1], transport_protocol=TransportProtocol.UDP, number=65),
-                 Port(node=nodes[2], transport_protocol=TransportProtocol.ICMP, number=99),]
+                 Port(node=nodes[2], transport_protocol=TransportProtocol.ICMP, number=99), ]
 
-        with self.storage as storage:
-            storage.save_ports(ports)
+        self.storage.save_port = MagicMock()
+        self.storage.save_ports(ports)
 
-            expected = storage.cursor.execute("SELECT * FROM ports").fetchall()
+        result = self.storage.save_port.call_args_list
+        expected = [
+            (ports[0],),
+            (ports[1],),
+            (ports[2],),
+        ]
 
-        for i in range(len(expected)):
-            self.assertEqual(expected[i][0], ports[i].node.id)
-            self.assertEqual(expected[i][1], str(ports[i].node.ip))
-            self.assertEqual(expected[i][2], ports[i].number)
-            self.assertEqual(expected[i][3], ports[i].transport_protocol.iana)
+        self.assertCountEqual(result[0][0], expected[0])
+        self.assertCountEqual(result[1][0], expected[1])
+        self.assertCountEqual(result[2][0], expected[2])
 
     def test_get_ports(self):
         nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')),
@@ -127,10 +136,16 @@ class StorageTest(TestCase):
 
         ports = [Port(node=nodes[0], transport_protocol=TransportProtocol.TCP, number=5),
                  Port(node=nodes[1], transport_protocol=TransportProtocol.UDP, number=65),
-                 Port(node=nodes[2], transport_protocol=TransportProtocol.ICMP, number=99),]
+                 Port(node=nodes[2], transport_protocol=TransportProtocol.ICMP, number=99), ]
 
         with self.storage as storage:
-            storage.save_ports(ports)
+            storage.cursor.execute("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, "
+                                   "time int, primary key (id, ip, port, protocol))")
+
+            for port in ports:
+                storage.cursor.execute("INSERT INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
+                                       (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
+                                        time.time()))
 
             expected = storage.get_ports(1000)
 
@@ -145,7 +160,6 @@ class StorageTest(TestCase):
         result = self.storage.get_ports(1000)
         self.assertEqual(result, [])
 
-    @patch('utils.storage.threading.Lock', MagicMock())
     def test_save_scan(self):
         exploit = Exploit(exploit_id=14)
         exploit.name = 'test_name'
@@ -156,23 +170,24 @@ class StorageTest(TestCase):
 
         start_scan = 17
         port.scan = Scan(start=start_scan)
+        self.storage.save_scan(exploit=exploit, port=port)
 
-        with Storage(":memory:") as storage:
-            storage.save_scan(exploit=exploit, port=port)
+        result = self.task.add_query.call_args_list
 
-            result = storage.cursor.execute("SELECT * FROM scans").fetchall()
+        expected = [
+            (("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
+              "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
+              (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
+               port.transport_protocol.iana, port.number)),),
+            (("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
+              "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+              (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
+               str(port.node.ip), port.transport_protocol.iana, port.number)),)
+        ]
 
-        self.assertEqual(result[0][0], exploit.id)
-        self.assertEqual(result[0][1], exploit.app)
-        self.assertEqual(result[0][2], exploit.name)
-        self.assertEqual(result[0][3], port.node.id)
-        self.assertEqual(result[0][4], str(port.node.ip))
-        self.assertEqual(result[0][5], port.transport_protocol.iana)
-        self.assertEqual(result[0][6], port.number)
-        self.assertEqual(result[0][7], start_scan)
-        self.assertEqual(result[0][8], None)
+        self.assertCountEqual(result[0][0], expected[0])
+        self.assertCountEqual(result[1][0], expected[1])
 
-    @patch('utils.storage.threading.Lock', MagicMock())
     def test_save_scan_without_changing_start_scan(self):
         exploit = Exploit(exploit_id=14)
         exploit.name = 'test_name'
@@ -183,15 +198,29 @@ class StorageTest(TestCase):
 
         start_scan = 17
         port.scan = Scan(start=start_scan, end=start_scan)
+        self.storage.save_scan(exploit=exploit, port=port)
 
-        with Storage(":memory:") as storage:
-            storage.save_scan(exploit=exploit, port=port)
+        result = self.task.add_query.call_args_list
 
-            result = storage.cursor.execute("SELECT * FROM scans").fetchall()
+        expected = [
+            (("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
+              "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
+              (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
+               port.transport_protocol.iana, port.number)),),
+            (("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
+              "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+              (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
+               str(port.node.ip), port.transport_protocol.iana, port.number)),),
+            (("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
+              "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+              (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
+               str(port.node.ip), port.transport_protocol.iana, port.number)),)
+        ]
 
-        self.assertEqual(result[0][7], start_scan)
+        self.assertCountEqual(result[0][0], expected[0])
+        self.assertCountEqual(result[1][0], expected[1])
+        self.assertCountEqual(result[2][0], expected[2])
 
-    @patch('utils.storage.threading.Lock', MagicMock())
     def test_get_scan_info(self):
         exploits = [Exploit(exploit_id=14, name='test_name_1', app='test_app'),
                     Exploit(exploit_id=20, name='test_name_2', app='test_app'),
@@ -207,11 +236,21 @@ class StorageTest(TestCase):
         start_scan = 17.0
         end_scan = 27.0
 
-        with Storage(":memory:") as storage:
+        with Storage(StorageTask(executor=MagicMock()), filename=":memory:") as storage:
+            storage.cursor.execute("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, "
+                                   "exploit_name text, node_id int, node_ip text, port_protocol int, port_number int, "
+                                   "scan_start float, scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, "
+                                   "port_protocol, port_number))")
+
             for exploit in exploits:
                 for port in ports:
                     port.scan = Scan(start=start_scan, end=end_scan)
-                    storage.save_scan(exploit=exploit, port=port)
+                    storage.cursor.execute("INSERT INTO scans (exploit_id, exploit_app, exploit_name, node_id,"
+                                           "node_ip, port_protocol, port_number, scan_start, scan_end) "
+                                           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                           (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
+                                            port.transport_protocol.iana, port.number, start_scan, end_scan))
+            storage.conn.commit()
 
             results = storage.get_scan_info(port=ports[0], app='test_app')
 
@@ -249,85 +288,60 @@ class StorageTest(TestCase):
                                                       number=1, transport_protocol=TransportProtocol.TCP), app=None)
         self.assertEqual(result, [])
 
-    @patch('utils.storage.threading.Lock', MagicMock())
-    def test_clear_scan_details(self):
-        exploit = Exploit(exploit_id=14)
-        exploit.name = 'test_name'
-        exploit.app = 'test_app'
-
-        port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=3), number=12,
-                    transport_protocol=TransportProtocol.TCP)
-        port.scan = Scan()
-
-        start_scan = 17
-
-        with Storage(":memory:") as storage:
-            port.scan.start = start_scan
-            storage.save_scan(exploit=exploit, port=port)
-
-            port.number += 1
-            port.scan.end = start_scan -1
-            storage.save_scan(exploit=exploit, port=port)
-
-            port.number += 1
-            port.scan.end +=1
-            storage.save_scan(exploit=exploit, port=port)
-
-            port.number += 1
-            port.scan.end += 1
-            storage.save_scan(exploit=exploit, port=port)
-
-            port.number += 1
-            port.scan.start = None
-            storage.save_scan(exploit=exploit, port=port)
-            storage.clear_scan_details()
-
-            result = len(storage.cursor.execute("SELECT * FROM scans").fetchall())
-
-        expected = 1
-
-        self.assertEqual(result, expected)
-
+    #
+    #     @patch('utils.storage.threading.Lock', MagicMock())
+    #     def test_clear_scan_details(self):
+    #         exploit = Exploit(exploit_id=14)
+    #         exploit.name = 'test_name'
+    #         exploit.app = 'test_app'
+    #
+    #         port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=3), number=12,
+    #                     transport_protocol=TransportProtocol.TCP)
+    #         port.scan = Scan()
+    #
+    #         start_scan = 17
+    #
+    #         with Storage(StorageTask(executor=MagicMock()), filename=":memory:") as storage:
+    #             port.scan.start = start_scan
+    #             storage.save_scan(exploit=exploit, port=port)
+    #
+    #             port.number += 1
+    #             port.scan.end = start_scan -1
+    #             storage.save_scan(exploit=exploit, port=port)
+    #
+    #             port.number += 1
+    #             port.scan.end +=1
+    #             storage.save_scan(exploit=exploit, port=port)
+    #
+    #             port.number += 1
+    #             port.scan.end += 1
+    #             storage.save_scan(exploit=exploit, port=port)
+    #
+    #             port.number += 1
+    #             port.scan.start = None
+    #             storage.save_scan(exploit=exploit, port=port)
+    #             storage.clear_scan_details()
+    #
+    #             result = len(storage.cursor.execute("SELECT * FROM scans").fetchall())
+    #
+    #         expected = 1
+    #
+    #         self.assertEqual(result, expected)
+    #
     def test_create_table(self):
-        with Storage(":memory:") as storage:
-            storage.create_tables()
-            nodes_result = storage.cursor.execute("PRAGMA table_info(nodes);").fetchall()
-            scans_result = storage.cursor.execute("PRAGMA table_info(scans);").fetchall()
-            ports_result = storage.cursor.execute("PRAGMA table_info(ports);").fetchall()
+        self.storage.create_tables()
+        result = self.task.add_query.call_args_list
+        expected = [
+            (("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, "
+              "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
+              "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, port_number))", ), ),
 
-        nodes_expected = [
-            (0, 'id', 'int', 0, None, 1),
-            (1, 'ip', 'text', 0, None, 2),
-            (2, 'time', 'int', 0, None, 0),
+            (("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
+              "primary key (id, ip, port, protocol))", ), ),
+
+            (("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))",), )
         ]
 
-        scans_expected = [
-            (0, 'exploit_id', 'int', 0, None, 1),
-            (1, 'exploit_app', 'text', 0, None, 0),
-            (2, 'exploit_name', 'text', 0, None, 0),
-            (3, 'node_id', 'int', 0, None, 2),
-            (4, 'node_ip', 'text', 0, None, 3),
-            (5, 'port_protocol', 'int', 0, None, 4),
-            (6, 'port_number', 'int', 0, None, 5),
-            (7, 'scan_start', 'float', 0, None, 0),
-            (8, 'scan_end', 'float', 0, None, 0),
-        ]
-
-        ports_expected = [
-            (0, 'id', 'int', 0, None, 1),
-            (1, 'ip', 'text', 0, None, 2),
-            (2, 'port', 'int', 0, None, 3),
-            (3, 'protocol', 'int', 0, None, 4),
-            (4, 'time', 'int', 0, None, 0),
-        ]
-
-        self.assertCountEqual(nodes_result, nodes_expected)
-        self.assertCountEqual(scans_result, scans_expected)
-        self.assertCountEqual(ports_result, ports_expected)
-
-    def test_clear_scan_details_with_db_error(self):
-        with Storage(":memory:") as storage:
-            storage._cursor = MagicMock()
-            storage._cursor.execute = MagicMock(side_effect=DatabaseError)
-
-            self.assertRaises(DatabaseError, storage.clear_scan_details)
+        self.assertCountEqual(result[0][0], expected[0])
+        self.assertCountEqual(result[1][0], expected[1])
+        self.assertCountEqual(result[2][0], expected[2])

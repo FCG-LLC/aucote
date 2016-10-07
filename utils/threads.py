@@ -42,6 +42,7 @@ class ThreadPool(object):
     def stop(self):
         """
         Stop threads by sending end-the-work signal
+
         """
         for _ in self._threads:
             self._queue.put(None)
@@ -54,6 +55,7 @@ class ThreadPool(object):
     def join(self):
         """
         Join to the threads
+
         """
         self._queue.join()
 

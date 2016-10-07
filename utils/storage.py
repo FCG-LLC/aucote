@@ -3,7 +3,6 @@ This file contains class for storage temporary information like last date of sca
 """
 import ipaddress
 import sqlite3
-import threading
 import time
 import logging as log
 
@@ -18,7 +17,7 @@ class Storage(DbInterface):
 
     """
 
-    def __init__(self, filename="storage.sqlite3"):
+    def __init__(self, task, filename="storage.sqlite3"):
         """
         Init storage
 
@@ -29,10 +28,10 @@ class Storage(DbInterface):
         self.filename = filename
         self.conn = None
         self._cursor = None
-        self.lock = threading.Lock()
+        self.task = task
 
     def connect(self):
-        self.conn = sqlite3.connect(self.filename, check_same_thread=False)
+        self.conn = sqlite3.connect(self.filename, check_same_thread=True)
         self._cursor = self.conn.cursor()
         self.create_tables()
 
@@ -51,7 +50,7 @@ class Storage(DbInterface):
         """
         return self._cursor
 
-    def save_node(self, node, commit=True, lock=True):
+    def save_node(self, node):
         """
         Saves node into to the storage
 
@@ -62,15 +61,11 @@ class Storage(DbInterface):
             None
 
         """
-        if lock:
-            self.lock.acquire(True)
-        self.cursor.execute("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)",
-                            (node.id, str(node.ip), time.time()))
+        self.task.add_query(("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)",
+                             (node.id, str(node.ip), time.time())))
 
-        if commit:
-            self.conn.commit()
-        if lock:
-            self.lock.release()
+        # if commit:
+        #     self.conn.commit()
 
     def save_nodes(self, nodes):
         """
@@ -84,12 +79,10 @@ class Storage(DbInterface):
 
         """
         log.debug("Saving nodes")
-        self.lock.acquire(True)
         for node in nodes:
-            self.save_node(node, False, False)
+            self.save_node(node)
 
-        self.conn.commit()
-        self.lock.release()
+            # self.conn.commit()
 
     def get_nodes(self, pasttime=0):
         """
@@ -109,7 +102,7 @@ class Storage(DbInterface):
         except sqlite3.DatabaseError:
             return []
 
-    def save_port(self, port, commit=True, lock=True):
+    def save_port(self, port):
         """
         Saves port to local storage
 
@@ -122,17 +115,12 @@ class Storage(DbInterface):
             None
 
         """
-        if lock:
-            self.lock.acquire(True)
-        self.cursor.execute("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
-                            (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
-                             time.time()))
+        self.task.add_query(("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
+                             (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
+                              time.time())))
 
-        if commit:
-            self.conn.commit()
-
-        if lock:
-            self.lock.release()
+        # if commit:
+        #     self.conn.commit()
 
     def save_ports(self, ports):
         """
@@ -145,12 +133,10 @@ class Storage(DbInterface):
             None
 
         """
-        self.lock.acquire(True)
         for port in ports:
-            self.save_port(port, False, False)
+            self.save_port(port)
 
-        self.conn.commit()
-        self.lock.release()
+            # self.conn.commit()
 
     def get_ports(self, pasttime=900):
         """
@@ -171,7 +157,7 @@ class Storage(DbInterface):
         except sqlite3.DatabaseError:
             return []
 
-    def save_scan(self, exploit, port, commit=True, lock=True):
+    def save_scan(self, exploit, port):
         """
         Saves scan informations into storage. Create table scans if not exists
 
@@ -189,32 +175,25 @@ class Storage(DbInterface):
         log.debug("Saving scan details: scan_start(%s), scan_end(%s), exploit_id(%s), node_id(%s), node(%s), port(%s)",
                   port.scan.start, port.scan.end, exploit.id, port.node.id, str(port.node), str(port))
 
-        if lock:
-            self.lock.acquire(True)
-
-        self.cursor.execute("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
-                            "port_protocol, port_number)"
-                            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                            (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
-                             port.transport_protocol.iana, port.number))
+        self.task.add_query(("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
+                             "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                             (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
+                              port.transport_protocol.iana, port.number)))
 
         if port.scan.start:
-            self.cursor.execute("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
-                                "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
-                                 str(port.node.ip), port.transport_protocol.iana, port.number))
+            self.task.add_query(("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
+                                 "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+                                 (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
+                                  str(port.node.ip), port.transport_protocol.iana, port.number)))
 
         if port.scan.end:
-            self.cursor.execute("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
-                                "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
-                                 str(port.node.ip), port.transport_protocol.iana, port.number))
+            self.task.add_query(("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
+                                 "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+                                 (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
+                                  str(port.node.ip), port.transport_protocol.iana, port.number)))
 
-        if commit:
-            self.conn.commit()
-
-        if lock:
-            self.lock.release()
+            # if commit:
+            #     self.conn.commit()
 
     def get_scan_info(self, port, app):
         """
@@ -257,14 +236,9 @@ class Storage(DbInterface):
             None
 
         """
-        try:
-            log.debug('Cleaning scan details')
-            self.lock.acquire(True)
-            self.cursor.execute("DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL "
-                                "OR SCAN_END IS NULL")
-
-        finally:
-            self.lock.release()
+        log.debug('Cleaning scan details')
+        self.task.add_query(("DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL "
+                             "OR SCAN_END IS NULL",))
 
     def create_tables(self):
         """
@@ -275,11 +249,12 @@ class Storage(DbInterface):
 
         """
 
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, "
-                            "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
-                            "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, port_number))")
+        self.task.add_query(("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, "
+                             "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
+                             "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, "
+                             "port_number))", ))
 
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
-                            "primary key (id, ip, port, protocol))")
+        self.task.add_query(("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
+                             "primary key (id, ip, port, protocol))",))
 
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))")
+        self.task.add_query(("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))",))
