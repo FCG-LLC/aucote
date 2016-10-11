@@ -24,22 +24,33 @@ class ScanTask(Task):
     Class responsible for scanning
 
     """
-    def __init__(self, nodes=None, *args, **kwargs):
+    def __init__(self, nodes=None, as_service=True, *args, **kwargs):
         super(ScanTask, self).__init__(*args, **kwargs)
         self.nodes = nodes or self._get_nodes()
         self.scheduler = sched.scheduler(time.time)
         self.scan_period = parse_period(cfg.get('service.scans.period'))
         self.storage = self.executor.storage
+        self.as_service = as_service
 
-    def run(self):
+    def run_periodically(self):
         """
-        Periodically run scanning. Function run itself every period time.
+        Periodically runs scanning. Function is recurrence.
 
         Returns:
             None
 
         """
-        self.scheduler.enter(self.scan_period, 1, self.run)
+        self.scheduler.enter(self.scan_period, 1, self.run_periodically)
+        self.run()
+
+    def run(self):
+        """
+        Run scanning.
+
+        Returns:
+            None
+
+        """
         scanner = MasscanPorts(executor=self.executor)
         nodes = self._get_nodes_for_scanning()
 
@@ -54,7 +65,10 @@ class ScanTask(Task):
         self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
 
     def __call__(self, *args, **kwargs):
-        self.run()
+        if self.as_service:
+            self.run_periodically()
+        else:
+            self.run()
         self.scheduler.run()
 
     @classmethod

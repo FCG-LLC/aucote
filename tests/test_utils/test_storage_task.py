@@ -36,3 +36,11 @@ class StorageTaskTest(TestCase):
         self.assertEqual(storage.cursor.execute.call_count, 4)
         self.assertEqual(storage.conn.commit.call_count, 3)
         self.assertEqual(self.task._queue.get.call_count, 3)
+
+    def test_finish_task(self):
+        self.executor.unfinished_tasks = 1
+        self.executor.started = True
+        self.task._queue = MagicMock()
+
+        self.task()
+        self.assertFalse(self.task._queue.get.called)

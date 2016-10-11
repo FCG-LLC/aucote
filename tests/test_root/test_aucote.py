@@ -72,11 +72,12 @@ class AucoteTest(TestCase):
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
 
-        self.aucote.run_scan()
+        self.aucote.run_scan(as_service=False)
         result = mock_scan_tasks.call_args[1]
         expected = {
             'executor': self.aucote,
-            'nodes': None
+            'nodes': None,
+            'as_service': False
         }
 
         self.assertEqual(mock_scan_tasks.call_count, 1)

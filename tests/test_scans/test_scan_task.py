@@ -125,6 +125,17 @@ class ScanTaskTest(TestCase):
 
     def test_call_magic(self):
         self.scan_task.scheduler = MagicMock()
+        self.scan_task.as_service = True
+        self.scan_task.run_periodically = MagicMock()
+
+        self.scan_task()
+
+        self.scan_task.run_periodically.assert_called_once_with()
+        self.scan_task.scheduler.run.assert_called_once_with()
+
+    def test_call_as_service(self):
+        self.scan_task.as_service = False
+        self.scan_task.scheduler = MagicMock()
         self.scan_task.run = MagicMock()
 
         self.scan_task()
@@ -135,7 +146,6 @@ class ScanTaskTest(TestCase):
     @patch('scans.scan_task.MasscanPorts')
     @patch('scans.scan_task.Executor')
     def test_run(self, mock_executor, mock_masscan):
-        self.scan_task.scheduler = MagicMock()
         self.scan_task.executor.add_task = MagicMock()
         self.scan_task._get_nodes_for_scanning = MagicMock()
         self.scan_task.storage = MagicMock()
@@ -145,7 +155,6 @@ class ScanTaskTest(TestCase):
 
         self.scan_task.run()
 
-        self.scan_task.scheduler.enter.assert_called_once_with(self.scan_task.scan_period, 1, self.scan_task.run)
         mock_executor.called_once_with(aucote=self.scan_task.executor, nodes=ports)
         self.scan_task.executor.add_task.called_once_with(mock_executor.return_value)
 
@@ -153,3 +162,14 @@ class ScanTaskTest(TestCase):
         self.scan_task._get_nodes_for_scanning = MagicMock(return_value=[])
         self.scan_task.run()
         self.assertFalse(self.scan_task.storage.save_nodes.called)
+
+    def test_run_periodically(self):
+        self.scan_task.scheduler = MagicMock()
+        self.scan_task.run = MagicMock()
+        self.scan_task.run_periodically()
+
+        result = self.scan_task.scheduler.enter.call_args[0]
+        expected = (self.scan_task.scan_period, 1, self.scan_task.run_periodically)
+
+        self.assertEqual(result, expected)
+        self.scan_task.run.assert_called_once_with()

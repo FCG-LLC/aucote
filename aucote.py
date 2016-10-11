@@ -87,7 +87,7 @@ def main():
                 node = Node(ip=args.host_ip, node_id=args.host_id)
                 nodes.append(node)
 
-            aucote.run_scan(nodes=nodes)
+            aucote.run_scan(nodes=nodes, as_service=False)
         elif args.cmd == 'service':
             aucote.run_service()
         elif args.cmd == 'syncdb':
@@ -111,6 +111,7 @@ class Aucote(object):
         self.filename = cfg.get('service.scans.storage')
         signal.signal(signal.SIGINT, self.signal_handler)
         self.lock = threading.Lock()
+        self.started = False
 
     @property
     def kudu_queue(self):
@@ -141,7 +142,7 @@ class Aucote(object):
         """
         return self._thread_pool
 
-    def run_scan(self, nodes=None):
+    def run_scan(self, nodes=None, as_service=True):
         """
         Start scanning ports.
 
@@ -156,7 +157,8 @@ class Aucote(object):
 
             self.lock.acquire(True)
             self.lock.release()
-            self.add_task(ScanTask(executor=self, nodes=nodes))
+            self.add_task(ScanTask(executor=self, nodes=nodes, as_service=as_service))
+            self.started = True
 
             self.thread_pool.join()
             self.thread_pool.stop()
@@ -219,6 +221,17 @@ class Aucote(object):
         """
         log.error("Received signal %s at frame %s. Exiting.", sig, frame)
         sys.exit(1)
+
+    @property
+    def unfinished_tasks(self):
+        """
+        Get number of unfinished tasks.
+
+        Returns:
+            int
+
+        """
+        return self.thread_pool.unfinished_tasks
 
 
 # =================== start app =================

@@ -50,8 +50,6 @@ class ThreadPool(object):
             thread.join()
         self._threads = []
 
-
-
     def join(self):
         """
         Join to the threads
@@ -74,3 +72,14 @@ class ThreadPool(object):
                 log.error('Exception %s while running %s', err, task, exc_info=err)
             finally:
                 self._queue.task_done()
+
+    @property
+    def unfinished_tasks(self):
+        """
+        Returns number of unfinished tasks
+
+        Returns:
+            int
+
+        """
+        return self._queue.unfinished_tasks

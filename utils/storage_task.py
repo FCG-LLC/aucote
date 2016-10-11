@@ -46,6 +46,9 @@ class StorageTask(Task):
             self.executor.lock.release()
             storage.clear_scan_details()
             while True:
+                if self.executor.unfinished_tasks == 1 and self.executor.started:
+                    log.debug("No more tasks for executing. auto-destroying storage task.")
+                    return
                 query = self._queue.get()
                 if isinstance(query, list):
                     log.debug("executing %i queries", len(query))
