@@ -59,8 +59,8 @@ class ScanTask(Task):
         if not nodes:
             return
 
-        self.storage.save_nodes(nodes)
         ports = scanner.scan_ports(nodes)
+        self.storage.save_nodes(nodes)
 
         self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
 
