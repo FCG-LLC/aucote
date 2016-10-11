@@ -57,5 +57,4 @@ class Task(object):
         Returns:
             None
         """
-        for exploit in exploits:
-            self.executor.storage.save_scan(exploit=exploit, port=port)
+        self.executor.storage.save_scans(exploits=exploits, port=port)

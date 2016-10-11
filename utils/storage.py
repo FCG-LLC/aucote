@@ -64,9 +64,6 @@ class Storage(DbInterface):
         self.task.add_query(("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)",
                              (node.id, str(node.ip), time.time())))
 
-        # if commit:
-        #     self.conn.commit()
-
     def save_nodes(self, nodes):
         """
         Saves nodes into local storage
@@ -78,11 +75,11 @@ class Storage(DbInterface):
             None
 
         """
-        log.debug("Saving nodes")
-        for node in nodes:
-            self.save_node(node)
+        queries = [("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)",
+                    (node.id, str(node.ip), time.time())) for node in nodes]
 
-            # self.conn.commit()
+        log.debug("Saving nodes")
+        self.task.add_query(queries)
 
     def get_nodes(self, pasttime=0):
         """
@@ -119,9 +116,6 @@ class Storage(DbInterface):
                              (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
                               time.time())))
 
-        # if commit:
-        #     self.conn.commit()
-
     def save_ports(self, ports):
         """
         Saves ports into local storage
@@ -133,10 +127,11 @@ class Storage(DbInterface):
             None
 
         """
-        for port in ports:
-            self.save_port(port)
+        queries = [("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
+                    (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
+                     time.time())) for port in ports]
 
-            # self.conn.commit()
+        self.task.add_query(queries)
 
     def get_ports(self, pasttime=900):
         """
@@ -159,7 +154,7 @@ class Storage(DbInterface):
 
     def save_scan(self, exploit, port):
         """
-        Saves scan informations into storage. Create table scans if not exists
+        Saves scan information into storage. Create table scans if not exists
 
         Args:
             exploit (Exploit): needs some exploit details to save into storage
@@ -192,8 +187,39 @@ class Storage(DbInterface):
                                  (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
                                   str(port.node.ip), port.transport_protocol.iana, port.number)))
 
-            # if commit:
-            #     self.conn.commit()
+    def save_scans(self, exploits, port):
+        """
+        Save scan details into local storage
+
+        Args:
+            exploits (list): List of Exploits
+            port (Port):
+
+        Returns:
+            None
+
+        """
+        queries = []
+
+        for exploit in exploits:
+            queries.append(("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
+                            "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
+                             port.transport_protocol.iana, port.number)))
+
+            if port.scan.start:
+                queries.append(("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
+                                "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+                                (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
+                                 str(port.node.ip), port.transport_protocol.iana, port.number)))
+
+            if port.scan.end:
+                queries.append(("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
+                                "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+                                (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
+                                 str(port.node.ip), port.transport_protocol.iana, port.number)))
+
+        self.task.add_query(queries)
 
     def get_scan_info(self, port, app):
         """
@@ -252,7 +278,7 @@ class Storage(DbInterface):
         self.task.add_query(("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, "
                              "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
                              "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, "
-                             "port_number))", ))
+                             "port_number))",))
 
         self.task.add_query(("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
                              "primary key (id, ip, port, protocol))",))

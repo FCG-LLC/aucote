@@ -50,10 +50,10 @@ class TaskTest(TestCase):
 
         self.task.store_scan_end(exploits=[exploit], port=port)
 
-        result = self.task.executor.storage.save_scan.call_args[1]
+        result = self.task.executor.storage.save_scans.call_args[1]
 
         expected = {
-            'exploit': exploit,
+            'exploits': [exploit],
             'port': port
         }
 

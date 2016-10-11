@@ -153,9 +153,9 @@ class TaskMapperTest(unittest.TestCase):
         self.task_mapper.store_scan_details(exploits=[self.exploits['test'][0]], port=self.UDP,
                                             storage=self.executor.storage)
 
-        result = self.executor.storage.save_scan.call_args[1]
+        result = self.executor.storage.save_scans.call_args[1]
         expected = {
-            'exploit': self.exploits['test'][0],
+            'exploits': [self.exploits['test'][0]],
             'port': self.UDP
         }
 

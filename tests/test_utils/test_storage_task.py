@@ -27,10 +27,12 @@ class StorageTaskTest(TestCase):
     @patch('utils.storage_task.Storage')
     def test_call(self, mock_storage):
         self.task._queue.task_done.side_effect = (None, None, Exception("TEST_FIN"))
+        self.task._queue.get.side_effect = ((1,), (2,), [(3, ), (4, )])
+
         self.assertRaises(Exception, self.task)
         storage = mock_storage.return_value.__enter__.return_value
         self.assertTrue(storage.clear_scan_details.called)
         self.assertEqual(self.executor._storage, storage)
-        self.assertEqual(storage.cursor.execute.call_count, 3)
+        self.assertEqual(storage.cursor.execute.call_count, 4)
         self.assertEqual(storage.conn.commit.call_count, 3)
         self.assertEqual(self.task._queue.get.call_count, 3)

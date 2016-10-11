@@ -47,8 +47,13 @@ class StorageTask(Task):
             storage.clear_scan_details()
             while True:
                 query = self._queue.get()
-                log.debug("executing query: %s", query[0])
-                storage.cursor.execute(*query)
+                if isinstance(query, list):
+                    log.debug("executing %i queries", len(query))
+                    for row in query:
+                        storage.cursor.execute(*row)
+                else:
+                    log.debug("executing query: %s", query[0])
+                    storage.cursor.execute(*query)
                 storage.conn.commit()
                 self._queue.task_done()
 

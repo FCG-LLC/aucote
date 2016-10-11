@@ -120,5 +120,4 @@ class HydraResult(object):
             str
 
         """
-        return "login: {2}\tpassword: {3}".format(self.host, self.port, self.login,
-                                                  self.password)
+        return "login: {0}\tpassword: {1}".format(self.login, self.password)
