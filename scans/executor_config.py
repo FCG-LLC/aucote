@@ -22,6 +22,16 @@ EXECUTOR_CONFIG = {
                 },
                 'http-barracuda-dir-traversal': {
                     'args': 'http-max-cache-size=5000000'
+                },
+                'dns-zone-transfer': {
+                    'args': NmapTool.custom_args_dns_zone_transfer
+                },
+                'dns-srv-enum': {
+                    'args': NmapTool.custom_args_dns_srv_enum,
+                    'singular': True
+                },
+                'http-domino-enum-passwords': {
+                    'args': NmapTool.custom_args_http_domino_enum_passwords
                 }
             }
         },

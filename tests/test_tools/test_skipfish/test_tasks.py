@@ -1,7 +1,7 @@
 import ipaddress
 import subprocess
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
 from structs import Port, TransportProtocol, Node, Scan
@@ -25,16 +25,16 @@ class SkipfishScanTaskTest(TestCase):
 
     def setUp(self):
         self.executor = MagicMock()
-        self.port = Port()
-        self.port.transport_protocol = TransportProtocol.TCP
-        self.port.node = Node()
-        self.port.node.id = 1
-        self.port.node.ip = ipaddress.ip_address('127.0.0.1')
-        self.port.number = 80
+
+        self.node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        self.port = Port(transport_protocol=TransportProtocol.TCP, number = 80, node=self.node)
         self.port.scan = Scan()
 
         self.task = SkipfishScanTask(executor=self.executor, port=self.port)
-        self.task.executor.exploits.find.return_value = Exploit(id=1)
+        self.exploit = Exploit(exploit_id=1)
+        self.task.executor.exploits.find.return_value = self.exploit
+        self.task.store_scan_end = MagicMock()
+        self.task.exploit = self.exploit
 
     def test_call(self):
         expected = MagicMock()
@@ -45,12 +45,32 @@ class SkipfishScanTaskTest(TestCase):
 
     def test_call_exception(self):
         self.task.call = MagicMock(side_effect=subprocess.CalledProcessError(MagicMock(), MagicMock()))
-        result = self.task()
 
+        result = self.task()
         self.assertEqual(result, None)
+
+        result = self.task.executor.storage.save_scan.call_args[1]
+
+        self.assertEqual(result['port'].scan.start, 0)
+        self.assertEqual(result['port'].scan.end, 0)
+        self.assertEqual(result['exploit'], self.exploit)
 
     def test_call_without_results(self):
         self.task.call = MagicMock(return_value=None)
         result = self.task()
 
         self.assertEqual(result, None)
+
+    @patch('time.time', MagicMock(return_value=27.0))
+    def test_storage(self):
+        self.task.call = MagicMock(return_value=MagicMock())
+        self.task()
+
+        result = self.task.store_scan_end.call_args[1]
+        expected = {
+            'exploits': [self.exploit],
+            'port': self.port,
+        }
+
+        self.assertDictEqual(result, expected)
+        self.assertEqual(self.port.scan.end, 27)

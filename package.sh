@@ -18,7 +18,7 @@ DEPENDENCIES="python3 (>= 3.4), nanomsg, libpq5, libyaml-dev, nmap, hydra (>= 8.
 virtualenv --python=${PYTHON_VERSION} --always-copy venv
 source venv/bin/activate
 easy_install -U setuptools
-pip install -r requirements.txt
+pip install -r requirements.txt -v --no-cache-dir --ignore-installed
 
 rm -rf ${PACKAGE_PATH}
 mkdir -p ${PACKAGE_PATH}

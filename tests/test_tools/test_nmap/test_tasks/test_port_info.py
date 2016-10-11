@@ -1,12 +1,12 @@
+import ipaddress
 import unittest
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
 from structs import Port, TransportProtocol, Node
 
-
-# TODO: This tests are complicated because of nesting and many mocking. Should be refactored.
 from tools.nmap.tasks.port_info import NmapPortInfoTask
+from utils.storage import Storage
 
 
 @patch('scans.task_mapper.TaskMapper', MagicMock)
@@ -52,54 +52,58 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 </nmaprun>'''
 
     def setUp(self):
-        self.executor = MagicMock()
+        self.executor = MagicMock(storage=Storage(":memory:"))
 
-        self.port = Port()
-        self.port.node = Node()
-        self.port.node.ip = '127.0.0.1'
-        self.port.number = 22
+        self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 
-        self.port.transport_protocol = TransportProtocol.TCP
+        self.port = Port(number=22, transport_protocol=TransportProtocol.TCP, node=self.node)
 
         self.port_info = NmapPortInfoTask(executor=self.executor, port=self.port)
         self.port_info.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
 
     def test_tcp_scan(self):
-        self.port_info.call = MagicMock(side_effect=self.check_args_tcp)
         self.port_info()
+
+        result = self.port_info.call.call_args[1].get('args', [])
+
+        self.assertIn('-p', result)
+        self.assertIn('22', result)
+        self.assertIn('-sV', result)
+        self.assertIn('--script', result)
+        self.assertIn('banner', result)
+        self.assertIn(str(self.port.node.ip), result)
 
     def test_init(self):
         self.assertEqual(self.port_info.executor, self.executor)
 
-    def check_args_tcp(self, args):
-        self.assertIn('-p', args)
-        self.assertIn('22', args)
-        self.assertIn('-sV', args)
-        self.assertIn('--script', args)
-        self.assertIn('banner', args)
-        self.assertIn(self.port.node.ip, args)
-
-        return ElementTree.fromstring(self.XML)
-
     def test_udp_scan(self):
         self.port_info._port.transport_protocol = TransportProtocol.UDP
-        self.port_info.call = MagicMock(side_effect=self.check_args_udp)
         self.port_info()
 
-    def check_args_udp(self, args):
-        self.assertIn('-sU', args)
-        return self.check_args_tcp(args)
+        result = self.port_info.call.call_args[1].get('args', [])
+
+        self.assertIn('-p', result)
+        self.assertIn('22', result)
+        self.assertIn('-sV', result)
+        self.assertIn('--script', result)
+        self.assertIn('banner', result)
+        self.assertIn(str(self.port.node.ip), result)
+        self.assertIn('-sU', result)
 
     def test_parser_with_banner(self):
         self.port_info()
 
-        self.assertEqual(self.port_info._port.service_name, 'ntp')
-        self.assertEqual(self.port_info._port.service_version, '1.2.3')
+        result = self.port_info._port
+
+        self.assertEqual(result.service_name, 'ntp')
+        self.assertEqual(result.service_version, '1.2.3')
 
     def test_parser_with_banner_and_without_service(self):
         self.port_info.call = MagicMock(return_value=ElementTree.fromstring(self.XML_BANNER))
         self.port_info()
 
-        self.assertEqual(self.port_info._port.service_name, None)
-        self.assertEqual(self.port_info._port.service_version, None)
-        self.assertEqual(self.port_info._port.banner, r"SSH-1.99-Cisco-1.25")
+        result = self.port_info._port
+
+        self.assertEqual(result.service_name, None)
+        self.assertEqual(result.service_version, None)
+        self.assertEqual(result.banner, r"SSH-1.99-Cisco-1.25")

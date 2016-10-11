@@ -1,14 +1,18 @@
 """
 Provide class for tasks
+
 """
+
 
 class Task(object):
     """
     Base class for tasks, e.g. scan, nmap, hydra
+
     """
     def __init__(self, executor):
         """
         Assign executor
+
         """
         self.executor = executor
 
@@ -16,6 +20,7 @@ class Task(object):
     def kudu_queue(self):
         """
         Return executors kudu_queue
+
         """
         return self.executor.kudu_queue
 
@@ -23,17 +28,33 @@ class Task(object):
     def exploits(self):
         """
         Return executors exploits
+
         """
         return self.executor.exploits
 
     def __call__(self, *args, **kwargs):
         """
         Call executed by executor
+
         """
         raise NotImplementedError
 
     def send_msg(self, msg):
         """
         Send msg to kudu_queue
+
         """
         return self.kudu_queue.send_msg(msg)
+
+    def store_scan_end(self, exploits, port):
+        """
+        Stores scan end in local storage
+
+        Args:
+            exploits (Exploits):
+            port (Port):
+
+        Returns:
+            None
+        """
+        self.executor.storage.save_scans(exploits=exploits, port=port)

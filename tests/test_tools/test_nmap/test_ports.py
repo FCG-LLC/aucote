@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 from xml.etree import ElementTree
 
+from structs import Node
 from tools.nmap.ports import PortsScan
 
 
@@ -31,6 +32,7 @@ class PortScanTest(TestCase):
 <port protocol="tcp" portid="587"><state state="open" reason="syn-ack" reason_ttl="62"/><service name="smtp" product="Postfix smtpd" hostname=" mail.respecs.org" method="probed" conf="10"><cpe>cpe:/a:postfix:postfix</cpe></service></port>
 <port protocol="tcp" portid="993"><state state="open" reason="syn-ack" reason_ttl="62"/><service name="imap" product="Dovecot imapd" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:dovecot:dovecot</cpe></service><script id="banner" output="* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID &#xa;ENABLE AUTH=PLAIN AUTH=LOGIN] Dovecot ready."/></port>
 <port protocol="tcp" portid="995"><state state="open" reason="syn-ack" reason_ttl="62"/><service name="pop3" product="Dovecot pop3d" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:dovecot:dovecot</cpe></service></port>
+<port protocol="tcp" portid="112"><state state="other" reason="syn-ack" reason_ttl="62"/><service name="pop3" product="Dovecot pop3d" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:dovecot:dovecot</cpe></service></port>
 </ports>
 <times srtt="220492" rttvar="5732" to="243420"/>
 </host>
@@ -38,12 +40,26 @@ class PortScanTest(TestCase):
 </runstats>
 </nmaprun>'''
 
+    NO_PORTS_OUTPUT = """<?xml version="1.0"?>
+<!-- masscan v1.0 scan -->
+<?xml-stylesheet href="" type="text/xsl"?>
+<nmaprun scanner="masscan" start="1470387319" version="1.0-BETA"  xmloutputversion="1.03">
+<scaninfo type="syn" protocol="tcp" />
+<host endtime="1470387319"><address addr="127.0.0.1" addrtype="ipv4"/></host>
+<host endtime="1470387319"><address addr="127.0.0.1" addrtype="ipv4"/></host>
+<host endtime="1470387319"><address addr="127.0.0.1" addrtype="ipv4"/></host>
+<runstats>
+<finished time="1470387330" timestr="2016-08-05 10:55:30" elapsed="13" />
+<hosts up="2" down="0" total="2" />
+</runstats>
+</nmaprun>
+    """
+
     def setUp(self):
         self.executor = MagicMock()
         self.kudu_queue = MagicMock()
         self.scanner = PortsScan(executor=self.executor)
-        node = MagicMock
-        node.ip = ipaddress.ip_address('192.168.1.5')
+        node = Node(ip = ipaddress.ip_address('192.168.1.5'), node_id=None)
         self.nodes = [node]
 
     def test_scan_ports(self):
@@ -59,3 +75,10 @@ class PortScanTest(TestCase):
         result = self.scanner.scan_ports(nodes=self.nodes, ports=[80, 43])
         self.assertEqual(len(result), 8)
         self.scanner.call.assert_called_once_with(['-n', '--privileged', '-oX', '-', '-T4', '-p', '80,43', '-sV', '--script', 'banner', '192.168.1.5'])
+
+    def test_no_ports(self):
+        self.scanner.call = MagicMock(return_value = ElementTree.fromstring(self.NO_PORTS_OUTPUT))
+        result = self.scanner.scan_ports(nodes=self.nodes, ports=[80, 43])
+        expected = []
+
+        self.assertEqual(result, expected)

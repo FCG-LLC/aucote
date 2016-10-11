@@ -35,7 +35,8 @@ _DEFAULT = {
     'tools':{
         'nmap':{
             'cmd': 'nmap',
-            'enable': True
+            'enable': True,
+            'period': '1d'
         },
         'masscan': {
             'cmd': 'masscan',
@@ -46,22 +47,27 @@ _DEFAULT = {
             'loginfile': 'static/logins.hydra.txt',
             'passwordfile': 'static/passwords.hydra.txt',
             'enable': True,
-            'disable_services': ['vnc', 'http', 'https']
+            'disable_services': ['vnc', 'http', 'https'],
+            'period': '1d'
         },
         'skipfish': {
             'cmd': 'skipfish',
             'enable': True,
             'limit': '0:10:00',
             'threads': 5,
-            'tmp_directory': '/tmp'
+            'tmp_directory': '/tmp',
+            'period': '1d'
         }
     },
     'service': {
         'scans': {
-            'period': '12h',
+            'period': '2h',
             'threads': 10,
             'ports': '0-65535,U:0-65535',
             'rate': 1000,
+            'port_period': '5m',
+            'node_period': '1m',
+            'storage': 'storage.sqlite3'
         },
         "api":{
             'v1': {
@@ -69,7 +75,8 @@ _DEFAULT = {
                 'port': 1235
             }
         }
-    }
+    },
+    'pid_file': 'aucote.pid'
 }
 
 #global cfg
