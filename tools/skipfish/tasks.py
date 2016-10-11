@@ -9,9 +9,10 @@ import logging as log
 from aucote_cfg import cfg
 from structs import Vulnerability, Scan
 from tools.skipfish.base import SkipfishBase
+from utils.task import Task
 
 
-class SkipfishScanTask(SkipfishBase):
+class SkipfishScanTask(Task, SkipfishBase):
     """
     This is task for Skipfish tool. Call skipfish and parse output
 

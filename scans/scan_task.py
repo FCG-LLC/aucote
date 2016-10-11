@@ -51,7 +51,7 @@ class ScanTask(Task):
             None
 
         """
-        scanner = MasscanPorts(executor=self.executor)
+        scanner = MasscanPorts()
         nodes = self._get_nodes_for_scanning()
 
         log.info('Scanning %i nodes', len(nodes))

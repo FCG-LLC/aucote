@@ -2,6 +2,8 @@
 Provide class for tasks
 
 """
+from database.serializer import Serializer
+import logging as log
 
 
 class Task(object):
@@ -58,3 +60,18 @@ class Task(object):
             None
         """
         self.executor.storage.save_scans(exploits=exploits, port=port)
+
+    def store_vulnerability(self, vuln):
+        """
+        Saves vulnerability into database (kudu)
+
+        Args:
+            vuln (Vulnerability):
+
+        Returns:
+            None
+
+        """
+        log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
+        msg = Serializer.serialize_port_vuln(vuln.port, vuln)
+        self.kudu_queue.send_msg(msg)

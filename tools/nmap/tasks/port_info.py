@@ -4,9 +4,10 @@ Provides task responsible for obtain detailed information about port
 import logging as log
 
 from tools.nmap.base import NmapBase
+from utils.task import Task
 
 
-class NmapPortInfoTask(NmapBase):
+class NmapPortInfoTask(Task, NmapBase):
     """
     Scans one port using provided vulnerability scan
 

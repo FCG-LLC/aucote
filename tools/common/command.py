@@ -8,12 +8,10 @@ import logging as log
 import subprocess
 
 from aucote_cfg import cfg
-from database.serializer import Serializer
 from utils.exceptions import NonXMLOutputException
-from utils.task import Task
 
 
-class Command(Task):
+class Command(object):
     """
     Base file for all classes that call a command (create process) using command line arguments.
 
@@ -62,21 +60,6 @@ class Command(Task):
 
         """
         return output
-
-    def store_vulnerability(self, vuln):
-        """
-        Saves vulnerability into database (kudu)
-
-        Args:
-            vuln (Vulnerability):
-
-        Returns:
-            None
-
-        """
-        log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
-        msg = Serializer.serialize_port_vuln(vuln.port, vuln)
-        self.kudu_queue.send_msg(msg)
 
 
 class CommandXML(Command):

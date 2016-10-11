@@ -21,12 +21,8 @@ class CommandTest(TestCase):
         '''
 
     def setUp(self):
-        self.executor = MagicMock(storage=Storage(":memory:"))
-        self.command = Command(executor=self.executor)
+        self.command = Command()
         self.command.COMMON_ARGS = []
-
-    def test_init(self):
-        self.assertEqual(self.command.executor, self.executor)
 
     @patch('subprocess.check_output', MagicMock(return_value=SCRIPT_XML))
     def test_stdout(self):
@@ -48,12 +44,8 @@ class CommandXMLTest(TestCase):
     NON_XML = b'''This is non XML output!'''
 
     def setUp(self):
-        self.executor = MagicMock()
-        self.command_xml = CommandXML(self.executor)
+        self.command_xml = CommandXML()
         self.command_xml.COMMON_ARGS = []
-
-    def test_init(self):
-        self.assertEqual(self.command_xml.executor, self.executor)
 
     @patch('subprocess.check_output', MagicMock(return_value=SCRIPT_XML))
     def test_stdout(self):

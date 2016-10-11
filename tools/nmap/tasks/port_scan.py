@@ -8,9 +8,10 @@ import time
 from database.serializer import Serializer
 from structs import Vulnerability
 from tools.nmap.base import NmapBase
+from utils.task import Task
 
 
-class NmapPortScanTask(NmapBase):
+class NmapPortScanTask(Task, NmapBase):
     """
     Scans one port using provided vulnerability scan
 

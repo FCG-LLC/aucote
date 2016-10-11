@@ -29,13 +29,9 @@ class MasscanPortsTest(TestCase):
     NON_XML = b'''This is non xml output!'''
 
     def setUp(self):
-        self.executor = MagicMock()
-        self.masscanports = MasscanPorts(executor=self.executor)
+        self.masscanports = MasscanPorts()
         node = Node(ip=ipaddress.ip_address(self.NODE_IP), node_id=None)
         self.nodes = [node]
-
-    def test_init(self):
-        self.assertEqual(self.masscanports.executor, self.executor)
 
     @patch('subprocess.check_output', MagicMock(return_value=MASSSCAN_OUTPUT_XML))
     def test_stdout(self):

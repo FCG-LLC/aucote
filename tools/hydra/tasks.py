@@ -9,9 +9,10 @@ import time
 from aucote_cfg import cfg
 from structs import Vulnerability, Scan
 from tools.hydra.base import HydraBase
+from utils.task import Task
 
 
-class HydraScriptTask(HydraBase):
+class HydraScriptTask(Task, HydraBase):
     """
     This is task for Hydra tool. Call Hydra and parse output
 
