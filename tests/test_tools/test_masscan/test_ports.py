@@ -7,9 +7,9 @@ from structs import Node
 from tools.masscan import MasscanPorts
 
 class MasscanPortsTest(TestCase):
-    '''
+    """
     Test masscan port scanning.
-    '''
+    """
 
     NODE_IP = '127.0.0.1'
     NODE_NAME = 'localhost'
@@ -31,10 +31,7 @@ class MasscanPortsTest(TestCase):
     def setUp(self):
         self.executor = MagicMock()
         self.masscanports = MasscanPorts(executor=self.executor)
-        node = Node()
-        node.ip = ipaddress.ip_address(self.NODE_IP)
-        node.name = None
-        node.id = None
+        node = Node(ip=ipaddress.ip_address(self.NODE_IP), node_id=None)
         self.nodes = [node]
 
     def test_init(self):
@@ -43,7 +40,11 @@ class MasscanPortsTest(TestCase):
     @patch('subprocess.check_output', MagicMock(return_value=MASSSCAN_OUTPUT_XML))
     def test_stdout(self):
         ports = self.masscanports.scan_ports(self.nodes)
-        self.assertEqual(len(ports), 2)
+
+        result = len(ports)
+        expected = 2
+
+        self.assertEqual(result, expected)
 
     @patch('subprocess.check_output', MagicMock(side_effect=subprocess.CalledProcessError(returncode=1, cmd='masscan')))
     def test_stderr(self):
@@ -52,4 +53,8 @@ class MasscanPortsTest(TestCase):
     @patch('subprocess.check_output', MagicMock(return_value=NON_XML))
     def test_without_xml_output(self):
         ports = self.masscanports.scan_ports(self.nodes)
-        self.assertEqual(len(ports), 0)
+
+        result = len(ports)
+        expected = 0
+
+        self.assertEqual(result, expected)

@@ -1,6 +1,9 @@
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+from fixtures.exploits import Exploit
+from structs import Scan, TransportProtocol, Port
+from utils.storage import Storage
 from utils.task import Task
 
 
@@ -39,3 +42,20 @@ class TaskTest(TestCase):
         """
         self.task.send_msg("TEST")
         self.executor.kudu_queue.send_msg.assert_called_once_with("TEST")
+
+    def test_store_scan(self):
+        port = Port(node=None, number=80, transport_protocol=TransportProtocol.UDP)
+        port.scan = Scan(end=25.0)
+        exploit = Exploit(exploit_id=5)
+
+        self.task.store_scan_end(exploits=[exploit], port=port)
+
+        result = self.task.executor.storage.save_scans.call_args[1]
+
+        expected = {
+            'exploits': [exploit],
+            'port': port
+        }
+
+        self.assertDictEqual(result, expected)
+        self.assertEqual(result['port'].scan.end, port.scan.end)

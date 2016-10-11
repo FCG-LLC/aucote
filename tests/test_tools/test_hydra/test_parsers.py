@@ -23,40 +23,42 @@ Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 15:46:32
     OUTPUT_ERROR_LINE = r"[ERROR] could not connect to ssh://192.168.56.102:29 - Connection refused"
     OUTPUT_DATA_LINE = r"[DATA] attacking service ssh on port 29"
 
+    def test_parse(self):
+        result = HydraParser.parse(output=self.OUTPUT)
+        self.assertEqual(result.success, 1)
+        self.assertEqual(result.fail, 0)
+        self.assertEqual(len(result), 1)
 
-    def setUp(self):
-        pass
+        self.assertEqual(result[0].login, 'test_login')
+        self.assertEqual(result[0].password, 'test_password')
+        self.assertEqual(result[0].port, 22)
+        self.assertEqual(result[0].service, 'ssh')
+        self.assertEqual(result[0].host, '192.168.56.102')
 
-    def test_init(self):
-        hydra_results = HydraParser.parse(output=self.OUTPUT)
-        self.assertEqual(hydra_results.success, 1)
-        self.assertEqual(hydra_results.fail, 0)
-        self.assertEqual(len(hydra_results), 1)
+    def test_parse_output_with_space_password(self):
+        result = HydraParser.from_output(self.OUTPUT_LINE_WITH_SPACE_PASSWORD)
+        self.assertEqual(result.port, 80)
+        self.assertEqual(result.service, 'http-get')
+        self.assertEqual(result.host, '192.168.56.102')
+        self.assertEqual(result.login, 'test_login')
+        self.assertEqual(result.password, 'test_password ')
 
-        self.assertEqual(hydra_results[0].login, 'test_login')
-        self.assertEqual(hydra_results[0].password, 'test_password')
-        self.assertEqual(hydra_results[0].port, 22)
-        self.assertEqual(hydra_results[0].service, 'ssh')
-        self.assertEqual(hydra_results[0].host, '192.168.56.102')
-
-    def test_space_password(self):
-        self.hydra_result = HydraParser.from_output(self.OUTPUT_LINE_WITH_SPACE_PASSWORD)
-        self.assertEqual(self.hydra_result.port, 80)
-        self.assertEqual(self.hydra_result.service, 'http-get')
-        self.assertEqual(self.hydra_result.host, '192.168.56.102')
-        self.assertEqual(self.hydra_result.login, 'test_login')
-        self.assertEqual(self.hydra_result.password, 'test_password ')
-
-    def test_space_login(self):
-        self.hydra_result = HydraParser.from_output(output=self.OUTPUT_LINE_WITH_SPACE_LOGIN)
-        self.assertEqual(self.hydra_result.port, 80)
-        self.assertEqual(self.hydra_result.service, 'http-get')
-        self.assertEqual(self.hydra_result.host, '192.168.56.102')
-        self.assertEqual(self.hydra_result.login, 'test_login ')
-        self.assertEqual(self.hydra_result.password, 'test_password')
+    def test_parse_output_space_login(self):
+        result = HydraParser.from_output(output=self.OUTPUT_LINE_WITH_SPACE_LOGIN)
+        self.assertEqual(result.port, 80)
+        self.assertEqual(result.service, 'http-get')
+        self.assertEqual(result.host, '192.168.56.102')
+        self.assertEqual(result.login, 'test_login ')
+        self.assertEqual(result.password, 'test_password')
 
     def test_output_error_line(self):
-        self.assertEqual(HydraParser.from_output(self.OUTPUT_ERROR_LINE), None)
+        result = HydraParser.from_output(self.OUTPUT_ERROR_LINE)
+        expected = None
+
+        self.assertEqual(result, expected)
 
     def test_output_data_line(self):
-        self.assertEqual(HydraParser.from_output(self.OUTPUT_DATA_LINE), None)
+        result = HydraParser.from_output(self.OUTPUT_DATA_LINE)
+        expected = None
+
+        self.assertEqual(result, expected)

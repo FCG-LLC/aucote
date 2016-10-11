@@ -6,12 +6,14 @@ from xml.etree.ElementTree import Element
 from tools.common import Command
 from tools.common.command import CommandXML
 from utils.exceptions import NonXMLOutputException
+from utils.storage import Storage
+
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
 class CommandTest(TestCase):
-    '''
+    """
     Test system command with and without stderr.
-    '''
+    """
 
     SCRIPT_XML = b'''<?xml version="1.0"?>
         <script output="">
@@ -19,7 +21,7 @@ class CommandTest(TestCase):
         '''
 
     def setUp(self):
-        self.executor = MagicMock()
+        self.executor = MagicMock(storage=Storage(":memory:"))
         self.command = Command(executor=self.executor)
         self.command.COMMON_ARGS = []
 
@@ -56,6 +58,7 @@ class CommandXMLTest(TestCase):
     @patch('subprocess.check_output', MagicMock(return_value=SCRIPT_XML))
     def test_stdout(self):
         result = self.command_xml.call()
+
         self.assertIsInstance(result, Element)
         self.assertEqual(result.tag, 'script')
 

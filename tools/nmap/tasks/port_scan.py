@@ -1,4 +1,9 @@
+"""
+Contains class responsible for exploiting port by using nmap scripts
+
+"""
 import logging as log
+import time
 
 from database.serializer import Serializer
 from structs import Vulnerability
@@ -8,15 +13,18 @@ from tools.nmap.base import NmapBase
 class NmapPortScanTask(NmapBase):
     """
     Scans one port using provided vulnerability scan
+
     """
 
     def __init__(self, port, script_classes, *args, **kwargs):
         """
-        Initialize variables
+        Init variables
+
         Args:
-            executor (Executor):
-            port:
-            script_clases:
+            port (Port):
+            script_classes (list):
+            *args:
+            **kwargs:
         """
 
         super().__init__(*args, **kwargs)
@@ -27,6 +35,7 @@ class NmapPortScanTask(NmapBase):
     def port(self):
         """
         Returns port
+
         """
 
         return self._port
@@ -35,6 +44,7 @@ class NmapPortScanTask(NmapBase):
     def script_classes(self):
         """
         Returns script classes
+
         """
 
         return self._script_classes
@@ -44,6 +54,7 @@ class NmapPortScanTask(NmapBase):
         Implement Tasks call method:
         scans port used nmap and provided script classes
         send serialized vulnerabilities to kudu queue
+
         """
 
         vulners = []
@@ -51,6 +62,10 @@ class NmapPortScanTask(NmapBase):
         args = ['-p', str(self._port.number), '-sV']
         if self._port.transport_protocol.name == "UDP":
             args.append("-sU")
+
+        if self._port.number == 53:
+            args.extend(["--dns-servers", str(self._port.node.ip)])
+
         for script in scripts.values():
             args.append('--script')
             args.append(script.name)
@@ -59,9 +74,12 @@ class NmapPortScanTask(NmapBase):
                 args.append(script.args)
         args.append(str(self._port.node.ip))
 
-        xml = self.call(args)
+        xml = self.call(args=args)
 
-        for script in xml.findall('host/ports/port/script'):
+        tmp_scripts = xml.findall('host/ports/port/script') or []
+        tmp_scripts.extend(xml.findall('prescript/script') or [])
+
+        for script in tmp_scripts:
             found_handler = scripts.get(script.get('id'))
             if found_handler is None:
                 continue
@@ -72,6 +90,11 @@ class NmapPortScanTask(NmapBase):
                 continue
 
             vulners.append(Vulnerability(exploit=found_handler.exploit, port=self._port, output=result))
+
+        exploits = [script.exploit for script in self._script_classes]
+
+        self._port.scan.end = time.time()
+        self.store_scan_end(exploits=exploits, port=self._port)
 
         if vulners:
             for vuln in vulners:

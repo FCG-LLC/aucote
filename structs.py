@@ -1,5 +1,6 @@
 """
 This file provides structures for project.
+
 """
 
 from enum import Enum
@@ -9,23 +10,52 @@ import time
 class Scan(object):
     """
     Scan object
+
     """
-    start = None
-    end = None
+
+    def __init__(self, start=None, end=None):
+        """
+        Args:
+            start (int|float): start scan time
+            end (int|float): end scan time
+
+        """
+        self.start = start
+        self.end = end
 
 
 class Node:
     """
     Node object consist of name, id and ip
+
     """
-    name = None
-    ip = None
-    id = None
+
+    def __init__(self, node_id, ip):
+        """
+        Init values
+        Args:
+            node_id (int):
+            ip (IPv4Address):
+
+        """
+        self.name = None
+        self.ip = ip
+        self.id = node_id
+
+    def __eq__(self, other):
+        return isinstance(other, Node) and self.ip == other.ip and self.id == other.id
+
+    def __ne__(self, other):
+        return (not isinstance(other, Node)) or self.ip != other.ip or self.id != other.id
+
+    def __hash__(self):
+        return hash((self.id, self.ip))
 
 
 class TransportProtocol(Enum):
     """
     Transport protocol object consist of db_val and IANA val
+
     """
     def __init__(self, db_val, iana):
         self.db_val = db_val
@@ -39,12 +69,16 @@ class TransportProtocol(Enum):
     def from_nmap_name(cls, name):
         """
         Create TransportProtocol object basing on string name
+
         Args:
-            name: string representation of transport protocol, eg. "tcp", "udp"
+            name (str): string representation of transport protocol, eg. "tcp", "udp"
 
-        Returns: TransportProtocol object
+        Returns:
+            TransportProtocol object
 
-        Raises: ValueError if not: tcp, udp or icmp
+        Raises:
+            ValueError if not: tcp, udp or icmp
+
         """
         name = name.upper()
         for val in cls:
@@ -52,10 +86,28 @@ class TransportProtocol(Enum):
                 return val
         raise ValueError('Invalid transport protocol name: %s'%name)
 
+    @classmethod
+    def from_iana(cls, number):
+        """
+        Create TransportProtocol object basing on protocol number
+
+        Args:
+            number (int): protocol number
+
+        Returns:
+            TransportProtocol
+
+        """
+        for val in cls:
+            if val.iana == number:
+                return val
+        raise ValueError('Invalid transport protocol number: %s' % number)
+
 
 class RiskLevel(Enum):
     """
     Risk level object
+
     """
     def __init__(self, txt, number):
         self.txt = txt
@@ -70,12 +122,16 @@ class RiskLevel(Enum):
     def from_name(cls, name):
         """
         Create RiskLevel object basing on string name
+
         Args:
             name: string representation of risk level, eg. "medium"
 
-        Returns: RiskLevel object
+        Returns:
+            RiskLevel object
 
-        Raises: ValueError if not: High, Medium, Low or None
+        Raises:
+            ValueError if not: High, Medium, Low or None
+
         """
         for val in cls:
             if val.txt == name:
@@ -86,36 +142,57 @@ class RiskLevel(Enum):
 class Port(object):
     """
     Port object
+
     """
     TABLE = 'ports'
 
-    def __init__(self):
+    def __init__(self, node, number, transport_protocol):
+        """
+        Args:
+            node (Node):
+            number (int):
+            transport_protocol (TransportProtocol):
+
+        """
         self.vulnerabilities = []
         self.when_discovered = time.time()
+        self.node = node
+        self.number = number
+        self.transport_protocol = transport_protocol
+        self.service_name = None
+        self.service_version = None
+        self.banner = None
+        self.scan = None
 
-    node = None
-    number = None
-    transport_protocol = None
-    service_name = None
-    service_version = None
-    banner = None
-    when_discovered = None
+    def __eq__(self, other):
+        return isinstance(other, Port) and self.transport_protocol == other.transport_protocol \
+                   and self.number == other.number and self.node == other.node
+
+    def __ne__(self, other):
+        return (not isinstance(other, Port)) or self.transport_protocol != other.transport_protocol \
+            or self.number != other.number or self.node != other.node
+
+    def __hash__(self):
+        return hash((self.transport_protocol, self.number, self.node))
 
     def __str__(self):
-        return '%s:%s'%(self.node.ip, self.number)
+        return '%s:%s' % (self.node.ip, self.number)
 
 
 class Vulnerability(object):
     """
     Vulnerability object
+
     """
     def __init__(self, exploit=None, port=None, output=None):
         """
         Init values
+
         Args:
             exploit(Exploit): Exploit used to detect vulnerability
             port(Port): Vulnerable port
             output(str): string or stringable output
+
         """
         self.when_discovered = time.time()
         self.output = str(output)
