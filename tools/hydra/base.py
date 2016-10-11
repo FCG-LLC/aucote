@@ -22,7 +22,7 @@ class HydraBase(Command):
                          'socks5', 'ssh', 'sshkey', 'svn', 'teamspeak', 'telnet', 'telnets', 'vmauthd', 'vnc', 'xmpp']
 
     @classmethod
-    def parser(cls, output):
+    def parse(cls, output):
         """
         Parse output and return HydraResults object
         """

@@ -32,29 +32,42 @@ class SkipfishScanTask(Task, SkipfishBase):
         self._port = port
         self.exploit = self.exploits.find('skipfish', 'skipfish')
 
-    def __call__(self):
+    def prepare_args(self):
         """
-        Call command, parse output and send to kudu_queue
+        Prepare aguments for command execution
+
+        Returns:
+            list
 
         """
-
         args = ['-m', str(cfg.get('tools.skipfish.threads')), '-k', cfg.get('tools.skipfish.limit')]
         args.extend(['-o', '{0}/skipfish_{1}'.format(cfg.get('tools.skipfish.tmp_directory'), time.time()),
                      "{0}://{1}:{2}/".format(self._port.service_name, self._port.node.ip, self._port.number)])
+        return args
+
+    def __call__(self):
+        """
+        Call command, parse output and stores vulnerabilities
+
+        Returns:
+
+        """
+        args = self.prepare_args()
 
         try:
             results = self.call(args)
         except subprocess.CalledProcessError as exception:
             self._port.scan = Scan(0, 0)
             self.executor.storage.save_scan(exploit=self.exploit, port=self._port)
-            log.warning("Exiting process", exc_info=exception)
+            log.warning("Exiting process %s ", self.NAME, exc_info=exception)
             return None
 
         self._port.scan.end = int(time.time())
         self.store_scan_end(exploits=[self.exploit], port=self._port)
 
         if not results:
-            return results
+            log.debug("Process %s does not return any result.", self.NAME)
+            return None
 
         self.store_vulnerability(Vulnerability(exploit=self.exploit, port=self._port, output=results))
         return results

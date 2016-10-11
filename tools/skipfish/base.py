@@ -13,7 +13,7 @@ class SkipfishBase(Command):
     NAME = 'skipfish'
 
     @classmethod
-    def parser(cls, output):
+    def parse(cls, output):
         """
         Args:
             output: stdout of command execution

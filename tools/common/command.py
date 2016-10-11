@@ -41,7 +41,7 @@ class Command(object):
         with tempfile.TemporaryFile() as temp_file:
             temp_file.truncate()
             try:
-                return self.parser(subprocess.check_output(all_args, stderr=temp_file).decode('utf-8'))
+                return self.parse(subprocess.check_output(all_args, stderr=temp_file).decode('utf-8'))
             except subprocess.CalledProcessError as exception:
                 temp_file.seek(0)
                 log.warning("Command '%s' Failed:\n\n%s", " ".join(all_args),
@@ -49,7 +49,7 @@ class Command(object):
                 raise exception
 
     @classmethod
-    def parser(cls, output):
+    def parse(cls, output):
         """
         Default parser for command output processing
 
@@ -69,7 +69,7 @@ class CommandXML(Command):
     """
 
     @classmethod
-    def parser(cls, output):
+    def parse(cls, output):
         """
         Treats output as XML and return ElementTree object
 

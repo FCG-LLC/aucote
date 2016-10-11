@@ -37,6 +37,20 @@ class HydraScriptTask(Task, HydraBase):
         self.login = login
         self.exploit = self.exploits.find('hydra', 'hydra')
 
+    def prepare_args(self):
+        """
+        Prepare aguments for command execution
+
+        Returns:
+            list
+
+        """
+        args = []
+        if self.login:
+            args.extend(['-L', cfg.get('tools.hydra.loginfile')])
+        args.extend(['-P', cfg.get('tools.hydra.passwordfile'), '-s', str(self._port.number), str(self._port.node.ip),
+                     self.service, ])
+
     def __call__(self):
         """
         Call command, parse output and stores vulnerabilities
@@ -44,28 +58,22 @@ class HydraScriptTask(Task, HydraBase):
         Returns:
 
         """
-
-        args = []
-        if self.login:
-            args.extend(['-L', cfg.get('tools.hydra.loginfile')])
-        args.extend(['-P', cfg.get('tools.hydra.passwordfile'), '-s', str(self._port.number), str(self._port.node.ip),
-                     self.service, ])
+        args = self.prepare_args()
 
         try:
             results = self.call(args)
         except subprocess.CalledProcessError as exception:
             self._port.scan = Scan(0, 0)
             self.executor.storage.save_scan(exploit=self.exploit, port=self._port)
-            log.warning("Exiting Hydra process", exc_info=exception)
+            log.warning("Exiting process %s ", self.NAME, exc_info=exception)
             return None
 
         self._port.scan.end = int(time.time())
         self.store_scan_end(exploits=[self.exploit], port=self._port)
 
         if not results:
-            log.debug("Hydra does not find any password.")
+            log.debug("Process %s does not return any result.", self.NAME)
             return None
 
-        self.store_vulnerability(Vulnerability(exploit=self.exploit, port=self._port,
-                                               output=results))
+        self.store_vulnerability(Vulnerability(exploit=self.exploit, port=self._port, output=results))
         return results
