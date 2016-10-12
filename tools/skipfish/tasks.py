@@ -2,12 +2,9 @@
 Contains all tasks related to the Skipfish tool
 
 """
-import subprocess
 import time
-import logging as log
 
 from aucote_cfg import cfg
-from structs import Vulnerability, Scan
 from tools.common.command_task import CommandTask
 from tools.skipfish.base import SkipfishBase
 

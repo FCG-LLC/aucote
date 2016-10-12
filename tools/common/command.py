@@ -7,7 +7,7 @@ import logging as log
 import subprocess
 
 from aucote_cfg import cfg
-from tools.common.parsers import Parser, XMLParser
+from tools.common.parsers import Parser
 
 
 class Command(object):
@@ -47,11 +47,3 @@ class Command(object):
                 log.warning("Command '%s' Failed:\n\n%s", " ".join(all_args),
                             "".join([line.decode() for line in temp_file.readlines()]))
                 raise exception
-
-
-class CommandXML(Command):
-    """
-    Extends Command. Adds XML-output parser
-
-    """
-    parser = XMLParser
