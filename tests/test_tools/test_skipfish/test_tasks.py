@@ -29,12 +29,11 @@ class SkipfishScanTaskTest(TestCase):
         self.node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         self.port = Port(transport_protocol=TransportProtocol.TCP, number = 80, node=self.node)
         self.port.scan = Scan()
-
-        self.task = SkipfishScanTask(executor=self.executor, port=self.port)
         self.exploit = Exploit(exploit_id=1)
+
+        self.task = SkipfishScanTask(executor=self.executor, port=self.port, exploit=self.exploit)
         self.task.executor.exploits.find.return_value = self.exploit
         self.task.store_scan_end = MagicMock()
-        self.task.exploit = self.exploit
 
     def test_call(self):
         expected = MagicMock()
@@ -56,7 +55,7 @@ class SkipfishScanTaskTest(TestCase):
         self.assertEqual(result['exploit'], self.exploit)
 
     def test_call_without_results(self):
-        self.task.call = MagicMock(return_value=None)
+        self.task.command.call = MagicMock(return_value=None)
         result = self.task()
 
         self.assertEqual(result, None)

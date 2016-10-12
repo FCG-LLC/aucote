@@ -8,17 +8,18 @@ import time
 
 from aucote_cfg import cfg
 from structs import Vulnerability, Scan
+from tools.common.command_task import CommandTask
 from tools.hydra.base import HydraBase
 from utils.task import Task
 
 
-class HydraScriptTask(Task):
+class HydraScriptTask(CommandTask):
     """
     This is task for Hydra tool. Call Hydra and parse output
 
     """
 
-    def __init__(self, port, service, login=True, *args, **kwargs):
+    def __init__(self, service, login=True, *args, **kwargs):
         """
         Initialize variables
 
@@ -31,12 +32,9 @@ class HydraScriptTask(Task):
 
         """
 
-        super().__init__(*args, **kwargs)
-        self._port = port
+        super().__init__(command=HydraBase(), *args, **kwargs)
         self.service = service
         self.login = login
-        self.exploit = self.exploits.find('hydra', 'hydra')
-        self.command = HydraBase()
 
     def prepare_args(self):
         """

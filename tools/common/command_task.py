@@ -41,7 +41,7 @@ class CommandTask(Task):
             list
 
         """
-        assert NotImplementedError
+        raise NotImplementedError
 
     def __call__(self):
         """
