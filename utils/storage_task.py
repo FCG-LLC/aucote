@@ -42,7 +42,7 @@ class StorageTask(Task):
         """
         self.executor.lock.acquire(True)
         with Storage(self, self.filename) as storage:
-            self.executor._storage = storage
+            self.executor.storage = storage
             self.executor.lock.release()
             storage.clear_scan_details()
             while True:

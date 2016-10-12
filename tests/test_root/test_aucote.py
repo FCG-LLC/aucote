@@ -143,11 +143,24 @@ class AucoteTest(TestCase):
         kudu_queue = MagicMock()
         storage = MagicMock()
 
-        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, storage=storage)
+        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue)
 
-        self.assertEqual(aucote.storage, storage)
+        self.assertEqual(aucote.storage, None)
         self.assertEqual(aucote.kudu_queue, kudu_queue)
-        self.assertEqual(aucote.storage, storage)
 
     def test_signal_handling(self):
         self.assertRaises(SystemExit, self.aucote.signal_handler, 2, MagicMock())
+
+    def test_storage_setter_default(self):
+        self.aucote._storage = None
+        expected = MagicMock()
+        self.aucote.storage = expected
+
+        self.assertEqual(self.aucote.storage, expected)
+
+    def test_storage_setter_set_already(self):
+        expected = MagicMock()
+        self.aucote._storage = expected
+        self.aucote.storage = MagicMock()
+
+        self.assertEqual(self.aucote.storage, expected)

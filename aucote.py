@@ -79,7 +79,7 @@ def main():
         except FileNotFoundError:
             pass
 
-        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, storage=None)
+        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue)
 
         if args.cmd == 'scan':
             nodes = []
@@ -102,11 +102,11 @@ class Aucote(object):
     Main aucote class. It Provides run functions (service, single instance, sync db)
     """
 
-    def __init__(self, exploits, kudu_queue, storage=None):
+    def __init__(self, exploits, kudu_queue):
         self.exploits = exploits
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
-        self._storage = storage
+        self._storage = None
         self.task_mapper = TaskMapper(self)
         self.filename = cfg.get('service.scans.storage')
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -130,6 +130,11 @@ class Aucote(object):
 
         """
         return self._storage
+
+    @storage.setter
+    def storage(self, storage):
+        if not self._storage:
+            self._storage = storage
 
     @property
     def thread_pool(self):
