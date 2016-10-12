@@ -2,8 +2,8 @@
 Provide class for tasks
 
 """
-from database.serializer import Serializer
 import logging as log
+from database.serializer import Serializer
 
 
 class Task(object):

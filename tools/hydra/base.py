@@ -11,6 +11,7 @@ class HydraBase(Command):
     """
     COMMON_ARGS = ('-t', '4')
     NAME = 'hydra'
+    parser = HydraParser
 
     SUPORTED_SERVICES = ['asterisk', 'cisco', 'cisco-enable', 'cvs', 'firebird', 'ftp', 'ftps', 'http-get', 'http-post',
                          'http-head', 'https-get', 'https-post', 'https-head', 'http-get-form', 'http-post-form',
@@ -20,10 +21,3 @@ class HydraBase(Command):
                          'oracle-sid', 'pcanywhere', 'pcnfs', 'pop3', 'pop3s', 'postgres', 'rdp', 'redis', 'rexec',
                          'rlogin', 'rsh', 'rtsp', 's7-300', 'sip', 'smb', 'smtp', 'smtps', 'smtp-enum', 'snmp',
                          'socks5', 'ssh', 'sshkey', 'svn', 'teamspeak', 'telnet', 'telnets', 'vmauthd', 'vnc', 'xmpp']
-
-    @classmethod
-    def parse(cls, output):
-        """
-        Parse output and return HydraResults object
-        """
-        return HydraParser.parse(output)

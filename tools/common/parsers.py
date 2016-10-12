@@ -12,7 +12,6 @@ class Parser(object):
     Return output
 
     """
-
     @classmethod
     def parse(cls, output):
         """
@@ -23,13 +22,18 @@ class Parser(object):
 
         Returns:
             str
+
         """
         return output
 
 
 class XMLParser(object):
+    """
+    Parser for XML output
+
+    """
     @classmethod
-    def parser(cls, output):
+    def parse(cls, output):
         """
         Treats output as XML and return ElementTree object
 

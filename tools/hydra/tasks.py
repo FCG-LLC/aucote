@@ -50,6 +50,7 @@ class HydraScriptTask(Task, HydraBase):
             args.extend(['-L', cfg.get('tools.hydra.loginfile')])
         args.extend(['-P', cfg.get('tools.hydra.passwordfile'), '-s', str(self._port.number), str(self._port.node.ip),
                      self.service, ])
+        return args
 
     def __call__(self):
         """
