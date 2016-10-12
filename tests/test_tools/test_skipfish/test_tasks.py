@@ -38,7 +38,7 @@ class SkipfishScanTaskTest(TestCase):
 
     def test_call(self):
         expected = MagicMock()
-        self.task.call = MagicMock(return_value=expected)
+        self.task.command.call = MagicMock(return_value=expected)
         result = self.task()
 
         self.assertEqual(result, expected)
@@ -63,7 +63,7 @@ class SkipfishScanTaskTest(TestCase):
 
     @patch('time.time', MagicMock(return_value=27.0))
     def test_storage(self):
-        self.task.call = MagicMock(return_value=MagicMock())
+        self.task.command.call = MagicMock(return_value=MagicMock())
         self.task()
 
         result = self.task.store_scan_end.call_args[1]

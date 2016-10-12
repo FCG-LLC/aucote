@@ -37,7 +37,7 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
 
     @patch('database.serializer.Serializer.serialize_port_vuln', MagicMock(return_value=None))
     def test_call(self):
-        self.hydra_script_task.call = MagicMock(return_value=HydraParser.parse(self.OUTPUT_SUCCESSFUL))
+        self.hydra_script_task.command.call = MagicMock(return_value=HydraParser.parse(self.OUTPUT_SUCCESSFUL))
         result = self.hydra_script_task()
 
         self.assertEqual(result[0].host, '192.168.56.102')
@@ -45,7 +45,7 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.assertEqual(result[0].password, 'msfadmin')
 
     def test_call_wihout_output(self):
-        self.hydra_script_task.call = MagicMock(return_value=None)
+        self.hydra_script_task.command.call = MagicMock(return_value=None)
 
         result = self.hydra_script_task()
         expected = None
@@ -53,7 +53,7 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.assertEqual(result, expected)
 
     def test_call_exception(self):
-        self.hydra_script_task.call = MagicMock(side_effect=subprocess.CalledProcessError(MagicMock(), MagicMock()))
+        self.hydra_script_task.command.call = MagicMock(side_effect=subprocess.CalledProcessError(MagicMock(), MagicMock()))
 
         result = self.hydra_script_task()
         expected = None
@@ -67,7 +67,7 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
 
     @patch('time.time', MagicMock(return_value=27.0))
     def test_storage(self):
-        self.hydra_script_task.call = MagicMock(return_value=MagicMock())
+        self.hydra_script_task.command.call = MagicMock(return_value=MagicMock())
         self.hydra_script_task.executor.kudu_queue = MagicMock()
         self.hydra_script_task.store_vulnerability = MagicMock()
         self.hydra_script_task()

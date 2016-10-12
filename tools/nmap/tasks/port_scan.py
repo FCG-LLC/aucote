@@ -11,7 +11,7 @@ from tools.nmap.base import NmapBase
 from utils.task import Task
 
 
-class NmapPortScanTask(Task, NmapBase):
+class NmapPortScanTask(Task):
     """
     Scans one port using provided vulnerability scan
 
@@ -31,6 +31,7 @@ class NmapPortScanTask(Task, NmapBase):
         super().__init__(*args, **kwargs)
         self._port = port
         self._script_classes = script_classes
+        self.command = NmapBase()
 
     @property
     def port(self):
@@ -75,7 +76,7 @@ class NmapPortScanTask(Task, NmapBase):
                 args.append(script.args)
         args.append(str(self._port.node.ip))
 
-        xml = self.call(args=args)
+        xml = self.command.call(args=args)
 
         tmp_scripts = xml.findall('host/ports/port/script') or []
         tmp_scripts.extend(xml.findall('prescript/script') or [])

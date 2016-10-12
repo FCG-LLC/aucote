@@ -12,7 +12,7 @@ from tools.skipfish.base import SkipfishBase
 from utils.task import Task
 
 
-class SkipfishScanTask(Task, SkipfishBase):
+class SkipfishScanTask(Task):
     """
     This is task for Skipfish tool. Call skipfish and parse output
 
@@ -31,6 +31,7 @@ class SkipfishScanTask(Task, SkipfishBase):
         super().__init__(*args, **kwargs)
         self._port = port
         self.exploit = self.exploits.find('skipfish', 'skipfish')
+        self.command = SkipfishBase()
 
     def prepare_args(self):
         """
@@ -55,18 +56,18 @@ class SkipfishScanTask(Task, SkipfishBase):
         args = self.prepare_args()
 
         try:
-            results = self.call(args)
+            results = self.command.call(args)
         except subprocess.CalledProcessError as exception:
             self._port.scan = Scan(0, 0)
             self.executor.storage.save_scan(exploit=self.exploit, port=self._port)
-            log.warning("Exiting process %s ", self.NAME, exc_info=exception)
+            log.warning("Exiting process %s ", self.command.NAME, exc_info=exception)
             return None
 
         self._port.scan.end = int(time.time())
         self.store_scan_end(exploits=[self.exploit], port=self._port)
 
         if not results:
-            log.debug("Process %s does not return any result.", self.NAME)
+            log.debug("Process %s does not return any result.", self.command.NAME)
             return None
 
         self.store_vulnerability(Vulnerability(exploit=self.exploit, port=self._port, output=results))
