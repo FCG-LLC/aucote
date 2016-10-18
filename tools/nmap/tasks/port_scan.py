@@ -80,6 +80,7 @@ class NmapPortScanTask(Task):
 
         tmp_scripts = xml.findall('host/ports/port/script') or []
         tmp_scripts.extend(xml.findall('prescript/script') or [])
+        tmp_scripts.extend(xml.findall('host/hostscript/script') or [])
 
         for script in tmp_scripts:
             found_handler = scripts.get(script.get('id'))
