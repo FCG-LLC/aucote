@@ -4,9 +4,10 @@ Provides task responsible for obtain detailed information about port
 import logging as log
 
 from tools.nmap.base import NmapBase
+from utils.task import Task
 
 
-class NmapPortInfoTask(NmapBase):
+class NmapPortInfoTask(Task):
     """
     Scans one port using provided vulnerability scan
 
@@ -24,6 +25,7 @@ class NmapPortInfoTask(NmapBase):
         """
         super().__init__(*args, **kwargs)
         self._port = port
+        self.command = NmapBase()
 
     def __call__(self):
         """
@@ -39,7 +41,7 @@ class NmapPortInfoTask(NmapBase):
             args.append("-sU")
         args.extend(('--script', 'banner'))
         args.append(str(self._port.node.ip))
-        xml = self.call(args=args)
+        xml = self.command.call(args=args)
         banner = xml.find("host/ports/port/script[@id='banner']")
         if banner is None:
             log.warning('No banner for %s:%i', self._port.node.ip, self._port.number)

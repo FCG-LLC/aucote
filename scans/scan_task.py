@@ -51,7 +51,7 @@ class ScanTask(Task):
             None
 
         """
-        scanner = MasscanPorts(executor=self.executor)
+        scanner = MasscanPorts()
         nodes = self._get_nodes_for_scanning()
 
         log.info('Scanning %i nodes', len(nodes))
@@ -92,6 +92,8 @@ class ScanTask(Task):
         for node_struct in nodes_cfg['nodes']:
             for node_ip in node_struct['ips']:
                 node = Node(ip=ipaddress.ip_address(node_ip), node_id=node_struct['id'])
+                if not isinstance(node.ip, ipaddress.IPv4Address):
+                    continue
                 node.name = node_struct['displayName']
                 nodes.append(node)
         return nodes

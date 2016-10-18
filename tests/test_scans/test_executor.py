@@ -13,9 +13,8 @@ from utils.threads import ThreadPool
 class ExecutorTest(TestCase):
 
     def setUp(self):
-        storage = MagicMock()
-        storage.connect()
-        self.aucote = Aucote(exploits=None, storage=storage, kudu_queue=None)
+        self.aucote = Aucote(exploits=None, kudu_queue=None)
+        self.aucote.storage = MagicMock()
         self.executor = Executor(aucote=self.aucote)
 
     def test_init(self):

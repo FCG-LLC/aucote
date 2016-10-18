@@ -11,11 +11,10 @@ class NmapBaseTest(TestCase):
     </script>'''
 
     def setUp(self):
-        self.executor = MagicMock()
-        self.base = NmapBase(executor=self.executor)
+        self.base = NmapBase()
 
-    def test_create(self):
-        self.assertEqual(self.base.executor, self.executor)
+    def test_init(self):
+        self.assertEqual(self.base.NAME, 'nmap')
 
 class NmapScriptTest(TestCase):
     SCRIPT_XML = '''<?xml version="1.0"?>

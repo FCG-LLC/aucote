@@ -2,16 +2,18 @@
 This module contains base nmap classes
 
 """
-from tools.common.command import CommandXML
+from tools.common.command import Command
+from tools.common.parsers import XMLParser
 
 
-class NmapBase(CommandXML):
+class NmapBase(Command):
     """
     Base for all classes using nmap application.
 
     """
     COMMON_ARGS = ('-n', '--privileged', '-oX', '-', '-T4')
     NAME = 'nmap'
+    parser = XMLParser
 
 
 class NmapScript(object):

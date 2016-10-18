@@ -59,12 +59,12 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port = Port(number=22, transport_protocol=TransportProtocol.TCP, node=self.node)
 
         self.port_info = NmapPortInfoTask(executor=self.executor, port=self.port)
-        self.port_info.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
+        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
 
     def test_tcp_scan(self):
         self.port_info()
 
-        result = self.port_info.call.call_args[1].get('args', [])
+        result = self.port_info.command.call.call_args[1].get('args', [])
 
         self.assertIn('-p', result)
         self.assertIn('22', result)
@@ -80,7 +80,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port_info._port.transport_protocol = TransportProtocol.UDP
         self.port_info()
 
-        result = self.port_info.call.call_args[1].get('args', [])
+        result = self.port_info.command.call.call_args[1].get('args', [])
 
         self.assertIn('-p', result)
         self.assertIn('22', result)
@@ -99,7 +99,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertEqual(result.service_version, '1.2.3')
 
     def test_parser_with_banner_and_without_service(self):
-        self.port_info.call = MagicMock(return_value=ElementTree.fromstring(self.XML_BANNER))
+        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_BANNER))
         self.port_info()
 
         result = self.port_info._port

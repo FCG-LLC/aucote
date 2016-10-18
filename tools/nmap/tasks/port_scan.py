@@ -8,9 +8,10 @@ import time
 from database.serializer import Serializer
 from structs import Vulnerability
 from tools.nmap.base import NmapBase
+from utils.task import Task
 
 
-class NmapPortScanTask(NmapBase):
+class NmapPortScanTask(Task):
     """
     Scans one port using provided vulnerability scan
 
@@ -30,6 +31,7 @@ class NmapPortScanTask(NmapBase):
         super().__init__(*args, **kwargs)
         self._port = port
         self._script_classes = script_classes
+        self.command = NmapBase()
 
     @property
     def port(self):
@@ -74,7 +76,7 @@ class NmapPortScanTask(NmapBase):
                 args.append(script.args)
         args.append(str(self._port.node.ip))
 
-        xml = self.call(args=args)
+        xml = self.command.call(args=args)
 
         tmp_scripts = xml.findall('host/ports/port/script') or []
         tmp_scripts.extend(xml.findall('prescript/script') or [])

@@ -14,4 +14,5 @@ class SkipfishTool(Tool):
 
     def call(self, *args, **kwargs):
 
-        self.executor.add_task(SkipfishScanTask(executor=self.executor, port=self.port))
+        self.executor.add_task(SkipfishScanTask(executor=self.executor, port=self.port,
+                                                exploit=self.executor.exploits.find('skipfish', 'skipfish')))
