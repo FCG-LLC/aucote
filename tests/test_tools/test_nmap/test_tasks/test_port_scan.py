@@ -156,14 +156,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertIn('22', result)
         self.assertIn('-sU', result)
 
-    def test_no_vulnerabilities(self):
-        self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.NO_VULNERABILITIES_XML))
-        self.scan_task()
-
-        self.scan_task.kudu_queue.send_msg.assert_called_once_with('test')
-
     @patch('tools.nmap.tasks.port_scan.Vulnerability')
-    @patch('tools.nmap.tasks.port_scan.Serializer', MagicMock())
     def test_prescript(self, mock_vulnerability):
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
         self.scan_task()
@@ -188,15 +181,13 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
     @patch('time.time', MagicMock(return_value=27.0))
     @patch('tools.nmap.tasks.port_scan.Vulnerability', MagicMock())
-    @patch('tools.nmap.tasks.port_scan.Serializer', MagicMock())
     def test_storage(self):
-        self.scan_task._script_classes = [self.script]
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
         self.scan_task()
 
         result = self.scan_task.store_scan_end.call_args[1]
         expected = {
-            'exploits': [self.script.exploit],
+            'exploits': [self.script.exploit, self.script2.exploit],
             'port': self.port,
         }
 

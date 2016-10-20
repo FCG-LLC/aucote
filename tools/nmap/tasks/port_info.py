@@ -3,6 +3,7 @@ Provides task responsible for obtain detailed information about port
 """
 import logging as log
 
+from database.serializer import Serializer
 from structs import Port, TransportProtocol
 from tools.nmap.base import NmapBase
 from utils.task import Task
@@ -58,5 +59,7 @@ class NmapPortInfoTask(Task):
         else:
             self._port.service_name = service.get('name')
             self._port.service_version = service.get('version')
+
+        self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
 
         self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)

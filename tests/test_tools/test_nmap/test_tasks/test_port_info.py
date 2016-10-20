@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
-from structs import Port, TransportProtocol, Node
+from structs import Port, TransportProtocol, Node, Scan
 
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.storage import Storage
@@ -52,7 +52,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 </nmaprun>'''
 
     def setUp(self):
-        self.executor = MagicMock(storage=Storage(":memory:"))
+        self.executor = MagicMock()
 
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 
@@ -61,6 +61,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port_info = NmapPortInfoTask(executor=self.executor, port=self.port)
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
 
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     def test_tcp_scan(self):
         self.port_info()
 
@@ -76,6 +77,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
     def test_init(self):
         self.assertEqual(self.port_info.executor, self.executor)
 
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     def test_udp_scan(self):
         self.port_info._port.transport_protocol = TransportProtocol.UDP
         self.port_info()
@@ -90,6 +92,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertIn(str(self.port.node.ip), result)
         self.assertIn('-sU', result)
 
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     def test_parser_with_banner(self):
         self.port_info()
 
@@ -98,6 +101,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertEqual(result.service_name, 'ntp')
         self.assertEqual(result.service_version, '1.2.3')
 
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     def test_parser_with_banner_and_without_service(self):
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_BANNER))
         self.port_info()
@@ -116,3 +120,12 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         expected = (Port.broadcast(), self.executor.storage)
 
         self.assertEqual(result, expected)
+
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
+    def test_add_port_scan_info(self, mock_serializer):
+        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_BANNER))
+        self.port_info()
+
+        mock_serializer.assert_called_once_with(self.port_info._port, None)
+
+        self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)

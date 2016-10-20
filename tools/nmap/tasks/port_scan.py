@@ -3,10 +3,10 @@ Contains class responsible for exploiting port by using nmap scripts
 
 """
 import logging as log
+import subprocess
 import time
 
-from database.serializer import Serializer
-from structs import Vulnerability, Port
+from structs import Vulnerability, Port, Scan
 from tools.nmap.base import NmapBase
 from utils.task import Task
 
@@ -28,9 +28,10 @@ class NmapPortScanTask(Task):
             **kwargs:
         """
 
+        self._script_classes = script_classes
+        self.current_exploits = [script.exploit for script in self._script_classes]
         super().__init__(*args, **kwargs)
         self._port = port
-        self._script_classes = script_classes
         self.scripts = {script.name: script for script in self._script_classes}
         self.command = NmapBase()
 
@@ -86,14 +87,36 @@ class NmapPortScanTask(Task):
 
         """
 
-        vulners = []
         args = self.prepare_args()
 
-        xml = self.command.call(args=args)
+        try:
+            results = self.command.call(args=args)
+        except subprocess.CalledProcessError as exception:
+            self._port.scan = Scan(0, 0)
+            self.executor.storage.save_scans(exploit=self.current_exploits, port=self._port)
+            log.warning("Exiting process %s ", self.command.NAME, exc_info=exception)
+            return None
 
-        tmp_scripts = xml.findall('host/ports/port/script') or []
-        tmp_scripts.extend(xml.findall('prescript/script') or [])
+        self._port.scan.end = time.time()
+        self.store_scan_end(exploits=self.current_exploits, port=self._port)
 
+        if not results:
+            log.debug("Process %s does not return any result.", self.command.NAME)
+            return None
+
+        vulnerabilities = self.get_vulnerabilities(results)
+
+        if vulnerabilities:
+            for vulnerability in vulnerabilities:
+                self.store_vulnerability(vulnerability)
+
+        return results
+
+    def get_vulnerabilities(self, results):
+        tmp_scripts = results.findall('host/ports/port/script') or []
+        tmp_scripts.extend(results.findall('prescript/script') or [])
+
+        vulnerabilities = []
         for script in tmp_scripts:
             found_handler = self.scripts.get(script.get('id'))
             if found_handler is None:
@@ -104,16 +127,7 @@ class NmapPortScanTask(Task):
             if result is None:
                 continue
 
-            vulners.append(Vulnerability(exploit=found_handler.exploit, port=self._port, output=result))
+            vulnerabilities.append(Vulnerability(exploit=found_handler.exploit, port=self._port, output=result))
 
-        exploits = [script.exploit for script in self._script_classes]
+        return vulnerabilities
 
-        self._port.scan.end = time.time()
-        self.store_scan_end(exploits=exploits, port=self._port)
-
-        if vulners:
-            for vuln in vulners:
-                self.store_vulnerability(vuln)
-        else:
-            msg = Serializer.serialize_port_vuln(self._port, None)
-            self.kudu_queue.send_msg(msg)
