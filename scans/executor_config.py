@@ -38,6 +38,9 @@ EXECUTOR_CONFIG = {
                 },
                 'eap-info': {
                     'singular': True
+                },
+                'broadcast-wpad-discovery': {
+                    'singular': True
                 }
             }
         },
