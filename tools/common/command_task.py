@@ -6,7 +6,6 @@ import subprocess
 import time
 import logging as log
 
-from database.serializer import Serializer
 from structs import Scan, Vulnerability
 from utils.task import Task
 
@@ -32,8 +31,8 @@ class CommandTask(Task):
         self._port = port
         self.command = command
 
-        if isinstance(exploit, (list,set)):
-            self.current_exploits = self.exploit
+        if isinstance(exploit, (list, set)):
+            self.current_exploits = exploit
             self.exploit = None
         else:
             self.exploit = exploit

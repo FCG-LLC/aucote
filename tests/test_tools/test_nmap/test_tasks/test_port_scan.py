@@ -125,7 +125,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         """
         self.scan_task()
 
-        result = self.scan_task.command.call.call_args[1]['args']
+        result = self.scan_task.command.call.call_args[0][0]
 
         self.assertIn('-sV', result)
         self.assertIn('--script', result)
@@ -144,7 +144,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task._port.transport_protocol = TransportProtocol.UDP
         self.scan_task()
 
-        result = self.scan_task.command.call.call_args[1]['args']
+        result = self.scan_task.command.call.call_args[0][0]
 
         self.assertIn('-sV', result)
         self.assertIn('--script', result)
@@ -174,7 +174,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.port.number = 53
         self.scan_task()
 
-        result = self.scan_task.command.call.call_args[1]['args']
+        result = self.scan_task.command.call.call_args[0][0]
         self.assertIn('-p', result)
         self.assertIn('53', result)
         self.assertIn('--dns-servers', result)
