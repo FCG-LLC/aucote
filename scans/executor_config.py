@@ -35,6 +35,9 @@ EXECUTOR_CONFIG = {
                 },
                 'broadcast-listener': {
                     'singular': True
+                },
+                'eap-info': {
+                    'singular': True
                 }
             }
         },
