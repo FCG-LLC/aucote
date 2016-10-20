@@ -3,6 +3,7 @@ Provides task responsible for obtain detailed information about port
 """
 import logging as log
 
+from structs import Port, TransportProtocol
 from tools.nmap.base import NmapBase
 from utils.task import Task
 
@@ -35,6 +36,10 @@ class NmapPortInfoTask(Task):
             None
 
         """
+        if self._port == Port.broadcast() or self._port.transport_protocol == TransportProtocol.PHY:
+            self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)
+            return
+
         args = list()
         args.extend(('-p', str(self._port.number), '-sV'))
         if self._port.transport_protocol.name == "UDP":

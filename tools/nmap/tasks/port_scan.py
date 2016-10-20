@@ -6,7 +6,7 @@ import logging as log
 import time
 
 from database.serializer import Serializer
-from structs import Vulnerability
+from structs import Vulnerability, Port
 from tools.nmap.base import NmapBase
 from utils.task import Task
 
@@ -31,6 +31,7 @@ class NmapPortScanTask(Task):
         super().__init__(*args, **kwargs)
         self._port = port
         self._script_classes = script_classes
+        self.scripts = {script.name: script for script in self._script_classes}
         self.command = NmapBase()
 
     @property
@@ -51,6 +52,32 @@ class NmapPortScanTask(Task):
 
         return self._script_classes
 
+    def prepare_args(self):
+        if self._port == Port.broadcast():
+            args = []
+            for script in self.scripts.values():
+                args.append('--script')
+                args.append(script.name)
+            return args
+
+        args = ['-p', str(self._port.number), '-sV']
+        if self._port.transport_protocol.name == "UDP":
+            args.append("-sU")
+
+        if self._port.number == 53:
+            args.extend(["--dns-servers", str(self._port.node.ip)])
+
+        for script in self.scripts.values():
+            args.append('--script')
+            args.append(script.name)
+            if script.args is not None:
+                args.append('--script-args')
+                args.append(script.args)
+
+        args.append(str(self._port.node.ip))
+
+        return args
+
     def __call__(self):
         """
         Implement Tasks call method:
@@ -60,21 +87,7 @@ class NmapPortScanTask(Task):
         """
 
         vulners = []
-        scripts = {script.name: script for script in self._script_classes}
-        args = ['-p', str(self._port.number), '-sV']
-        if self._port.transport_protocol.name == "UDP":
-            args.append("-sU")
-
-        if self._port.number == 53:
-            args.extend(["--dns-servers", str(self._port.node.ip)])
-
-        for script in scripts.values():
-            args.append('--script')
-            args.append(script.name)
-            if script.args is not None:
-                args.append('--script-args')
-                args.append(script.args)
-        args.append(str(self._port.node.ip))
+        args = self.prepare_args()
 
         xml = self.command.call(args=args)
 
@@ -82,7 +95,7 @@ class NmapPortScanTask(Task):
         tmp_scripts.extend(xml.findall('prescript/script') or [])
 
         for script in tmp_scripts:
-            found_handler = scripts.get(script.get('id'))
+            found_handler = self.scripts.get(script.get('id'))
             if found_handler is None:
                 continue
             log.debug('Parsing output from script %s', script.get('id'))

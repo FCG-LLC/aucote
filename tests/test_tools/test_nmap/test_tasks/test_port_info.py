@@ -107,3 +107,12 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertEqual(result.service_name, None)
         self.assertEqual(result.service_version, None)
         self.assertEqual(result.banner, r"SSH-1.99-Cisco-1.25")
+
+    def test_call_broadcast(self):
+        self.port_info._port = Port.broadcast()
+        self.port_info()
+
+        result = self.executor.task_mapper.assign_tasks.call_args[0]
+        expected = (Port.broadcast(), self.executor.storage)
+
+        self.assertEqual(result, expected)

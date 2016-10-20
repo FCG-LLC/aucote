@@ -202,3 +202,11 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
         self.assertDictEqual(result, expected)
         self.assertEqual(self.port.scan.end, 27.0)
+
+    def test_prepare_args(self):
+        self.scan_task._port = Port.broadcast()
+
+        result = self.scan_task.prepare_args()
+        expected = ['--script', 'test', '--script', 'test2']
+
+        self.assertCountEqual(result, expected)

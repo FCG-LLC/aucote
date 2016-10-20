@@ -65,6 +65,7 @@ class TransportProtocol(Enum):
     TCP = ('TCP', 6)
     UDP = ('UDP', 17)
     ICMP = ('ICMP', 1)
+    PHY = ('PHY', 255)
 
     @classmethod
     def from_nmap_name(cls, name):
