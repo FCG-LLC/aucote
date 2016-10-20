@@ -190,7 +190,7 @@ class Port(object):
             Port
 
         """
-        return cls(node=Node(node_id=0, ip=ipaddress.ip_address('255.255.255.255')), number=0,
+        return cls(node=Node(node_id=0xFFFFFFFF, ip=ipaddress.ip_address('255.255.255.255')), number=0,
                    transport_protocol=TransportProtocol.UDP)
 
 
