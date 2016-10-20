@@ -166,6 +166,7 @@ class Port(object):
         self.service_version = None
         self.banner = None
         self.scan = None
+        self.interface = None
 
     def __eq__(self, other):
         return isinstance(other, Port) and self.transport_protocol == other.transport_protocol \
@@ -192,6 +193,18 @@ class Port(object):
         """
         return cls(node=Node(node_id=0xFFFFFFFF, ip=ipaddress.ip_address('255.255.255.255')), number=0,
                    transport_protocol=TransportProtocol.UDP)
+
+    @classmethod
+    def physical(cls):
+        """
+        Get physical port structure
+
+        Returns:
+            Port
+
+        """
+        return cls(node=Node(node_id=0xFFFFFFFF, ip=ipaddress.ip_address('255.255.255.255')), number=0,
+                   transport_protocol=TransportProtocol.PHY)
 
 
 class Vulnerability(object):

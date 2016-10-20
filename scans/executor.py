@@ -22,10 +22,8 @@ class Executor(object):
         Init executor. Sets kudu_queue and nodes
 
         """
-
         self.aucote = aucote
         self.ports = nodes or []
-
         self.ports.append(Port.broadcast())
 
     @property
@@ -131,7 +129,6 @@ class Executor(object):
             list
 
         """
-
         ports = ports[:]
 
         for port in storage_ports:

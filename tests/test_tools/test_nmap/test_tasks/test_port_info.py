@@ -3,11 +3,9 @@ import unittest
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
-from structs import Port, TransportProtocol, Node, Scan
+from structs import Port, TransportProtocol, Node
 
 from tools.nmap.tasks.port_info import NmapPortInfoTask
-from utils.storage import Storage
-
 
 @patch('scans.task_mapper.TaskMapper', MagicMock)
 class NmapPortInfoTaskTest(unittest.TestCase):

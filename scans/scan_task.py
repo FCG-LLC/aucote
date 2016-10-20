@@ -9,10 +9,11 @@ from urllib.error import URLError
 import urllib.request as http
 import logging as log
 import time
+import netifaces
 
 from aucote_cfg import cfg
 from scans.executor import Executor
-from structs import Node
+from structs import Node, Port
 from tools.masscan import MasscanPorts
 from utils.exceptions import TopdisConnectionException
 from utils.task import Task
@@ -61,6 +62,19 @@ class ScanTask(Task):
 
         ports = scanner.scan_ports(nodes)
         self.storage.save_nodes(nodes)
+
+        self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
+
+        interfaces = netifaces.interfaces()
+
+        for interface in interfaces:
+            addr = netifaces.ifaddresses(interface)
+            if netifaces.AF_INET not in addr:
+                continue
+
+            port = Port.physical()
+            port.interface = interface
+            ports.append(port)
 
         self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
 

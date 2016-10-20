@@ -104,8 +104,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
         self.script = InfoNmapScript(port=self.port, exploit=self.exploit, name='test', args='test_args')
         self.script.get_result = MagicMock(return_value='test')
-        self.script2 = VulnNmapScript(port=self.port, exploit=self.exploit_vuln_non_exist, name='test2',
-                                      args='test_args')
+        self.script2 = VulnNmapScript(port=self.port, exploit=self.exploit_vuln_non_exist, name='test2')
         self.scan_task = NmapPortScanTask(executor=self.executor, port=self.port,
                                           script_classes=[self.script, self.script2])
         self.scan_task.store_scan_end = MagicMock()
@@ -194,10 +193,19 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertDictEqual(result, expected)
         self.assertEqual(self.port.scan.end, 27.0)
 
-    def test_prepare_args(self):
+    def test_prepare_args_broadcast(self):
         self.scan_task._port = Port.broadcast()
 
         result = self.scan_task.prepare_args()
-        expected = ['--script', 'test', '--script', 'test2']
+        expected = ['--script', 'test', '--script-args', 'test_args', '--script', 'test2']
+
+        self.assertCountEqual(result, expected)
+
+    def test_prepare_args_physical(self):
+        self.scan_task._port = Port.physical()
+        self.scan_task._port.interface = 'wlan0'
+
+        result = self.scan_task.prepare_args()
+        expected = ['--script', 'test', '--script-args', 'test_args', '--script', 'test2', '-e', 'wlan0']
 
         self.assertCountEqual(result, expected)

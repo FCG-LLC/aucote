@@ -3,3 +3,4 @@ argparse
 nanomsg
 netaddr
 python-dateutil
+netifaces
