@@ -32,6 +32,9 @@ EXECUTOR_CONFIG = {
                 },
                 'http-domino-enum-passwords': {
                     'args': NmapTool.custom_args_http_domino_enum_passwords
+                },
+                'broadcast-listener': {
+                    'singular': True
                 }
             }
         },
