@@ -32,6 +32,10 @@ EXECUTOR_CONFIG = {
                 },
                 'http-domino-enum-passwords': {
                     'args': NmapTool.custom_args_http_domino_enum_passwords
+                },
+                'dns-check-zone': {
+                    'args': NmapTool.custom_args_dns_check_zone,
+                    'singular': True
                 }
             }
         },
