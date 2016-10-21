@@ -125,8 +125,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
         self.script = InfoNmapScript(port=self.port, exploit=self.exploit, name='test', args='test_args')
         self.script.get_result = MagicMock(return_value='test')
-        self.script2 = VulnNmapScript(port=self.port, exploit=self.exploit_vuln_non_exist, name='test2',
-                                      args='test_args')
+        self.script2 = VulnNmapScript(port=self.port, exploit=self.exploit_vuln_non_exist, name='test2')
         self.scan_task = NmapPortScanTask(executor=self.executor, port=self.port,
                                           script_classes=[self.script, self.script2])
         self.scan_task.store_scan_end = MagicMock()
@@ -146,7 +145,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         """
         self.scan_task()
 
-        result = self.scan_task.command.call.call_args[1]['args']
+        result = self.scan_task.command.call.call_args[0][0]
 
         self.assertIn('-sV', result)
         self.assertIn('--script', result)
@@ -165,7 +164,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task._port.transport_protocol = TransportProtocol.UDP
         self.scan_task()
 
-        result = self.scan_task.command.call.call_args[1]['args']
+        result = self.scan_task.command.call.call_args[0][0]
 
         self.assertIn('-sV', result)
         self.assertIn('--script', result)
@@ -181,11 +180,10 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.NO_VULNERABILITIES_XML))
         self.scan_task()
 
-        self.scan_task.kudu_queue.send_msg.assert_called_once_with('test')
+        self.assertFalse(self.scan_task.kudu_queue.send_msg.called)
 
     @patch('tools.nmap.tasks.port_scan.Vulnerability')
-    @patch('tools.nmap.tasks.port_scan.Serializer', MagicMock())
-    def test_hostscript(self, mock_vulnerability):
+    def test_prescript(self, mock_vulnerability):
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
         self.scan_task()
 
@@ -195,7 +193,6 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.tasks.port_scan.Vulnerability')
-    @patch('tools.nmap.tasks.port_scan.Serializer', MagicMock())
     def test_hostscript(self, mock_vulnerability):
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.HOSTSCRIPT_XML))
         self.scan_task()
@@ -213,14 +210,13 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.port.number = 53
         self.scan_task()
 
-        result = self.scan_task.command.call.call_args[1]['args']
+        result = self.scan_task.command.call.call_args[0][0]
         self.assertIn('-p', result)
         self.assertIn('53', result)
         self.assertIn('--dns-servers', result)
 
     @patch('time.time', MagicMock(return_value=27.0))
     @patch('tools.nmap.tasks.port_scan.Vulnerability', MagicMock())
-    @patch('tools.nmap.tasks.port_scan.Serializer', MagicMock())
     def test_storage(self):
         self.scan_task._script_classes = [self.script]
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
@@ -228,9 +224,26 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
         result = self.scan_task.store_scan_end.call_args[1]
         expected = {
-            'exploits': [self.script.exploit],
+            'exploits': [self.script.exploit, self.script2.exploit],
             'port': self.port,
         }
 
         self.assertDictEqual(result, expected)
         self.assertEqual(self.port.scan.end, 27.0)
+
+    def test_prepare_args_broadcast(self):
+        self.scan_task._port = Port.broadcast()
+
+        result = self.scan_task.prepare_args()
+        expected = ['--script', 'test', '--script-args', 'test_args', '--script', 'test2']
+
+        self.assertCountEqual(result, expected)
+
+    def test_prepare_args_physical(self):
+        self.scan_task._port = Port.physical()
+        self.scan_task._port.interface = 'wlan0'
+
+        result = self.scan_task.prepare_args()
+        expected = ['--script', 'test', '--script-args', 'test_args', '--script', 'test2', '-e', 'wlan0']
+
+        self.assertCountEqual(result, expected)

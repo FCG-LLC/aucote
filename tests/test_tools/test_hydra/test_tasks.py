@@ -24,13 +24,12 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.port.node = MagicMock()
         self.port.node.ip = '127.0.0.1'
         self.port.service_name = 'ssh'
+        self.exploit = Exploit(exploit_id=1)
 
-        self.hydra_script_task = HydraScriptTask(exploit=MagicMock(), executor=self.executor, port=self.port,
+        self.hydra_script_task = HydraScriptTask(exploit=self.exploit, executor=self.executor, port=self.port,
                                                  service=self.port.service_name)
         self.hydra_script_task.store_scan_end = MagicMock()
-        self.exploit = Exploit(exploit_id=1)
         self.hydra_script_task.executor.exploits.find.return_value = self.exploit
-        self.hydra_script_task.exploit = self.exploit
 
     def test_init(self):
         self.assertEqual(self.hydra_script_task.executor, self.executor)

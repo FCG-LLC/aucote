@@ -3,6 +3,8 @@ Provides task responsible for obtain detailed information about port
 """
 import logging as log
 
+from database.serializer import Serializer
+from structs import Port
 from tools.nmap.base import NmapBase
 from utils.task import Task
 
@@ -35,6 +37,10 @@ class NmapPortInfoTask(Task):
             None
 
         """
+        if self._port == Port.broadcast() or self._port == self._port.physical():
+            self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)
+            return
+
         args = list()
         args.extend(('-p', str(self._port.number), '-sV'))
         if self._port.transport_protocol.name == "UDP":
@@ -53,5 +59,7 @@ class NmapPortInfoTask(Task):
         else:
             self._port.service_name = service.get('name')
             self._port.service_version = service.get('version')
+
+        self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
 
         self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)

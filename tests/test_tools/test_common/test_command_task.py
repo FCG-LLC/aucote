@@ -51,8 +51,8 @@ class CommandTaskTest(TestCase):
         self.command.call.side_effect = CalledProcessError(returncode=127, cmd='test')
 
         result = self.task()
-        args_storage = self.executor.storage.save_scan.call_args[1]
+        args_storage = self.executor.storage.save_scans.call_args[1]
         self.assertEqual(result, None)
         self.assertEqual(args_storage['port'].scan.end, 0)
         self.assertEqual(args_storage['port'].scan.start, 0)
-        self.assertEqual(args_storage['exploit'], self.exploit)
+        self.assertEqual(args_storage['exploits'], [self.exploit])

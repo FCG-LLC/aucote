@@ -2,6 +2,7 @@
 This module contains base nmap classes
 
 """
+import logging as log
 from tools.common.command import Command
 from tools.common.parsers import XMLParser
 
@@ -95,4 +96,9 @@ class InfoNmapScript(NmapScript):
         """
         if script is None:
             return None
-        return script.get('output').strip()
+
+        output = script.get('output').strip()
+        if output.startswith("ERROR: "):
+            log.warning(output)
+            return None
+        return output

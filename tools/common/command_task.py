@@ -30,7 +30,13 @@ class CommandTask(Task):
         super().__init__(*args, **kwargs)
         self._port = port
         self.command = command
-        self.exploit = exploit
+
+        if isinstance(exploit, (list, set)):
+            self.current_exploits = exploit
+            self.exploit = None
+        else:
+            self.exploit = exploit
+            self.current_exploits = [exploit]
 
     @classmethod
     def prepare_args(cls):
@@ -56,16 +62,34 @@ class CommandTask(Task):
             results = self.command.call(args)
         except subprocess.CalledProcessError as exception:
             self._port.scan = Scan(0, 0)
-            self.executor.storage.save_scan(exploit=self.exploit, port=self._port)
+            self.executor.storage.save_scans(exploits=self.current_exploits, port=self._port)
             log.warning("Exiting process %s ", self.command.NAME, exc_info=exception)
             return None
 
         self._port.scan.end = int(time.time())
-        self.store_scan_end(exploits=[self.exploit], port=self._port)
+        self.store_scan_end(exploits=self.current_exploits, port=self._port)
 
         if not results:
             log.debug("Process %s does not return any result.", self.command.NAME)
             return None
 
-        self.store_vulnerability(Vulnerability(exploit=self.exploit, port=self._port, output=results))
+        vulnerabilities = self.get_vulnerabilities(results)
+
+        if vulnerabilities:
+            for vulnerability in vulnerabilities:
+                self.store_vulnerability(vulnerability)
+
         return results
+
+    def get_vulnerabilities(self, results):
+        """
+        Gets vulnerabilities based upon results
+
+        Args:
+            results:
+
+        Returns:
+            list
+
+        """
+        return [Vulnerability(exploit=self.exploit, port=self._port, output=results)]

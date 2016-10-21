@@ -75,6 +75,8 @@ class VulnNmapScriptTest(TestCase):
 
 
 class InfoNmapScriptTest(TestCase):
+    ERROR_OUTPUT = "ERROR: Script execution failed (use -d to debug)"
+
     def setUp(self):
         self.script = InfoNmapScript(exploit=MagicMock(), port=MagicMock())
 
@@ -89,5 +91,14 @@ class InfoNmapScriptTest(TestCase):
 
         result = self.script.get_result(script)
         expected = 'test'
+
+        self.assertEqual(result, expected)
+
+    def test_error(self):
+        script = MagicMock()
+        script.get = MagicMock(return_value=self.ERROR_OUTPUT)
+
+        result = self.script.get_result(script)
+        expected = None
 
         self.assertEqual(result, expected)
