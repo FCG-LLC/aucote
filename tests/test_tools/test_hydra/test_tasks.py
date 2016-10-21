@@ -36,36 +36,6 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.assertEqual(self.hydra_script_task.executor, self.executor)
         self.assertEqual(self.hydra_script_task._port, self.port)
 
-    @patch('database.serializer.Serializer.serialize_port_vuln', MagicMock(return_value=None))
-    def test_call(self):
-        self.hydra_script_task.command.call = MagicMock(return_value=HydraParser.parse(self.OUTPUT_SUCCESSFUL))
-        result = self.hydra_script_task()
-
-        self.assertEqual(result[0].host, '192.168.56.102')
-        self.assertEqual(result[0].login, 'msfadmin')
-        self.assertEqual(result[0].password, 'msfadmin')
-
-    def test_call_wihout_output(self):
-        self.hydra_script_task.command.call = MagicMock(return_value=None)
-
-        result = self.hydra_script_task()
-        expected = None
-
-        self.assertEqual(result, expected)
-
-    def test_call_exception(self):
-        self.hydra_script_task.command.call = MagicMock(side_effect=subprocess.CalledProcessError(MagicMock(), MagicMock()))
-
-        result = self.hydra_script_task()
-        expected = None
-
-        self.assertEqual(result, expected)
-        result = self.hydra_script_task.executor.storage.save_scan.call_args[1]
-
-        self.assertEqual(result['port'].scan.start, 0)
-        self.assertEqual(result['port'].scan.end, 0)
-        self.assertEqual(result['exploit'], self.exploit)
-
     @patch('time.time', MagicMock(return_value=27.0))
     def test_storage(self):
         self.hydra_script_task.command.call = MagicMock(return_value=MagicMock())
