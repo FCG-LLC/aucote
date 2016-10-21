@@ -102,6 +102,18 @@ class NmapTool(Tool):
         return ['dns-srv-enum.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
+    def custom_args_dns_check_zone(cls):
+        """
+        Parses configuration and convert it to the script argument
+
+        Returns:
+            list
+
+        """
+        domains = cls.get_config('tools.nmap.domains')
+        return ['dns-check-zone.domain={0}'.format(domain) for domain in domains]
+
+    @classmethod
     def custom_args_http_domino_enum_passwords(cls):
         """
         Parses configuration and convert it to the script argument

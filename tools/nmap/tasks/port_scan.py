@@ -103,6 +103,7 @@ class NmapPortScanTask(CommandTask):
         """
         tmp_scripts = results.findall('host/ports/port/script') or []
         tmp_scripts.extend(results.findall('prescript/script') or [])
+        tmp_scripts.extend(results.findall('host/hostscript/script') or [])
 
         vulnerabilities = []
         for script in tmp_scripts:
