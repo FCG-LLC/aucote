@@ -5,8 +5,8 @@ This module contains class responsible for scanning ports by using nmap
 import logging as log
 from tools.common import OpenPortsParser
 from utils.exceptions import NonXMLOutputException
-from .base import NmapBase
 from aucote_cfg import cfg
+from .base import NmapBase
 
 
 class PortsScan(NmapBase):
@@ -53,7 +53,7 @@ class PortsScan(NmapBase):
             list
 
         """
-        args = ['-sV', '--script', 'banner']
+        args = ['-sV', '--script', 'banner', '-6']
         args.extend(['-p', str(cfg.get('service.scans.ports'))])
 
         args.extend([str(node.ip) for node in nodes])

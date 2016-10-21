@@ -69,7 +69,7 @@ class PortScanTest(TestCase):
 
         result = self.scanner.scan_ports(nodes=self.nodes)
         self.assertEqual(len(result), 8)
-        self.scanner.call.assert_called_once_with(['-sV', '--script', 'banner', '-p', '55', '192.168.1.5'])
+        self.scanner.call.assert_called_once_with(['-sV', '--script', 'banner', '-6', '-p', '55', '192.168.1.5'])
 
     def test_no_ports(self):
         self.scanner.call = MagicMock(return_value = ElementTree.fromstring(self.NO_PORTS_OUTPUT))
