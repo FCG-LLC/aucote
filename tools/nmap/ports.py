@@ -2,8 +2,11 @@
 This module contains class responsible for scanning ports by using nmap
 
 """
+import logging as log
 from tools.common import OpenPortsParser
+from utils.exceptions import NonXMLOutputException
 from .base import NmapBase
+from aucote_cfg import cfg
 
 
 class PortsScan(NmapBase):
@@ -12,7 +15,7 @@ class PortsScan(NmapBase):
 
     """
 
-    def scan_ports(self, nodes, ports=None):
+    def scan_ports(self, nodes):
         """
         Scan nodes for open ports. If ports are passed, scans only them. Returns list of open ports.
 
@@ -24,15 +27,34 @@ class PortsScan(NmapBase):
             list
 
         """
-        node_by_ip = {node.ip: node for node in nodes}
-        args = list(self.COMMON_ARGS)
-        if ports is None:
-            args.extend(('-p', '0-65535'))
-        else:
-            port_str = ','.join([str(port) for port in ports])
-            args.extend(('-p', port_str))
-        args.extend(('-sV', '--script', 'banner'))
-        args.extend([str(node.ip) for node in nodes])
-        xml = self.call(args)
+        log.info("Scanning ports")
 
-        return OpenPortsParser.parse(xml=xml, node_by_ip=node_by_ip)
+        args = self.prepare_args(nodes)
+
+        try:
+            xml = self.call(args)
+        except NonXMLOutputException:
+            return []
+
+        parser = OpenPortsParser()
+        node_by_ip = {node.ip: node for node in nodes}
+        ports = parser.parse(xml, node_by_ip)
+        return ports
+
+    @classmethod
+    def prepare_args(cls, nodes):
+        """
+        Prepare args for command execution
+
+        Args:
+            nodes (list): nodes from scanning
+
+        Returns:
+            list
+
+        """
+        args = ['-sV', '--script', 'banner']
+        args.extend(['-p', str(cfg.get('service.scans.ports'))])
+
+        args.extend([str(node.ip) for node in nodes])
+        return args

@@ -14,6 +14,7 @@ from aucote_cfg import cfg
 from scans.executor import Executor
 from structs import Node
 from tools.masscan import MasscanPorts
+from tools.nmap.ports import PortsScan
 from utils.exceptions import TopdisConnectionException
 from utils.task import Task
 from utils.time import parse_period
@@ -24,6 +25,7 @@ class ScanTask(Task):
     Class responsible for scanning
 
     """
+
     def __init__(self, nodes=None, as_service=True, *args, **kwargs):
         super(ScanTask, self).__init__(*args, **kwargs)
         self.nodes = nodes or self._get_nodes()
@@ -51,17 +53,23 @@ class ScanTask(Task):
             None
 
         """
-        scanner = MasscanPorts()
+        scanner_ipv4 = MasscanPorts()
+        scanner_ipv6 = PortsScan()
+
         nodes = self._get_nodes_for_scanning()
 
-        log.info('Scanning %i nodes', len(nodes))
+        nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
+        nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
+
+        log.info('Scanning %i nodes (ipv4: %s, ipv6: %s)', len(nodes), len(nodes_ipv4), len(nodes_ipv6))
 
         if not nodes:
             return
 
-        ports = scanner.scan_ports(nodes)
-        self.storage.save_nodes(nodes)
+        ports = scanner_ipv4.scan_ports(nodes_ipv4)
+        ports.extend(scanner_ipv6.scan_ports(nodes_ipv6))
 
+        self.storage.save_nodes(nodes_ipv4)
         self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
 
     def __call__(self, *args, **kwargs):
@@ -92,8 +100,6 @@ class ScanTask(Task):
         for node_struct in nodes_cfg['nodes']:
             for node_ip in node_struct['ips']:
                 node = Node(ip=ipaddress.ip_address(node_ip), node_id=node_struct['id'])
-                if not isinstance(node.ip, ipaddress.IPv4Address):
-                    continue
                 node.name = node_struct['displayName']
                 nodes.append(node)
         return nodes

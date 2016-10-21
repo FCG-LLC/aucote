@@ -143,19 +143,25 @@ class ScanTaskTest(TestCase):
         self.scan_task.run.assert_called_once_with()
         self.scan_task.scheduler.run.assert_called_once_with()
 
+    @patch('scans.scan_task.PortsScan')
     @patch('scans.scan_task.MasscanPorts')
     @patch('scans.scan_task.Executor')
-    def test_run(self, mock_executor, mock_masscan):
+    def test_run(self, mock_executor, mock_masscan, mock_nmap):
         self.scan_task.executor.add_task = MagicMock()
         self.scan_task._get_nodes_for_scanning = MagicMock()
         self.scan_task.storage = MagicMock()
 
-        ports = [MagicMock()]
-        mock_masscan.return_value.scan_ports.return_value = ports
+        ports_masscan = [MagicMock()]
+        ports_nmap = [MagicMock()]
+
+        ports = [ports_masscan[0], ports_nmap[0]]
+
+        mock_masscan.return_value.scan_ports.return_value = ports_masscan
+        mock_nmap.return_value.scan_ports.return_value = ports_nmap
 
         self.scan_task.run()
 
-        mock_executor.called_once_with(aucote=self.scan_task.executor, nodes=ports)
+        mock_executor.assert_called_once_with(aucote=self.scan_task.executor, nodes=ports)
         self.scan_task.executor.add_task.called_once_with(mock_executor.return_value)
 
     def test_run_without_nodes(self):
