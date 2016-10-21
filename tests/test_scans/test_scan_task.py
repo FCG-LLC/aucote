@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 from urllib.error import URLError
 
 from scans.scan_task import ScanTask
-from structs import Node
+from structs import Node, Port
 from utils.exceptions import TopdisConnectionException
 from utils.storage import Storage
 
@@ -143,18 +143,27 @@ class ScanTaskTest(TestCase):
         self.scan_task.run.assert_called_once_with()
         self.scan_task.scheduler.run.assert_called_once_with()
 
+    @patch('scans.scan_task.netifaces')
     @patch('scans.scan_task.PortsScan')
     @patch('scans.scan_task.MasscanPorts')
     @patch('scans.scan_task.Executor')
-    def test_run(self, mock_executor, mock_masscan, mock_nmap):
+    def test_run(self, mock_executor, mock_masscan, mock_nmap, mock_netiface):
         self.scan_task.executor.add_task = MagicMock()
         self.scan_task._get_nodes_for_scanning = MagicMock()
         self.scan_task.storage = MagicMock()
 
         ports_masscan = [MagicMock()]
         ports_nmap = [MagicMock()]
+        mock_netiface.interfaces.return_value = ['test', 'test2']
+        mock_netiface.ifaddresses.side_effect = ([mock_netiface.AF_INET], [''])
 
-        ports = [ports_masscan[0], ports_nmap[0]]
+        mock_masscan.scan_ports.return_value = ports_masscan
+        mock_nmap.scan_ports.return_value = ports_nmap
+
+        port = Port.physical()
+        port.interface = 'test'
+
+        ports = [ports_masscan[0], ports_nmap[0], port]
 
         mock_masscan.return_value.scan_ports.return_value = ports_masscan
         mock_nmap.return_value.scan_ports.return_value = ports_nmap

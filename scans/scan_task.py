@@ -70,8 +70,7 @@ class ScanTask(Task):
         ports = scanner_ipv4.scan_ports(nodes_ipv4)
         ports.extend(scanner_ipv6.scan_ports(nodes_ipv6))
 
-        self.storage.save_nodes(nodes_ipv4)
-        self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
+        self.storage.save_nodes(nodes)
 
         interfaces = netifaces.interfaces()
 

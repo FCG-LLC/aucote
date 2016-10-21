@@ -55,6 +55,8 @@ class PortScanTest(TestCase):
 </nmaprun>
     """
 
+    NON_XML = b'''This is non xml output!'''
+
     def setUp(self):
         self.kudu_queue = MagicMock()
         self.scanner = PortsScan()
@@ -73,5 +75,14 @@ class PortScanTest(TestCase):
         self.scanner.call = MagicMock(return_value = ElementTree.fromstring(self.NO_PORTS_OUTPUT))
         result = self.scanner.scan_ports(nodes=self.nodes)
         expected = []
+
+        self.assertEqual(result, expected)
+
+    @patch('subprocess.check_output', MagicMock(return_value=NON_XML))
+    def test_without_xml_output(self):
+        ports = self.scanner.scan_ports(self.nodes)
+
+        result = len(ports)
+        expected = 0
 
         self.assertEqual(result, expected)
