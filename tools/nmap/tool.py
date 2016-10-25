@@ -3,6 +3,8 @@ Contains main class responsible for managing NMAP
 
 """
 import logging as log
+
+from aucote_cfg import cfg
 from structs import RiskLevel
 from tools.base import Tool
 from tools.nmap.base import InfoNmapScript, VulnNmapScript
@@ -39,7 +41,8 @@ class NmapTool(Tool):
                 try:
                     args = args()
                 except ImproperConfigurationException as exception:
-                    log.warning("%s is not configured!", name, exc_info=exception)
+                    log.warning("%s is not configured: Please configure %s in %s", name, exception,
+                                cfg.get('config_filename'))
                     continue
 
             if not isinstance(args, (list, set)):
