@@ -148,6 +148,13 @@ class Port(object):
 
     """
     TABLE = 'ports'
+    BROADCAST_IP = ipaddress.ip_address("255.255.255.255")
+    BROADCAST_NODE_ID = 0xFFFFFFFF
+    BROADCAST_PROTOCOL = TransportProtocol.UDP
+
+    PHYSICAL_IP = ipaddress.ip_address("255.255.255.255")
+    PHYSICAL_NODE_ID = 0xFFFFFFFF
+    PHYSICAL_PROTOCOL = TransportProtocol.PHY
 
     def __init__(self, node, number, transport_protocol):
         """
@@ -191,8 +198,8 @@ class Port(object):
             Port
 
         """
-        return cls(node=Node(node_id=0xFFFFFFFF, ip=ipaddress.ip_address('255.255.255.255')), number=0,
-                   transport_protocol=TransportProtocol.UDP)
+        return cls(node=Node(node_id=cls.BROADCAST_NODE_ID, ip=cls.BROADCAST_IP), number=0,
+                   transport_protocol=cls.BROADCAST_PROTOCOL)
 
     @classmethod
     def physical(cls):
@@ -203,8 +210,28 @@ class Port(object):
             Port
 
         """
-        return cls(node=Node(node_id=0xFFFFFFFF, ip=ipaddress.ip_address('255.255.255.255')), number=0,
-                   transport_protocol=TransportProtocol.PHY)
+        return cls(node=Node(node_id=cls.PHYSICAL_NODE_ID, ip=cls.PHYSICAL_IP), number=0,
+                   transport_protocol=cls.PHYSICAL_PROTOCOL)
+
+    @property
+    def is_broadcast(self):
+        """
+        Is true if port is broadcast
+
+        Returns:
+            bool
+        """
+        return self == self.broadcast()
+
+    @property
+    def is_physical(self):
+        """
+        Is true if port is physical
+
+        Returns:
+            bool
+        """
+        return self == self.physical()
 
 
 class Vulnerability(object):

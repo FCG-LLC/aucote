@@ -57,7 +57,7 @@ class NmapPortScanTask(CommandTask):
             list
 
         """
-        if self._port == Port.broadcast() or self._port == Port.physical():
+        if self._port.is_broadcast or self._port.is_physical:
             args = []
             for script in self.scripts.values():
                 args.append('--script')

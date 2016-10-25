@@ -37,7 +37,7 @@ class NmapPortInfoTask(Task):
             None
 
         """
-        if self._port == Port.broadcast() or self._port == self._port.physical():
+        if self._port.is_broadcast or self._port.is_physical:
             self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)
             return
 
