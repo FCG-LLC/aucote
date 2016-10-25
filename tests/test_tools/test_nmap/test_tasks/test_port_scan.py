@@ -118,10 +118,13 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.exploits.add(self.exploit)
 
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=None)
+        self.node_ipv6 = Node(ip=ipaddress.ip_address('::1'), node_id=None)
 
         self.port = Port(number=22, node=self.node, transport_protocol=TransportProtocol.TCP)
         self.port.service_name = 'ssh'
         self.port.scan = Scan()
+
+        self.port_ipv6 = Port(number=22, node=self.node_ipv6, transport_protocol=TransportProtocol.TCP)
 
         self.script = InfoNmapScript(port=self.port, exploit=self.exploit, name='test', args='test_args')
         self.script.get_result = MagicMock(return_value='test')
@@ -247,3 +250,11 @@ class NmapPortScanTaskTest(unittest.TestCase):
         expected = ['--script', 'test', '--script-args', 'test_args', '--script', 'test2', '-e', 'wlan0']
 
         self.assertCountEqual(result, expected)
+
+    def test_prepare_args_ipv6(self):
+        self.scan_task._port = self.port_ipv6
+
+        result = self.scan_task.prepare_args()
+        expected = '-6'
+
+        self.assertIn(expected, result)

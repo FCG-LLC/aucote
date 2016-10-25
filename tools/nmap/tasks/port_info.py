@@ -29,6 +29,29 @@ class NmapPortInfoTask(Task):
         self._port = port
         self.command = NmapBase()
 
+    def prepare_args(self):
+        """
+        Prepares args for command call
+
+        Returns:
+            list
+
+        """
+
+        args = list()
+        args.extend(('-p', str(self._port.number), '-sV'))
+        if self._port.transport_protocol.name == "UDP":
+            args.append("-sU")
+
+        if self._port.is_ipv6:
+            args.append("-6")
+
+        args.extend(('--script', 'banner'))
+        args.append(str(self._port.node.ip))
+
+        return args
+
+
     def __call__(self):
         """
         Scans port, parses output for obtain information about service name and version and pass it to the task mapper
@@ -41,12 +64,8 @@ class NmapPortInfoTask(Task):
             self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)
             return
 
-        args = list()
-        args.extend(('-p', str(self._port.number), '-sV'))
-        if self._port.transport_protocol.name == "UDP":
-            args.append("-sU")
-        args.extend(('--script', 'banner'))
-        args.append(str(self._port.node.ip))
+        args = self.prepare_args()
+
         xml = self.command.call(args=args)
         banner = xml.find("host/ports/port/script[@id='banner']")
         if banner is None:

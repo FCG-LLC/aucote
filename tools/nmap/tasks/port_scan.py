@@ -76,6 +76,9 @@ class NmapPortScanTask(CommandTask):
         if self._port.transport_protocol.name == "UDP":
             args.append("-sU")
 
+        if self._port.is_ipv6:
+            args.append("-6")
+
         if self._port.number == 53:
             args.extend(["--dns-servers", str(self._port.node.ip)])
 

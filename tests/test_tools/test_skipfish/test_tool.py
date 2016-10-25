@@ -34,6 +34,14 @@ class SkipfishToolTest(TestCase):
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
     def test_disable(self):
         config = MagicMock()
-        SkipfishTool(exploits=MagicMock(), port=MagicMock(), executor=self.executor, config=config)()
+        SkipfishTool(exploits=MagicMock(), port=MagicMock(is_ipv6=False), executor=self.executor, config=config)()
 
         self.assertEqual(config.get.call_count, 0)
+
+    @patch('aucote_cfg.cfg.get', MagicMock(return_value=True))
+    @patch('tools.skipfish.tool.SkipfishScanTask')
+    def test_disable_ipv6(self, mock_scantask):
+        config = MagicMock()
+        SkipfishTool(exploits=MagicMock(), port=MagicMock(is_ipv6=True), executor=self.executor, config=config)()
+
+        self.assertFalse(mock_scantask.called)

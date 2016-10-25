@@ -67,6 +67,16 @@ class NodeTest(TestCase):
 
         self.assertEqual(result, expected)
 
+    def test_is_ipv6_on_ipv4(self):
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+
+        self.assertFalse(node.is_ipv6)
+
+    def test_is_ipv6_on_ipv6(self):
+        node = Node(ip=ipaddress.ip_address('::1'), node_id=1)
+
+        self.assertTrue(node.is_ipv6)
+
 
 class PortTest(TestCase):
     def test_ports_comparison_eq(self):
@@ -110,6 +120,10 @@ class PortTest(TestCase):
 
         self.assertEqual(result, expected)
 
+    def test_is_ipv6(self):
+        port = Port(node=MagicMock(), number=1, transport_protocol=MagicMock())
+
+        self.assertEqual(port.is_ipv6, port.node.is_ipv6)
 
 class ScanTest(TestCase):
     def setUp(self):

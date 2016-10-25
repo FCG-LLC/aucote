@@ -53,8 +53,10 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.executor = MagicMock()
 
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        self.node_ipv6 = Node(ip=ipaddress.ip_address('::1'), node_id=None)
 
         self.port = Port(number=22, transport_protocol=TransportProtocol.TCP, node=self.node)
+        self.port_ipv6 = Port(number=22, node=self.node_ipv6, transport_protocol=TransportProtocol.TCP)
 
         self.port_info = NmapPortInfoTask(executor=self.executor, port=self.port)
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
@@ -127,3 +129,11 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         mock_serializer.assert_called_once_with(self.port_info._port, None)
 
         self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)
+
+    def test_prepare_args_ipv6(self):
+        self.port_info._port = self.port_ipv6
+
+        result = self.port_info.prepare_args()
+        expected = '-6'
+
+        self.assertIn(expected, result)
