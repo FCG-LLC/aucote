@@ -65,6 +65,8 @@ class Config:
             cfg = yaml.load(stream.read())
             self._cfg = self._recursive_merge(cfg, defaults)
 
+        self._cfg['config_filename'] = file_name
+
     def _recursive_merge(self, data, defaults):
         #recursively replace defaults with configured data
         if isinstance(defaults, dict) and isinstance(data, dict):

@@ -116,6 +116,7 @@ class NmapToolTest(TestCase):
         mock_cfg.assert_called_once_with('tools.nmap.domains')
 
     @patch('tools.nmap.tool.VulnNmapScript')
+    @patch('tools.nmap.tool.cfg.get', MagicMock(return_value='test'))
     def test_improper_configure_args(self, vuln_scan_script):
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.config['services']['test_name2']['args'].side_effect = ImproperConfigurationException('test.test2')

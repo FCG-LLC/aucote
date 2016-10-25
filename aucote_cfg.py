@@ -92,6 +92,8 @@ def load(file_name=None):
     if file_name is None:
         #by default search for "confg.yaml" in application dir
         file_name = path.join(path.dirname(__file__), 'aucote_cfg.yaml')
+
+    file_name = path.abspath(file_name)
     #at this point logs do not work, print info to stdout
     print("Reading configuration from file:", file_name)
     cfg.load(file_name, _DEFAULT)
