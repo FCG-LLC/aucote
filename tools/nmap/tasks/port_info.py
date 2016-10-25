@@ -4,7 +4,6 @@ Provides task responsible for obtain detailed information about port
 import logging as log
 
 from database.serializer import Serializer
-from structs import Port
 from tools.nmap.base import NmapBase
 from utils.task import Task
 
