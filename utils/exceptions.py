@@ -23,7 +23,7 @@ class NmapUnsupported(NameError):
 
     """
 
-class ServiceUnsupporedByNmapException(NmapUnsupported):
+class ServiceUnsupportedByNmapException(NmapUnsupported):
     """
     Raise if service name does not exist in nmap services file
 
@@ -37,17 +37,19 @@ class PortUnsupportedException(NmapUnsupported):
     """
 
 
-class ProtocolUnsupporedByNmapException(NmapUnsupported):
+class ProtocolUnsupportedByNmapException(NmapUnsupported):
     """
     Raise if service name does not exist in nmap services file
 
     """
+
 
 class PortRangeUnsupported(NmapUnsupported):
     """
     Raise if port range is not supported, eg. 23-13 instead of 13-23
 
     """
+
 
 class TopdisConnectionException(BaseException):
     """
@@ -56,7 +58,7 @@ class TopdisConnectionException(BaseException):
     """
 
 
-class ImproperConfigurationException(Exception):
+class ImproperConfigurationException(KeyError):
     """
     Raises if tool is not configured
 
