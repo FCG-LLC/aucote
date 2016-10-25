@@ -23,7 +23,7 @@ class NmapUnsupported(NameError):
 
     """
 
-class ServiceUnsupporedByNmapException(NmapUnsupported):
+class ServiceUnsupportedByNmapException(NmapUnsupported):
     """
     Raise if service name does not exist in nmap services file
 
@@ -37,7 +37,7 @@ class PortUnsupportedException(NmapUnsupported):
     """
 
 
-class ProtocolUnsupporedByNmapException(NmapUnsupported):
+class ProtocolUnsupportedByNmapException(NmapUnsupported):
     """
     Raise if service name does not exist in nmap services file
 

@@ -2,14 +2,13 @@
 This is main module of aucote scanning functionality.
 
 """
-
 import logging as log
 import time
 
 from aucote_cfg import cfg
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.time import parse_period
-from structs import Scan
+from structs import Scan, Port
 
 
 class Executor(object):
@@ -23,9 +22,9 @@ class Executor(object):
         Init executor. Sets kudu_queue and nodes
 
         """
-
         self.aucote = aucote
-        self.ports = nodes
+        self.ports = nodes or []
+        self.ports.append(Port.broadcast())
 
     @property
     def storage(self):
@@ -130,7 +129,6 @@ class Executor(object):
             list
 
         """
-
         ports = ports[:]
 
         for port in storage_ports:

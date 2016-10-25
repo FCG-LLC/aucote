@@ -36,6 +36,15 @@ EXECUTOR_CONFIG = {
                 'dns-check-zone': {
                     'args': NmapTool.custom_args_dns_check_zone,
                     'singular': True
+                },
+                'broadcast-listener': {
+                    'singular': True
+                },
+                'eap-info': {
+                    'singular': True
+                },
+                'broadcast-wpad-discovery': {
+                    'singular': True
                 }
             }
         },
