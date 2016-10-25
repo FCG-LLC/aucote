@@ -39,7 +39,7 @@ class NmapTool(Tool):
                 try:
                     args = args()
                 except ImproperConfigurationException as exception:
-                    log.warning("%s is not configured!", name, exc_info=exception)
+                    log.warning("%s is not configured: Please configure %s in aucote_cfg.yaml!", name, exception)
                     continue
 
             if not isinstance(args, (list, set)):

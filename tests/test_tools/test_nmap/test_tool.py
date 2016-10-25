@@ -118,7 +118,7 @@ class NmapToolTest(TestCase):
     @patch('tools.nmap.tool.VulnNmapScript')
     def test_improper_configure_args(self, vuln_scan_script):
         self.nmap_tool.exploits = [self.exploit_conf_args]
-        self.config['services']['test_name2']['args'].side_effect = ImproperConfigurationException()
+        self.config['services']['test_name2']['args'].side_effect = ImproperConfigurationException('test.test2')
         self.nmap_tool()
 
         self.assertFalse(vuln_scan_script.called)

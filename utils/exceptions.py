@@ -43,11 +43,13 @@ class ProtocolUnsupporedByNmapException(NmapUnsupported):
 
     """
 
+
 class PortRangeUnsupported(NmapUnsupported):
     """
     Raise if port range is not supported, eg. 23-13 instead of 13-23
 
     """
+
 
 class TopdisConnectionException(BaseException):
     """
@@ -56,7 +58,7 @@ class TopdisConnectionException(BaseException):
     """
 
 
-class ImproperConfigurationException(Exception):
+class ImproperConfigurationException(KeyError):
     """
     Raises if tool is not configured
 
