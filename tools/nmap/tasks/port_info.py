@@ -51,7 +51,6 @@ class NmapPortInfoTask(Task):
 
         return args
 
-
     def __call__(self):
         """
         Scans port, parses output for obtain information about service name and version and pass it to the task mapper
