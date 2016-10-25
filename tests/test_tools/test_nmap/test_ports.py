@@ -63,13 +63,14 @@ class PortScanTest(TestCase):
         node = Node(ip = ipaddress.ip_address('192.168.1.5'), node_id=None)
         self.nodes = [node]
 
-    @patch('tools.nmap.ports.cfg.get', MagicMock(return_value='55'))
+    @patch('tools.nmap.ports.cfg.get', MagicMock(side_effect=('55', '1000', '1030')))
     def test_scan_ports(self):
         self.scanner.call = MagicMock(return_value = ElementTree.fromstring(self.OUTPUT))
 
         result = self.scanner.scan_ports(nodes=self.nodes)
         self.assertEqual(len(result), 8)
-        self.scanner.call.assert_called_once_with(['-sV', '--script', 'banner', '-6', '-p', '55', '192.168.1.5'])
+        self.scanner.call.assert_called_once_with(['-sV', '--script', 'banner', '-6', '-p', '55', '--min-rate', '1000',
+                                                   '--max-rate', '1030', '192.168.1.5'])
 
     def test_no_ports(self):
         self.scanner.call = MagicMock(return_value = ElementTree.fromstring(self.NO_PORTS_OUTPUT))

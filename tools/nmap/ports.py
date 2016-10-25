@@ -54,7 +54,8 @@ class PortsScan(NmapBase):
 
         """
         args = ['-sV', '--script', 'banner', '-6']
-        args.extend(['-p', str(cfg.get('service.scans.ports'))])
+        args.extend(['-p', str(cfg.get('service.scans.ports')), '--min-rate', str(cfg.get('service.scans.rate')),
+                     '--max-rate', str(cfg.get('service.scans.rate'))])
 
         args.extend([str(node.ip) for node in nodes])
         return args
