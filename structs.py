@@ -51,6 +51,10 @@ class Node:
     def __hash__(self):
         return hash((self.id, self.ip))
 
+    @property
+    def is_ipv6(self):
+        return isinstance(self.ip, ipaddress.IPv6Address)
+
 
 class TransportProtocol(Enum):
     """
@@ -232,6 +236,10 @@ class Port(object):
             bool
         """
         return self == self.physical()
+
+    @property
+    def is_ipv6(self):
+        return self.node.is_ipv6
 
 
 class Vulnerability(object):

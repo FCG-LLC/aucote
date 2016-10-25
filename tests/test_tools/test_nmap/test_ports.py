@@ -1,6 +1,6 @@
 import ipaddress
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
 from structs import Node
@@ -55,29 +55,34 @@ class PortScanTest(TestCase):
 </nmaprun>
     """
 
+    NON_XML = b'''This is non xml output!'''
+
     def setUp(self):
         self.kudu_queue = MagicMock()
         self.scanner = PortsScan()
         node = Node(ip = ipaddress.ip_address('192.168.1.5'), node_id=None)
         self.nodes = [node]
 
+    @patch('tools.nmap.ports.cfg.get', MagicMock(return_value='55'))
     def test_scan_ports(self):
         self.scanner.call = MagicMock(return_value = ElementTree.fromstring(self.OUTPUT))
 
         result = self.scanner.scan_ports(nodes=self.nodes)
         self.assertEqual(len(result), 8)
-        self.scanner.call.assert_called_once_with(['-n', '--privileged', '-oX', '-', '-T4', '-p', '0-65535', '-sV', '--script', 'banner', '192.168.1.5'])
-
-    def test_scan_custom_ports(self):
-        self.scanner.call = MagicMock(return_value = ElementTree.fromstring(self.OUTPUT))
-
-        result = self.scanner.scan_ports(nodes=self.nodes, ports=[80, 43])
-        self.assertEqual(len(result), 8)
-        self.scanner.call.assert_called_once_with(['-n', '--privileged', '-oX', '-', '-T4', '-p', '80,43', '-sV', '--script', 'banner', '192.168.1.5'])
+        self.scanner.call.assert_called_once_with(['-sV', '--script', 'banner', '-6', '-p', '55', '192.168.1.5'])
 
     def test_no_ports(self):
         self.scanner.call = MagicMock(return_value = ElementTree.fromstring(self.NO_PORTS_OUTPUT))
-        result = self.scanner.scan_ports(nodes=self.nodes, ports=[80, 43])
+        result = self.scanner.scan_ports(nodes=self.nodes)
         expected = []
+
+        self.assertEqual(result, expected)
+
+    @patch('subprocess.check_output', MagicMock(return_value=NON_XML))
+    def test_without_xml_output(self):
+        ports = self.scanner.scan_ports(self.nodes)
+
+        result = len(ports)
+        expected = 0
 
         self.assertEqual(result, expected)
