@@ -110,6 +110,7 @@ class Aucote(object):
         self.task_mapper = TaskMapper(self)
         self.filename = cfg.get('service.scans.storage')
         signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
         self.lock = threading.Lock()
         self.started = False
 
