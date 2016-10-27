@@ -4,3 +4,4 @@ nanomsg
 netaddr
 python-dateutil
 netifaces
+requests

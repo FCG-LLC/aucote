@@ -70,6 +70,9 @@ EXECUTOR_CONFIG = {
         },
         'skipfish': {
             'class': SkipfishTool
-        }
+        },
+        # 'aucote-http-headers': {
+        #     'class': AucoteHttpHeadersTool
+        # }
     }
 }
