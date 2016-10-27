@@ -7,15 +7,16 @@ import time
 import logging as log
 
 from structs import Scan, Vulnerability
+from tools.common.port_task import PortTask
 from utils.task import Task
 
 
-class CommandTask(Task):
+class CommandTask(PortTask):
     """
     Task which runs shell command
 
     """
-    def __init__(self, port, exploit, command, *args, **kwargs):
+    def __init__(self, command, *args, **kwargs):
         """
         Initialize variables
 
@@ -28,15 +29,7 @@ class CommandTask(Task):
 
         """
         super().__init__(*args, **kwargs)
-        self._port = port
         self.command = command
-
-        if isinstance(exploit, (list, set)):
-            self.current_exploits = exploit
-            self.exploit = None
-        else:
-            self.exploit = exploit
-            self.current_exploits = [exploit]
 
     @classmethod
     def prepare_args(cls):
