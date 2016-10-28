@@ -19,4 +19,12 @@ class AucoteHttpHeadersToolTest(TestCase):
 
         self.executor.exploits.find.assert_called_once_with('aucote-http-headers', 'aucote-http-headers')
         mock_task.assert_called_once_with(executor=self.executor, port=self.port,
-                                          exploit=self.executor.exploits.find.return_value)
+                                          exploit=self.executor.exploits.find.return_value, config=self.config)
+
+    @patch('tools.aucote_http_headers.tool.cfg.get', MagicMock(return_value='test'))
+    @patch('tools.aucote_http_headers.tool.HeaderDefinitions')
+    def test_load(self, mock_header):
+        config = MagicMock()
+        AucoteHttpHeadersTool.load(config=config)
+
+        mock_header.assert_called_once_with('test')

@@ -241,6 +241,14 @@ class Port(object):
     def is_ipv6(self):
         return self.node.is_ipv6
 
+    @property
+    def url(self):
+        if self.is_ipv6:
+            format_string = "{0}://[{1}]:{2}"
+        else:
+            format_string = "{0}://{1}:{2}"
+        return format_string.format(self.service_name, self.node.ip, self.number)
+
 
 class Vulnerability(object):
     """

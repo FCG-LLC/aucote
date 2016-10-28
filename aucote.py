@@ -16,6 +16,7 @@ import fcntl
 import signal
 
 from fixtures.exploits import Exploits
+from scans.executor_config import EXECUTOR_CONFIG
 from scans.scan_task import ScanTask
 from scans.task_mapper import TaskMapper
 from structs import Node
@@ -79,7 +80,7 @@ def main():
         except FileNotFoundError:
             pass
 
-        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue)
+        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=EXECUTOR_CONFIG)
 
         if args.cmd == 'scan':
             nodes = []
@@ -102,7 +103,7 @@ class Aucote(object):
     Main aucote class. It Provides run functions (service, single instance, sync db)
     """
 
-    def __init__(self, exploits, kudu_queue):
+    def __init__(self, exploits, kudu_queue, tools_config):
         self.exploits = exploits
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
@@ -113,6 +114,7 @@ class Aucote(object):
         signal.signal(signal.SIGTERM, self.signal_handler)
         self.lock = threading.Lock()
         self.started = False
+        self.load_tools(tools_config)
 
     @property
     def kudu_queue(self):
@@ -238,6 +240,19 @@ class Aucote(object):
 
         """
         return self.thread_pool.unfinished_tasks
+
+    def load_tools(self, config):
+        """
+        Load tools, if tools require config
+
+        Returns:
+            None
+
+        """
+        for name, app in config['apps'].items():
+            if app.get('loader', None):
+                log.info('Loading %s', name)
+                app['loader'](app)
 
 
 # =================== start app =================

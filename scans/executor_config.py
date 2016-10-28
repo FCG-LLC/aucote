@@ -1,7 +1,8 @@
 """
 Provides configuration for tools. Configuration is implicit and shouldn't be modified by end-user.
 """
-
+from tools.aucote_http_headers.structs import HeaderDefinition, HeaderDefinitions
+from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
 from tools.hydra.tool import HydraTool
 from tools.nmap.tool import NmapTool
 from tools.skipfish.tool import SkipfishTool
@@ -71,8 +72,9 @@ EXECUTOR_CONFIG = {
         'skipfish': {
             'class': SkipfishTool
         },
-        # 'aucote-http-headers': {
-        #     'class': AucoteHttpHeadersTool
-        # }
+        'aucote-http-headers': {
+            'class': AucoteHttpHeadersTool,
+            'loader': AucoteHttpHeadersTool.load
+        }
     }
 }
