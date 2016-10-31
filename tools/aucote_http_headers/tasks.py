@@ -1,5 +1,6 @@
 """
-This module containstasks related to Aucote HTTP Headers
+This module contains tasks related to Aucote HTTP Headers
+
 """
 import time
 import requests
@@ -12,8 +13,10 @@ class AucoteHttpHeadersTask(PortTask):
     """
     This task check if required headers are used by HTTP server
 
-    """
+    Returns:
+        list
 
+    """
     MISSING_HEADER = 'Missing header: {name}'
     SUSPICIOUS_HEADER = "Suspicious header value: {name}: '{value}'"
 

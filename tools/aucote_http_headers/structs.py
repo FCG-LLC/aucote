@@ -15,9 +15,8 @@ class HeaderDefinition(object):
         Init variables
 
         Args:
-            name (str):
             pattern (str): Pattern for header value testing
-            exploit (Exploit): Exploit related to header
+            obligatory (bool): Defines if header is obligatory or not
 
         """
         self.pattern = pattern
