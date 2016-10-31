@@ -17,14 +17,14 @@ class AucoteHttpHeadersToolTest(TestCase):
     def test_call(self, mock_task):
         self.assertIsNone(self.tool())
 
-        self.executor.exploits.find.assert_called_once_with('aucote-http-headers', 'aucote-http-headers')
         mock_task.assert_called_once_with(executor=self.executor, port=self.port,
-                                          exploit=self.executor.exploits.find.return_value, config=self.config)
+                                          exploit=self.exploits, config=self.config)
 
     @patch('tools.aucote_http_headers.tool.cfg.get', MagicMock(return_value='test'))
     @patch('tools.aucote_http_headers.tool.HeaderDefinitions')
     def test_load(self, mock_header):
         config = MagicMock()
-        AucoteHttpHeadersTool.load(config=config)
+        exploits = MagicMock()
+        AucoteHttpHeadersTool.load(config=config, exploits=exploits)
 
-        mock_header.assert_called_once_with('test')
+        mock_header.assert_called_once_with('test', exploits)

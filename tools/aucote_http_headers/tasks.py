@@ -14,8 +14,8 @@ class AucoteHttpHeadersTask(PortTask):
 
     """
 
-    MISSING_HEADER = 'Missing header: {name}:\n\t{description}'
-    SUSPICIOUS_HEADER = "Suspicious header value: {name}: '{value}'\n\t{description}"
+    MISSING_HEADER = 'Missing header: {name}'
+    SUSPICIOUS_HEADER = "Suspicious header value: {name}: '{value}'"
 
     def __init__(self, config, *args, **kwargs):
         self.config = config
@@ -29,12 +29,18 @@ class AucoteHttpHeadersTask(PortTask):
         results = []
 
         for header in self.config['headers']:
-            if header.name in headers.keys():
-                if not header.regex.match(headers[header.name]):
-                    results.append(self.SUSPICIOUS_HEADER.format(name=header.name, value=headers[header.name],
-                                                                 description=header.description))
+            if header.exploit.title in headers.keys():
+                if not header.regex.match(headers[header.exploit.title]):
+                    results.append({
+                        'output': self.SUSPICIOUS_HEADER.format(name=header.exploit.title,
+                                                                value=headers[header.exploit.title]),
+                        'exploit': header.exploit
+                    })
             else:
-                results.append(self.MISSING_HEADER.format(name=header.name, description=header.description))
+                results.append({
+                    'output': self.MISSING_HEADER.format(name=header.exploit.title),
+                    'exploit': header.exploit
+                })
 
         self._port.scan.end = int(time.time())
         self.store_scan_end(exploits=self.current_exploits, port=self._port)
@@ -42,7 +48,7 @@ class AucoteHttpHeadersTask(PortTask):
         if not results:
             return results
 
-        vulnerabilities = self.get_vulnerabilities("\n\n".join(results))
+        vulnerabilities = self.get_vulnerabilities(results)
 
         if vulnerabilities:
             for vulnerability in vulnerabilities:
@@ -61,4 +67,9 @@ class AucoteHttpHeadersTask(PortTask):
             list
 
         """
-        return [Vulnerability(exploit=self.exploit, port=self._port, output=results)]
+
+        return_value = []
+
+        for result in results:
+            return_value.append(Vulnerability(exploit=result['exploit'], port=self._port, output=result['output']))
+        return return_value

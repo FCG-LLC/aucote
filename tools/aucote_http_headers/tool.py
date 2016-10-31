@@ -16,12 +16,10 @@ class AucoteHttpHeadersTool(Tool):
 
     def call(self, *args, **kwargs):
         self.executor.add_task(AucoteHttpHeadersTask(executor=self.executor, port=self.port,
-                                                     exploit=self.executor.exploits.find('aucote-http-headers',
-                                                                                         'aucote-http-headers'),
-                                                     config=self.config))
+                                                     exploit=self.exploits, config=self.config))
 
     @classmethod
-    def load(self, config):
+    def load(cls, config, exploits):
         """
         Loads configuration after Aucote initialization
 
@@ -32,4 +30,4 @@ class AucoteHttpHeadersTool(Tool):
             None
 
         """
-        config['headers'] = HeaderDefinitions(cfg.get('tools.aucote-http-headers.headers'))
+        config['headers'] = HeaderDefinitions(cfg.get('tools.aucote-http-headers.headers'), exploits)

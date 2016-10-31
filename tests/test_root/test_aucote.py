@@ -181,7 +181,8 @@ class AucoteTest(TestCase):
             }
         }
 
-        Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=config)
+        exploits = MagicMock()
+        Aucote(exploits=exploits, kudu_queue=MagicMock(), tools_config=config)
 
-        config['apps']['app1']['loader'].assert_called_once_with(config['apps']['app1'])
-        config['apps']['app2']['loader'].assert_called_once_with(config['apps']['app2'])
+        config['apps']['app1']['loader'].assert_called_once_with(config['apps']['app1'], exploits)
+        config['apps']['app2']['loader'].assert_called_once_with(config['apps']['app2'], exploits)

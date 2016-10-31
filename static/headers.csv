@@ -1,21 +1,17 @@
-name;pattern;description
-X-Frame-Options;^(deny|SAMEORIGIN)$;"The use of ""X-Frame-Options"" allows a web page from host B to declare that its content (for example, a button, links, text, etc.) must not be displayed in a frame (<frame> or <iframe>) of another page (e.g., from host A). This is done by a policy declared in the HTTP header and enforced by browser implementations."
-Access-Control-Allow-Origin;^((?!\*).)*$;"The Access-Control-Allow-Origin header indicates whether a resource can be shared based by returning the value of the Origin request header, ""*"", or ""null"" in the response."
-Access-Control-Allow-Methods;;
-Access-Control-Allow-Headers;;
-Access-Control-Max-Age;;
-Content-Security-Policy;^(?=.*upgrade-insecure-requests)(?=.*reflected-xss).*$;Content Security Policy requires careful tuning and precise definition of the policy. If enabled, CSP has significant impact on the way browser renders pages (e.g., inline JavaScript disabled by default and must be explicitly allowed in policy). CSP prevents a wide range of attacks, including Cross-site scripting and other cross-site injections.
-Content-Security-Policy-Report-Only;^(?=.*upgrade-insecure-requests)(?=.*reflected-xss).*$;Content Security Policy requires careful tuning and precise definition of the policy. If enabled, CSP has significant impact on the way browser renders pages (e.g., inline JavaScript disabled by default and must be explicitly allowed in policy). CSPR reports any policy breaking.
-X-Content-Security-Policy;^(?=.*upgrade-insecure-requests)(?=.*reflected-xss).*$;Content Security Policy requires careful tuning and precise definition of the policy. If enabled, CSP has significant impact on the way browser renders pages (e.g., inline JavaScript disabled by default and must be explicitly allowed in policy). CSP prevents a wide range of attacks, including Cross-site scripting and other cross-site injections.
-Upgrade-Insecure-Requests;1;
-Content-Encoding;^((?!(gzip|deflate)).)*$;
-Public-Key-Pins;;"HTTP Public Key Pinning (HPKP) is a trust on first use security mechanism which protects HTTPS websites from impersonation using fraudulent certificates issued by compromised certificate authorities. The 
-security context or pinset data is supplied by the site or origin."
-Referrer-Policy;^((?!no-referrer).)*$;
-Strict-Transport-Security;^((?!max-age=0).)*$;"HTTP Strict Transport Security (HSTS) is a web security policy mechanism which helps to protect secure HTTPS websites against downgrade attacks and cookie hijacking. It allows web servers to declare that 
-web browsers (or other complying user agents) should only interact with it using secure HTTPS connections, and never via the insecure HTTP protocol. HSTS is an IETF standards track protocol and is specified in RFC 6797."
-X-Content-Type-Options;^(?=.*nosniff).*$;"The only defined value, ""nosniff"", prevents Internet Explorer and Google Chrome from MIME-sniffing a response away from the declared content-type. This also applies to Google Chrome, when downloading extensions. This reduces exposure to drive-by download attacks and sites serving user uploaded content that, by clever naming, could be treated by MSIE as executable or dynamic HTML files."
-X-Download-Options;^(?=.*noopen).*$;
-X-Permitted-Cross-Domain-Policies;^none$;
-X-XSS-Protection;1;"This header enables the Cross-site scripting (XSS) filter built into most recent web browsers. It's usually enabled by default anyway, so the role of this header is to re-enable the filter for this partic
-ular website if it was disabled by the user. This header is supported in IE 8+, and in Chrome (not sure which versions). The anti-XSS filter was added in Chrome 4. Its unknown if that version honored this header."
+name;pattern;enable;required
+x-frame-options;^(deny|SAMEORIGIN)$;1;1
+access-control-allow-origin;^((?!\*).)*$;1;1
+access-control-allow-methods;;0;0
+access-control-allow-headers;;0;0
+access-control-max-age;;0;0
+content-security-policy;^(?=.*upgrade-insecure-requests)(?=.*reflected-xss).*$;1;1
+content-security-policy-report-only;^(?=.*upgrade-insecure-requests)(?=.*reflected-xss).*$;1;1
+x-content-security-policy;^(?=.*upgrade-insecure-requests)(?=.*reflected-xss).*$;1;1
+content-encoding;^((?!(gzip|deflate)).)*$;1;0
+public-key-pins;;1;1
+referrer-policy;^((?!(|unsafe-url)).)*$;1;1
+strict-transport-security;^((?!max-age=0).)*$;1;1
+x-content-type-options;^(?=.*nosniff).*$;1;1
+x-download-options;^(?=.*noopen).*$;1;1
+x-permitted-cross-domain-policies;^none$;1;1
+x-xss-protection;^1$;1;1

@@ -11,28 +11,28 @@ class HeaderDefinition(object):
     Definition of header. Defines name of header and how to check it.
 
     """
-    def __init__(self, name, pattern, description):
+    def __init__(self, name, pattern, exploit):
         """
         Init variables
 
         Args:
             name (str):
             pattern (str): Pattern for header value testing
-            description (str): Description of header, e.g. usage
+            exploit (Exploit): Exploit related to header
 
         """
         self.pattern = pattern
         self.regex = re.compile(pattern, re.IGNORECASE)
         self.name = name
-        self.description = description
+        self.exploit = exploit
 
 
 class HeaderDefinitions(object):
-    def __init__(self, filename):
-        self._headers = self.read(filename)
+    def __init__(self, filename, exploits):
+        self._headers = self.read(filename, exploits)
 
     @classmethod
-    def read(cls, filename):
+    def read(cls, filename, exploits):
         """
         Reads Headers Definition from csv file
 
@@ -50,7 +50,8 @@ class HeaderDefinitions(object):
             for num, row in enumerate(reader):
                 if num == 0:
                     continue
-                return_value.append(HeaderDefinition(name=row[0], pattern=row[1], description=row[2]))
+                return_value.append(HeaderDefinition(name=row[0], pattern=row[1],
+                                                     exploit=exploits.find('aucote-http-headers', row[0])))
         return return_value
 
     def __iter__(self):

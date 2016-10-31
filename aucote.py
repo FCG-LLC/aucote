@@ -252,7 +252,7 @@ class Aucote(object):
         for name, app in config['apps'].items():
             if app.get('loader', None):
                 log.info('Loading %s', name)
-                app['loader'](app)
+                app['loader'](app, self.exploits)
 
 
 # =================== start app =================

@@ -2,6 +2,7 @@ from collections import KeysView
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+from fixtures.exploits import Exploit
 from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tasks import AucoteHttpHeadersTask
 
@@ -41,7 +42,7 @@ class AucoteHttpHeadersTaskTest(TestCase):
         self.exploit = MagicMock()
         self.config = {
             'headers': {
-                HeaderDefinition(name='Access-Control-Allow-Origin', pattern='test_nie', description='test')
+                HeaderDefinition(name='Access-Control-Allow-Origin', pattern='test_nie', exploit=self.exploit)
             }
         }
         self.custom_headers = {'Accept-Encoding:': 'gzip, deflate'}
@@ -61,16 +62,28 @@ class AucoteHttpHeadersTaskTest(TestCase):
 
     @patch('tools.aucote_http_headers.tasks.requests')
     def test_call_errors(self, mock_requests):
+        exploit_1 = MagicMock()
+        exploit_1.title = 'X-Frame-Options'
+        exploit_2 = MagicMock()
+        exploit_2.title = 'Access-Control-Non-Existing'
         self.task.config['headers'] = {
-            HeaderDefinition(name='X-Frame-Options', pattern='^(SAMEORIGIN)$', description='description_1'),
-            HeaderDefinition(name='Access-Control-Non-Existing', pattern='^((?!\*).)*$', description='description_2')
+            HeaderDefinition(name='X-Frame-Options', pattern='^(SAMEORIGIN)$', exploit=exploit_1),
+            HeaderDefinition(name='Access-Control-Non-Existing', pattern='^((?!\*).)*$', exploit=exploit_2)
         }
         mock_requests.head.return_value = self.SERVER_RETURN
         self.task.store_vulnerability = MagicMock()
         self.task.store_scan_end = MagicMock()
 
         result = self.task()
-        expected = ["Missing header: Access-Control-Non-Existing:\n\tdescription_2",
-                    "Suspicious header value: X-Frame-Options: 'deny'\n\tdescription_1"]
+        expected = [
+            {
+                "output": "Missing header: Access-Control-Non-Existing",
+                "exploit": exploit_2,
+            },
+            {
+                "output": "Suspicious header value: X-Frame-Options: 'deny'",
+                "exploit": exploit_1,
+            }
+        ]
 
         self.assertCountEqual(result, expected)
