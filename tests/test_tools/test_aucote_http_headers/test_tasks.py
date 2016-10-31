@@ -42,7 +42,7 @@ class AucoteHttpHeadersTaskTest(TestCase):
         self.exploit = MagicMock()
         self.config = {
             'headers': {
-                HeaderDefinition(name='Access-Control-Allow-Origin', pattern='test_nie', exploit=self.exploit)
+                HeaderDefinition(pattern='test_nie', obligatory=True)
             }
         }
         self.custom_headers = {'Accept-Encoding:': 'gzip, deflate'}
@@ -52,8 +52,12 @@ class AucoteHttpHeadersTaskTest(TestCase):
     @patch('tools.aucote_http_headers.tasks.requests')
     def test_call(self, mock_requests):
         mock_requests.head.return_value = self.SERVER_RETURN
+        self.exploit.name = 'test'
+        self.task.current_exploits = [self.exploit]
         self.task.config = {
-            'headers': set(),
+            'headers': {
+                'test': HeaderDefinition(pattern='', obligatory=False)
+            },
         }
         self.task.store_vulnerability = MagicMock()
         self.task.store_scan_end = MagicMock()
@@ -62,14 +66,24 @@ class AucoteHttpHeadersTaskTest(TestCase):
 
     @patch('tools.aucote_http_headers.tasks.requests')
     def test_call_errors(self, mock_requests):
+
         exploit_1 = MagicMock()
         exploit_1.title = 'X-Frame-Options'
+        exploit_1.name = 'exploit_1'
         exploit_2 = MagicMock()
         exploit_2.title = 'Access-Control-Non-Existing'
-        self.task.config['headers'] = {
-            HeaderDefinition(name='X-Frame-Options', pattern='^(SAMEORIGIN)$', exploit=exploit_1),
-            HeaderDefinition(name='Access-Control-Non-Existing', pattern='^((?!\*).)*$', exploit=exploit_2),
-            HeaderDefinition(name='Access-Control-Non-Existing', pattern='^((?!\*).)*$', exploit=None)
+        exploit_2.name = 'exploit_2'
+        exploit_3 = MagicMock()
+        exploit_3.name = 'exploit_3'
+
+        self.task.current_exploits = [exploit_1, exploit_2, exploit_3]
+
+        self.task.config = {
+            'headers': {
+                'exploit_1': HeaderDefinition(pattern='^(SAMEORIGIN)$', obligatory=True),
+                'exploit_2': HeaderDefinition(pattern='^((?!\*).)*$', obligatory=True),
+                'exploit_3': HeaderDefinition(pattern='^((?!\*).)*$', obligatory=False)
+            }
         }
         mock_requests.head.return_value = self.SERVER_RETURN
         self.task.store_vulnerability = MagicMock()

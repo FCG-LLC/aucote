@@ -1,7 +1,9 @@
 """
 Provides configuration for tools. Configuration is implicit and shouldn't be modified by end-user.
 """
-from tools.aucote_http_headers.structs import HeaderDefinition, HeaderDefinitions
+import re
+
+from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
 from tools.hydra.tool import HydraTool
 from tools.nmap.tool import NmapTool
@@ -74,7 +76,58 @@ EXECUTOR_CONFIG = {
         },
         'aucote-http-headers': {
             'class': AucoteHttpHeadersTool,
-            'loader': AucoteHttpHeadersTool.load
+            'loader': None,
+            'headers': {
+                'x-frame-options':
+                    HeaderDefinition(pattern='^(deny|SAMEORIGIN)$', obligatory=True),
+
+                'access-control-allow-origin':
+                    HeaderDefinition(pattern='^((?!\*).)*$', obligatory=False),
+
+                'access-control-allow-methods':
+                    HeaderDefinition(pattern='', obligatory=False),
+
+                'access-control-allow-headers':
+                    HeaderDefinition(pattern='', obligatory=False),
+
+                'access-control-max-age':
+                    HeaderDefinition(pattern='', obligatory=False),
+
+                'content-security-policy':
+                    HeaderDefinition(pattern='^(?=.*upgrade-insecure-requests)(?=.*reflected-xss).*$', obligatory=True),
+
+                'content-security-policy-report-only':
+                    HeaderDefinition(pattern='^(?=.*upgrade-insecure-requests)(?=.*reflected-xss).*$',
+                                     obligatory=False),
+
+                'x-content-security-policy':
+                    HeaderDefinition(pattern='^(?=.*upgrade-insecure-requests)(?=.*reflected-xss).*$',
+                                     obligatory=False),
+
+                'content-encoding':
+                    HeaderDefinition(pattern='^((?!(gzip|deflate)).)*$', obligatory=False),
+
+                'public-key-pins':
+                    HeaderDefinition(pattern='', obligatory=True),
+
+                'referrer-policy':
+                    HeaderDefinition(pattern='^((?!(|unsafe-url)).)*$', obligatory=True),
+
+                'strict-transport-security':
+                    HeaderDefinition(pattern='^((?!max-age=0).)*$', obligatory=True),
+
+                'x-content-type-options':
+                    HeaderDefinition(pattern='^(?=.*nosniff).*$', obligatory=True),
+
+                'x-download-options':
+                    HeaderDefinition(pattern='^(?=.*noopen).*$', obligatory=True),
+
+                'x-permitted-cross-domain-policies':
+                    HeaderDefinition(pattern='^none$', obligatory=True),
+
+                'x-xss-protection':
+                    HeaderDefinition(pattern='^1$', obligatory=True)
+            }
         }
     }
 }

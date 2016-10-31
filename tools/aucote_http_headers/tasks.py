@@ -28,20 +28,19 @@ class AucoteHttpHeadersTask(PortTask):
 
         results = []
 
-        for header in self.config['headers']:
-            if not header.exploit:
-                continue
-            if header.exploit.title in headers.keys():
-                if not header.regex.match(headers[header.exploit.title]):
+        for exploit in self.current_exploits:
+            header = self.config.get('headers', {}).get(exploit.name)
+            if exploit.title in headers.keys():
+                if not header.regex.match(headers[exploit.title]):
                     results.append({
-                        'output': self.SUSPICIOUS_HEADER.format(name=header.exploit.title,
-                                                                value=headers[header.exploit.title]),
-                        'exploit': header.exploit
+                        'output': self.SUSPICIOUS_HEADER.format(name=exploit.title,
+                                                                value=headers[exploit.title]),
+                        'exploit': exploit
                     })
-            else:
+            elif header.obligatory:
                 results.append({
-                    'output': self.MISSING_HEADER.format(name=header.exploit.title),
-                    'exploit': header.exploit
+                    'output': self.MISSING_HEADER.format(name=exploit.title),
+                    'exploit': exploit
                 })
 
         self._port.scan.end = int(time.time())
