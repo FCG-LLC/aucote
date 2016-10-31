@@ -68,7 +68,8 @@ class AucoteHttpHeadersTaskTest(TestCase):
         exploit_2.title = 'Access-Control-Non-Existing'
         self.task.config['headers'] = {
             HeaderDefinition(name='X-Frame-Options', pattern='^(SAMEORIGIN)$', exploit=exploit_1),
-            HeaderDefinition(name='Access-Control-Non-Existing', pattern='^((?!\*).)*$', exploit=exploit_2)
+            HeaderDefinition(name='Access-Control-Non-Existing', pattern='^((?!\*).)*$', exploit=exploit_2),
+            HeaderDefinition(name='Access-Control-Non-Existing', pattern='^((?!\*).)*$', exploit=None)
         }
         mock_requests.head.return_value = self.SERVER_RETURN
         self.task.store_vulnerability = MagicMock()

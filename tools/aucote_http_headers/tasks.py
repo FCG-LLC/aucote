@@ -29,6 +29,8 @@ class AucoteHttpHeadersTask(PortTask):
         results = []
 
         for header in self.config['headers']:
+            if not header.exploit:
+                continue
             if header.exploit.title in headers.keys():
                 if not header.regex.match(headers[header.exploit.title]):
                     results.append({
