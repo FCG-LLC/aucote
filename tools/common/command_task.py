@@ -8,7 +8,6 @@ import logging as log
 
 from structs import Scan, Vulnerability
 from tools.common.port_task import PortTask
-from utils.task import Task
 
 
 class CommandTask(PortTask):

@@ -53,6 +53,13 @@ class Node:
 
     @property
     def is_ipv6(self):
+        """
+        Returns True if node is using ipv6 addressing
+
+        Returns:
+            bool
+
+        """
         return isinstance(self.ip, ipaddress.IPv6Address)
 
 
@@ -239,10 +246,24 @@ class Port(object):
 
     @property
     def is_ipv6(self):
+        """
+        Returns True if node is using ipv6 addressing
+
+        Returns:
+            bool
+
+        """
         return self.node.is_ipv6
 
     @property
     def url(self):
+        """
+        Returns node as URL string.
+
+        Returns:
+            str
+
+        """
         if self.is_ipv6:
             format_string = "{0}://[{1}]:{2}"
         else:

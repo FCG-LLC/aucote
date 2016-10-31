@@ -1,7 +1,15 @@
+"""
+This module contains task related to port.
+
+"""
 from utils.task import Task
 
 
 class PortTask(Task):
+    """
+    Abstract class for exploit-tasks executed on port
+
+    """
     def __init__(self, port, exploit, *args, **kwargs):
         """
         Initialize variables
