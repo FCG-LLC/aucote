@@ -4,6 +4,7 @@ This module contains tasks related to Aucote HTTP Headers
 """
 import time
 import requests
+import logging as log
 
 from structs import Vulnerability
 from tools.aucote_http_headers.structs import AucoteHttpHeaderResult as Result
@@ -27,7 +28,12 @@ class AucoteHttpHeadersTask(PortTask):
 
     def __call__(self, *args, **kwargs):
         custom_headers = {'Accept-Encoding:': 'gzip, deflate'}
-        request = requests.head(self._port.url, headers=custom_headers, verify=False)
+        try:
+            request = requests.head(self._port.url, headers=custom_headers, verify=False)
+        except Exception as exception:
+            log.warning("Exception occured while connecting to %s", self._port.url, exc_info=exception)
+            return None
+
         headers = request.headers
 
         results = []

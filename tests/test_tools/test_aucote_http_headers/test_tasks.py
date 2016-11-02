@@ -96,3 +96,12 @@ class AucoteHttpHeadersTaskTest(TestCase):
         ]
 
         self.assertCountEqual(result, expected)
+
+    @patch('tools.aucote_http_headers.tasks.requests')
+    def test_with_requests_exception(self, mock_requests):
+        mock_requests.head.side_effect = Exception()
+
+        result = self.task()
+        expected = None
+
+        self.assertEqual(result, expected)

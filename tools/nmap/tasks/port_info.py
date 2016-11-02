@@ -74,6 +74,10 @@ class NmapPortInfoTask(Task):
             log.warning('No service for %s:%i', self._port.node.ip, self._port.number)
         else:
             self._port.service_name = service.get('name')
+            if self._port.service_name == 'http':
+                if service.get('tunnel') == 'ssl':
+                    self._port.service_name = 'https'
+
             self._port.service_version = service.get('version')
 
         self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
