@@ -60,7 +60,7 @@ _DEFAULT = {
         },
         'aucote-http-headers': {
             'enable': True,
-            'period': '1s'
+            'period': ''
         }
     },
     'service': {
