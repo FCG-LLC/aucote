@@ -6,6 +6,7 @@ import time
 import requests
 
 from structs import Vulnerability
+from tools.aucote_http_headers.structs import AucoteHttpHeaderResult as Result
 from tools.common.port_task import PortTask
 
 
@@ -14,7 +15,7 @@ class AucoteHttpHeadersTask(PortTask):
     This task check if required headers are used by HTTP server
 
     Returns:
-        list
+        list: list of AucoteHttpHeaderResult objects
 
     """
     MISSING_HEADER = 'Missing header: {name}'
@@ -35,16 +36,11 @@ class AucoteHttpHeadersTask(PortTask):
             header = self.config.get('headers', {}).get(exploit.name)
             if exploit.title in headers.keys():
                 if not header.regex.match(headers[exploit.title]):
-                    results.append({
-                        'output': self.SUSPICIOUS_HEADER.format(name=exploit.title,
-                                                                value=headers[exploit.title]),
-                        'exploit': exploit
-                    })
+                    results.append(Result(output=self.SUSPICIOUS_HEADER.format(name=exploit.title,
+                                                                               value=headers[exploit.title]),
+                                          exploit=exploit))
             elif header.obligatory:
-                results.append({
-                    'output': self.MISSING_HEADER.format(name=exploit.title),
-                    'exploit': exploit
-                })
+                results.append(Result(output=self.MISSING_HEADER.format(name=exploit.title),exploit=exploit))
 
         self._port.scan.end = int(time.time())
         self.store_scan_end(exploits=self.current_exploits, port=self._port)
@@ -65,15 +61,15 @@ class AucoteHttpHeadersTask(PortTask):
         Gets vulnerabilities based upon results
 
         Args:
-            results:
+            results(list): list of AucoteHttpHeaderResult
 
         Returns:
-            list
+            list: list of Vulneravbilities
 
         """
 
         return_value = []
 
         for result in results:
-            return_value.append(Vulnerability(exploit=result['exploit'], port=self._port, output=result['output']))
+            return_value.append(Vulnerability(exploit=result.exploit, port=self._port, output=result.output))
         return return_value

@@ -18,4 +18,4 @@ class AucoteHttpHeadersToolTest(TestCase):
         self.assertIsNone(self.tool())
 
         mock_task.assert_called_once_with(executor=self.executor, port=self.port,
-                                          exploit=self.exploits, config=self.config)
+                                          exploits=self.exploits, config=self.config)

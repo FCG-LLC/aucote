@@ -45,7 +45,7 @@ class HydraToolTest(TestCase):
         self.hydra_tool()
 
         hydra_task_mock.assert_called_once_with(executor=self.executor, service='ssh', port=self.port, login=True,
-                                                exploit=self.executor.exploits.find.return_value)
+                                                exploits=[self.executor.exploits.find.return_value])
 
     @patch('tools.hydra.tool.HydraScriptTask')
     @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=[])))
@@ -53,7 +53,7 @@ class HydraToolTest(TestCase):
         self.hydra_tool_without_login()
 
         hydra_task_mock.assert_called_once_with(executor=self.executor, service='vnc', port=self.port_no_login,
-                                                login=False, exploit=self.executor.exploits.find.return_value)
+                                                login=False, exploits=[self.executor.exploits.find.return_value])
 
     def test_non_implemented_service(self):
         self.config['mapper']['test'] = 'test'

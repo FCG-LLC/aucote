@@ -22,3 +22,45 @@ class HeaderDefinition(object):
         self.pattern = pattern
         self.regex = re.compile(pattern, re.IGNORECASE)
         self.obligatory = obligatory
+
+
+class AucoteHttpHeaderResult(object):
+    """
+    Result of successful check
+
+    """
+    def __init__(self, output, exploit):
+        """
+
+        Args:
+            output (str): checks output
+            exploit (Exploit): exploit handler
+
+        """
+        self.output = output
+        self.exploit = exploit
+
+    def __eq__(self, other):
+        """
+        Check if two objects are equal
+        Args:
+            other (AucoteHttpHeaderResult):
+
+        Returns:
+            bool
+
+        """
+        return isinstance(other, AucoteHttpHeaderResult) and self.output == other.output \
+               and self.exploit == other.exploit
+
+    def __ne__(self, other):
+        """
+        Check if two objects are not equal
+        Args:
+            other (AucoteHttpHeaderResult):
+
+        Returns:
+            bool
+
+        """
+        return not self == other

@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
-from tools.aucote_http_headers.structs import HeaderDefinition
+from tools.aucote_http_headers.structs import HeaderDefinition, AucoteHttpHeaderResult
 from tools.aucote_http_headers.tasks import AucoteHttpHeadersTask
 
 
@@ -62,7 +62,7 @@ class AucoteHttpHeadersTaskTest(TestCase):
         self.task.store_vulnerability = MagicMock()
         self.task.store_scan_end = MagicMock()
         self.assertEqual(self.task(), [])
-        mock_requests.head.assert_called_once_with(self.port.url, headers=self.custom_headers)
+        mock_requests.head.assert_called_once_with(self.port.url, headers=self.custom_headers, verify=False)
 
     @patch('tools.aucote_http_headers.tasks.requests')
     def test_call_errors(self, mock_requests):
@@ -91,14 +91,8 @@ class AucoteHttpHeadersTaskTest(TestCase):
 
         result = self.task()
         expected = [
-            {
-                "output": "Missing header: Access-Control-Non-Existing",
-                "exploit": exploit_2,
-            },
-            {
-                "output": "Suspicious header value: X-Frame-Options: 'deny'",
-                "exploit": exploit_1,
-            }
+            AucoteHttpHeaderResult(output="Missing header: Access-Control-Non-Existing", exploit=exploit_2),
+            AucoteHttpHeaderResult(output="Suspicious header value: X-Frame-Options: 'deny'", exploit=exploit_1),
         ]
 
         self.assertCountEqual(result, expected)

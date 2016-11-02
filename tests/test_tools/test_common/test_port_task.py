@@ -15,3 +15,10 @@ class PortTaskTest(TestCase):
         self.assertEqual(self.task._port, self.port)
         self.assertEqual(self.task.executor, self.executor)
         self.assertEqual(self.task.exploit, self.exploit)
+
+    def test_exploit_one(self):
+        self.assertEqual(self.task.exploit, self.exploit)
+
+    def test_exploit_multiple(self):
+        self.task.current_exploits = [MagicMock(), MagicMock()]
+        self.assertEqual(self.task.exploit, None)
