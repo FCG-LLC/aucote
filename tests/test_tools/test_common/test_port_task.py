@@ -9,7 +9,7 @@ class PortTaskTest(TestCase):
         self.executor = MagicMock()
         self.port = MagicMock()
         self.exploit = MagicMock()
-        self.task = PortTask(executor=self.executor, port=self.port, exploit=self.exploit)
+        self.task = PortTask(executor=self.executor, port=self.port, exploits=[self.exploit])
 
     def test_init(self):
         self.assertEqual(self.task._port, self.port)

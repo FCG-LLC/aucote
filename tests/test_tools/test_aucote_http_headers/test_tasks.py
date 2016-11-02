@@ -46,7 +46,7 @@ class AucoteHttpHeadersTaskTest(TestCase):
             }
         }
         self.custom_headers = {'Accept-Encoding:': 'gzip, deflate'}
-        self.task = AucoteHttpHeadersTask(port=self.port, executor=self.executor, exploit=self.exploit,
+        self.task = AucoteHttpHeadersTask(port=self.port, executor=self.executor, exploits=[self.exploit],
                                           config=self.config)
 
     @patch('tools.aucote_http_headers.tasks.requests')

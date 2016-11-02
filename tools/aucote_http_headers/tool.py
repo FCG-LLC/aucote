@@ -14,4 +14,4 @@ class AucoteHttpHeadersTool(Tool):
 
     def call(self, *args, **kwargs):
         self.executor.add_task(AucoteHttpHeadersTask(executor=self.executor, port=self.port,
-                                                     exploit=self.exploits, config=self.config))
+                                                     exploits=self.exploits, config=self.config))

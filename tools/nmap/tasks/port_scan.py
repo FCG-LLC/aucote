@@ -28,7 +28,7 @@ class NmapPortScanTask(CommandTask):
 
         self._script_classes = script_classes
         exploits = [script.exploit for script in self._script_classes]
-        super().__init__(command=NmapBase(), exploit=exploits, *args, **kwargs)
+        super().__init__(command=NmapBase(), exploits=exploits, *args, **kwargs)
         self.scripts = {script.name: script for script in self._script_classes}
 
     @property

@@ -11,7 +11,7 @@ class CommandTaskTest(TestCase):
         self.port = MagicMock()
         self.command = MagicMock()
         self.exploit = MagicMock()
-        self.task = CommandTask(executor=self.executor, port=self.port, command=self.command, exploit=self.exploit)
+        self.task = CommandTask(executor=self.executor, port=self.port, command=self.command, exploits=[self.exploit])
 
     def test_init(self):
         self.assertEqual(self.task._port, self.port)

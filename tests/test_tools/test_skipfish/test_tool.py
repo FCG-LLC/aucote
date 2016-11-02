@@ -29,7 +29,7 @@ class SkipfishToolTest(TestCase):
         self.skipfish_tool()
 
         skipfish_scan_mock.assert_called_once_with(executor=self.executor, port=self.port,
-                                                   exploit=self.executor.exploits.find.return_value)
+                                                   exploits=[self.executor.exploits.find.return_value])
 
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
     def test_disable(self):
