@@ -93,7 +93,7 @@ class NmapPortScanTask(CommandTask):
 
         return args
 
-    def get_vulnerabilities(self, results):
+    def _get_vulnerabilities(self, results):
         """
         Proceed results of command execution and returns list of vulnerabilities
 

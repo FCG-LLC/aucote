@@ -65,7 +65,7 @@ class CommandTask(PortTask):
             log.debug("Process %s does not return any result.", self.command.NAME)
             return None
 
-        vulnerabilities = self.get_vulnerabilities(results)
+        vulnerabilities = self._get_vulnerabilities(results)
 
         if vulnerabilities:
             for vulnerability in vulnerabilities:
@@ -73,7 +73,7 @@ class CommandTask(PortTask):
 
         return results
 
-    def get_vulnerabilities(self, results):
+    def _get_vulnerabilities(self, results):
         """
         Gets vulnerabilities based upon results
 
