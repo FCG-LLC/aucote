@@ -26,7 +26,7 @@ class AucoteHttpHeadersTask(PortTask):
 
     def __call__(self, *args, **kwargs):
         custom_headers = {'Accept-Encoding:': 'gzip, deflate'}
-        request = requests.head(self._port.url, headers=custom_headers)
+        request = requests.head(self._port.url, headers=custom_headers, verify=False)
         headers = request.headers
 
         results = []
