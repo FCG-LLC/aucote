@@ -1,7 +1,7 @@
 """
 Provides configuration for tools. Configuration is implicit and shouldn't be modified by end-user.
 """
-
+from tools.cisco_global_exploiter.tool import CiscoGlobalExploiterTool
 from tools.hydra.tool import HydraTool
 from tools.nmap.tool import NmapTool
 from tools.skipfish.tool import SkipfishTool
@@ -70,6 +70,10 @@ EXECUTOR_CONFIG = {
         },
         'skipfish': {
             'class': SkipfishTool
+        },
+        'cisco-global-exploiter': {
+            'class': CiscoGlobalExploiterTool,
+            'disabled_scripts': {'cisco1', 'cisco2', 'cisco9', 'cisco10', 'cisco11', 'cisco12', 'cisco14'}
         }
     }
 }
