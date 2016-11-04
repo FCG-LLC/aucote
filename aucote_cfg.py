@@ -57,6 +57,10 @@ _DEFAULT = {
             'threads': 5,
             'tmp_directory': '/tmp',
             'period': '1d'
+        },
+        'aucote-http-headers': {
+            'enable': True,
+            'period': ''
         }
     },
     'service': {
@@ -69,7 +73,7 @@ _DEFAULT = {
             'node_period': '1m',
             'storage': 'storage.sqlite3'
         },
-        "api":{
+        "api": {
             'v1': {
                 'host': '0.0.0.0',
                 'port': 1235

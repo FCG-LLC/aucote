@@ -14,20 +14,20 @@ from utils.storage import Storage
 @patch('utils.log.config', Mock(return_value=""))
 class AucoteTest(TestCase):
     def setUp(self):
-        self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock())
+        self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=MagicMock())
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl', MagicMock())
-    def test_main_scan(self):
+    @patch('aucote.Aucote')
+    def test_main_scan(self, mock_aucote):
         args = PropertyMock()
         args.configure_mock(cmd='scan')
 
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            with patch('aucote.Aucote.run_scan') as mock:
-                main()
+            main()
 
-        self.assertEqual(mock.call_count, 1)
+        self.assertEqual(mock_aucote.return_value.run_scan.call_count, 1)
 
     @patch('fixtures.exploits.Exploits.read', MagicMock(side_effect=NmapUnsupported))
     @patch('builtins.open', mock_open())
@@ -43,26 +43,26 @@ class AucoteTest(TestCase):
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl', MagicMock())
-    def test_main_service(self):
+    @patch('aucote.Aucote')
+    def test_main_service(self, mock_aucote):
         args = PropertyMock()
         args.configure_mock(cmd='service')
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            with patch('aucote.Aucote.run_service') as mock:
-                main()
+            main()
 
-        self.assertEqual(mock.call_count, 1)
+        self.assertEqual(mock_aucote.return_value.run_service.call_count, 1)
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl', MagicMock())
-    def test_main_syncdb(self):
+    @patch('aucote.Aucote')
+    def test_main_syncdb(self, mock_aucote):
         args = PropertyMock()
         args.configure_mock(cmd='syncdb')
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            with patch('aucote.Aucote.run_syncdb') as mock:
-                main()
+            main()
 
-        self.assertEqual(mock.call_count, 1)
+        self.assertEqual(mock_aucote.return_value.run_syncdb.call_count, 1)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.StorageTask')
@@ -138,15 +138,17 @@ class AucoteTest(TestCase):
             with patch('aucote.Aucote.run_service'):
                 self.assertRaises(SystemExit, main)
 
-    def test_init(self):
+    @patch('aucote.Aucote.load_tools')
+    def test_init(self, mock_loader):
         exploits = MagicMock()
         kudu_queue = MagicMock()
-        storage = MagicMock()
+        cfg = MagicMock()
 
-        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue)
+        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=cfg)
 
         self.assertEqual(aucote.storage, None)
         self.assertEqual(aucote.kudu_queue, kudu_queue)
+        mock_loader.called_once_With(cfg)
 
     def test_signal_handling(self):
         self.assertRaises(SystemExit, self.aucote.signal_handler, 2, MagicMock())
@@ -164,3 +166,23 @@ class AucoteTest(TestCase):
         self.aucote.storage = MagicMock()
 
         self.assertEqual(self.aucote.storage, expected)
+
+    def test_load_tools(self):
+        config = {
+            'apps': {
+                'app1': {
+                    'name': MagicMock,
+                    'loader': MagicMock(),
+                },
+                'app2': {
+                    'name': MagicMock,
+                    'loader': MagicMock(),
+                }
+            }
+        }
+
+        exploits = MagicMock()
+        Aucote(exploits=exploits, kudu_queue=MagicMock(), tools_config=config)
+
+        config['apps']['app1']['loader'].assert_called_once_with(config['apps']['app1'], exploits)
+        config['apps']['app2']['loader'].assert_called_once_with(config['apps']['app2'], exploits)

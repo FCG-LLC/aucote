@@ -7,15 +7,15 @@ import time
 import logging as log
 
 from structs import Scan, Vulnerability
-from utils.task import Task
+from tools.common.port_task import PortTask
 
 
-class CommandTask(Task):
+class CommandTask(PortTask):
     """
     Task which runs shell command
 
     """
-    def __init__(self, port, exploit, command, *args, **kwargs):
+    def __init__(self, command, *args, **kwargs):
         """
         Initialize variables
 
@@ -28,15 +28,7 @@ class CommandTask(Task):
 
         """
         super().__init__(*args, **kwargs)
-        self._port = port
         self.command = command
-
-        if isinstance(exploit, (list, set)):
-            self.current_exploits = exploit
-            self.exploit = None
-        else:
-            self.exploit = exploit
-            self.current_exploits = [exploit]
 
     @classmethod
     def prepare_args(cls):
@@ -73,7 +65,7 @@ class CommandTask(Task):
             log.debug("Process %s does not return any result.", self.command.NAME)
             return None
 
-        vulnerabilities = self.get_vulnerabilities(results)
+        vulnerabilities = self._get_vulnerabilities(results)
 
         if vulnerabilities:
             for vulnerability in vulnerabilities:
@@ -81,7 +73,7 @@ class CommandTask(Task):
 
         return results
 
-    def get_vulnerabilities(self, results):
+    def _get_vulnerabilities(self, results):
         """
         Gets vulnerabilities based upon results
 
