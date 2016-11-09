@@ -1,52 +1,63 @@
 import asyncio.subprocess
-import sys
-import time
 import os
-from asyncio import wait_for
-
-all_args = ['nmap', '--script', 'banner', '-p', '0-65535', '127.0.0.1']
+from asyncio import wait_for, futures
 
 
 @asyncio.coroutine
-def get_date():
-    create = asyncio.create_subprocess_exec(*all_args, stdout=asyncio.subprocess.PIPE, stdin=asyncio.subprocess.PIPE,
+def _call_asyncio(command, arguments):
+    instance = asyncio.create_subprocess_exec(*command, stdout=asyncio.subprocess.PIPE, stdin=asyncio.subprocess.PIPE,
                                             stderr=asyncio.subprocess.PIPE)
-    proc = yield from create
+
+    process = yield from instance
     stdout_data = b""
     stderr_data = b""
 
+    iterator = iter(arguments)
+    current_arg = next(iterator)
+
     while True:
         try:
-            os.kill(proc.pid, 0)
+            os.kill(process.pid, 0)
         except ProcessLookupError:
+            yield from process.wait()
             return stdout_data
 
-        yield from wait_for(create, None)
-        data = yield from proc.stdout.read(4096)
-        if data:
-            stdout_data += data
+        yield from wait_for(instance, None)
 
-        data = yield from proc.stderr.read(4096)
-        if data:
-            stderr_data += data
+        try:
+            data = yield from wait_for(process.stdout.read(4096), 0.5)
 
-        if data:
-            print(data)
-            proc.stdin.write(b"\n")
-            yield from proc.stdin.drain()
-            time.sleep(5)
+            if data:
+                stdout_data += data
+        except futures.TimeoutError:
+            pass
 
-    # Wait for the subprocess exit
-    # yield from proc.wait()
-    # return data
+        try:
+            data = yield from wait_for(process.stderr.read(4096), 0.5)
+            if data:
+                stderr_data += data
+        except futures.TimeoutError:
+            pass
 
-if sys.platform == "win32":
-    loop = asyncio.ProactorEventLoop()
-    asyncio.set_event_loop(loop)
-else:
-    loop = asyncio.get_event_loop()
+        if current_arg and stdout_data.endswith(current_arg[0]):
+            process.stdin.write(current_arg[1])
+            stdout_data += current_arg[1]
+            yield from process.stdin.drain()
+            try:
+                current_arg = next(iterator)
+            except StopIteration:
+                current_arg = None
 
-date = loop.run_until_complete(get_date())
-print("Current date: %s" % date)
+
+loop = asyncio.get_event_loop()
+
+all_args = ['perl', '/home/wolodija/Projects/cisco-global-exploiter/cge.pl', '127.0.0.1', '9']
+arguments = [
+    (b'Input packets size : ', b'50\n'),
+    (b'Please enter a server\'s open port : ', b'22\n')
+]
+
+date = loop.run_until_complete(_call_asyncio(all_args, arguments))
+print("Current date: %s" % date.decode())
 loop.close()
 
