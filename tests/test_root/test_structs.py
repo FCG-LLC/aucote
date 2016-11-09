@@ -108,7 +108,7 @@ class PortTest(TestCase):
         port1 = Port(node=node1, number=1, transport_protocol=TransportProtocol.UDP)
 
         self.assertNotEqual(port1, None)
-        self.assertFalse(port1 == None)
+        self.assertFalse(port1 is None)
 
     def test_hash(self):
         transport_protocol = MagicMock()
@@ -136,6 +136,25 @@ class PortTest(TestCase):
 
         self.assertTrue(port.is_broadcast)
         self.assertFalse(port.is_physical)
+
+    def test_get_url(self):
+        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        port1 = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
+        port1.service_name = 'http'
+
+        expected = "http://127.0.0.1:1"
+
+        self.assertEqual(port1.url, expected)
+
+    def test_get_url_ipv6(self):
+        node1 = Node(ip=ipaddress.ip_address('::1'), node_id=1)
+        port1 = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
+        port1.service_name = 'http'
+
+        expected = "http://[::1]:1"
+
+        self.assertEqual(port1.url, expected)
+
 
 class ScanTest(TestCase):
     def setUp(self):

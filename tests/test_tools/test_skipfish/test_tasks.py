@@ -31,7 +31,7 @@ class SkipfishScanTaskTest(TestCase):
         self.port.scan = Scan()
         self.exploit = Exploit(exploit_id=1)
 
-        self.task = SkipfishScanTask(executor=self.executor, port=self.port, exploit=self.exploit)
+        self.task = SkipfishScanTask(executor=self.executor, port=self.port, exploits=[self.exploit])
         self.task.executor.exploits.find.return_value = self.exploit
         self.task.store_scan_end = MagicMock()
 
