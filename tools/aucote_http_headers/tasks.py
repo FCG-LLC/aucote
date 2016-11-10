@@ -27,7 +27,7 @@ class AucoteHttpHeadersTask(PortTask):
         super(AucoteHttpHeadersTask, self).__init__(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        custom_headers = {'Accept-Encoding:': 'gzip, deflate'}
+        custom_headers = {'Accept-Encoding': 'gzip, deflate'}
         try:
             request = requests.head(self._port.url, headers=custom_headers, verify=False)
         except Exception as exception:
