@@ -75,29 +75,9 @@ EXECUTOR_CONFIG = {
         },
         'cisco-global-exploiter': {
             'class': CiscoGlobalExploiterTool,
-            'disabled_scripts': {'cisco4', 'cisco5', 'cisco6', 'cisco7', 'cisco8', 'cisco9', 'cisco11', 'cisco13'},
+            'disabled_scripts': {'cisco4', 'cisco7', 'cisco9', 'cisco11'},
             'scripts': {
-                'cisco3': {
-                    'stdin': None
-                },
-                'cisco4': {
-                    'stdin': None
-                },
-                'cisco5': {
-                    'stdin': None
-                },
-                'cisco6': {
-                    'stdin': None
-                },
-                'cisco7': {
-                    'stdin': (b'Enter a file to read [ /show/config/cr set as default ] : ', b'\n')
-                },
-                'cisco8': {
-                    'stdin': None
-                },
-                'cisco13': {
-                    'stdin': None
-                }
+
             }
         },
         'aucote-http-headers': {
