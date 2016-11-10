@@ -42,8 +42,7 @@ class Command(object):
         with tempfile.TemporaryFile() as temp_file:
             temp_file.truncate()
             try:
-                stdout = subprocess.check_output(all_args, stderr=temp_file).decode('utf-8')
-                return self.parser.parse(stdout)
+                return self.parser.parse(subprocess.check_output(all_args, stderr=temp_file).decode('utf-8'))
             except subprocess.CalledProcessError as exception:
                 temp_file.seek(0)
                 stderr_lines = [line.decode() for line in temp_file.readlines()]

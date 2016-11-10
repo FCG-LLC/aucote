@@ -61,6 +61,10 @@ _DEFAULT = {
         'aucote-http-headers': {
             'enable': True,
             'period': ''
+        },
+        'cisco-http-headers': {
+            'enable': False,
+            'period': ''
         }
     },
     'service': {
