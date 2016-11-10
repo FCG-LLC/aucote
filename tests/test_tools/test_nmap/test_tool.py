@@ -115,10 +115,19 @@ class NmapToolTest(TestCase):
         self.assertEqual(NmapTool.custom_args_dns_zone_transfer(), expected)
         mock_cfg.assert_called_once_with('tools.nmap.domains')
 
+    @patch('tools.base.cfg.get')
+    def test_custom_args_dns_check_zone(self, mock_cfg):
+        mock_cfg.return_value.cfg = ['test.host', 'test.host2']
+        expected = ['dns-check-zone.domain=test.host', 'dns-check-zone.domain=test.host2']
+
+        self.assertEqual(NmapTool.custom_args_dns_check_zone(), expected)
+        mock_cfg.assert_called_once_with('tools.nmap.domains')
+
     @patch('tools.nmap.tool.VulnNmapScript')
+    @patch('tools.nmap.tool.cfg.get', MagicMock(return_value='test'))
     def test_improper_configure_args(self, vuln_scan_script):
         self.nmap_tool.exploits = [self.exploit_conf_args]
-        self.config['services']['test_name2']['args'].side_effect = ImproperConfigurationException()
+        self.config['services']['test_name2']['args'].side_effect = ImproperConfigurationException('test.test2')
         self.nmap_tool()
 
         self.assertFalse(vuln_scan_script.called)

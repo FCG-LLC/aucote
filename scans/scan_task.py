@@ -9,11 +9,13 @@ from urllib.error import URLError
 import urllib.request as http
 import logging as log
 import time
+import netifaces
 
 from aucote_cfg import cfg
 from scans.executor import Executor
-from structs import Node
+from structs import Node, Port
 from tools.masscan import MasscanPorts
+from tools.nmap.ports import PortsScan
 from utils.exceptions import TopdisConnectionException
 from utils.task import Task
 from utils.time import parse_period
@@ -24,6 +26,7 @@ class ScanTask(Task):
     Class responsible for scanning
 
     """
+
     def __init__(self, nodes=None, as_service=True, *args, **kwargs):
         super(ScanTask, self).__init__(*args, **kwargs)
         self.nodes = nodes or self._get_nodes()
@@ -51,16 +54,34 @@ class ScanTask(Task):
             None
 
         """
-        scanner = MasscanPorts(executor=self.executor)
+        scanner_ipv4 = MasscanPorts()
+        scanner_ipv6 = PortsScan()
+
         nodes = self._get_nodes_for_scanning()
 
-        log.info('Scanning %i nodes', len(nodes))
+        nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
+        nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
+
+        log.info('Scanning %i nodes (ipv4: %s, ipv6: %s)', len(nodes), len(nodes_ipv4), len(nodes_ipv6))
 
         if not nodes:
             return
 
-        ports = scanner.scan_ports(nodes)
+        ports = scanner_ipv4.scan_ports(nodes_ipv4)
+        ports.extend(scanner_ipv6.scan_ports(nodes_ipv6))
+
         self.storage.save_nodes(nodes)
+
+        interfaces = netifaces.interfaces()
+
+        for interface in interfaces:
+            addr = netifaces.ifaddresses(interface)
+            if netifaces.AF_INET not in addr:
+                continue
+
+            port = Port.physical()
+            port.interface = interface
+            ports.append(port)
 
         self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
 

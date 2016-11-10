@@ -3,6 +3,8 @@ Contains main class responsible for managing NMAP
 
 """
 import logging as log
+
+from aucote_cfg import cfg
 from structs import RiskLevel
 from tools.base import Tool
 from tools.nmap.base import InfoNmapScript, VulnNmapScript
@@ -39,7 +41,8 @@ class NmapTool(Tool):
                 try:
                     args = args()
                 except ImproperConfigurationException as exception:
-                    log.warning("%s is not configured!", name, exc_info=exception)
+                    log.warning("%s is not configured: Please configure %s in %s", name, exception,
+                                cfg.get('config_filename'))
                     continue
 
             if not isinstance(args, (list, set)):
@@ -100,6 +103,18 @@ class NmapTool(Tool):
         """
         domains = cls.get_config('tools.nmap.domains')
         return ['dns-srv-enum.domain={0}'.format(domain) for domain in domains]
+
+    @classmethod
+    def custom_args_dns_check_zone(cls):
+        """
+        Parses configuration and convert it to the script argument
+
+        Returns:
+            list
+
+        """
+        domains = cls.get_config('tools.nmap.domains')
+        return ['dns-check-zone.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
     def custom_args_http_domino_enum_passwords(cls):

@@ -2,22 +2,18 @@
 This module provides tasks related to Hydra
 
 """
-import subprocess
-import logging as log
-import time
-
 from aucote_cfg import cfg
-from structs import Vulnerability, Scan
+from tools.common.command_task import CommandTask
 from tools.hydra.base import HydraBase
 
 
-class HydraScriptTask(HydraBase):
+class HydraScriptTask(CommandTask):
     """
     This is task for Hydra tool. Call Hydra and parse output
 
     """
 
-    def __init__(self, port, service, login=True, *args, **kwargs):
+    def __init__(self, service, login=True, *args, **kwargs):
         """
         Initialize variables
 
@@ -30,41 +26,24 @@ class HydraScriptTask(HydraBase):
 
         """
 
-        super().__init__(*args, **kwargs)
-        self._port = port
+        super().__init__(command=HydraBase(), *args, **kwargs)
         self.service = service
         self.login = login
-        self.exploit = self.exploits.find('hydra', 'hydra')
 
-    def __call__(self):
+    def prepare_args(self):
         """
-        Call command, parse output and stores vulnerabilities
+        Prepare aguments for command execution
 
         Returns:
+            list
 
         """
-
         args = []
         if self.login:
             args.extend(['-L', cfg.get('tools.hydra.loginfile')])
+        if self._port.is_ipv6:
+            args.append('-6')
+
         args.extend(['-P', cfg.get('tools.hydra.passwordfile'), '-s', str(self._port.number), str(self._port.node.ip),
                      self.service, ])
-
-        try:
-            results = self.call(args)
-        except subprocess.CalledProcessError as exception:
-            self._port.scan = Scan(0, 0)
-            self.executor.storage.save_scan(exploit=self.exploit, port=self._port)
-            log.warning("Exiting Hydra process", exc_info=exception)
-            return None
-
-        self._port.scan.end = int(time.time())
-        self.store_scan_end(exploits=[self.exploit], port=self._port)
-
-        if not results:
-            log.debug("Hydra does not find any password.")
-            return None
-
-        self.store_vulnerability(Vulnerability(exploit=self.exploit, port=self._port,
-                                               output=results))
-        return results
+        return args

@@ -16,6 +16,7 @@ import fcntl
 import signal
 
 from fixtures.exploits import Exploits
+from scans.executor_config import EXECUTOR_CONFIG
 from scans.scan_task import ScanTask
 from scans.task_mapper import TaskMapper
 from structs import Node
@@ -79,7 +80,7 @@ def main():
         except FileNotFoundError:
             pass
 
-        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, storage=None)
+        aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=EXECUTOR_CONFIG)
 
         if args.cmd == 'scan':
             nodes = []
@@ -102,16 +103,18 @@ class Aucote(object):
     Main aucote class. It Provides run functions (service, single instance, sync db)
     """
 
-    def __init__(self, exploits, kudu_queue, storage=None):
+    def __init__(self, exploits, kudu_queue, tools_config):
         self.exploits = exploits
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
-        self._storage = storage
+        self._storage = None
         self.task_mapper = TaskMapper(self)
         self.filename = cfg.get('service.scans.storage')
         signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
         self.lock = threading.Lock()
         self.started = False
+        self.load_tools(tools_config)
 
     @property
     def kudu_queue(self):
@@ -130,6 +133,11 @@ class Aucote(object):
 
         """
         return self._storage
+
+    @storage.setter
+    def storage(self, storage):
+        if not self._storage:
+            self._storage = storage
 
     @property
     def thread_pool(self):
@@ -232,6 +240,19 @@ class Aucote(object):
 
         """
         return self.thread_pool.unfinished_tasks
+
+    def load_tools(self, config):
+        """
+        Load tools, if tools require config
+
+        Returns:
+            None
+
+        """
+        for name, app in config['apps'].items():
+            if app.get('loader', None):
+                log.info('Loading %s', name)
+                app['loader'](app, self.exploits)
 
 
 # =================== start app =================

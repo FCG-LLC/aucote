@@ -17,7 +17,8 @@ class ConfigTest(TestCase):
                     'cat'
                 ]
             },
-        }
+        },
+        'config_filename': 'test',
     }
 
     YAML = '''alice:
@@ -35,11 +36,12 @@ class ConfigTest(TestCase):
                         'cat'
                     ]
                 },
-            }
+            },
+            'config_filename': 'test',
         }
 
     def test_len(self):
-        self.assertEqual(len(self.config), 1)
+        self.assertEqual(len(self.config), 2)
 
     def test_empty_config_len(self):
         config = Config()
@@ -102,7 +104,7 @@ class ConfigTest(TestCase):
 
     @patch('builtins.open', mock_open(read_data=YAML))
     def test_load_yaml_without_defaults(self):
-        expected = {'alice': {'has': {'a': 'dog'}}}
+        expected = {'alice': {'has': {'a': 'dog'}}, 'config_filename': 'test'}
 
         self.config.load('test')
 

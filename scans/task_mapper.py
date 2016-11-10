@@ -29,7 +29,6 @@ class TaskMapper:
         Assign tasks for a provided port
 
         """
-
         scripts = self._executor.exploits.find_all_matching(port)
 
         for app, exploits in scripts.items():

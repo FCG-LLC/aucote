@@ -11,11 +11,10 @@ class NmapBaseTest(TestCase):
     </script>'''
 
     def setUp(self):
-        self.executor = MagicMock()
-        self.base = NmapBase(executor=self.executor)
+        self.base = NmapBase()
 
-    def test_create(self):
-        self.assertEqual(self.base.executor, self.executor)
+    def test_init(self):
+        self.assertEqual(self.base.NAME, 'nmap')
 
 class NmapScriptTest(TestCase):
     SCRIPT_XML = '''<?xml version="1.0"?>
@@ -76,6 +75,8 @@ class VulnNmapScriptTest(TestCase):
 
 
 class InfoNmapScriptTest(TestCase):
+    ERROR_OUTPUT = "ERROR: Script execution failed (use -d to debug)"
+
     def setUp(self):
         self.script = InfoNmapScript(exploit=MagicMock(), port=MagicMock())
 
@@ -90,5 +91,14 @@ class InfoNmapScriptTest(TestCase):
 
         result = self.script.get_result(script)
         expected = 'test'
+
+        self.assertEqual(result, expected)
+
+    def test_error(self):
+        script = MagicMock()
+        script.get = MagicMock(return_value=self.ERROR_OUTPUT)
+
+        result = self.script.get_result(script)
+        expected = None
 
         self.assertEqual(result, expected)

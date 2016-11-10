@@ -2,7 +2,7 @@
 This file provides structures for project.
 
 """
-
+import ipaddress
 from enum import Enum
 import time
 
@@ -51,12 +51,24 @@ class Node:
     def __hash__(self):
         return hash((self.id, self.ip))
 
+    @property
+    def is_ipv6(self):
+        """
+        Returns True if node is using ipv6 addressing
+
+        Returns:
+            bool
+
+        """
+        return isinstance(self.ip, ipaddress.IPv6Address)
+
 
 class TransportProtocol(Enum):
     """
     Transport protocol object consist of db_val and IANA val
 
     """
+
     def __init__(self, db_val, iana):
         self.db_val = db_val
         self.iana = iana
@@ -64,6 +76,7 @@ class TransportProtocol(Enum):
     TCP = ('TCP', 6)
     UDP = ('UDP', 17)
     ICMP = ('ICMP', 1)
+    PHY = ('PHY', 255)
 
     @classmethod
     def from_nmap_name(cls, name):
@@ -84,7 +97,7 @@ class TransportProtocol(Enum):
         for val in cls:
             if val.db_val == name:
                 return val
-        raise ValueError('Invalid transport protocol name: %s'%name)
+        raise ValueError('Invalid transport protocol name: %s' % name)
 
     @classmethod
     def from_iana(cls, number):
@@ -109,6 +122,7 @@ class RiskLevel(Enum):
     Risk level object
 
     """
+
     def __init__(self, txt, number):
         self.txt = txt
         self.number = number
@@ -136,7 +150,7 @@ class RiskLevel(Enum):
         for val in cls:
             if val.txt == name:
                 return val
-        raise ValueError('Unsupported risk level name: %s'%name)
+        raise ValueError('Unsupported risk level name: %s' % name)
 
 
 class Port(object):
@@ -145,6 +159,13 @@ class Port(object):
 
     """
     TABLE = 'ports'
+    BROADCAST_IP = ipaddress.ip_address("255.255.255.255")
+    BROADCAST_NODE_ID = 0xFFFFFFFF
+    BROADCAST_PROTOCOL = TransportProtocol.UDP
+
+    PHYSICAL_IP = ipaddress.ip_address("255.255.255.255")
+    PHYSICAL_NODE_ID = 0xFFFFFFFF
+    PHYSICAL_PROTOCOL = TransportProtocol.PHY
 
     def __init__(self, node, number, transport_protocol):
         """
@@ -163,14 +184,15 @@ class Port(object):
         self.service_version = None
         self.banner = None
         self.scan = None
+        self.interface = None
 
     def __eq__(self, other):
         return isinstance(other, Port) and self.transport_protocol == other.transport_protocol \
-                   and self.number == other.number and self.node == other.node
+               and self.number == other.number and self.node == other.node
 
     def __ne__(self, other):
         return (not isinstance(other, Port)) or self.transport_protocol != other.transport_protocol \
-            or self.number != other.number or self.node != other.node
+               or self.number != other.number or self.node != other.node
 
     def __hash__(self):
         return hash((self.transport_protocol, self.number, self.node))
@@ -178,12 +200,83 @@ class Port(object):
     def __str__(self):
         return '%s:%s' % (self.node.ip, self.number)
 
+    @classmethod
+    def broadcast(cls):
+        """
+        Get broadcast Port
+
+        Returns:
+            Port
+
+        """
+        return cls(node=Node(node_id=cls.BROADCAST_NODE_ID, ip=cls.BROADCAST_IP), number=0,
+                   transport_protocol=cls.BROADCAST_PROTOCOL)
+
+    @classmethod
+    def physical(cls):
+        """
+        Get physical port structure
+
+        Returns:
+            Port
+
+        """
+        return cls(node=Node(node_id=cls.PHYSICAL_NODE_ID, ip=cls.PHYSICAL_IP), number=0,
+                   transport_protocol=cls.PHYSICAL_PROTOCOL)
+
+    @property
+    def is_broadcast(self):
+        """
+        Is true if port is broadcast
+
+        Returns:
+            bool
+        """
+        return self == self.broadcast()
+
+    @property
+    def is_physical(self):
+        """
+        Is true if port is physical
+
+        Returns:
+            bool
+        """
+        return self == self.physical()
+
+    @property
+    def is_ipv6(self):
+        """
+        Returns True if node is using ipv6 addressing
+
+        Returns:
+            bool
+
+        """
+        return self.node.is_ipv6
+
+    @property
+    def url(self):
+        """
+        Returns node as URL string.
+
+        Returns:
+            str
+
+        """
+        if self.is_ipv6:
+            format_string = "{0}://[{1}]:{2}"
+        else:
+            format_string = "{0}://{1}:{2}"
+        return format_string.format(self.service_name, self.node.ip, self.number)
+
 
 class Vulnerability(object):
     """
     Vulnerability object
 
     """
+
     def __init__(self, exploit=None, port=None, output=None):
         """
         Init values

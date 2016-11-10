@@ -28,17 +28,34 @@ class MasscanPorts(MasscanBase):
         """
         log.info("Scanning ports")
 
-        args = ['--rate', str(cfg.get('service.scans.rate')),
-                '--ports', str(cfg.get('service.scans.ports'))]
+        args = self.prepare_args(nodes)
 
-        args.extend(cfg.get('tools.masscan.args').cfg)
-
-        args.extend([str(node.ip) for node in nodes])
         try:
             xml = self.call(args)
         except NonXMLOutputException:
             return []
+
         parser = OpenPortsParser()
         node_by_ip = {node.ip: node for node in nodes}
         ports = parser.parse(xml, node_by_ip)
         return ports
+
+    @classmethod
+    def prepare_args(cls, nodes):
+        """
+        Prepare args for command execution
+
+        Args:
+            nodes (list): nodes from scanning
+
+        Returns:
+            list
+
+        """
+        args = ['--rate', str(cfg.get('service.scans.rate')),
+                '--ports', str(cfg.get('service.scans.ports'))]
+        args.extend(cfg.get('tools.masscan.args').cfg)
+
+        args.extend([str(node.ip) for node in nodes])
+
+        return args

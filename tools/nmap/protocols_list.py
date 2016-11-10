@@ -148,4 +148,6 @@ NMAP_PROTOCOLS = {
     'XNET',
     'XNS-IDP',
     'XTP',
+
+    'PHY',
 }

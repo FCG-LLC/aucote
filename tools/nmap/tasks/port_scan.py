@@ -3,20 +3,19 @@ Contains class responsible for exploiting port by using nmap scripts
 
 """
 import logging as log
-import time
 
-from database.serializer import Serializer
-from structs import Vulnerability
+from structs import Vulnerability, Port
+from tools.common.command_task import CommandTask
 from tools.nmap.base import NmapBase
 
 
-class NmapPortScanTask(NmapBase):
+class NmapPortScanTask(CommandTask):
     """
     Scans one port using provided vulnerability scan
 
     """
 
-    def __init__(self, port, script_classes, *args, **kwargs):
+    def __init__(self, script_classes, *args, **kwargs):
         """
         Init variables
 
@@ -27,9 +26,10 @@ class NmapPortScanTask(NmapBase):
             **kwargs:
         """
 
-        super().__init__(*args, **kwargs)
-        self._port = port
         self._script_classes = script_classes
+        exploits = [script.exploit for script in self._script_classes]
+        super().__init__(command=NmapBase(), exploits=exploits, *args, **kwargs)
+        self.scripts = {script.name: script for script in self._script_classes}
 
     @property
     def port(self):
@@ -49,38 +49,68 @@ class NmapPortScanTask(NmapBase):
 
         return self._script_classes
 
-    def __call__(self):
+    def prepare_args(self):
         """
-        Implement Tasks call method:
-        scans port used nmap and provided script classes
-        send serialized vulnerabilities to kudu queue
+        Prepares arguments for command execution
+
+        Returns:
+            list
 
         """
+        if self._port.is_broadcast or self._port.is_physical:
+            args = []
+            for script in self.scripts.values():
+                args.append('--script')
+                args.append(script.name)
+                if script.args is not None:
+                    args.append('--script-args')
+                    args.append(script.args)
 
-        vulners = []
-        scripts = {script.name: script for script in self._script_classes}
+            if self._port == Port.physical():
+                args.append('-e')
+                args.append(self._port.interface)
+
+            return args
+
         args = ['-p', str(self._port.number), '-sV']
         if self._port.transport_protocol.name == "UDP":
             args.append("-sU")
 
+        if self._port.is_ipv6:
+            args.append("-6")
+
         if self._port.number == 53:
             args.extend(["--dns-servers", str(self._port.node.ip)])
 
-        for script in scripts.values():
+        for script in self.scripts.values():
             args.append('--script')
             args.append(script.name)
             if script.args is not None:
                 args.append('--script-args')
                 args.append(script.args)
+
         args.append(str(self._port.node.ip))
 
-        xml = self.call(args=args)
+        return args
 
-        tmp_scripts = xml.findall('host/ports/port/script') or []
-        tmp_scripts.extend(xml.findall('prescript/script') or [])
+    def _get_vulnerabilities(self, results):
+        """
+        Proceed results of command execution and returns list of vulnerabilities
 
+        Args:
+            results:
+
+        Returns:
+            list
+
+        """
+        tmp_scripts = results.findall('host/ports/port/script') or []
+        tmp_scripts.extend(results.findall('prescript/script') or [])
+        tmp_scripts.extend(results.findall('host/hostscript/script') or [])
+
+        vulnerabilities = []
         for script in tmp_scripts:
-            found_handler = scripts.get(script.get('id'))
+            found_handler = self.scripts.get(script.get('id'))
             if found_handler is None:
                 continue
             log.debug('Parsing output from script %s', script.get('id'))
@@ -89,16 +119,6 @@ class NmapPortScanTask(NmapBase):
             if result is None:
                 continue
 
-            vulners.append(Vulnerability(exploit=found_handler.exploit, port=self._port, output=result))
+            vulnerabilities.append(Vulnerability(exploit=found_handler.exploit, port=self._port, output=result))
 
-        exploits = [script.exploit for script in self._script_classes]
-
-        self._port.scan.end = time.time()
-        self.store_scan_end(exploits=exploits, port=self._port)
-
-        if vulners:
-            for vuln in vulners:
-                self.store_vulnerability(vuln)
-        else:
-            msg = Serializer.serialize_port_vuln(self._port, None)
-            self.kudu_queue.send_msg(msg)
+        return vulnerabilities

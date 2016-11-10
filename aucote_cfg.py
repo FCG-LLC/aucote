@@ -57,6 +57,10 @@ _DEFAULT = {
             'threads': 5,
             'tmp_directory': '/tmp',
             'period': '1d'
+        },
+        'aucote-http-headers': {
+            'enable': True,
+            'period': ''
         }
     },
     'service': {
@@ -69,7 +73,7 @@ _DEFAULT = {
             'node_period': '1m',
             'storage': 'storage.sqlite3'
         },
-        "api":{
+        "api": {
             'v1': {
                 'host': '0.0.0.0',
                 'port': 1235
@@ -92,6 +96,8 @@ def load(file_name=None):
     if file_name is None:
         #by default search for "confg.yaml" in application dir
         file_name = path.join(path.dirname(__file__), 'aucote_cfg.yaml')
+
+    file_name = path.abspath(file_name)
     #at this point logs do not work, print info to stdout
     print("Reading configuration from file:", file_name)
     cfg.load(file_name, _DEFAULT)

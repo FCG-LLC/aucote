@@ -32,7 +32,7 @@ class StorageTaskTest(TestCase):
         self.assertRaises(Exception, self.task)
         storage = mock_storage.return_value.__enter__.return_value
         self.assertTrue(storage.clear_scan_details.called)
-        self.assertEqual(self.executor._storage, storage)
+        self.assertEqual(self.executor.storage, storage)
         self.assertEqual(storage.cursor.execute.call_count, 4)
         self.assertEqual(storage.conn.commit.call_count, 3)
         self.assertEqual(self.task._queue.get.call_count, 3)
