@@ -47,10 +47,10 @@ class Command(object):
             except subprocess.CalledProcessError as exception:
                 temp_file.seek(0)
                 stderr_lines = [line.decode() for line in temp_file.readlines()]
-                log.warning("Command '%s' Failed and returns %i:\n\n%s", " ".join(all_args), exception.returncode,
-                            "".join(stderr_lines))
                 self.handle_exception(exception, stderr_lines)
 
     @classmethod
-    def handle_exception(self, exception, stderr):
+    def handle_exception(cls, exception, stderr):
+        log.warning("Command '%s' Failed and returns %i:\n\n%s", exception.cmd, exception.returncode,
+                    "".join(stderr))
         raise exception
