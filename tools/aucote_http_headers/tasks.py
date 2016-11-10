@@ -3,8 +3,8 @@ This module contains tasks related to Aucote HTTP Headers
 
 """
 import time
-import requests
 import logging as log
+import requests
 
 from structs import Vulnerability
 from tools.aucote_http_headers.structs import AucoteHttpHeaderResult as Result
@@ -46,7 +46,7 @@ class AucoteHttpHeadersTask(PortTask):
                                                                                value=headers[exploit.title]),
                                           exploit=exploit))
             elif header.obligatory:
-                results.append(Result(output=self.MISSING_HEADER.format(name=exploit.title),exploit=exploit))
+                results.append(Result(output=self.MISSING_HEADER.format(name=exploit.title), exploit=exploit))
 
         self._port.scan.end = int(time.time())
         self.store_scan_end(exploits=self.current_exploits, port=self._port)
