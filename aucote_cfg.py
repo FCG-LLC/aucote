@@ -62,9 +62,10 @@ _DEFAULT = {
             'enable': True,
             'period': ''
         },
-        'cisco-http-headers': {
+        'cisco-global-exploiter': {
             'enable': False,
-            'period': ''
+            'period': '',
+            'cmd': 'static/cge.pl'
         }
     },
     'service': {
