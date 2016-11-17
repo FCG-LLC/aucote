@@ -12,8 +12,8 @@ else
 	echo "Create file with following contents:"
 	echo 'jenkins="http://10.12.1.110:8080"'
 	echo 'user="yourjenkinsuser"'
-	echo 'pass="lyourjenkinspass"'
-	echo '### below you can override deployment host'
+	echo 'pass="yourjenkinspass"'
+	echo '### below you can override deployment host but this works only with --just deploy switch'
 	echo 'host="10.12.1.175"'
 	echo '### below you can put jenkins job name if autodetect does not work otherwise leave blank'
 	echo 'std_job_name=""'
@@ -26,7 +26,7 @@ switch="$1";
 function deploy(){
 	echo "Submiting deploy request to Jenkins";
 
-	queue_no=`curl -s -i --netrc -X POST --user "$user:$pass" "$jenkins/job/deploy-dev/buildWithParameters?app=$app&host=$host" | perl -ne "print /Location:.http.*\/(.*)\//"`;
+	queue_no=`curl -s -i --netrc -X POST --user "$user:$pass" "$jenkins/job/deploy/buildWithParameters?app=$app&host=$host&destEnv=$host" | perl -ne "print /Location:.http.*\/(.*)\//"`;
 	queue_url="$jenkins/queue/item/$queue_no/api/json";
 	echo "Deploy '$job_name' to $host build queued, waiting for free slot ($queue_url)";
 	while [[ `curl -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
@@ -47,7 +47,7 @@ function deploy(){
 
 function check_dep(){
 	queue_url="$jenkins/$dep_queue/api/json"
-	job_name=`curl -s --user "$user:$pass" $queue_url | perl -ne "print /name...(.*?)\"/"`
+	job_name=`curl -s --user "$user:$pass" $queue_url | perl -ne "print /Project...name...(.*?)\"/"`
 	echo "Sub-task '$job_name' build queued, waiting for free slot ($queue_url)"
 	while [[ `curl -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
 		echo -n "."; 
@@ -67,8 +67,10 @@ function check_dep(){
 
 function process_main_job (){
 	echo "Submiting build request to Jenkins";
-	queue_no=`curl -s -i --netrc -X POST --user "$user:$pass" $jenkins/job/$job_name/buildWithParameters?branch=$branch | perl -ne "print /Location:.http.*\/(.*)\//"`;
+	#app=`echo $job_name | cut -d"-" -f1`;
+	queue_no=`curl -s -i --netrc -X POST --user "$user:$pass" "$jenkins/view/$app%20pipeline/job/$job_name/buildWithParameters?branch=$branch&destEnv=dev" | perl -ne "print /Location:.http.*\/(.*)\//"`;
 	queue_url="$jenkins/queue/item/$queue_no/api/json";
+	
 	echo "Main-task '$job_name' branch $branch build queued, waiting for free slot ($queue_url)";
 	while [[ `curl -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
 		echo -n "."; 
@@ -93,8 +95,12 @@ function process_main_job (){
 		dep_queue=`curl -s --user "$user:$pass" $jenkins/queue/api/json | perl -ne "print /build number $build_job_no.*?url...(que.*?)..,/"`	
 	
 		if [ "$dep_queue" == "" ]; then
-			echo "Build ready to deploy"
-			deploy;
+			echo ""
+			echo "-------------------------------------------------------------------------------"
+			echo "You can re-run failed jobs or check detailed logs in $app pipeline:"
+			echo "    $jenkins/view/$app%20pipeline"
+			echo "-------------------------------------------------------------------------------"
+			echo ""
 			break;
 		fi
 		check_dep;
@@ -107,7 +113,7 @@ echo "";
 if [ "$switch" == "--just-deploy" ]; then
 	echo "Will just deploy latest docker to $host"
 else
-	echo "Will build and then deploy last pushed commit in $branch to $host, details below"
+	echo "Will build and then deploy last pushed commit in $branch to DEV host, details below"
 	echo "--------------------------------";
 	git log -1 origin/$branch
 	echo "--------------------------------";
@@ -132,23 +138,54 @@ if [ "$std_job_name" ]; then
 		echo 'Done processing!';
 	fi
 else
-	echo "Determining proper job for current repo";
+	echo "Determining proper pipeline for current repo";
 
 	current_repo=`grep url .git/config | cut -d" " -f3`
 
-	search_res='Current repo not defined anywheree in Jenkins!'
+	search_res='Current repo does not have defined pipeline in Jenkins!'
 	joblist=`curl -s --user "$user:$pass" $jenkins/api/xml | perl -lne "print /<url>(http.*?job.*?)<\/url>/g" | sed 's/http/\nhttp/g'`
 	while read job;
 	do
 		if [[ ! $job  =~ "dockerization" ]]; then
 			job_repo=`curl -s -X GET  --user "$user:$pass" $job/config.xml | perl -ne "print /<url>(git.github.*?)<\/url>/g"`;		
+			#echo "$job_repo";
 			if [[ $job_repo == $current_repo ]]; then 
 				job_name=`echo $job | perl -ne "print /job\/(.*)\//"`;
 				app=`echo $job_name | cut -d"-" -f1`;
-				if [[ ! "$job_name" =~ "unit_test" ]]; then
-
-					read -p "'$job_name' is this correct job ? [Y/n] " correct </dev/tty;
+				echo "Reading through jobs in $app pipeline"
+				pipelinejobs=`curl -s --user "$user:$pass" "$jenkins/view/$app%20pipeline/api/xml" | perl -lne "print /<url>(http.*?job.*?)<\/url>/g" | sed 's/http/\nhttp/g' | sed 's/\n//'`
+				#echo $pipelinejobs
+				i=1
+				while read pipejob;
+				do
+					if [ "$pipejob" == "" ];then
+						continue
+					fi
+					job_name=`echo $pipejob | perl -ne "print /job\/(.*)\//"`;
+					if [ $i == 1 ]; then
+						echo ""
+						read -p "You want to start whole build pipeline with first job '$job_name' ? [Y/n] " pipecorrect </dev/tty;
+						if [ "$pipecorrect" == "n" ]; then
+							((i++))
+							continue
+						else
+						 	echo ""
+							echo "-------------------------------------------------------------------------------"
+							echo "You can also watch status or detailed logs in $app pipeline:"
+							echo "    $jenkins/view/$app%20pipeline"
+							echo "-------------------------------------------------------------------------------"
+							echo ""
+							process_main_job
+							search_res='Done processing!';
+							break
+						fi
+						
+					fi
+					echo ""
+					correct=y
+					read -p "'$job_name' is this correct job you want start the build with ? [Y/n] " correct </dev/tty;
 					if [ "$correct" == "n" ]; then
+						echo ""
 						echo "Trying to find next matching job....";
 						search_res='No more matching jobs found!'
 					else
@@ -160,7 +197,9 @@ else
 						search_res='Done processing!';	
 						break
 					fi
-				fi
+				((i++))
+				done <<< "$(echo -e "$pipelinejobs")"
+				break
 			fi
 		fi
 	done <<< "$(echo -e "$joblist")"
