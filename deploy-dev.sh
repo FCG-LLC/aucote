@@ -95,12 +95,6 @@ function process_main_job (){
 		dep_queue=`curl -s --user "$user:$pass" $jenkins/queue/api/json | perl -ne "print /build number $build_job_no.*?url...(que.*?)..,/"`	
 	
 		if [ "$dep_queue" == "" ]; then
-			echo ""
-			echo "-------------------------------------------------------------------------------"
-			echo "You can re-run failed jobs or check detailed logs in $app pipeline:"
-			echo "    $jenkins/view/$app%20pipeline"
-			echo "-------------------------------------------------------------------------------"
-			echo ""
 			break;
 		fi
 		check_dep;
