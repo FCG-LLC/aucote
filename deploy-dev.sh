@@ -137,7 +137,7 @@ else
 	current_repo=`grep url .git/config | cut -d" " -f3`
 
 	search_res='Current repo does not have defined pipeline in Jenkins!'
-	joblist=`curl --insecure -s --user "$user:$pass" $jenkins/api/xml | perl -lne "print /<url>(http.*?job.*?)<\/url>/g" | sed 's/http/\\nhttp/g'`
+	joblist=`curl --insecure -s --user "$user:$pass" $jenkins/api/xml | perl -lne "print /<url>(http.*?job.*?)<\/url>/g" | sed 's/http/\\\nhttp/g'`
 	while read job;
 	do
 		if [[ ! $job  =~ "dockerization" ]]; then
@@ -147,7 +147,7 @@ else
 				job_name=`echo $job | perl -ne "print /job\/(.*)\//"`;
 				app=`echo $job_name | cut -d"-" -f1`;
 				echo "Reading through jobs in $app pipeline"
-				pipelinejobs=`curl --insecure -s --user "$user:$pass" "$jenkins/view/$app%20pipeline/api/xml" | perl -lne "print /<url>(http.*?job.*?)<\/url>/g" | sed 's/http/\\nhttp/g' | sed 's/\n//'`
+				pipelinejobs=`curl --insecure -s --user "$user:$pass" "$jenkins/view/$app%20pipeline/api/xml" | perl -lne "print /<url>(http.*?job.*?)<\/url>/g" | sed 's/http/\\\nhttp/g' | sed 's/\n//'`
 				#echo $pipelinejobs
 				i=1
 				while read pipejob;
