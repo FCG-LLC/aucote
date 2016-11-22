@@ -2,7 +2,7 @@
 ddcfg="$HOME/.csapp/deploy-dev.cfg";
 if [[ -f "$ddcfg" ]];
 	then source $ddcfg; 
-	result=`curl -s -I -X POST --user "$user:$pass" $jenkins/xml | head -n 1 | perl -ne "print 1 if /401 Invalid/"`
+	result=`curl --insecure -s -I -X POST --user "$user:$pass" $jenkins/xml | head -n 1 | perl -ne "print 1 if /401 Invalid/"`
 	if [ $result ]; then
 		echo "Invalid Jenkins credentials !!!, exiting...";
 		exit
@@ -10,7 +10,7 @@ if [[ -f "$ddcfg" ]];
 else 
 	echo "Missing config file $ddcfg";
 	echo "Create file with following contents:"
-	echo 'jenkins="http://10.12.1.110:8080"'
+	echo 'jenkins="https://jenkins.cs.int"'
 	echo 'user="yourjenkinsuser"'
 	echo 'pass="yourjenkinspass"'
 	echo '### below you can override deployment host but this works only with --just deploy switch'
@@ -26,73 +26,73 @@ switch="$1";
 function deploy(){
 	echo "Submiting deploy request to Jenkins";
 
-	queue_no=`curl -s -i --netrc -X POST --user "$user:$pass" "$jenkins/job/deploy/buildWithParameters?app=$app&host=$host&destEnv=$host" | perl -ne "print /Location:.http.*\/(.*)\//"`;
+	queue_no=`curl --insecure -s -i --netrc -X POST --user "$user:$pass" "$jenkins/job/deploy/buildWithParameters?app=$app&host=$host&destEnv=$host" | perl -ne "print /Location:.http.*\/(.*)\//"`;
 	queue_url="$jenkins/queue/item/$queue_no/api/json";
 	echo "Deploy '$job_name' to $host build queued, waiting for free slot ($queue_url)";
-	while [[ `curl -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
+	while [[ `curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
 		echo -n "."; 
 		sleep 2; 
 	done
 
-	build_job_no=`curl -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'`;
+	build_job_no=`curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'`;
 	echo "";
 	echo "Slot assigned for '$job_name' deployment #$build_job_no, deploying ($jenkins/job/deploy-dev/$build_job_no/)"
-	curl -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print 'ETA: '; print /estimatedDuration..(...)/; print \" s\n\""
-	while [[ `curl -s -X POST --user "$user:$pass" "$jenkins/job/deploy-dev/$build_job_no/api/json" | perl -ne "print /building..(.*?),/"` == "true" ]]; do
+	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print 'ETA: '; print /estimatedDuration..(...)/; print \" s\n\""
+	while [[ `curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/deploy-dev/$build_job_no/api/json" | perl -ne "print /building..(.*?),/"` == "true" ]]; do
 		echo -n '.'
 		sleep 2
 	done
-	curl -s -X POST --user "$user:$pass" "$jenkins/job/deploy-dev/$build_job_no/api/json" | perl -ne "print \"\nRESULT: \"; print /result..(.*?),/; print \"\n\n\""
+	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/deploy-dev/$build_job_no/api/json" | perl -ne "print \"\nRESULT: \"; print /result..(.*?),/; print \"\n\n\""
 }
 
 function check_dep(){
 	queue_url="$jenkins/$dep_queue/api/json"
-	job_name=`curl -s --user "$user:$pass" $queue_url | perl -ne "print /Project...name...(.*?)\"/"`
+	job_name=`curl --insecure -s --user "$user:$pass" $queue_url | perl -ne "print /Project...name...(.*?)\"/"`
 	echo "Sub-task '$job_name' build queued, waiting for free slot ($queue_url)"
-	while [[ `curl -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
+	while [[ `curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
 		echo -n "."; 
 		sleep 2; 
 	done
 
-	build_job_no=`curl -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'`;
+	build_job_no=`curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'`;
 	echo "";
 	echo "Slot assigned for job '$job_name' build #$build_job_no, building ($jenkins/job/$job_name/$build_job_no/)"
-	curl -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print 'ETA: '; print /estimatedDuration..(...)/; print \" s\n\""
-	while [[ `curl -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print /building..(.*?),/"` == "true" ]]; do
+	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print 'ETA: '; print /estimatedDuration..(...)/; print \" s\n\""
+	while [[ `curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print /building..(.*?),/"` == "true" ]]; do
 		echo -n '.'
 		sleep 2
 	done
-	curl -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print \"\nRESULT: \"; print /result..(.*?),/; print \"\n\n\""
+	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print \"\nRESULT: \"; print /result..(.*?),/; print \"\n\n\""
 }
 
 function process_main_job (){
 	echo "Submiting build request to Jenkins";
 	#app=`echo $job_name | cut -d"-" -f1`;
-	queue_no=`curl -s -i --netrc -X POST --user "$user:$pass" "$jenkins/view/$app%20pipeline/job/$job_name/buildWithParameters?branch=$branch&destEnv=dev" | perl -ne "print /Location:.http.*\/(.*)\//"`;
+	queue_no=`curl --insecure -s -i --netrc -X POST --user "$user:$pass" "$jenkins/view/$app%20pipeline/job/$job_name/buildWithParameters?branch=$branch&destEnv=dev&forceWhole=yes" | perl -ne "print /Location:.http.*\/(.*)\//"`;
 	queue_url="$jenkins/queue/item/$queue_no/api/json";
 	
 	echo "Main-task '$job_name' branch $branch build queued, waiting for free slot ($queue_url)";
-	while [[ `curl -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
+	while [[ `curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
 		echo -n "."; 
 		sleep 2; 
 	done
 
-	build_job_no=`curl -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'`;
+	build_job_no=`curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'`;
 	echo "";
 	
 	echo $app;
 	echo "Slot assigned for '$job_name' build #$build_job_no, building ($jenkins/job/$job_name/$build_job_no/)"
-	curl -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print 'ETA: '; print /estimatedDuration..(...)/; print \" s\n\""
-	while [[ `curl -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print /building..(.*?),/"` == "true" ]]; do
+	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print 'ETA: '; print /estimatedDuration..(...)/; print \" s\n\""
+	while [[ `curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print /building..(.*?),/"` == "true" ]]; do
 		echo -n '.'
 		sleep 2
 	done
-	curl -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print \"\nRESULT: \"; print /result..(.*?),/; print \"\n\n\""
+	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print \"\nRESULT: \"; print /result..(.*?),/; print \"\n\n\""
 	## Check for triggered dependant builds
 	while [ true ]; do
 		echo "Checking for ongoing dependant automatic triggered builds..."
 
-		dep_queue=`curl -s --user "$user:$pass" $jenkins/queue/api/json | perl -ne "print /build number $build_job_no.*?url...(que.*?)..,/"`	
+		dep_queue=`curl --insecure -s --user "$user:$pass" $jenkins/queue/api/json | perl -ne "print /build number $build_job_no.*?url...(que.*?)..,/"`	
 	
 		if [ "$dep_queue" == "" ]; then
 			break;
@@ -121,7 +121,7 @@ fi
 
 if [ "$std_job_name" ]; then
 	job_name="$std_job_name";
-	if [[ `curl -s --user "$user:$pass" $jenkins/api/xml | perl -lne "print /<url>(http.*?job\/$job_name\/.*?)<\/url>/g"` == "" ]]; then
+	if [[ `curl --insecure -s --user "$user:$pass" $jenkins/api/xml | perl -lne "print /<url>(http.*?job\/$job_name\/.*?)<\/url>/g"` == "" ]]; then
 		echo "No job named '$job_name' in Jenkins dedfined!!";
 	else
 		if [ "$switch" == "--just-deploy" ]; then
@@ -137,17 +137,17 @@ else
 	current_repo=`grep url .git/config | cut -d" " -f3`
 
 	search_res='Current repo does not have defined pipeline in Jenkins!'
-	joblist=`curl -s --user "$user:$pass" $jenkins/api/xml | perl -lne "print /<url>(http.*?job.*?)<\/url>/g" | sed 's/http/\nhttp/g'`
+	joblist=`curl --insecure -s --user "$user:$pass" $jenkins/api/xml | perl -lne "print /<url>(http.*?job.*?)<\/url>/g" | sed 's/http/\\nhttp/g'`
 	while read job;
 	do
 		if [[ ! $job  =~ "dockerization" ]]; then
-			job_repo=`curl -s -X GET  --user "$user:$pass" $job/config.xml | perl -ne "print /<url>(git.github.*?)<\/url>/g"`;		
+			job_repo=`curl --insecure -s -X GET  --user "$user:$pass" $job/config.xml | perl -ne "print /<url>(git.github.*?)<\/url>/g"`;		
 			#echo "$job_repo";
 			if [[ $job_repo == $current_repo ]]; then 
 				job_name=`echo $job | perl -ne "print /job\/(.*)\//"`;
 				app=`echo $job_name | cut -d"-" -f1`;
 				echo "Reading through jobs in $app pipeline"
-				pipelinejobs=`curl -s --user "$user:$pass" "$jenkins/view/$app%20pipeline/api/xml" | perl -lne "print /<url>(http.*?job.*?)<\/url>/g" | sed 's/http/\nhttp/g' | sed 's/\n//'`
+				pipelinejobs=`curl --insecure -s --user "$user:$pass" "$jenkins/view/$app%20pipeline/api/xml" | perl -lne "print /<url>(http.*?job.*?)<\/url>/g" | sed 's/http/\\nhttp/g' | sed 's/\n//'`
 				#echo $pipelinejobs
 				i=1
 				while read pipejob;
