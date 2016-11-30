@@ -33,7 +33,6 @@ class ScanTask(Task):
         super(ScanTask, self).__init__(*args, **kwargs)
         self.nodes = nodes or self._get_nodes()
         self.scheduler = sched.scheduler(time.time)
-        self.scan_period = parse_period(cfg.get('service.scans.period'))
         self.storage = self.executor.storage
         self.as_service = as_service
 
@@ -52,7 +51,6 @@ class ScanTask(Task):
 
         """
         self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
-        # self.scheduler.enter(self.scan_period, 1, self.run_periodically)
         self.run()
 
     def run(self):
