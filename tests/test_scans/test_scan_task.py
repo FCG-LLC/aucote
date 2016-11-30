@@ -76,7 +76,6 @@ class ScanTaskTest(TestCase):
 }"""
 
     @patch('scans.scan_task.ScanTask._get_nodes', MagicMock(return_value=[]))
-    @patch('scans.scan_task.parse_period', MagicMock(return_value=5))
     @patch('scans.scan_task.croniter', MagicMock(return_value=croniter('* * * * *', time.time())))
     @patch('scans.scan_task.cfg.get', MagicMock())
     def setUp(self):
@@ -85,6 +84,10 @@ class ScanTaskTest(TestCase):
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
         self.urllib_response.headers.get_content_charset = MagicMock(return_value='utf-8')
         self.scan_task = ScanTask(nodes=MagicMock(), executor=MagicMock(storage=MagicMock()))
+
+    @patch('scans.scan_task.cfg.get', MagicMock(side_effect=KeyError('test')))
+    def test_init_with_exception(self):
+        self.assertRaises(SystemExit, ScanTask, nodes=MagicMock(), executor=MagicMock())
 
     @patch('scans.scan_task.http.urlopen')
     @patch('scans.scan_task.cfg.get', MagicMock())
