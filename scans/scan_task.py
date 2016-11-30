@@ -36,7 +36,12 @@ class ScanTask(Task):
         self.scan_period = parse_period(cfg.get('service.scans.period'))
         self.storage = self.executor.storage
         self.as_service = as_service
-        self.cron = croniter(cfg.get('service.scans.cron'), time.time())
+
+        try:
+            self.cron = croniter(cfg.get('service.scans.cron'), time.time())
+        except KeyError:
+            log.error("Please configure service.scans.cron")
+            exit(1)
 
     def run_periodically(self):
         """
