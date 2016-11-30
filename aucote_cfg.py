@@ -61,6 +61,11 @@ _DEFAULT = {
         'aucote-http-headers': {
             'enable': True,
             'period': ''
+        },
+        'cisco-global-exploiter': {
+            'enable': False,
+            'period': '',
+            'cmd': 'static/cge.pl'
         }
     },
     'service': {

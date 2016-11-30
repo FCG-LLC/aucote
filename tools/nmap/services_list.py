@@ -3219,4 +3219,6 @@ NMAP_SERVICES = {
     'zincite-a',
     'zion-lm',
     'zserv',
+
+    'cisco'
 }

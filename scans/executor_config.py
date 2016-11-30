@@ -1,6 +1,7 @@
 """
 Provides configuration for tools. Configuration is implicit and shouldn't be modified by end-user.
 """
+from tools.cisco_global_exploiter.tool import CiscoGlobalExploiterTool
 from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
 from tools.hydra.tool import HydraTool
@@ -71,6 +72,13 @@ EXECUTOR_CONFIG = {
         },
         'skipfish': {
             'class': SkipfishTool
+        },
+        'cisco-global-exploiter': {
+            'class': CiscoGlobalExploiterTool,
+            'disabled_scripts': {'cisco4', 'cisco7', 'cisco9', 'cisco11'},
+            'scripts': {
+
+            }
         },
         'aucote-http-headers': {
             'class': AucoteHttpHeadersTool,
