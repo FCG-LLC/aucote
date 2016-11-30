@@ -11,6 +11,8 @@ import logging as log
 import time
 import netifaces
 
+from netaddr import all_matching_cidrs
+
 from aucote_cfg import cfg
 from scans.executor import Executor
 from structs import Node, Port
@@ -57,7 +59,7 @@ class ScanTask(Task):
         scanner_ipv4 = MasscanPorts()
         scanner_ipv6 = PortsScan()
 
-        nodes = self._get_nodes_for_scanning()
+        nodes = self._filter_nodes_by_networks(self._get_nodes_for_scanning(), self._get_networks_list())
 
         nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
         nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
@@ -72,16 +74,17 @@ class ScanTask(Task):
 
         self.storage.save_nodes(nodes)
 
-        interfaces = netifaces.interfaces()
+        if cfg.get('service.scans.physical'):
+            interfaces = netifaces.interfaces()
 
-        for interface in interfaces:
-            addr = netifaces.ifaddresses(interface)
-            if netifaces.AF_INET not in addr:
-                continue
+            for interface in interfaces:
+                addr = netifaces.ifaddresses(interface)
+                if netifaces.AF_INET not in addr:
+                    continue
 
-            port = Port.physical()
-            port.interface = interface
-            ports.append(port)
+                port = Port.physical()
+                port.interface = interface
+                ports.append(port)
 
         self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
 
@@ -136,3 +139,15 @@ class ScanTask(Task):
                 continue
 
         return topdis_nodes
+
+    @classmethod
+    def _filter_nodes_by_networks(cls, nodes, networks):
+        return [node for node in nodes if all_matching_cidrs(str(node.ip), networks)]
+
+    @classmethod
+    def _get_networks_list(cls):
+        try:
+            return [network.strip() for network in cfg.get('service.scans.networks').split(",")]
+        except KeyError:
+            log.error("Please configure service.scans.networks!")
+            return []
