@@ -34,8 +34,8 @@ class NmapTool(Tool):
         tasks = []
         for exploit in self.exploits:
             name = exploit.name
-            args = self.config.get('services', {}).get(name, {}).get('args', None)
-            singular = self.config.get('services', {}).get(name, {}).get('singular', False)
+            args = self.config.get('scripts', {}).get(name, {}).get('args', None)
+            singular = self.config.get('scripts', {}).get(name, {}).get('singular', False)
 
             if callable(args):
                 try:
@@ -125,6 +125,11 @@ class NmapTool(Tool):
             list
 
         """
-        domains = cls.get_config('tools.nmap.domino-http')
+        config = cls.get_config('tools.nmap.domino-http')
         return "domino-enum-passwords.username='{0}',domino-enum-passwords.password={1}".format(
-            domains.get('username', None), domains.get('password', None))
+            config.get('username', None), config.get('password', None))
+
+    @classmethod
+    def custom_args_http_useragent(cls):
+        config = cls.get_config('service.scans.useragent')
+        return "http.useragent='{0}'".format(config)

@@ -20,7 +20,7 @@ class NmapToolTest(TestCase):
         self.exploit_conf_args.risk_level = RiskLevel.HIGH
 
         self.config = {
-            'services': {
+            'scripts': {
                 'test_name': {
                     'args': 'test_args'
                 },
@@ -65,7 +65,7 @@ class NmapToolTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_single_mode(self):
-        self.nmap_tool.config['services']['test_name']['singular'] = True
+        self.nmap_tool.config['scripts']['test_name']['singular'] = True
         self.exploit2.name = 'test_name2'
         self.nmap_tool()
 
@@ -77,7 +77,7 @@ class NmapToolTest(TestCase):
     @patch('tools.nmap.tool.VulnNmapScript')
     def test_configurable_args(self, vuln_scan_script):
         self.nmap_tool.exploits = [self.exploit_conf_args]
-        self.config['services']['test_name2']['args'].return_value = 'dynamic_conf_test'
+        self.config['scripts']['test_name2']['args'].return_value = 'dynamic_conf_test'
         self.nmap_tool()
         vuln_scan_script.assert_called_once_with(exploit=self.exploit_conf_args, port=self.port, name='test_name2',
                                                  args='dynamic_conf_test')
@@ -97,7 +97,7 @@ class NmapToolTest(TestCase):
 
         """
 
-        self.config['services']['test_name']['args'] = ['test', 'test2']
+        self.config['scripts']['test_name']['args'] = ['test', 'test2']
         self.nmap_tool()
         info_scan_script.assert_any_call(exploit=self.exploit, port=self.port, name='test_name',
                                                  args='test')
@@ -127,7 +127,7 @@ class NmapToolTest(TestCase):
     @patch('tools.nmap.tool.cfg.get', MagicMock(return_value='test'))
     def test_improper_configure_args(self, vuln_scan_script):
         self.nmap_tool.exploits = [self.exploit_conf_args]
-        self.config['services']['test_name2']['args'].side_effect = ImproperConfigurationException('test.test2')
+        self.config['scripts']['test_name2']['args'].side_effect = ImproperConfigurationException('test.test2')
         self.nmap_tool()
 
         self.assertFalse(vuln_scan_script.called)
@@ -147,3 +147,11 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(NmapTool.custom_args_http_domino_enum_passwords(), expected)
         mock_cfg.assert_called_once_with('tools.nmap.domino-http')
+
+    @patch('tools.base.cfg.get')
+    def test_custom_args_http_useragent(self, mock_cfg):
+        mock_cfg.return_value.cfg = "test_useragent"
+        expected = "http.useragent='test_useragent'"
+
+        self.assertEqual(NmapTool.custom_args_http_useragent(), expected)
+        mock_cfg.assert_called_once_with('service.scans.useragent')
