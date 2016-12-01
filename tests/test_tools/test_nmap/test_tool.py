@@ -35,6 +35,7 @@ class NmapToolTest(TestCase):
                          node=Node(node_id=1,ip=ipaddress.ip_address('127.0.0.1')))
 
         self.port.scan = Scan(start=14, end=13)
+        self.port.service_name = 'test_service'
 
         self.executor = MagicMock(storage=Storage(":memory:"))
         self.nmap_tool = NmapTool(executor=self.executor, exploits=self.exploits, port=self.port, config=self.config)
@@ -148,10 +149,37 @@ class NmapToolTest(TestCase):
         self.assertEqual(NmapTool.custom_args_http_domino_enum_passwords(), expected)
         mock_cfg.assert_called_once_with('tools.nmap.domino-http')
 
-    @patch('tools.base.cfg.get')
+    @patch('tools.nmap.tool.cfg.get')
     def test_custom_args_http_useragent(self, mock_cfg):
-        mock_cfg.return_value.cfg = "test_useragent"
+        mock_cfg.return_value = "test_useragent"
         expected = "http.useragent='test_useragent'"
 
         self.assertEqual(NmapTool.custom_args_http_useragent(), expected)
         mock_cfg.assert_called_once_with('service.scans.useragent')
+
+    def test_custom_service_args(self):
+        custom_args = MagicMock(return_value="test_arg")
+        self.config['services'] = {
+            'test_service': {
+                'args': custom_args
+            }
+        }
+        self.nmap_tool.exploits = [self.exploit]
+
+        self.nmap_tool.config = self.config
+        result = self.nmap_tool._get_tasks()
+        expected = "test_args,test_arg"
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].args, expected)
+
+
+    def test_empty_custom_service_args(self):
+        self.nmap_tool.config = self.config
+        self.nmap_tool.exploits = [self.exploit]
+
+        result = self.nmap_tool._get_tasks()
+        expected = "test_args"
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].args, expected)

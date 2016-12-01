@@ -30,35 +30,7 @@ class NmapTool(Tool):
             None
 
         """
-
-        tasks = []
-        for exploit in self.exploits:
-            name = exploit.name
-            args = self.config.get('scripts', {}).get(name, {}).get('args', None)
-            singular = self.config.get('scripts', {}).get(name, {}).get('singular', False)
-
-            if callable(args):
-                try:
-                    args = args()
-                except ImproperConfigurationException as exception:
-                    log.warning("%s is not configured: Please configure %s in %s", name, exception,
-                                cfg.get('config_filename'))
-                    continue
-
-            if not isinstance(args, (list, set)):
-                args = [args]
-
-            for arg in args:
-                if exploit.risk_level == RiskLevel.NONE:
-                    task = InfoNmapScript(exploit=exploit, port=self.port, name=name, args=arg)
-                else:
-                    task = VulnNmapScript(exploit=exploit, port=self.port, name=name, args=arg)
-
-                if singular:
-                    self.executor.add_task(NmapPortScanTask(executor=self.executor, port=self.port,
-                                                            script_classes=[task]))
-                    continue
-                tasks.append(task)
+        tasks = self._get_tasks()
 
         names = []
         scripts = []
@@ -79,6 +51,53 @@ class NmapTool(Tool):
 
         for script in scripts:
             self.executor.add_task(NmapPortScanTask(executor=self.executor, port=self.port, script_classes=script))
+
+    def _get_tasks(self):
+        """
+        Prepare nmaps scripts  for executing
+
+        Returns:
+            list - list of tasks
+        """
+        tasks = []
+
+        for exploit in self.exploits:
+            name = exploit.name
+            args = self.config.get('scripts', {}).get(name, {}).get('args', None)
+            singular = self.config.get('scripts', {}).get(name, {}).get('singular', False)
+            service_args = self.config.get('services', {}).get(self.port.service_name, {}).get('args', None)
+
+            if callable(service_args):
+                service_args = service_args()
+            else:
+                service_args = ""
+
+            if callable(args):
+                try:
+                    args = args()
+                except ImproperConfigurationException as exception:
+                    log.warning("%s is not configured: Please configure %s in %s", name, exception,
+                                cfg.get('config_filename'))
+                    continue
+
+            if not isinstance(args, (list, set)):
+                args = [args]
+
+            for arg in args:
+                arg = "{0},{1}".format(arg or "", service_args).strip(",")
+
+                if exploit.risk_level == RiskLevel.NONE:
+                    task = InfoNmapScript(exploit=exploit, port=self.port, name=name, args=arg)
+                else:
+                    task = VulnNmapScript(exploit=exploit, port=self.port, name=name, args=arg)
+
+                if singular:
+                    self.executor.add_task(NmapPortScanTask(executor=self.executor, port=self.port,
+                                                            script_classes=[task]))
+                    continue
+                tasks.append(task)
+
+        return tasks
 
     @classmethod
     def custom_args_dns_zone_transfer(cls):
@@ -122,7 +141,7 @@ class NmapTool(Tool):
         Parses configuration and convert it to the script argument
 
         Returns:
-            list
+            str
 
         """
         config = cls.get_config('tools.nmap.domino-http')
@@ -131,5 +150,13 @@ class NmapTool(Tool):
 
     @classmethod
     def custom_args_http_useragent(cls):
-        config = cls.get_config('service.scans.useragent')
-        return "http.useragent='{0}'".format(config)
+        """
+        Parses configuration and convert it to the script argument
+
+        Returns:
+            str
+
+        """
+        config = cfg.get('service.scans.useragent')
+        if config:
+            return "http.useragent='{0}'".format(config)
