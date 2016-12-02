@@ -17,7 +17,7 @@ pid_file: tmp/aucote.pid
 
 logging:
     file: aucote.log
-    level: debug
+    level: info
     max_file_size: 10485760
     max_files: 5
     format: "%(levelname)s %(asctime)s %(threadName)s: %(message)s"
