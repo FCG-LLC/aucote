@@ -59,7 +59,7 @@ class ScanTask(Task):
         scanner_ipv4 = MasscanPorts()
         scanner_ipv6 = PortsScan()
 
-        nodes = self._filter_nodes_by_networks(self._get_nodes_for_scanning(), self._get_networks_list())
+        nodes = [node for node in self._get_nodes_for_scanning() if node.ip.exploded in self._get_networks_list()]
 
         nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
         nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
@@ -139,21 +139,6 @@ class ScanTask(Task):
                 continue
 
         return topdis_nodes
-
-    @classmethod
-    def _filter_nodes_by_networks(cls, nodes, networks):
-        """
-        Returns nodes which belongs to given networks
-
-        Args:
-            nodes (list): list of Nodes
-            networks (IPSet): set of networks
-
-        Returns:
-            list: list of nodes
-
-        """
-        return [node for node in nodes if node.ip.exploded in networks]
 
     @classmethod
     def _get_networks_list(cls):

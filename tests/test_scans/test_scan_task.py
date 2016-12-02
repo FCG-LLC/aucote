@@ -151,9 +151,10 @@ class ScanTaskTest(TestCase):
     @patch('scans.scan_task.cfg.get', MagicMock(return_value=True))
     def test_run(self, mock_executor, mock_masscan, mock_nmap, mock_netiface):
         self.scan_task.executor.add_task = MagicMock()
-        self.scan_task._get_nodes_for_scanning = MagicMock()
-        self.scan_task._get_networks_list = MagicMock()
-        self.scan_task._filter_nodes_by_networks = MagicMock()
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
+
+        self.scan_task._get_nodes_for_scanning = MagicMock(return_value=[node_1])
+        self.scan_task._get_networks_list = MagicMock(return_value=IPSet(['127.0.0.2/31']))
         self.scan_task.storage = MagicMock()
 
         ports_masscan = [MagicMock()]
@@ -194,19 +195,6 @@ class ScanTaskTest(TestCase):
 
         self.assertEqual(result, expected)
         self.scan_task.run.assert_called_once_with()
-
-    def test_filter_nodes_by_networks(self):
-        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
-        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
-        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
-
-        nodes = [node_1, node_2, node_3]
-        networks = IPSet(['127.0.0.2/31'])
-
-        expected = [node_2, node_3]
-        result = self.scan_task._filter_nodes_by_networks(nodes, networks)
-
-        self.assertCountEqual(result, expected)
 
     @patch('scans.scan_task.cfg.get', MagicMock(return_value=MagicMock(cfg=['127.0.0.1/24', '128.0.0.1/13'])))
     def test_get_networks_list(self):
