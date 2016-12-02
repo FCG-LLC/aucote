@@ -103,5 +103,4 @@ scan.txt
 *.sqlite3
 
 # Locking file
-
 *.pid
