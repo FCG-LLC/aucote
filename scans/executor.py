@@ -24,7 +24,8 @@ class Executor(object):
         """
         self.aucote = aucote
         self.ports = nodes or []
-        self.ports.append(Port.broadcast())
+        if cfg.get('service.scans.broadcast'):
+            self.ports.append(Port.broadcast())
 
     @property
     def storage(self):

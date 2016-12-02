@@ -47,9 +47,13 @@ kuduworker:
 #                     Period should be set up in special format:
 #                     <int>d<int>h<int>m<int>s, where letters mean: days, hours, minutes, seconds
 #     ports: <str> - Port range in format suit to the used tool eg. T:0-65535 for nmap/masscan
-#       port_period: <period> - Minimal port scanning period
-#       node_period: <period> - Minimal node scanning period
-
+#     port_period: <period> - Minimal port scanning period
+#     node_period: <period> - Minimal node scanning period
+#     broadcast: (True|False) - Enable broadcast scanning if True (default)
+#     physical: (True|False) - Enable scanning of aucote's host physical interfaces (e.g. eth0) if True (default)
+#     networks: - list of networks, which should be scanned
+#       - 127.0.0.1/32 - example ipv4 network
+#       - ::1/128 - example ipv6 network
 
 service:
     scans:
@@ -59,6 +63,9 @@ service:
         ports: T:0-65535,U:0-65535,S:65535 # TCP, UDP, SCTP: full range
         port_period: 15m
         node_period: 0s
+        # networks: # Change it to proper values and uncomment
+        #    - 127.0.0.1/32
+        #    - ::1/128
 
 # This section contains configuration related to topdis service
 # topdis:
@@ -76,11 +83,11 @@ topdis:
 # This subsection shows common applications options
 #
 # tools:
-#   app_name1:
+#   app_name:
 #     enable: (True|False) - Enable tool
 #     cmd: <str> - Command used to run application
 #     period: <str> - Defines how often use application
-#     periods: - Defines how often using particalar application modules (e.g. nmap scripts).
+#     periods: - Defines how often using particular application modules (e.g. nmap scripts).
 #                These values are higher priority than 'period'.
 #       module1: <period> - Period for module1
 #       module2: <period> - Period for module2
