@@ -11,7 +11,7 @@ import logging as log
 import time
 import netifaces
 
-from netaddr import all_matching_cidrs
+from netaddr import IPSet
 
 from aucote_cfg import cfg
 from scans.executor import Executor
@@ -142,12 +142,30 @@ class ScanTask(Task):
 
     @classmethod
     def _filter_nodes_by_networks(cls, nodes, networks):
-        return [node for node in nodes if all_matching_cidrs(str(node.ip), networks)]
+        """
+        Returns nodes which belongs to given networks
+
+        Args:
+            nodes (list): list of Nodes
+            networks (IPSet): set of networks
+
+        Returns:
+            list: list of nodes
+
+        """
+        return [node for node in nodes if node.ip.exploded in networks]
 
     @classmethod
     def _get_networks_list(cls):
+        """
+        Returns list of networks from configuration file
+
+        Returns:
+            IPSet: set of networks
+
+        """
         try:
-            return [network.strip() for network in cfg.get('service.scans.networks').cfg]
+            return IPSet(cfg.get('service.scans.networks').cfg)
         except KeyError:
-            log.error("Please configure service.scans.networks!")
-            return []
+            log.error("Please set service.scans.networks in configuration file!")
+            return IPSet()

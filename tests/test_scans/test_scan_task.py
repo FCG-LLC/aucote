@@ -3,6 +3,8 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from urllib.error import URLError
 
+from netaddr import IPSet
+
 from scans.scan_task import ScanTask
 from structs import Node, Port
 from utils.exceptions import TopdisConnectionException
@@ -199,7 +201,7 @@ class ScanTaskTest(TestCase):
         node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
 
         nodes = [node_1, node_2, node_3]
-        networks = ['127.0.0.2/31']
+        networks = IPSet(['127.0.0.2/31'])
 
         expected = [node_2, node_3]
         result = self.scan_task._filter_nodes_by_networks(nodes, networks)
@@ -209,13 +211,13 @@ class ScanTaskTest(TestCase):
     @patch('scans.scan_task.cfg.get', MagicMock(return_value=MagicMock(cfg=['127.0.0.1/24', '128.0.0.1/13'])))
     def test_get_networks_list(self):
         result = self.scan_task._get_networks_list()
-        expected = ['127.0.0.1/24', '128.0.0.1/13']
+        expected = IPSet(['127.0.0.1/24', '128.0.0.1/13'])
 
-        self.assertCountEqual(result, expected)
+        self.assertEqual(result, expected)
 
     @patch('scans.scan_task.cfg.get', MagicMock(side_effect=KeyError("test")))
     def test_get_networks_list_no_cfg(self):
         result = self.scan_task._get_networks_list()
-        expected = []
+        expected = IPSet()
 
         self.assertCountEqual(result, expected)
