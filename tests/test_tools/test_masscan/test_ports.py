@@ -54,3 +54,9 @@ class MasscanPortsTest(TestCase):
         expected = 0
 
         self.assertEqual(result, expected)
+
+    def test_empty_nodes(self):
+        result = self.masscanports.scan_ports([])
+        expected = []
+
+        self.assertEqual(result, expected)

@@ -147,7 +147,7 @@ class ScanTask(Task):
     @classmethod
     def _get_networks_list(cls):
         try:
-            return [network.strip() for network in cfg.get('service.scans.networks').split(",")]
+            return [network.strip() for network in cfg.get('service.scans.networks').cfg]
         except KeyError:
             log.error("Please configure service.scans.networks!")
             return []

@@ -206,7 +206,7 @@ class ScanTaskTest(TestCase):
 
         self.assertCountEqual(result, expected)
 
-    @patch('scans.scan_task.cfg.get', MagicMock(return_value='127.0.0.1/24, 128.0.0.1/13'))
+    @patch('scans.scan_task.cfg.get', MagicMock(return_value=MagicMock(cfg=['127.0.0.1/24', '128.0.0.1/13'])))
     def test_get_networks_list(self):
         result = self.scan_task._get_networks_list()
         expected = ['127.0.0.1/24', '128.0.0.1/13']
