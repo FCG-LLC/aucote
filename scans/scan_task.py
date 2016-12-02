@@ -11,6 +11,7 @@ import logging as log
 import time
 import netifaces
 
+from croniter import croniter
 from netaddr import IPSet
 
 from aucote_cfg import cfg
@@ -33,9 +34,14 @@ class ScanTask(Task):
         super(ScanTask, self).__init__(*args, **kwargs)
         self.nodes = nodes or self._get_nodes()
         self.scheduler = sched.scheduler(time.time)
-        self.scan_period = parse_period(cfg.get('service.scans.period'))
         self.storage = self.executor.storage
         self.as_service = as_service
+
+        try:
+            self.cron = croniter(cfg.get('service.scans.cron'), time.time())
+        except KeyError:
+            log.error("Please configure service.scans.cron")
+            exit(1)
 
     def run_periodically(self):
         """
@@ -45,7 +51,7 @@ class ScanTask(Task):
             None
 
         """
-        self.scheduler.enter(self.scan_period, 1, self.run_periodically)
+        self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
         self.run()
 
     def run(self):
@@ -90,7 +96,7 @@ class ScanTask(Task):
 
     def __call__(self, *args, **kwargs):
         if self.as_service:
-            self.run_periodically()
+            self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
         else:
             self.run()
         self.scheduler.run()

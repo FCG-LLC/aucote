@@ -3,6 +3,8 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from urllib.error import URLError
 
+import time
+from croniter import croniter
 from netaddr import IPSet
 
 from scans.scan_task import ScanTask
@@ -75,14 +77,21 @@ class ScanTaskTest(TestCase):
 }"""
 
     @patch('scans.scan_task.ScanTask._get_nodes', MagicMock(return_value=[]))
+    @patch('scans.scan_task.croniter', MagicMock(return_value=croniter('* * * * *', time.time())))
+    @patch('scans.scan_task.cfg.get', MagicMock())
     def setUp(self):
         self.urllib_response = MagicMock()
         self.urllib_response.read = MagicMock()
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
         self.urllib_response.headers.get_content_charset = MagicMock(return_value='utf-8')
-        self.scan_task = ScanTask(executor=MagicMock(storage=MagicMock()))
+        self.scan_task = ScanTask(nodes=MagicMock(), executor=MagicMock(storage=MagicMock()))
+
+    @patch('scans.scan_task.cfg.get', MagicMock(side_effect=KeyError('test')))
+    def test_init_with_exception(self):
+        self.assertRaises(SystemExit, ScanTask, nodes=MagicMock(), executor=MagicMock())
 
     @patch('scans.scan_task.http.urlopen')
+    @patch('scans.scan_task.cfg.get', MagicMock())
     def test_getting_nodes(self, urllib):
         urllib.return_value = self.urllib_response
 
@@ -94,6 +103,7 @@ class ScanTaskTest(TestCase):
         self.assertEqual(nodes[0].name, 'EPSON1B0407')
 
     @patch('scans.scan_task.http.urlopen')
+    @patch('scans.scan_task.cfg.get', MagicMock())
     def test_getting_nodes_cannot_connect_to_topdis(self, urllib):
         urllib.side_effect = URLError('')
 
@@ -128,10 +138,11 @@ class ScanTaskTest(TestCase):
         self.scan_task.scheduler = MagicMock()
         self.scan_task.as_service = True
         self.scan_task.run_periodically = MagicMock()
+        self.scan_task.cron = croniter('* * * * *', 0)
 
         self.scan_task()
 
-        self.scan_task.run_periodically.assert_called_once_with()
+        self.scan_task.scheduler.enterabs.assert_called_once_with(60, 1, self.scan_task.run_periodically)
         self.scan_task.scheduler.run.assert_called_once_with()
 
     def test_call_as_service(self):
@@ -188,10 +199,11 @@ class ScanTaskTest(TestCase):
     def test_run_periodically(self):
         self.scan_task.scheduler = MagicMock()
         self.scan_task.run = MagicMock()
+        self.scan_task.cron = croniter('* * * * *', 0)
         self.scan_task.run_periodically()
 
-        result = self.scan_task.scheduler.enter.call_args[0]
-        expected = (self.scan_task.scan_period, 1, self.scan_task.run_periodically)
+        result = self.scan_task.scheduler.enterabs.call_args[0]
+        expected = (60, 1, self.scan_task.run_periodically)
 
         self.assertEqual(result, expected)
         self.scan_task.run.assert_called_once_with()

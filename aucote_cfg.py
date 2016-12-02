@@ -65,7 +65,6 @@ _DEFAULT = {
     },
     'service': {
         'scans': {
-            'period': '2h',
             'threads': 10,
             'ports': '0-65535,U:0-65535',
             'rate': 1000,

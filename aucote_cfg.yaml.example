@@ -43,9 +43,12 @@ kuduworker:
 #   scans:
 #     threads: <int> - Number of threads to be running
 #     rate: <int> - Rate in packets per seconds for scanning tool (e.g. masscan)
-#     period: <period> - If aucote runs in service mode it scans network every "period" time.
-#                     Period should be set up in special format:
-#                     <int>d<int>h<int>m<int>s, where letters mean: days, hours, minutes, seconds
+#     cron: <cron-like format> - This options defines how often aucote should run scans.
+#                                Examples:
+#                                   "*/5 * * * *" - run every 5 minutes
+#                                   "1 2 3 4 5" - run every 3rd march at 2:01, if it is friday(5)
+#                                More information: http://www.nncron.ru/help/EN/working/cron-format.htm
+#                                                  https://en.wikipedia.org/wiki/Cron#CRON_expression
 #     ports: <str> - Port range in format suit to the used tool eg. T:0-65535 for nmap/masscan
 #     port_period: <period> - Minimal port scanning period
 #     node_period: <period> - Minimal node scanning period
@@ -59,7 +62,7 @@ service:
     scans:
         threads: 30
         rate: 1000
-        period: 12h
+        cron: "0 22 * * *" # run every day at 22:00
         ports: T:0-65535,U:0-65535,S:65535 # TCP, UDP, SCTP: full range
         port_period: 15m
         node_period: 0s
