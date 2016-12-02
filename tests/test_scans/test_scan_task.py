@@ -5,6 +5,7 @@ from urllib.error import URLError
 
 import time
 from croniter import croniter
+from netaddr import IPSet
 
 from scans.scan_task import ScanTask
 from structs import Node, Port
@@ -158,9 +159,13 @@ class ScanTaskTest(TestCase):
     @patch('scans.scan_task.PortsScan')
     @patch('scans.scan_task.MasscanPorts')
     @patch('scans.scan_task.Executor')
+    @patch('scans.scan_task.cfg.get', MagicMock(return_value=True))
     def test_run(self, mock_executor, mock_masscan, mock_nmap, mock_netiface):
         self.scan_task.executor.add_task = MagicMock()
-        self.scan_task._get_nodes_for_scanning = MagicMock()
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
+
+        self.scan_task._get_nodes_for_scanning = MagicMock(return_value=[node_1])
+        self.scan_task._get_networks_list = MagicMock(return_value=IPSet(['127.0.0.2/31']))
         self.scan_task.storage = MagicMock()
 
         ports_masscan = [MagicMock()]
@@ -186,6 +191,8 @@ class ScanTaskTest(TestCase):
 
     def test_run_without_nodes(self):
         self.scan_task._get_nodes_for_scanning = MagicMock(return_value=[])
+        self.scan_task._get_networks_list = MagicMock()
+        self.scan_task._get_networks_list.return_value = ['0.0.0.0/0']
         self.scan_task.run()
         self.assertFalse(self.scan_task.storage.save_nodes.called)
 
@@ -200,3 +207,15 @@ class ScanTaskTest(TestCase):
 
         self.assertEqual(result, expected)
         self.scan_task.run.assert_called_once_with()
+
+    @patch('scans.scan_task.cfg.get', MagicMock(return_value=MagicMock(cfg=['127.0.0.1/24', '128.0.0.1/13'])))
+    def test_get_networks_list(self):
+        result = self.scan_task._get_networks_list()
+        expected = IPSet(['127.0.0.1/24', '128.0.0.1/13'])
+
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_task.cfg.get', MagicMock(side_effect=KeyError("test")))
+    def test_get_networks_list_no_cfg(self):
+
+        self.assertRaises(SystemExit, self.scan_task._get_networks_list)

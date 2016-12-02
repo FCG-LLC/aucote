@@ -70,7 +70,9 @@ _DEFAULT = {
             'rate': 1000,
             'port_period': '5m',
             'node_period': '1m',
-            'storage': 'storage.sqlite3'
+            'storage': 'storage.sqlite3',
+            'physical': True,
+            'broadcast': True
         },
         "api": {
             'v1': {
