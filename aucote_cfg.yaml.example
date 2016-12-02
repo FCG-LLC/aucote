@@ -41,6 +41,7 @@ kuduworker:
 # This section provides configurations related to aucote as a service
 # service:
 #   scans:
+#     useragent <str> - User-Agent string used by Aucote scripts.
 #     threads: <int> - Number of threads to be running
 #     rate: <int> - Rate in packets per seconds for scanning tool (e.g. masscan)
 #     period: <period> - If aucote runs in service mode it scans network every "period" time.
@@ -53,6 +54,7 @@ kuduworker:
 
 service:
     scans:
+        useragent: "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
         threads: 30
         rate: 1000
         period: 12h
