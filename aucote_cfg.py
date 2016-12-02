@@ -105,6 +105,6 @@ def load(file_name=None):
     print("Reading configuration from file:", file_name)
     try:
         cfg.load(file_name, _DEFAULT)
-    except (FileNotFoundError, TypeError):
+    except Exception:
         stderr.write("Cannot load configuration file {0}".format(file_name))
         exit()
