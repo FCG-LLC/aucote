@@ -67,13 +67,14 @@ _DEFAULT = {
     },
     'service': {
         'scans': {
-            'period': '2h',
             'threads': 10,
             'ports': '0-65535,U:0-65535',
             'rate': 1000,
             'port_period': '5m',
             'node_period': '1m',
-            'storage': 'storage.sqlite3'
+            'storage': 'storage.sqlite3',
+            'physical': True,
+            'broadcast': True
         },
         "api": {
             'v1': {

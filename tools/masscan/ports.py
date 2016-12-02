@@ -27,6 +27,8 @@ class MasscanPorts(MasscanBase):
 
         """
         log.info("Scanning ports")
+        if not nodes:
+            return []
 
         args = self.prepare_args(nodes)
 
