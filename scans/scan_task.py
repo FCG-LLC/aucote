@@ -11,6 +11,9 @@ import logging as log
 import time
 import netifaces
 
+from croniter import croniter
+from netaddr import IPSet
+
 from aucote_cfg import cfg
 from scans.executor import Executor
 from structs import Node, Port
@@ -31,9 +34,14 @@ class ScanTask(Task):
         super(ScanTask, self).__init__(*args, **kwargs)
         self.nodes = nodes or self._get_nodes()
         self.scheduler = sched.scheduler(time.time)
-        self.scan_period = parse_period(cfg.get('service.scans.period'))
         self.storage = self.executor.storage
         self.as_service = as_service
+
+        try:
+            self.cron = croniter(cfg.get('service.scans.cron'), time.time())
+        except KeyError:
+            log.error("Please configure service.scans.cron")
+            exit(1)
 
     def run_periodically(self):
         """
@@ -43,7 +51,7 @@ class ScanTask(Task):
             None
 
         """
-        self.scheduler.enter(self.scan_period, 1, self.run_periodically)
+        self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
         self.run()
 
     def run(self):
@@ -57,7 +65,7 @@ class ScanTask(Task):
         scanner_ipv4 = MasscanPorts()
         scanner_ipv6 = PortsScan()
 
-        nodes = self._get_nodes_for_scanning()
+        nodes = [node for node in self._get_nodes_for_scanning() if node.ip.exploded in self._get_networks_list()]
 
         nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
         nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
@@ -72,22 +80,23 @@ class ScanTask(Task):
 
         self.storage.save_nodes(nodes)
 
-        interfaces = netifaces.interfaces()
+        if cfg.get('service.scans.physical'):
+            interfaces = netifaces.interfaces()
 
-        for interface in interfaces:
-            addr = netifaces.ifaddresses(interface)
-            if netifaces.AF_INET not in addr:
-                continue
+            for interface in interfaces:
+                addr = netifaces.ifaddresses(interface)
+                if netifaces.AF_INET not in addr:
+                    continue
 
-            port = Port.physical()
-            port.interface = interface
-            ports.append(port)
+                port = Port.physical()
+                port.interface = interface
+                ports.append(port)
 
         self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
 
     def __call__(self, *args, **kwargs):
         if self.as_service:
-            self.run_periodically()
+            self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
         else:
             self.run()
         self.scheduler.run()
@@ -136,3 +145,18 @@ class ScanTask(Task):
                 continue
 
         return topdis_nodes
+
+    @classmethod
+    def _get_networks_list(cls):
+        """
+        Returns list of networks from configuration file
+
+        Returns:
+            IPSet: set of networks
+
+        """
+        try:
+            return IPSet(cfg.get('service.scans.networks').cfg)
+        except KeyError:
+            log.error("Please set service.scans.networks in configuration file!")
+            exit()
