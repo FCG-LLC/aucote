@@ -205,7 +205,5 @@ class ScanTaskTest(TestCase):
 
     @patch('scans.scan_task.cfg.get', MagicMock(side_effect=KeyError("test")))
     def test_get_networks_list_no_cfg(self):
-        result = self.scan_task._get_networks_list()
-        expected = IPSet()
 
-        self.assertCountEqual(result, expected)
+        self.assertRaises(SystemExit, self.scan_task._get_networks_list)

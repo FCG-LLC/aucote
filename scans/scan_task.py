@@ -153,4 +153,4 @@ class ScanTask(Task):
             return IPSet(cfg.get('service.scans.networks').cfg)
         except KeyError:
             log.error("Please set service.scans.networks in configuration file!")
-            return IPSet()
+            exit()
