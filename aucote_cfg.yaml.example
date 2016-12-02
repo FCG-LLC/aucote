@@ -63,7 +63,7 @@ service:
         ports: T:0-65535,U:0-65535,S:65535 # TCP, UDP, SCTP: full range
         port_period: 15m
         node_period: 0s
-        # networks: Change it to proper values and uncomment
+        # networks: # Change it to proper values and uncomment
         #    - 127.0.0.1/32
         #    - ::1/128
 
