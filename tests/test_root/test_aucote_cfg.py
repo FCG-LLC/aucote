@@ -11,3 +11,17 @@ class AucoteCfgTest(TestCase):
     def test_empty_load(self, cfg_mock):
         load()
         cfg_mock.load.assert_called_once_with('test', _DEFAULT)
+
+    @patch('aucote_cfg.cfg', MagicMock())
+    @patch('os.path.join', MagicMock(return_value='test'))
+    @patch('aucote_cfg.Config')
+    def test_nonexist_file_load(self, mock_cfg):
+        mock_cfg.return_value.load.side_effect = FileNotFoundError
+        self.assertRaises(SystemExit, load('test'))
+
+    @patch('aucote_cfg.cfg', MagicMock())
+    @patch('os.path.join', MagicMock(return_value='test'))
+    @patch('aucote_cfg.Config')
+    def test_invalid_file_load(self, mock_cfg):
+        mock_cfg.return_value.load.side_effect = TypeError
+        self.assertRaises(SystemExit, load('test'))

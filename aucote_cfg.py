@@ -2,6 +2,8 @@
 This module provides default configuration and the global instance for the utils.Config class.
 '''
 import os.path as path
+from sys import stderr
+
 from utils import Config
 
 #default values
@@ -100,4 +102,8 @@ def load(file_name=None):
     file_name = path.abspath(file_name)
     #at this point logs do not work, print info to stdout
     print("Reading configuration from file:", file_name)
-    cfg.load(file_name, _DEFAULT)
+    try:
+        cfg.load(file_name, _DEFAULT)
+    except (FileNotFoundError, TypeError):
+        stderr.write("Cannot load configuration file {0}".format(file_name))
+        exit()
