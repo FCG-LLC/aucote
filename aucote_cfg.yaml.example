@@ -17,7 +17,7 @@ pid_file: tmp/aucote.pid
 
 logging:
     file: aucote.log
-    level: debug
+    level: info
     max_file_size: 10485760
     max_files: 5
     format: "%(levelname)s %(asctime)s %(threadName)s: %(message)s"
@@ -86,8 +86,15 @@ topdis:
 #
 # This subsection shows common applications options
 #
+#    List of tools:
+#        - nmap - security scanner
+#        - masscan - port scanner based on nmap
+#        - skipfish - active web application scanner
+#        - hydra - parallelized login cracker
+#        - aucote-http-headers - HTTP security headers scanner
+#
 # tools:
-#   app_name:
+#   (nmap|masscan|hydra|skipfish|aucote-http-headers):
 #     enable: (True|False) - Enable tool
 #     cmd: <str> - Command used to run application
 #     period: <str> - Defines how often use application
@@ -134,7 +141,8 @@ tools:
         cmd: hydra
         loginfile: static/logins.hydra.txt
         passwordfile: static/passwords.hydra.txt
-        enable: True
+        enable: False
+        period: 1d
         disable_services:
             - vnc
             - http
@@ -142,8 +150,10 @@ tools:
         period: 7d
     skipfish:
         cmd: skipfish
-        enable: True
+        enable: False
         limit: 0:10:00
         threads: 5
         tmp_directory: /tmp
         period: 7d
+    aucote-http-headers:
+        enable: True

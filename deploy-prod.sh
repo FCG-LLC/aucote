@@ -1,5 +1,5 @@
 #!/bin/bash
-ddcfg="$HOME/.csapp/deploy-dev.cfg";
+ddcfg="$HOME/.csapp/deploy-prod.cfg";
 if [[ -f "$ddcfg" ]];
 	then source $ddcfg; 
 	result=`curl --insecure -s -I -X POST --user "$user:$pass" $jenkins/xml | head -n 1 | perl -ne "print 1 if /401 Invalid/"`
@@ -14,7 +14,7 @@ else
 	echo 'user="yourjenkinsuser"'
 	echo 'pass="yourjenkinspass"'
 	echo '### below you can override deployment host but this works only with --just deploy switch'
-	echo 'host="10.12.1.175"'
+	echo 'host="10.12.1.165"'
 	echo '### below you can put jenkins job name if autodetect does not work otherwise leave blank'
 	echo 'std_job_name=""'
 	exit
@@ -68,7 +68,7 @@ function check_dep(){
 function process_main_job (){
 	echo "Submiting build request to Jenkins";
 	#app=`echo $job_name | cut -d"-" -f1`;
-	queue_no=`curl --insecure -s -i --netrc -X POST --user "$user:$pass" "$jenkins/view/$app%20pipeline/job/$job_name/buildWithParameters?branch=$branch&destEnv=dev&forceWhole=yes" | perl -ne "print /Location:.http.*\/(.*)\//"`;
+	queue_no=`curl --insecure -s -i --netrc -X POST --user "$user:$pass" "$jenkins/view/$app%20pipeline/job/$job_name/buildWithParameters?branch=$branch&destEnv=prod&forceWhole=yes" | perl -ne "print /Location:.http.*\/(.*)\//"`;
 	queue_url="$jenkins/queue/item/$queue_no/api/json";
 	
 	echo "Main-task '$job_name' branch $branch build queued, waiting for free slot ($queue_url)";
@@ -102,14 +102,14 @@ function process_main_job (){
 }
 
 
-branch=`git branch | grep '*' | cut -f2 -d" "`
+branch="tags/$1"
 echo "";
 if [ "$switch" == "--just-deploy" ]; then
 	echo "Will just deploy latest docker to $host"
 else
-	echo "Will build and then deploy last pushed commit in $branch to DEV host, details below"
+	echo "Will build and then deploy $branch to PROD host, details below"
 	echo "--------------------------------";
-	git log -1 origin/$branch
+	git log -1 $branch
 	echo "--------------------------------";
 	if [ "$branch" == "master" ]; then
 		read -p "You are building and deploying above commit from MASTER branch to DEV host, are you sure ? [y/N] " sure </dev/tty;

@@ -1,8 +1,9 @@
 """
 Configuration related module
-"""
 
+"""
 import yaml
+
 
 class Config:
     '''
@@ -61,6 +62,7 @@ class Config:
         if not defaults:
             defaults = {}
         defaults = self._simplify_defaults(defaults)
+
         with open(file_name, 'r') as stream:
             cfg = yaml.load(stream.read())
             self._cfg = self._recursive_merge(cfg, defaults)
