@@ -62,6 +62,7 @@ service:
     scans:
         threads: 30
         rate: 1000
+        period: 12h
         cron: "0 22 * * *" # run every day at 22:00
         ports: T:0-65535,U:0-65535,S:65535 # TCP, UDP, SCTP: full range
         port_period: 15m
