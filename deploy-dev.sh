@@ -31,7 +31,7 @@ function deploy(){
 	echo "Deploy '$job_name' to $host build queued, waiting for free slot ($queue_url)";
 	while [[ `curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
 		echo -n "."; 
-		sleep 2; 
+		sleep 1; 
 	done
 
 	build_job_no=`curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'`;
@@ -40,7 +40,7 @@ function deploy(){
 	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print 'ETA: '; print /estimatedDuration..(...)/; print \" s\n\""
 	while [[ `curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/deploy-dev/$build_job_no/api/json" | perl -ne "print /building..(.*?),/"` == "true" ]]; do
 		echo -n '.'
-		sleep 2
+		sleep 1
 	done
 	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/deploy-dev/$build_job_no/api/json" | perl -ne "print \"\nRESULT: \"; print /result..(.*?),/; print \"\n\n\""
 }
@@ -51,7 +51,7 @@ function check_dep(){
 	echo "Sub-task '$job_name' build queued, waiting for free slot ($queue_url)"
 	while [[ `curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
 		echo -n "."; 
-		sleep 2; 
+		sleep 1; 
 	done
 
 	build_job_no=`curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'`;
@@ -60,7 +60,7 @@ function check_dep(){
 	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print 'ETA: '; print /estimatedDuration..(...)/; print \" s\n\""
 	while [[ `curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print /building..(.*?),/"` == "true" ]]; do
 		echo -n '.'
-		sleep 2
+		sleep 1
 	done
 	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print \"\nRESULT: \"; print /result..(.*?),/; print \"\n\n\""
 }
@@ -74,7 +74,7 @@ function process_main_job (){
 	echo "Main-task '$job_name' branch $branch build queued, waiting for free slot ($queue_url)";
 	while [[ `curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'` == "" ]]; do 
 		echo -n "."; 
-		sleep 2; 
+		sleep 1; 
 	done
 
 	build_job_no=`curl --insecure -s --user "$user:$pass" $queue_url | perl -ne 'print /executable.*number..(\d+)/'`;
@@ -85,7 +85,7 @@ function process_main_job (){
 	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print 'ETA: '; print /estimatedDuration..(...)/; print \" s\n\""
 	while [[ `curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print /building..(.*?),/"` == "true" ]]; do
 		echo -n '.'
-		sleep 2
+		sleep 1
 	done
 	curl --insecure -s -X POST --user "$user:$pass" "$jenkins/job/$job_name/$build_job_no/api/json" | perl -ne "print \"\nRESULT: \"; print /result..(.*?),/; print \"\n\n\""
 	## Check for triggered dependant builds
