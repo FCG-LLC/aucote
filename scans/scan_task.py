@@ -5,6 +5,7 @@ This module contains class responsible for scanning.
 import ipaddress
 import json
 import sched
+from datetime import datetime
 from urllib.error import URLError
 import urllib.request as http
 import logging as log
@@ -13,10 +14,11 @@ import netifaces
 
 from croniter import croniter
 from netaddr import IPSet
+from pylint.reporters.ureports import nodes
 
 from aucote_cfg import cfg
 from scans.executor import Executor
-from structs import Node, Port
+from structs import Node, Port, Scan
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from utils.exceptions import TopdisConnectionException
@@ -36,6 +38,7 @@ class ScanTask(Task):
         self.scheduler = sched.scheduler(time.time)
         self.storage = self.executor.storage
         self.as_service = as_service
+        self.scan = None
 
         try:
             self.cron = croniter(cfg.get('service.scans.cron'), time.time())
@@ -90,6 +93,7 @@ class ScanTask(Task):
 
                 port = Port.physical()
                 port.interface = interface
+                port.scan = self.scan
                 ports.append(port)
 
         self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
@@ -101,8 +105,7 @@ class ScanTask(Task):
             self.run()
         self.scheduler.run()
 
-    @classmethod
-    def _get_nodes(cls):
+    def _get_nodes(self):
         """
         Get nodes from todis application
 
@@ -124,6 +127,11 @@ class ScanTask(Task):
                 node = Node(ip=ipaddress.ip_address(node_ip), node_id=node_struct['id'])
                 node.name = node_struct['displayName']
                 nodes.append(node)
+
+        datestring = nodes_cfg['meta']['requestTime']
+        timestamp = datetime.strptime(datestring[:-3] + datestring[-2:], "%Y-%m-%dT%H:%M:%S.%f%z").timestamp()
+
+        self.scan = Scan(start=timestamp)
         return nodes
 
     def _get_nodes_for_scanning(self):

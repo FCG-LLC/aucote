@@ -95,7 +95,7 @@ class ScanTaskTest(TestCase):
     def test_getting_nodes(self, urllib):
         urllib.return_value = self.urllib_response
 
-        nodes = ScanTask._get_nodes()
+        nodes = self.scan_task._get_nodes()
 
         self.assertEqual(len(nodes), 9)
         self.assertEqual(nodes[0].id, 573)
@@ -107,7 +107,7 @@ class ScanTaskTest(TestCase):
     def test_getting_nodes_cannot_connect_to_topdis(self, urllib):
         urllib.side_effect = URLError('')
 
-        self.assertRaises(TopdisConnectionException, ScanTask._get_nodes)
+        self.assertRaises(TopdisConnectionException, self.scan_task._get_nodes)
 
     @patch('scans.scan_task.http.urlopen')
     def test_getting_nodes_unknown_exception(self, urllib):

@@ -65,9 +65,6 @@ class Executor(object):
         Start tasks: scanning nodes and ports
 
         """
-        scan = Scan()
-        scan.start = time.time()
-
         ports = self.ports
         storage_ports = self.storage.get_ports(parse_period(cfg.get('service.scans.port_period')))
 
@@ -75,9 +72,6 @@ class Executor(object):
         log.info("Found %i recently not scanned ports", len(ports))
 
         self.storage.save_ports(ports)
-
-        for port in ports:
-            port.scan = scan
 
         for port in ports:
             self.add_task(NmapPortInfoTask(executor=self.aucote, port=port))
