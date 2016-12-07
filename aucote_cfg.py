@@ -39,7 +39,7 @@ _DEFAULT = {
             'cmd': 'nmap',
             'enable': True,
             'period': '1d',
-            'disable_scripts': set()
+            'disable_scripts': []
         },
         'masscan': {
             'cmd': 'masscan',
