@@ -42,7 +42,7 @@ class NmapToolTest(TestCase):
     @patch('tools.nmap.tool.VulnNmapScript')
     @patch('tools.nmap.tool.InfoNmapScript')
     @patch('tools.nmap.tool.NmapPortScanTask')
-    @patch('tools.nmap.tool.cfg.get', MagicMock(side_effect=(MagicMock(cfg=set())),))
+    @patch('tools.nmap.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=[])))
     def test_call(self, port_scan_mock, info_scan_script, vuln_scan_script):
 
         self.nmap_tool()
