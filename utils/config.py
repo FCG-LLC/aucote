@@ -31,6 +31,7 @@ class Config:
         '''
 
         keys = key.split('.')
+
         curr = self._cfg
         for k in keys:
             if isinstance(curr, dict):
@@ -38,7 +39,7 @@ class Config:
             elif isinstance(curr, list):
                 curr = curr[int(k)]
             else:
-                raise KeyError(k)
+                raise KeyError(key)
         if isinstance(curr, dict) or isinstance(curr, list):
             return Config(curr)
         else:
