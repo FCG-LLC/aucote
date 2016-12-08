@@ -60,7 +60,7 @@ kuduworker:
 
 service:
     scans:
-        threads: 30
+        threads: 10
         rate: 1000
         period: 12h
         cron: "0 22 * * *" # run every day at 22:00
