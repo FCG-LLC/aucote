@@ -22,6 +22,8 @@ class NmapTool(Tool):
         """
         Prepares nmap args, executes and manages nmap scripts.
 
+        If there is a list of different arguments and this same script name, they shouldn't be executed together
+
         Args:
             *args:
             **kwargs:
@@ -37,8 +39,7 @@ class NmapTool(Tool):
 
         for task in tasks:
             create_new = True
-            for i in range(len(names)):
-                name = names[i]
+            for i, name in enumerate(names):
                 if task.name not in name:
                     name.add(task.name)
                     scripts[i].add(task)
