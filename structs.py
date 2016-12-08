@@ -41,6 +41,7 @@ class Node:
         self.name = None
         self.ip = ip
         self.id = node_id
+        self.scan = None
 
     def __eq__(self, other):
         return isinstance(other, Node) and self.ip == other.ip and self.id == other.id

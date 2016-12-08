@@ -219,3 +219,14 @@ class ScanTaskTest(TestCase):
     def test_get_networks_list_no_cfg(self):
 
         self.assertRaises(SystemExit, self.scan_task._get_networks_list)
+
+    @patch('scans.scan_task.http.urlopen')
+    @patch('scans.scan_task.cfg.get', MagicMock())
+    def test_scan_time_init(self, urllib):
+        urllib.return_value = self.urllib_response
+
+        result = self.scan_task._get_nodes()
+        expected = 1470915752.842891
+
+        self.assertEqual(result[0].scan.start, expected)
+
