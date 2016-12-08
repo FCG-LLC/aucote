@@ -5,7 +5,6 @@ This module contains class responsible for scanning.
 import ipaddress
 import json
 import sched
-from copy import deepcopy
 from datetime import datetime
 from urllib.error import URLError
 import urllib.request as http
@@ -15,7 +14,6 @@ import netifaces
 
 from croniter import croniter
 from netaddr import IPSet
-from pylint.reporters.ureports import nodes
 
 from aucote_cfg import cfg
 from scans.executor import Executor
@@ -105,7 +103,7 @@ class ScanTask(Task):
             self.run()
         self.scheduler.run()
 
-    def _get_nodes(self):
+    def _get_nodes(cls):
         """
         Get nodes from todis application
 
