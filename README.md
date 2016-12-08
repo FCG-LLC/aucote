@@ -11,7 +11,7 @@ apt-get install git python3 python3-dev virtualenv -y
 git clone https://github.com/FCG-LLC/aucote.git
 ```
 
-#####Install nanomsg
+##### Install nanomsg
 
 Install nanomsg from sources (This should be done before next steps):
 ```
@@ -51,6 +51,15 @@ cp aucote_cfg.yaml.exmaple aucote_cfg.yaml
 ```
 
 Fulfill `aucote_cfg.yaml` with proper data.
+
+The most important fields are:
+ - topdis.api.host and topdis.api.port, which define how to connect to Topdis
+ - service.scans.threads - defines hom many threads should be run
+ - service.scans.rate - maximum number of packets per second. **This value should be set very carefully!**
+ - service.scans.networks - list of networks which are allowed to be scanned. **This value should be set very carefully!**
+ - service.scans.cron - cron-like scanning schedule
+
+More details and options are describe in example configuration.
 
 ### Usage
 
