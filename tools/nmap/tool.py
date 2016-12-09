@@ -32,8 +32,15 @@ class NmapTool(Tool):
         """
 
         tasks = []
+        disabled_scripts = self.config.get('disable_scripts', set()).copy()
+        disabled_scripts.update(set(cfg.get('tools.nmap.disable_scripts').cfg or []))
+
         for exploit in self.exploits:
             name = exploit.name
+
+            if name in disabled_scripts:
+                continue
+
             args = self.config.get('services', {}).get(name, {}).get('args', None)
             singular = self.config.get('services', {}).get(name, {}).get('singular', False)
 

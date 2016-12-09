@@ -110,6 +110,9 @@ topdis:
 #     domains: - List of domains used by some scripts e.g. DNS
 #       - <str>
 #       - <str>
+#     disable_scripts: - List of scripts, which shouldn't be used by aucote.
+#       - <str>
+#       - <str>
 #
 #   masscan: - This subsection contains masscan configuration
 #     args: additional arguments for masscan e.g. outgoing interface

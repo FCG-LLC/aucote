@@ -47,6 +47,9 @@ EXECUTOR_CONFIG = {
                 'broadcast-wpad-discovery': {
                     'singular': True
                 }
+            },
+            'disable_scripts': {
+                'http-mcmp'
             }
         },
         'hydra': {
