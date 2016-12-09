@@ -17,7 +17,7 @@ from netaddr import IPSet
 
 from aucote_cfg import cfg
 from scans.executor import Executor
-from structs import Node, Port, Scan
+from structs import Node, Scan, PhysicalPort
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from utils.exceptions import TopdisConnectionException
@@ -89,7 +89,7 @@ class ScanTask(Task):
                 if netifaces.AF_INET not in addr:
                     continue
 
-                port = Port.physical()
+                port = PhysicalPort()
                 port.interface = interface
                 port.scan = Scan(start=time.time())
                 ports.append(port)
@@ -103,6 +103,7 @@ class ScanTask(Task):
             self.run()
         self.scheduler.run()
 
+    @classmethod
     def _get_nodes(cls):
         """
         Get nodes from todis application

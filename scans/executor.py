@@ -8,7 +8,7 @@ import time
 from aucote_cfg import cfg
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.time import parse_period
-from structs import Scan, Port
+from structs import Scan, BroadcastPort
 
 
 class Executor(object):
@@ -25,7 +25,7 @@ class Executor(object):
         self.aucote = aucote
         self.ports = nodes or []
         if cfg.get('service.scans.broadcast'):
-            broadcast_port = Port.broadcast()
+            broadcast_port = BroadcastPort()
             broadcast_port.scan = Scan(start=time.time())
             self.ports.append(broadcast_port)
 

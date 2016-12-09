@@ -8,7 +8,7 @@ from croniter import croniter
 from netaddr import IPSet
 
 from scans.scan_task import ScanTask
-from structs import Node, Port
+from structs import Node, Port, PhysicalPort
 from utils.exceptions import TopdisConnectionException
 
 
@@ -176,7 +176,7 @@ class ScanTaskTest(TestCase):
         mock_masscan.scan_ports.return_value = ports_masscan
         mock_nmap.scan_ports.return_value = ports_nmap
 
-        port = Port.physical()
+        port = PhysicalPort()
         port.interface = 'test'
 
         ports = [ports_masscan[0], ports_nmap[0], port]
