@@ -2,7 +2,7 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from structs import RiskLevel, Node, Port, Scan
+from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort
 from structs import TransportProtocol
 
 
@@ -126,16 +126,16 @@ class PortTest(TestCase):
         self.assertEqual(port.is_ipv6, port.node.is_ipv6)
 
     def test_is_broadcast(self):
-        port = Port.broadcast()
+        port = BroadcastPort()
 
-        self.assertTrue(port.is_broadcast)
-        self.assertFalse(port.is_physical)
+        self.assertTrue(isinstance(port, BroadcastPort))
+        self.assertFalse(isinstance(port, PhysicalPort))
 
     def test_is_physical(self):
-        port = Port.broadcast()
+        port = PhysicalPort()
 
-        self.assertTrue(port.is_broadcast)
-        self.assertFalse(port.is_physical)
+        self.assertFalse(isinstance(port, BroadcastPort))
+        self.assertTrue(isinstance(port, PhysicalPort))
 
     def test_get_url(self):
         node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)

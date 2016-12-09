@@ -5,7 +5,7 @@ from xml.etree import ElementTree
 
 from fixtures.exploits import Exploit
 from fixtures.exploits import Exploits
-from structs import Port, TransportProtocol, Node, Vulnerability, Scan
+from structs import Port, TransportProtocol, Node, Vulnerability, Scan, PhysicalPort, BroadcastPort
 from tools.nmap.base import InfoNmapScript, VulnNmapScript
 
 from tools.nmap.tasks.port_scan import NmapPortScanTask
@@ -235,7 +235,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertEqual(self.port.scan.end, 27.0)
 
     def test_prepare_args_broadcast(self):
-        self.scan_task._port = Port.broadcast()
+        self.scan_task._port = BroadcastPort()
 
         result = self.scan_task.prepare_args()
         expected = ['--script', 'test', '--script-args', 'test_args', '--script', 'test2']
@@ -243,7 +243,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertCountEqual(result, expected)
 
     def test_prepare_args_physical(self):
-        self.scan_task._port = Port.physical()
+        self.scan_task._port = PhysicalPort()
         self.scan_task._port.interface = 'wlan0'
 
         result = self.scan_task.prepare_args()
