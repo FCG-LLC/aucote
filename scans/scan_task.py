@@ -5,7 +5,6 @@ This module contains class responsible for scanning.
 import ipaddress
 import json
 import sched
-from datetime import datetime
 from urllib.error import URLError
 import urllib.request as http
 import logging as log
@@ -22,7 +21,7 @@ from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from utils.exceptions import TopdisConnectionException
 from utils.task import Task
-from utils.time import parse_period
+from utils.time import parse_period, parse_time_to_timestamp
 
 
 class ScanTask(Task):
@@ -120,8 +119,7 @@ class ScanTask(Task):
         nodes_txt = resource.read().decode(charset)
         nodes_cfg = json.loads(nodes_txt)
 
-        datestring = nodes_cfg['meta']['requestTime']
-        timestamp = datetime.strptime(datestring[:-3] + datestring[-2:], "%Y-%m-%dT%H:%M:%S.%f%z").timestamp()
+        timestamp = parse_time_to_timestamp(nodes_cfg['meta']['requestTime'])
         log.debug('Got nodes: %s', nodes_cfg)
         nodes = []
         for node_struct in nodes_cfg['nodes']:
