@@ -60,7 +60,7 @@ kuduworker:
 
 service:
     scans:
-        threads: 30
+        threads: 10
         rate: 1000
         period: 12h
         cron: "0 22 * * *" # run every day at 22:00
@@ -108,6 +108,9 @@ topdis:
 # tools:
 #   nmap: - This subsection contains nmap configuration
 #     domains: - List of domains used by some scripts e.g. DNS
+#       - <str>
+#       - <str>
+#     disable_scripts: - List of scripts, which shouldn't be used by aucote.
 #       - <str>
 #       - <str>
 #

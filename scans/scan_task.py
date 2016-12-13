@@ -16,12 +16,12 @@ from netaddr import IPSet
 
 from aucote_cfg import cfg
 from scans.executor import Executor
-from structs import Node, Port
+from structs import Node, Scan, PhysicalPort
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from utils.exceptions import TopdisConnectionException
 from utils.task import Task
-from utils.time import parse_period
+from utils.time import parse_period, parse_time_to_timestamp
 
 
 class ScanTask(Task):
@@ -88,8 +88,9 @@ class ScanTask(Task):
                 if netifaces.AF_INET not in addr:
                     continue
 
-                port = Port.physical()
+                port = PhysicalPort()
                 port.interface = interface
+                port.scan = Scan(start=time.time())
                 ports.append(port)
 
         self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
@@ -117,13 +118,17 @@ class ScanTask(Task):
         charset = resource.headers.get_content_charset() or 'utf-8'
         nodes_txt = resource.read().decode(charset)
         nodes_cfg = json.loads(nodes_txt)
+
+        timestamp = parse_time_to_timestamp(nodes_cfg['meta']['requestTime'])
         log.debug('Got nodes: %s', nodes_cfg)
         nodes = []
         for node_struct in nodes_cfg['nodes']:
             for node_ip in node_struct['ips']:
                 node = Node(ip=ipaddress.ip_address(node_ip), node_id=node_struct['id'])
                 node.name = node_struct['displayName']
+                node.scan = Scan(start=timestamp)
                 nodes.append(node)
+
         return nodes
 
     def _get_nodes_for_scanning(self):
@@ -132,7 +137,7 @@ class ScanTask(Task):
             list of nodes to be scan
 
         """
-        topdis_nodes = ScanTask._get_nodes()
+        topdis_nodes = self._get_nodes()
 
         log.info('Found %i nodes total', len(topdis_nodes))
 

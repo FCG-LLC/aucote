@@ -4,6 +4,8 @@ Provides task responsible for obtain detailed information about port
 import logging as log
 
 from database.serializer import Serializer
+from structs import BroadcastPort
+from structs import PhysicalPort
 from tools.nmap.base import NmapBase
 from utils.task import Task
 
@@ -57,7 +59,7 @@ class NmapPortInfoTask(Task):
             None
 
         """
-        if self._port.is_broadcast or self._port.is_physical:
+        if isinstance(self._port, (BroadcastPort, PhysicalPort)):
             self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)
             return
 
