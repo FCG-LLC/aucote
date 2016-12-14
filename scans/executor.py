@@ -8,7 +8,7 @@ import time
 from aucote_cfg import cfg
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.time import parse_period
-from structs import Scan, Port
+from structs import Scan, BroadcastPort
 
 
 class Executor(object):
@@ -25,7 +25,9 @@ class Executor(object):
         self.aucote = aucote
         self.ports = nodes or []
         if cfg.get('service.scans.broadcast'):
-            self.ports.append(Port.broadcast())
+            broadcast_port = BroadcastPort()
+            broadcast_port.scan = Scan(start=time.time())
+            self.ports.append(broadcast_port)
 
     @property
     def storage(self):
@@ -65,9 +67,6 @@ class Executor(object):
         Start tasks: scanning nodes and ports
 
         """
-        scan = Scan()
-        scan.start = time.time()
-
         ports = self.ports
         storage_ports = self.storage.get_ports(parse_period(cfg.get('service.scans.port_period')))
 
@@ -75,9 +74,6 @@ class Executor(object):
         log.info("Found %i recently not scanned ports", len(ports))
 
         self.storage.save_ports(ports)
-
-        for port in ports:
-            port.scan = scan
 
         for port in ports:
             self.add_task(NmapPortInfoTask(executor=self.aucote, port=port))

@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
-from structs import Node
+from structs import Node, Scan
 from tools.nmap.ports import PortsScan
 
 
@@ -61,6 +61,7 @@ class PortScanTest(TestCase):
         self.kudu_queue = MagicMock()
         self.scanner = PortsScan()
         node = Node(ip = ipaddress.ip_address('192.168.1.5'), node_id=None)
+        node.scan = Scan()
         self.nodes = [node]
 
     @patch('tools.nmap.ports.cfg.get', MagicMock(side_effect=('55', '1000', '1030')))

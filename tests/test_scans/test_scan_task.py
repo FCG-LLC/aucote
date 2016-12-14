@@ -8,7 +8,7 @@ from croniter import croniter
 from netaddr import IPSet
 
 from scans.scan_task import ScanTask
-from structs import Node, Port
+from structs import Node, Port, PhysicalPort
 from utils.exceptions import TopdisConnectionException
 
 
@@ -95,7 +95,7 @@ class ScanTaskTest(TestCase):
     def test_getting_nodes(self, urllib):
         urllib.return_value = self.urllib_response
 
-        nodes = ScanTask._get_nodes()
+        nodes = self.scan_task._get_nodes()
 
         self.assertEqual(len(nodes), 9)
         self.assertEqual(nodes[0].id, 573)
@@ -107,7 +107,7 @@ class ScanTaskTest(TestCase):
     def test_getting_nodes_cannot_connect_to_topdis(self, urllib):
         urllib.side_effect = URLError('')
 
-        self.assertRaises(TopdisConnectionException, ScanTask._get_nodes)
+        self.assertRaises(TopdisConnectionException, self.scan_task._get_nodes)
 
     @patch('scans.scan_task.http.urlopen')
     def test_getting_nodes_unknown_exception(self, urllib):
@@ -176,7 +176,7 @@ class ScanTaskTest(TestCase):
         mock_masscan.scan_ports.return_value = ports_masscan
         mock_nmap.scan_ports.return_value = ports_nmap
 
-        port = Port.physical()
+        port = PhysicalPort()
         port.interface = 'test'
 
         ports = [ports_masscan[0], ports_nmap[0], port]
@@ -219,3 +219,14 @@ class ScanTaskTest(TestCase):
     def test_get_networks_list_no_cfg(self):
 
         self.assertRaises(SystemExit, self.scan_task._get_networks_list)
+
+    @patch('scans.scan_task.http.urlopen')
+    @patch('scans.scan_task.cfg.get', MagicMock())
+    def test_scan_time_init(self, urllib):
+        urllib.return_value = self.urllib_response
+
+        result = self.scan_task._get_nodes()
+        expected = 1470915752.842891
+
+        self.assertEqual(result[0].scan.start, expected)
+

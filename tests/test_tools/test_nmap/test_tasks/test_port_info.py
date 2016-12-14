@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
-from structs import Port, TransportProtocol, Node
+from structs import Port, TransportProtocol, Node, BroadcastPort
 
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 
@@ -133,11 +133,11 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertEqual(result.banner, r"SSH-1.99-Cisco-1.25")
 
     def test_call_broadcast(self):
-        self.port_info._port = Port.broadcast()
+        self.port_info._port = BroadcastPort()
         self.port_info()
 
         result = self.executor.task_mapper.assign_tasks.call_args[0]
-        expected = (Port.broadcast(), self.executor.storage)
+        expected = (BroadcastPort(), self.executor.storage)
 
         self.assertEqual(result, expected)
 

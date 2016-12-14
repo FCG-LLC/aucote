@@ -6,6 +6,7 @@ import time
 import logging as log
 import requests
 
+from aucote_cfg import cfg
 from structs import Vulnerability
 from tools.aucote_http_headers.structs import AucoteHttpHeaderResult as Result
 from tools.common.port_task import PortTask
@@ -27,14 +28,26 @@ class AucoteHttpHeadersTask(PortTask):
         super(AucoteHttpHeadersTask, self).__init__(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        custom_headers = {'Accept-Encoding': 'gzip, deflate'}
+        custom_headers = {
+            'Accept-Encoding': 'gzip, deflate'
+        }
+
         try:
-            request = requests.head(self._port.url, headers=custom_headers, verify=False)
+            custom_headers['User-Agent'] = cfg.get('service.scans.useragent')
+        except Exception:
+            pass
+
+        try:
+            response = requests.head(self._port.url, headers=custom_headers, verify=False)
+
+            if response.status_code != 200:
+                log.warning("Server replied with status code: %i", response.status_code)
+
         except Exception as exception:
             log.warning("Exception occured while connecting to %s", self._port.url, exc_info=exception)
             return None
 
-        headers = request.headers
+        headers = response.headers
 
         results = []
 

@@ -2,7 +2,7 @@ import ipaddress
 import unittest
 import xml.etree.ElementTree as ET
 
-from structs import Node, TransportProtocol
+from structs import Node, TransportProtocol, Scan
 from tools.common import OpenPortsParser
 
 
@@ -44,6 +44,7 @@ class OpenPortsParserTest(unittest.TestCase):
         self.parser = OpenPortsParser()
         self.node = Node(ip=ipaddress.ip_address(self.NODE_IP), node_id=None)
         self.node.name = self.NODE_NAME
+        self.node.scan = Scan(start=1234)
         self.node_by_ip = {self.node.ip: self.node}
 
     def test_parse_masscan(self):
@@ -54,10 +55,12 @@ class OpenPortsParserTest(unittest.TestCase):
         self.assertEqual(ports[0].number, 514)
         self.assertEqual(ports[0].transport_protocol, TransportProtocol.TCP)
         self.assertEqual(ports[0].node, self.node)
+        self.assertEqual(ports[0].scan.start, 1234)
 
         self.assertEqual(ports[1].number, 80)
         self.assertEqual(ports[1].transport_protocol, TransportProtocol.TCP)
         self.assertEqual(ports[1].node, self.node)
+        self.assertEqual(ports[1].scan.start, 1234)
 
     def test_no_ports_scan(self):
         result = self.parser.parse(self.NO_PORTS_ELEMENT, self.node_by_ip)
