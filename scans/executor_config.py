@@ -52,6 +52,9 @@ EXECUTOR_CONFIG = {
                 'http': {
                     'args': NmapTool.custom_args_http_useragent
                 }
+            },
+            'disable_scripts': {
+                'http-mcmp'
             }
         },
         'hydra': {

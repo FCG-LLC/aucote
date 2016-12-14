@@ -4,7 +4,7 @@ Provides parser for open ports
 """
 import ipaddress
 import logging as log
-from structs import TransportProtocol, Port
+from structs import TransportProtocol, Port, Scan
 
 
 class OpenPortsParser:
@@ -41,6 +41,7 @@ class OpenPortsParser:
                 node = node_by_ip[ip]
 
                 port = Port(number=number, node=node, transport_protocol=transport_protocol)
+                port.scan = Scan(start=node.scan.start)
 
                 service = xml_port.find('service')
                 port.service_name = service.get('name') if service is not None else None
