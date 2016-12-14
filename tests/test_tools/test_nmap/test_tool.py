@@ -4,6 +4,7 @@ from unittest.mock import patch, MagicMock
 
 from fixtures.exploits import Exploit
 from structs import RiskLevel, Port, TransportProtocol, Node, Scan
+from tools.nmap.base import InfoNmapScript
 from tools.nmap.tool import NmapTool
 from utils.exceptions import ImproperConfigurationException
 from utils.storage import Storage
@@ -87,30 +88,26 @@ class NmapToolTest(TestCase):
         vuln_scan_script.assert_called_once_with(exploit=self.exploit_conf_args, port=self.port, name='test_name2',
                                                  args='dynamic_conf_test')
 
-    @patch('tools.nmap.tool.VulnNmapScript')
-    @patch('tools.nmap.tool.InfoNmapScript')
     @patch('tools.nmap.tool.NmapPortScanTask')
     @patch('tools.nmap.tool.cfg.get', MagicMock(side_effect=(MagicMock(cfg=set())),))
-    def test_exploits_with_this_same_scripts_name(self, port_scan_mock, info_scan_script, vuln_scan_script):
+    def test_exploits_with_this_same_scripts_name(self, port_scan_mock):
         """
         Test executing exploits with this same script name
         Args:
             port_scan_mock (MagicMock):
-            info_scan_script (MagicMock):
-            vuln_scan_script (MagicMock):
 
         Returns:
 
         """
 
         self.config['scripts']['test_name']['args'] = ['test', 'test2']
-        self.nmap_tool()
-        info_scan_script.assert_any_call(exploit=self.exploit, port=self.port, name='test_name',
-                                                 args='test')
-        info_scan_script.assert_any_call(exploit=self.exploit, port=self.port, name='test_name',
-                                                 args='test2')
+        self.nmap_tool._get_tasks = MagicMock()
+        self.nmap_tool._get_tasks.return_value = [
+            InfoNmapScript(exploit=self.exploit, port=self.port, name='test_name', args='test'),
+            InfoNmapScript(exploit=self.exploit, port=self.port, name='test_name', args='test2')
+        ]
 
-        self.assertEqual(info_scan_script.call_count, 2)
+        self.nmap_tool()
         self.assertEqual(port_scan_mock.call_count, 2)
 
     @patch('tools.base.cfg.get')

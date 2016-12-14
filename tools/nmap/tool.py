@@ -3,6 +3,9 @@ Contains main class responsible for managing NMAP
 
 """
 import logging as log
+from collections import defaultdict
+
+import itertools
 
 from aucote_cfg import cfg
 from structs import RiskLevel
@@ -34,24 +37,14 @@ class NmapTool(Tool):
         """
         tasks = self._get_tasks()
 
-        names = []
-        scripts = []
-
+        by_name = defaultdict(set)
         for task in tasks:
-            create_new = True
-            for i, name in enumerate(names):
-                if task.name not in name:
-                    name.add(task.name)
-                    scripts[i].add(task)
-                    create_new = False
-                    break
+            by_name[task.name].add(task)
+        packs = itertools.zip_longest(*by_name.values())
 
-            if create_new:
-                names.append({task.name})
-                scripts.append({task})
-
-        for script in scripts:
-            self.executor.add_task(NmapPortScanTask(executor=self.executor, port=self.port, script_classes=script))
+        for pack in packs:
+            self.executor.add_task(NmapPortScanTask(executor=self.executor, port=self.port,
+                                                    script_classes=[val for val in pack if val is not None]))
 
     def _get_tasks(self):
         """
