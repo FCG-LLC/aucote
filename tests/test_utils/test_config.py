@@ -131,3 +131,17 @@ class ConfigTest(TestCase):
         result = self.config['alice.has.a']
 
         self.assertEqual(result, expected)
+
+    def test_get_with_default(self):
+        expected = 'Bob'
+        result = self.config.get('test.non.exist.alice.or.sth', False, expected)
+
+        self.assertEqual(result, expected)
+
+    def test_get_exception_proper_message(self):
+        try:
+            expected = 'test.non.exist.alice.or.sth'
+            self.config.get(expected)
+            self.assertTrue(False)
+        except KeyError as result:
+            self.assertIn(expected, str(result))
