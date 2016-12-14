@@ -67,6 +67,10 @@ class NmapTool(Tool):
 
         for exploit in self.exploits:
             name = exploit.name
+
+            if name in disabled_scripts:
+                continue
+
             service_args = self.config.get('services', {}).get(self.port.service_name, {}).get('args', None)
 
             if callable(service_args):
@@ -74,8 +78,6 @@ class NmapTool(Tool):
             else:
                 service_args = ""
 
-            if name in disabled_scripts:
-                continue
 
             args = self.config.get('scripts', {}).get(name, {}).get('args', None)
             singular = self.config.get('scripts', {}).get(name, {}).get('singular', False)
