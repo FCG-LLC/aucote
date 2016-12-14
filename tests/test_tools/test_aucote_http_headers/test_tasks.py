@@ -120,3 +120,20 @@ class AucoteHttpHeadersTaskTest(TestCase):
         self.task()
 
         self.assertTrue(mock_log.warning.called)
+
+    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(side_effect=(KeyError('test'), 'test')))
+    def test_call_config_exception(self, mock_requests):
+        mock_requests.head.return_value = self.SERVER_RETURN
+        self.exploit.name = 'test'
+        self.task.current_exploits = [self.exploit]
+        self.task.config = {
+            'headers': {
+                'test': HeaderDefinition(pattern='', obligatory=False)
+            },
+        }
+        self.task.store_vulnerability = MagicMock()
+        self.task.store_scan_end = MagicMock()
+        self.assertEqual(self.task(), [])
+        del self.custom_headers['User-Agent']
+        mock_requests.head.assert_called_once_with(self.port.url, headers=self.custom_headers, verify=False)

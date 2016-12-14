@@ -29,9 +29,13 @@ class AucoteHttpHeadersTask(PortTask):
 
     def __call__(self, *args, **kwargs):
         custom_headers = {
-            'Accept-Encoding': 'gzip, deflate',
-            'User-Agent': cfg.get('service.scans.useragent')
+            'Accept-Encoding': 'gzip, deflate'
         }
+
+        try:
+            custom_headers['User-Agent'] = cfg.get('service.scans.useragent')
+        except Exception:
+            pass
 
         try:
             response = requests.head(self._port.url, headers=custom_headers, verify=False)
