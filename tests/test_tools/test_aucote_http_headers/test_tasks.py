@@ -122,7 +122,7 @@ class AucoteHttpHeadersTaskTest(TestCase):
         self.assertTrue(mock_log.warning.called)
 
     @patch('tools.aucote_http_headers.tasks.requests')
-    @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(side_effect=('', 'test')))
+    @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(side_effect=(None, 'test')))
     def test_call_config_without_user_agent(self, mock_requests):
         mock_requests.head.return_value = self.SERVER_RETURN
         self.exploit.name = 'test'

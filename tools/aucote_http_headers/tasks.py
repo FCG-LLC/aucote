@@ -32,9 +32,12 @@ class AucoteHttpHeadersTask(PortTask):
             'Accept-Encoding': 'gzip, deflate'
         }
 
-        useragent = cfg.get('service.scans.useragent', False)
-        if useragent:
-            custom_headers['User-Agent'] = useragent
+        try:
+            useragent = cfg.get('service.scans.useragent')
+            if useragent is not None:
+                custom_headers['User-Agent'] = useragent
+        except KeyError:
+            log.warning("service.scans.useragent not set in config file")
 
         try:
             response = requests.head(self._port.url, headers=custom_headers, verify=False)

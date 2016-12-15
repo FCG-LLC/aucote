@@ -131,9 +131,3 @@ class ConfigTest(TestCase):
         result = self.config['alice.has.a']
 
         self.assertEqual(result, expected)
-
-    def test_get_with_default(self):
-        expected = 'Bob'
-        result = self.config.get('test.non.exist.alice.or.sth', False, expected)
-
-        self.assertEqual(result, expected)
