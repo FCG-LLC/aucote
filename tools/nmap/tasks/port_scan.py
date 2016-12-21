@@ -4,7 +4,7 @@ Contains class responsible for exploiting port by using nmap scripts
 """
 import logging as log
 
-from structs import Vulnerability, Port
+from structs import Vulnerability, PhysicalPort, BroadcastPort
 from tools.common.command_task import CommandTask
 from tools.nmap.base import NmapBase
 
@@ -57,7 +57,7 @@ class NmapPortScanTask(CommandTask):
             list
 
         """
-        if self._port.is_broadcast or self._port.is_physical:
+        if isinstance(self._port, (PhysicalPort, BroadcastPort)):
             args = []
             for script in self.scripts.values():
                 args.append('--script')
@@ -66,7 +66,7 @@ class NmapPortScanTask(CommandTask):
                     args.append('--script-args')
                     args.append(script.args)
 
-            if self._port == Port.physical():
+            if self._port == PhysicalPort():
                 args.append('-e')
                 args.append(self._port.interface)
 

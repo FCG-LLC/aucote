@@ -11,7 +11,7 @@ EXECUTOR_CONFIG = {
     'apps': {
         'nmap': {
             'class': NmapTool,
-            'services': {
+            'scripts': {
                 'http-slowloris-check': {
                     'args': 'http-slowloris.threads=500,http-slowloris.timeout=200'
                 },
@@ -47,6 +47,14 @@ EXECUTOR_CONFIG = {
                 'broadcast-wpad-discovery': {
                     'singular': True
                 }
+            },
+            'services': {
+                'http': {
+                    'args': NmapTool.custom_args_http_useragent
+                }
+            },
+            'disable_scripts': {
+                'http-mcmp'
             }
         },
         'hydra': {

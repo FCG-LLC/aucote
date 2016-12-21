@@ -3,7 +3,7 @@ import subprocess
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
-from structs import Node
+from structs import Node, Scan
 from tools.masscan import MasscanPorts
 
 class MasscanPortsTest(TestCase):
@@ -31,6 +31,7 @@ class MasscanPortsTest(TestCase):
     def setUp(self):
         self.masscanports = MasscanPorts()
         node = Node(ip=ipaddress.ip_address(self.NODE_IP), node_id=None)
+        node.scan = Scan()
         self.nodes = [node]
 
     @patch('subprocess.check_output', MagicMock(return_value=MASSSCAN_OUTPUT_XML))

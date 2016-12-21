@@ -135,6 +135,8 @@ else
 	echo "Determining proper pipeline for current repo";
 
 	current_repo=`grep url .git/config | cut -d" " -f3`
+	current_repo="${current_repo#https://github.com/}"
+	current_repo="git@github.com:${current_repo#git@github.com:}"
 
 	search_res='Current repo does not have defined pipeline in Jenkins!'
 	joblist=`curl --insecure -s --user "$user:$pass" $jenkins/api/xml | perl -lne "print /<url>(http.*?job.*?)<\/url>/g" | sed 's/http/\\\nhttp/g'`

@@ -45,6 +45,7 @@ class Node:
         self.name = None
         self.ip = ip
         self.id = node_id
+        self.scan = None
 
     def __eq__(self, other):
         return isinstance(other, Node) and self.ip == other.ip and self.id == other.id
@@ -162,15 +163,6 @@ class Port(object):
     Port object
 
     """
-    TABLE = 'ports'
-    BROADCAST_IP = ipaddress.ip_address("255.255.255.255")
-    BROADCAST_NODE_ID = 0xFFFFFFFF
-    BROADCAST_PROTOCOL = TransportProtocol.UDP
-
-    PHYSICAL_IP = ipaddress.ip_address("255.255.255.255")
-    PHYSICAL_NODE_ID = 0xFFFFFFFF
-    PHYSICAL_PROTOCOL = TransportProtocol.PHY
-
     def __init__(self, node, number, transport_protocol):
         """
         Args:
@@ -222,50 +214,6 @@ class Port(object):
         return_value.interface = self.interface
         return return_value
 
-    @classmethod
-    def broadcast(cls):
-        """
-        Get broadcast Port
-
-        Returns:
-            Port
-
-        """
-        return cls(node=Node(node_id=cls.BROADCAST_NODE_ID, ip=cls.BROADCAST_IP), number=0,
-                   transport_protocol=cls.BROADCAST_PROTOCOL)
-
-    @classmethod
-    def physical(cls):
-        """
-        Get physical port structure
-
-        Returns:
-            Port
-
-        """
-        return cls(node=Node(node_id=cls.PHYSICAL_NODE_ID, ip=cls.PHYSICAL_IP), number=0,
-                   transport_protocol=cls.PHYSICAL_PROTOCOL)
-
-    @property
-    def is_broadcast(self):
-        """
-        Is true if port is broadcast
-
-        Returns:
-            bool
-        """
-        return self == self.broadcast()
-
-    @property
-    def is_physical(self):
-        """
-        Is true if port is physical
-
-        Returns:
-            bool
-        """
-        return self == self.physical()
-
     @property
     def is_ipv6(self):
         """
@@ -291,6 +239,36 @@ class Port(object):
         else:
             format_string = "{0}://{1}:{2}"
         return format_string.format(self.service_name, self.node.ip, self.number)
+
+
+class SpecialPort(Port):
+    """
+    Class for special ports (broadcast, physical)
+
+    """
+    IP = ipaddress.ip_address("255.255.255.255")
+    NODE_ID = 0xFFFFFFFF
+    PROTOCOL = None
+
+    def __init__(self):
+        super(SpecialPort, self).__init__(node=Node(node_id=self.NODE_ID, ip=self.IP), number=0,
+                                          transport_protocol=self.PROTOCOL)
+
+
+class BroadcastPort(SpecialPort):
+    """
+    Broadcast port
+
+    """
+    PROTOCOL = TransportProtocol.UDP
+
+
+class PhysicalPort(SpecialPort):
+    """
+    Physical port
+
+    """
+    PROTOCOL = TransportProtocol.PHY
 
 
 class Vulnerability(object):
