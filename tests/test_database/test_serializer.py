@@ -21,7 +21,7 @@ class SerializerTest(TestCase):
         port.service_name = 'ssh'
 
         port.scan = Scan()
-        port.scan.start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
+        port.scan._start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
         port.when_discovered = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
 
         self.vuln.port = port

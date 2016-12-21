@@ -20,8 +20,12 @@ class Scan(object):
             end (int|float): end scan time
 
         """
-        self.start = start
+        self._start = start
         self.end = end
+
+    @property
+    def start(self):
+        return self._start
 
 
 class Node:
@@ -199,6 +203,24 @@ class Port(object):
 
     def __str__(self):
         return '%s:%s' % (self.node.ip, self.number)
+
+    def copy(self):
+        """
+        Return copy of port
+
+        Returns:
+            Port: copy of port
+
+        """
+        return_value = Port(node=self.node, number=self.number, transport_protocol=self.transport_protocol)
+        return_value.vulnerabilities = self.vulnerabilities
+        return_value.when_discovered = self.when_discovered
+        return_value.service_name = self.service_name
+        return_value.service_version = self.service_version
+        return_value.banner = self.banner
+        return_value.scan = self.scan
+        return_value.interface = self.interface
+        return return_value
 
     @classmethod
     def broadcast(cls):

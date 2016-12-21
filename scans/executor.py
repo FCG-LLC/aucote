@@ -65,8 +65,7 @@ class Executor(object):
         Start tasks: scanning nodes and ports
 
         """
-        scan = Scan()
-        scan.start = time.time()
+        scan = Scan(start=time.time())
 
         ports = self.ports
         storage_ports = self.storage.get_ports(parse_period(cfg.get('service.scans.port_period')))
