@@ -43,7 +43,7 @@ class ThreadPoolTest(TestCase):
         self.thread_pool._queue.task_done.side_effect = [SystemExit()]
 
         self.assertRaises(SystemExit, self.thread_pool._worker)
-        self.thread_pool._queue.get.assert_called_once()
+        self.thread_pool._queue.get.assert_called_once_with()
 
     def test_worker_task_is_not_none_but_raises_exception(self):
         self.thread_pool._queue = MagicMock()
@@ -51,4 +51,4 @@ class ThreadPoolTest(TestCase):
         self.thread_pool._queue.task_done.side_effect = [SystemExit()]
 
         self.assertRaises(SystemExit, self.thread_pool._worker)
-        self.thread_pool._queue.get.assert_called_once()
+        self.thread_pool._queue.get.assert_called_once_with()
