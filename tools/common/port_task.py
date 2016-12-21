@@ -22,7 +22,7 @@ class PortTask(Task):
 
         """
         super().__init__(*args, **kwargs)
-        self._port = port
+        self._port = port.copy()
         self.current_exploits = exploits
 
     @property
