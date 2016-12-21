@@ -3,6 +3,7 @@ Configuration related module
 
 """
 import yaml
+import logging as log
 
 
 class Config:
@@ -23,10 +24,13 @@ class Config:
         ''' Works like "get()" '''
         return self.get(key)
 
-    def get(self, key):
+    def get(self, key, obligatory=True, default=None):
         try:
             return self._get(key)
-        except KeyError as exception:
+        except KeyError:
+            log.warning("%s not found in configuration file", key)
+            if not obligatory:
+                return default
             raise KeyError(key)
 
     def _get(self, key):

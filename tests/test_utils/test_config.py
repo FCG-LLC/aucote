@@ -131,3 +131,9 @@ class ConfigTest(TestCase):
         result = self.config['alice.has.a']
 
         self.assertEqual(result, expected)
+
+    def test_default(self):
+        result = self.config.get('this.key.is.definitely.non.exist', False, 'test_default')
+        expected = 'test_default'
+
+        self.assertEqual(result, expected)
