@@ -53,3 +53,27 @@ class SerializerTest(TestCase):
                    b'\x03'
 
         self.assertEqual(result, expected)
+
+    def test_vulnerability_deserializer(self):
+        data = '0000bfa9b70259010000bd012002c0a8d21000000000000000000000a40000000c006d6963726f736f66742d64730000000006d4a7b702590100000000000000000000000000000000'
+
+        result = self.serializer.deserialize_port_vuln(data)
+
+        expected = {
+            'server_ip1': None,
+            'server_ip2': 3232289296,
+            'port': 445,
+            'prot':6,
+            'vuln_id': 0,
+            'node_id': 164,
+            'scan_start': 1481809308095,
+            'port_scan_start': 1481809307604,
+            'service_name': 'microsoft-ds',
+            'service_version': '',
+            'service_banner': '',
+            'vuln_output': '',
+            'timestamp_bucket': 1481808960,
+            'key': 6901026950306939566,
+        }
+
+        self.assertDictEqual(result, expected)
