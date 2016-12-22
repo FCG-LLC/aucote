@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
+from structs import Port, TransportProtocol, Node, Scan
 from tools.hydra.parsers import HydraParser
 from tools.hydra.tasks import HydraScriptTask
 
@@ -19,11 +20,9 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
 
     def setUp(self):
         self.executor = MagicMock()
-        self.port = MagicMock()
-        self.port.number = 22
-        self.port.node = MagicMock()
-        self.port.node.ip = '127.0.0.1'
+        self.port = Port(node=Node(ip='127.0.0.1', node_id=None), transport_protocol=TransportProtocol.TCP, number=22)
         self.port.service_name = 'ssh'
+        self.port.scan = Scan()
         self.exploit = Exploit(exploit_id=1)
 
         self.hydra_script_task = HydraScriptTask(exploits=[self.exploit], executor=self.executor, port=self.port,
