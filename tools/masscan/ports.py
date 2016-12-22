@@ -26,7 +26,6 @@ class MasscanPorts(MasscanBase):
             list
 
         """
-        log.info("Scanning ports")
         if not nodes:
             return []
 

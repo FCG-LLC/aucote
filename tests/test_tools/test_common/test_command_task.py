@@ -9,7 +9,7 @@ from tools.common.command_task import CommandTask
 class CommandTaskTest(TestCase):
     def setUp(self):
         self.executor = MagicMock()
-        self.port = Port(node=None, transport_protocol=None, number=None)
+        self.port = Port(node=MagicMock(), transport_protocol=None, number=None)
         self.port.scan = Scan()
         self.command = MagicMock()
         self.exploit = MagicMock()
