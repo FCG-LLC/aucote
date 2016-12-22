@@ -32,7 +32,7 @@ class AucoteHttpHeadersTask(PortTask):
             'Accept-Encoding': 'gzip, deflate'
         }
 
-        useragent = cfg.get('service.scans.useragent', obligatory=False, default=None)
+        useragent = cfg.get('service.scans.useragent')
         if useragent is not None:
             custom_headers['User-Agent'] = useragent
 
