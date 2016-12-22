@@ -72,8 +72,9 @@ class SerializerTest(TestCase):
             'service_version': '',
             'service_banner': '',
             'vuln_output': '',
-            'timestamp_bucket': 1481808960,
-            'key': 6901026950306939566,
+            'timestamp_bucket': 1481809260,
+            'key': 2865786373124384746,
+            'vuln_when_discovered': 0,
         }
 
         self.assertDictEqual(result, expected)

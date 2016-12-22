@@ -122,8 +122,9 @@ class Serializer:
             struct.unpack('<{vuln_output_length}siq'.format(vuln_output_length=vuln_output_length), hex[counter:])
 
         server_ip2 = int(codecs.encode(node_ip[2:6], "hex"), 16)
-        timestamp_bucket = int(port_scan_start/360000)*360
-        timestamp_remainder = (port_scan_start - timestamp_bucket*1000)*1000
+        timestamp = vuln_when_discovered or port_scan_start
+        timestamp_bucket = int(timestamp/60000)*60
+        timestamp_remainder = (timestamp - timestamp_bucket*1000)*1000
         key = hash((timestamp_bucket, 0, server_ip2, port_number, protocol, exploit_id, timestamp_remainder))
 
         return {
@@ -139,6 +140,7 @@ class Serializer:
             'service_version': service_version.decode(),
             'service_banner': banner.decode(),
             'vuln_output': vuln_output.decode(),
+            'vuln_when_discovered': vuln_when_discovered,
             'timestamp_bucket': timestamp_bucket,
             'key': key,
         }
