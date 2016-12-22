@@ -210,7 +210,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         Test UDP scanning
 
         """
-        self.port.number = 53
+        self.scan_task._port.number = 53
         self.scan_task()
 
         result = self.scan_task.command.call.call_args[0][0]
