@@ -3,6 +3,8 @@ Configuration related module
 
 """
 import yaml
+import logging as log
+
 
 
 class Config:
@@ -24,6 +26,13 @@ class Config:
         return self.get(key)
 
     def get(self, key):
+        try:
+            return self._get(key)
+        except KeyError:
+            log.warning("%s not found in configuration file", key)
+            raise KeyError(key)
+
+    def _get(self, key):
         '''
         Gets data from multilevel dictionary using keys with dots.
         i.e. key="logging.file"
@@ -31,6 +40,7 @@ class Config:
         '''
 
         keys = key.split('.')
+
         curr = self._cfg
         for k in keys:
             if isinstance(curr, dict):
@@ -39,6 +49,7 @@ class Config:
                 curr = curr[int(k)]
             else:
                 raise KeyError(k)
+
         if isinstance(curr, dict) or isinstance(curr, list):
             return Config(curr)
         else:

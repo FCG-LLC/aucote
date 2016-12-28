@@ -2,7 +2,7 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from structs import RiskLevel, Node, Port, Scan
+from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort
 from structs import TransportProtocol
 
 
@@ -126,16 +126,16 @@ class PortTest(TestCase):
         self.assertEqual(port.is_ipv6, port.node.is_ipv6)
 
     def test_is_broadcast(self):
-        port = Port.broadcast()
+        port = BroadcastPort()
 
-        self.assertTrue(port.is_broadcast)
-        self.assertFalse(port.is_physical)
+        self.assertTrue(isinstance(port, BroadcastPort))
+        self.assertFalse(isinstance(port, PhysicalPort))
 
     def test_is_physical(self):
-        port = Port.broadcast()
+        port = PhysicalPort()
 
-        self.assertTrue(port.is_broadcast)
-        self.assertFalse(port.is_physical)
+        self.assertFalse(isinstance(port, BroadcastPort))
+        self.assertTrue(isinstance(port, PhysicalPort))
 
     def test_get_url(self):
         node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
@@ -154,6 +154,23 @@ class PortTest(TestCase):
         expected = "http://[::1]:1"
 
         self.assertEqual(port1.url, expected)
+
+    def test_copy(self):
+        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        port = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
+        result = port.copy()
+
+        self.assertEqual(result, port)
+        self.assertEqual(result.interface, port.interface)
+        self.assertEqual(result.scan, port.scan)
+        self.assertEqual(result.banner, port.banner)
+        self.assertEqual(result.node, port.node)
+        self.assertEqual(result.number, port.number)
+        self.assertEqual(result.service_name, port.service_name)
+        self.assertEqual(result.service_version, port.service_version)
+        self.assertEqual(result.transport_protocol, port.transport_protocol)
+        self.assertEqual(result.vulnerabilities, port.vulnerabilities)
+        self.assertEqual(result.when_discovered, port.when_discovered)
 
 
 class ScanTest(TestCase):

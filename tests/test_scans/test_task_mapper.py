@@ -172,3 +172,12 @@ class TaskMapperTest(unittest.TestCase):
         expected = self.exploits['test']
 
         self.assertEqual(result, expected)
+
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
+    @patch('aucote_cfg.cfg.get', MagicMock(side_effect=(True, MagicMock(), True, MagicMock())))
+    def test_copying_port(self):
+        self.executor.storage.get_scan_info.return_value = []
+        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+
+        self.assertNotEqual(id(self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['port']), id(self.UDP))
+        self.assertNotEqual(id(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_args[1]['port']), id(self.TCP))

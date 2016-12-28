@@ -38,7 +38,8 @@ _DEFAULT = {
         'nmap':{
             'cmd': 'nmap',
             'enable': True,
-            'period': '1d'
+            'period': '1d',
+            'disable_scripts': []
         },
         'masscan': {
             'cmd': 'masscan',
@@ -67,6 +68,7 @@ _DEFAULT = {
     },
     'service': {
         'scans': {
+            'useragent': None,
             'threads': 10,
             'ports': '0-65535,U:0-65535',
             'rate': 1000,
