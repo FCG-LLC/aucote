@@ -30,6 +30,8 @@ from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
 
 #constants
+from utils.watchdog_task import WatchdogTask
+
 VERSION = (0, 1, 0)
 APP_NAME = 'Automated Compliance Tests'
 
@@ -49,8 +51,6 @@ def main():
     parser.add_argument('cmd', help="aucote command", type=str, default='service',
                         choices=['scan', 'service', 'syncdb'],
                         nargs='?')
-    parser.add_argument("--host_ip", help="Host ip for single scan")
-    parser.add_argument("--host_id", help="Host id for single scan")
     args = parser.parse_args()
 
     # read configuration
@@ -83,14 +83,9 @@ def main():
         aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=EXECUTOR_CONFIG)
 
         if args.cmd == 'scan':
-            nodes = []
-            if args.host_ip is not None and args.host_id is not None:
-                node = Node(ip=args.host_ip, node_id=args.host_id)
-                nodes.append(node)
-
-            aucote.run_scan(nodes=nodes, as_service=False)
+            aucote.run_scan(as_service=False)
         elif args.cmd == 'service':
-            aucote.run_service()
+            aucote.run_scan(as_service=True)
         elif args.cmd == 'syncdb':
             aucote.run_syncdb()
 
@@ -150,7 +145,7 @@ class Aucote(object):
         """
         return self._thread_pool
 
-    def run_scan(self, nodes=None, as_service=True):
+    def run_scan(self, as_service=True):
         """
         Start scanning ports.
 
@@ -165,29 +160,17 @@ class Aucote(object):
 
             self.lock.acquire(True)
             self.lock.release()
-            self.add_task(ScanTask(executor=self, nodes=nodes, as_service=as_service))
+
+            if as_service:
+                self.add_task(WatchdogTask(file=cfg.get('config_filename'), executor=self))
+
+            self.add_task(ScanTask(executor=self, as_service=as_service))
             self.started = True
 
             self.thread_pool.join()
             self.thread_pool.stop()
         except TopdisConnectionException:
             log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)
-
-    def run_service(self):
-        """
-        Run service for periodic scanning
-
-        Returns:
-            None
-
-        """
-        scheduler = sched.scheduler(time.time)
-        scan_period = parse_period(cfg.get('service.scans.period'))
-        scheduler.enter(0, 1, self.run_scan)
-        while True:
-            scheduler.run()
-            log.info("sleeping %s seconds", scan_period)
-            scheduler.enter(scan_period, 1, self.run_scan)
 
     def run_syncdb(self):
         """

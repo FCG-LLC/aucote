@@ -84,11 +84,11 @@ class ScanTaskTest(TestCase):
         self.urllib_response.read = MagicMock()
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
         self.urllib_response.headers.get_content_charset = MagicMock(return_value='utf-8')
-        self.scan_task = ScanTask(nodes=MagicMock(), executor=MagicMock(storage=MagicMock()))
+        self.scan_task = ScanTask(executor=MagicMock(storage=MagicMock()))
 
     @patch('scans.scan_task.cfg.get', MagicMock(side_effect=KeyError('test')))
     def test_init_with_exception(self):
-        self.assertRaises(SystemExit, ScanTask, nodes=MagicMock(), executor=MagicMock())
+        self.assertRaises(SystemExit, ScanTask, executor=MagicMock())
 
     @patch('scans.scan_task.http.urlopen')
     @patch('scans.scan_task.cfg.get', MagicMock())

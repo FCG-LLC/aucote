@@ -30,10 +30,9 @@ class ScanTask(Task):
 
     """
 
-    def __init__(self, nodes=None, as_service=True, *args, **kwargs):
+    def __init__(self, as_service=True, *args, **kwargs):
         log.debug("Initialize scan task")
         super(ScanTask, self).__init__(*args, **kwargs)
-        self.nodes = nodes or self._get_nodes()
         self.scheduler = sched.scheduler(time.time)
         self.storage = self.executor.storage
         self.as_service = as_service

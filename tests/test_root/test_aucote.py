@@ -50,7 +50,7 @@ class AucoteTest(TestCase):
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
             main()
 
-        self.assertEqual(mock_aucote.return_value.run_service.call_count, 1)
+        self.assertEqual(mock_aucote.return_value.run_scan.call_count, 1)
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
@@ -76,7 +76,6 @@ class AucoteTest(TestCase):
         result = mock_scan_tasks.call_args[1]
         expected = {
             'executor': self.aucote,
-            'nodes': None,
             'as_service': False
         }
 
@@ -87,21 +86,29 @@ class AucoteTest(TestCase):
         self.aucote._thread_pool.join.called_once_with()
         self.aucote._thread_pool.stop.called_once_with()
 
-    @patch('aucote.Aucote.run_scan', MagicMock())
-    @patch('aucote.parse_period')
-    @patch('sched.scheduler.run')
-    @patch('sched.scheduler.enter')
-    @patch('aucote.KuduQueue', MagicMock())
-    def test_service(self, mock_sched_enter, mock_sched_run, mock_parse_period):
-        mock_sched_run.side_effect = self.check_service # NotImplementedError('test')
-        self._mock = mock_sched_run
-        self.assertRaises(NotImplementedError, self.aucote.run_service)
-        self.assertEqual(mock_sched_enter.call_count, 3)
-        self.assertEqual(mock_sched_run.call_count, 3)
+    @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
+    @patch('aucote.StorageTask')
+    @patch('aucote.WatchdogTask')
+    @patch('aucote.ScanTask')
+    def test_service(self, mock_scan_tasks, mock_watchdog, mock_storage_task):
+        self.aucote._thread_pool = MagicMock()
+        self.aucote._storage = MagicMock()
+        self.aucote._kudu_queue = MagicMock()
 
-    def check_service(self):
-        if self._mock.call_count == 3:
-            raise NotImplementedError
+        self.aucote.run_scan(as_service=True)
+        result = mock_scan_tasks.call_args[1]
+        expected = {
+            'executor': self.aucote,
+            'as_service': True
+        }
+
+        self.assertEqual(mock_scan_tasks.call_count, 1)
+        self.assertEqual(mock_storage_task.call_count, 1)
+        self.assertEqual(mock_watchdog.call_count, 1)
+        self.assertDictEqual(result, expected)
+        self.aucote._thread_pool.start.called_once_with()
+        self.aucote._thread_pool.join.called_once_with()
+        self.aucote._thread_pool.stop.called_once_with()
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))
@@ -135,7 +142,7 @@ class AucoteTest(TestCase):
         args = PropertyMock()
         args.configure_mock(cmd='service')
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            with patch('aucote.Aucote.run_service'):
+            with patch('aucote.Aucote.run_scan'):
                 self.assertRaises(SystemExit, main)
 
     @patch('aucote.Aucote.load_tools')
