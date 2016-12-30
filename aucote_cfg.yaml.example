@@ -64,7 +64,7 @@ service:
         useragent: "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
         threads: 30
         rate: 1000
-        period: 0s #deprecated
+        period: 0s # deprecated
         cron: "0 22 * * *" # run every day at 22:00
         ports: T:0-65535,U:0-65535 # TCP, UDP: full range
         port_period: 15m
