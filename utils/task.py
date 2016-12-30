@@ -75,3 +75,7 @@ class Task(object):
         log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
         msg = Serializer.serialize_port_vuln(vuln.port, vuln)
         self.kudu_queue.send_msg(msg)
+
+    @property
+    def storage(self):
+        return self.executor.storage

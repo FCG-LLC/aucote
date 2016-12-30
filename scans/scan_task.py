@@ -33,9 +33,8 @@ class ScanTask(Task):
     def __init__(self, nodes=None, as_service=True, *args, **kwargs):
         log.debug("Initialize scan task")
         super(ScanTask, self).__init__(*args, **kwargs)
-        self.nodes = nodes or self._get_nodes()
+        self.nodes = nodes
         self.scheduler = sched.scheduler(time.time)
-        self.storage = self.executor.storage
         self.as_service = as_service
 
         try:
@@ -68,13 +67,14 @@ class ScanTask(Task):
 
         nodes = [node for node in self._get_nodes_for_scanning() if node.ip.exploded in self._get_networks_list()]
 
+        if not nodes:
+            log.warning("List of nodes is empty")
+            return
+
         nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
         nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
 
         log.info('Scanning %i nodes (IPv4: %s, IPv6: %s)', len(nodes), len(nodes_ipv4), len(nodes_ipv6))
-
-        if not nodes:
-            return
 
         log.info("Scanning %i IPv4 nodes for open ports.", len(nodes_ipv4))
         ports = scanner_ipv4.scan_ports(nodes_ipv4)
@@ -141,7 +141,10 @@ class ScanTask(Task):
             list of nodes to be scan
 
         """
-        topdis_nodes = self._get_nodes()
+        try:
+            topdis_nodes = self._get_nodes()
+        except TopdisConnectionException:
+            return []
 
         log.info('Found %i nodes total', len(topdis_nodes))
 
