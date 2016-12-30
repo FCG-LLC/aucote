@@ -7,4 +7,4 @@ netifaces
 requests
 croniter
 pytz
-watchdog
+inotify

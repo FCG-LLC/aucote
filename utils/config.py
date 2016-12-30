@@ -74,8 +74,11 @@ class Config:
             defaults = {}
         defaults = self._simplify_defaults(defaults)
 
+        yaml_config = []
         with open(file_name, 'r') as stream:
-            cfg = yaml.load(stream.read())
+            yaml_config.append(yaml.load(stream.read()))
+
+        for cfg in yaml_config:
             self._cfg = self._recursive_merge(cfg, defaults)
 
         self._cfg['config_filename'] = file_name
@@ -107,3 +110,6 @@ class Config:
         if isinstance(defaults, list):
             return [self._simplify_defaults(val) for val in defaults]
         return defaults
+
+    def reload(self, file_name):
+        self.load(file_name)

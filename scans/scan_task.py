@@ -2,6 +2,7 @@
 This module contains class responsible for scanning.
 
 """
+import datetime
 import ipaddress
 import json
 import sched
@@ -36,12 +37,15 @@ class ScanTask(Task):
         self.scheduler = sched.scheduler(time.time)
         self.storage = self.executor.storage
         self.as_service = as_service
+        self.current_task = None
 
         try:
             self.cron = croniter(cfg.get('service.scans.cron'), time.time())
         except KeyError:
             log.error("Please configure service.scans.cron")
             exit(1)
+
+        self.keep_update_cron = croniter('* * * * *', time.time())
 
     def run_periodically(self):
         """
@@ -51,7 +55,9 @@ class ScanTask(Task):
             None
 
         """
-        self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
+        log.error("run_period")
+        self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
+        log.error("run_after_period")
         self.run()
 
     def run(self):
@@ -100,10 +106,12 @@ class ScanTask(Task):
 
     def __call__(self, *args, **kwargs):
         if self.as_service:
-            self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
+            self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
+            self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
         else:
             self.run()
         self.scheduler.run()
+        log.error("finish scan task")
 
     @classmethod
     def _get_nodes(cls):
@@ -114,9 +122,10 @@ class ScanTask(Task):
         url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
         try:
             resource = http.urlopen(url)
-        except URLError:
-            log.error('Cannot connect to topdis: %s:%s', cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
-            raise TopdisConnectionException
+        except URLError as exception:
+            log.error('Cannot connect to topdis: %s:%s', cfg.get('topdis.api.host'), cfg.get('topdis.api.port'),
+                      exc_info=exception)
+            return []
 
         charset = resource.headers.get_content_charset() or 'utf-8'
         nodes_txt = resource.read().decode(charset)
@@ -132,7 +141,7 @@ class ScanTask(Task):
                 node.scan = Scan(start=timestamp)
                 nodes.append(node)
 
-        return nodes
+        return node
 
     def _get_nodes_for_scanning(self):
         """
@@ -168,3 +177,18 @@ class ScanTask(Task):
         except KeyError:
             log.error("Please set service.scans.networks in configuration file!")
             exit()
+
+    def reload_config(self):
+        try:
+            log.info("Update cron to: '%s'", cfg.get('service.scans.cron'))
+            self.cron = croniter(cfg.get('service.scans.cron'), time.time())
+            self.scheduler.cancel(self.current_task)
+            self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
+        except KeyError:
+            log.error("Error while changing scanning cron")
+
+    def keep_update(self):
+        self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
+
+        if time.time()%3600 == 0:
+            log.debug("keep cron update")

@@ -8,8 +8,6 @@ import threading
 import os
 from os import chdir
 from os.path import dirname, realpath
-import sched
-import time
 import sys
 import fcntl
 
@@ -19,12 +17,10 @@ from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
 from scans.scan_task import ScanTask
 from scans.task_mapper import TaskMapper
-from structs import Node
 import utils.log as log_cfg
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage_task import StorageTask
 from utils.threads import ThreadPool
-from utils.time import parse_period
 from utils.kudu_queue import KuduQueue
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
@@ -110,6 +106,7 @@ class Aucote(object):
         self.lock = threading.Lock()
         self.started = False
         self.load_tools(tools_config)
+        self.scan_task = None
 
     @property
     def kudu_queue(self):
@@ -162,9 +159,10 @@ class Aucote(object):
             self.lock.release()
 
             if as_service:
-                self.add_task(WatchdogTask(file=cfg.get('config_filename'), executor=self))
+                self.add_task(WatchdogTask(file=cfg.get('config_filename'), action=self.reload, executor=self))
 
-            self.add_task(ScanTask(executor=self, as_service=as_service))
+            self.scan_task = ScanTask(executor=self, as_service=as_service)
+            self.add_task(self.scan_task)
             self.started = True
 
             self.thread_pool.join()
@@ -236,6 +234,21 @@ class Aucote(object):
             if app.get('loader', None):
                 log.info('Loading %s', name)
                 app['loader'](app, self.exploits)
+
+    def reload_config(self, file_name):
+        """
+        Reload configuration and notify threads about it
+
+        Returns:
+            None
+
+        """
+        cfg.reload(file_name)
+        self.scan_task.reload_config()
+
+    def reload(self, file_name):
+        self.thread_pool.stop()
+        self.run_scan(as_service=True)
 
 
 # =================== start app =================
