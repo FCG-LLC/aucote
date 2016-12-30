@@ -71,12 +71,15 @@ class ScanTask(Task):
         nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
         nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
 
-        log.info('Scanning %i nodes (ipv4: %s, ipv6: %s)', len(nodes), len(nodes_ipv4), len(nodes_ipv6))
+        log.info('Scanning %i nodes (IPv4: %s, IPv6: %s)', len(nodes), len(nodes_ipv4), len(nodes_ipv6))
 
         if not nodes:
             return
 
+        log.info("Scanning %i IPv4 nodes for open ports.", len(nodes_ipv4))
         ports = scanner_ipv4.scan_ports(nodes_ipv4)
+
+        log.info("Scanning %i IPv6 nodes for open ports.", len(nodes_ipv6))
         ports.extend(scanner_ipv6.scan_ports(nodes_ipv6))
 
         self.storage.save_nodes(nodes)

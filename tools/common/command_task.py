@@ -66,6 +66,7 @@ class CommandTask(PortTask):
             return None
 
         vulnerabilities = self._get_vulnerabilities(results)
+        log.info("Found %i vulnerabilities for %s", len(vulnerabilities), str(self._port))
 
         if vulnerabilities:
             for vulnerability in vulnerabilities:

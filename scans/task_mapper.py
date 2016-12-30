@@ -54,7 +54,7 @@ class TaskMapper:
 
             log.info("Using %i exploits against %s", len(exploits), port)
             self.store_scan_details(port=port, exploits=exploits, storage=storage)
-            task = EXECUTOR_CONFIG['apps'][app]['class'](executor=self._executor, exploits=exploits, port=port,
+            task = EXECUTOR_CONFIG['apps'][app]['class'](executor=self._executor, exploits=exploits, port=port.copy(),
                                                          config=EXECUTOR_CONFIG['apps'][app])
 
             self.executor.add_task(task)

@@ -19,9 +19,9 @@ class AucoteCfgTest(TestCase):
         mock_cfg.return_value.load.side_effect = FileNotFoundError
         self.assertRaises(SystemExit, load('test'))
 
-    @patch('aucote_cfg.cfg', MagicMock())
+    @patch('aucote_cfg.cfg')
+    @patch('aucote_cfg.stderr', MagicMock())
     @patch('os.path.join', MagicMock(return_value='test'))
-    @patch('aucote_cfg.Config')
     def test_invalid_file_load(self, mock_cfg):
-        mock_cfg.return_value.load.side_effect = TypeError
-        self.assertRaises(SystemExit, load('test'))
+        mock_cfg.load.side_effect = [TypeError()]
+        self.assertRaises(SystemExit, load, 'test')

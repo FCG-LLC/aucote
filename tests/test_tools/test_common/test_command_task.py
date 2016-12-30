@@ -2,13 +2,15 @@ from subprocess import CalledProcessError
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+from structs import Port, Scan
 from tools.common.command_task import CommandTask
 
 
 class CommandTaskTest(TestCase):
     def setUp(self):
         self.executor = MagicMock()
-        self.port = MagicMock()
+        self.port = Port(node=MagicMock(), transport_protocol=None, number=None)
+        self.port.scan = Scan()
         self.command = MagicMock()
         self.exploit = MagicMock()
         self.task = CommandTask(executor=self.executor, port=self.port, command=self.command, exploits=[self.exploit])

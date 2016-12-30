@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
+from structs import Port, Scan
 from tools.aucote_http_headers.structs import HeaderDefinition, AucoteHttpHeaderResult
 from tools.aucote_http_headers.tasks import AucoteHttpHeadersTask
 
@@ -37,7 +38,8 @@ class AucoteHttpHeadersTaskTest(TestCase):
             'X-XSS-Protection': '1',})
 
     def setUp(self):
-        self.port = MagicMock(url='http://127.0.0.1:80/')
+        self.port = Port(node=MagicMock(), transport_protocol=None, number=None)
+        self.port.scan = Scan()
         self.executor = MagicMock()
         self.exploit = MagicMock()
         self.exploit.name = "test"
@@ -122,8 +124,8 @@ class AucoteHttpHeadersTaskTest(TestCase):
         self.assertTrue(mock_log.warning.called)
 
     @patch('tools.aucote_http_headers.tasks.requests')
-    @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(side_effect=(KeyError('test'), 'test')))
-    def test_call_config_exception(self, mock_requests):
+    @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(side_effect=(None, 'test')))
+    def test_call_config_without_user_agent(self, mock_requests):
         mock_requests.head.return_value = self.SERVER_RETURN
         self.exploit.name = 'test'
         self.task.current_exploits = [self.exploit]
