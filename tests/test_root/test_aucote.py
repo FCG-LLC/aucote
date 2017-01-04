@@ -193,3 +193,23 @@ class AucoteTest(TestCase):
 
         config['apps']['app1']['loader'].assert_called_once_with(config['apps']['app1'], exploits)
         config['apps']['app2']['loader'].assert_called_once_with(config['apps']['app2'], exploits)
+
+    @patch('aucote.cfg')
+    def test_reload_config(self, mock_cfg):
+        filename = 'test_filename'
+        self.aucote.scan_task = MagicMock()
+
+        self.aucote.reload_config(filename)
+
+        mock_cfg.assert_Called_once_with(filename)
+        self.aucote.scan_task.reload_config.assert_called_once_with()
+
+    def test_reload(self):
+        filename = 'test_filename'
+        self.aucote._thread_pool = MagicMock()
+        self.aucote.run_scan = MagicMock()
+
+        self.aucote.reload(file_name=filename)
+
+        self.aucote.run_scan.assert_called_once_with(as_service=True)
+        self.aucote.thread_pool.stop.assert_called_once_with()

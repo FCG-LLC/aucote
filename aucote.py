@@ -82,7 +82,7 @@ def main():
         if args.cmd == 'scan':
             aucote.run_scan(as_service=False)
         elif args.cmd == 'service':
-            aucote.run_scan(as_service=True)
+            aucote.run_scan()
         elif args.cmd == 'syncdb':
             aucote.run_syncdb()
 

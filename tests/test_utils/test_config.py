@@ -131,3 +131,9 @@ class ConfigTest(TestCase):
         result = self.config['alice.has.a']
 
         self.assertEqual(result, expected)
+
+    def test_reload(self):
+        self.config.load = MagicMock()
+        filename = 'test_filename'
+        self.config.reload(filename)
+        self.config.load.assert_called_once_with(filename)

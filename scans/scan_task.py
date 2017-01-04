@@ -35,7 +35,6 @@ class ScanTask(Task):
         log.debug("Initialize scan task")
         super(ScanTask, self).__init__(*args, **kwargs)
         self.scheduler = sched.scheduler(time.time)
-        self.storage = self.executor.storage
         self.as_service = as_service
         self.current_task = None
 
