@@ -50,7 +50,7 @@ class AucoteTest(TestCase):
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
             main()
 
-        self.assertEqual(mock_aucote.return_value.run_service.call_count, 1)
+        mock_aucote.return_value.run_scan.assert_called_once_with()
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
@@ -87,22 +87,6 @@ class AucoteTest(TestCase):
         self.aucote._thread_pool.join.called_once_with()
         self.aucote._thread_pool.stop.called_once_with()
 
-    @patch('aucote.Aucote.run_scan', MagicMock())
-    @patch('aucote.parse_period')
-    @patch('sched.scheduler.run')
-    @patch('sched.scheduler.enter')
-    @patch('aucote.KuduQueue', MagicMock())
-    def test_service(self, mock_sched_enter, mock_sched_run, mock_parse_period):
-        mock_sched_run.side_effect = self.check_service # NotImplementedError('test')
-        self._mock = mock_sched_run
-        self.assertRaises(NotImplementedError, self.aucote.run_service)
-        self.assertEqual(mock_sched_enter.call_count, 3)
-        self.assertEqual(mock_sched_run.call_count, 3)
-
-    def check_service(self):
-        if self._mock.call_count == 3:
-            raise NotImplementedError
-
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))
     @patch('database.serializer.Serializer.serialize_exploit')
@@ -135,8 +119,7 @@ class AucoteTest(TestCase):
         args = PropertyMock()
         args.configure_mock(cmd='service')
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            with patch('aucote.Aucote.run_service'):
-                self.assertRaises(SystemExit, main)
+            self.assertRaises(SystemExit, main)
 
     @patch('aucote.Aucote.load_tools')
     def test_init(self, mock_loader):

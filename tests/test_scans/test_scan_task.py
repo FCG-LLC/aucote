@@ -126,7 +126,6 @@ class ScanTaskTest(TestCase):
         nodes = [node_1, node_2,]
         mock_get_nodes.return_value=nodes
 
-        self.scan_task.storage = MagicMock()
         self.scan_task.storage.get_nodes = MagicMock(return_value=[node_2, node_3])
 
         result = self.scan_task._get_nodes_for_scanning()
@@ -166,7 +165,7 @@ class ScanTaskTest(TestCase):
 
         self.scan_task._get_nodes_for_scanning = MagicMock(return_value=[node_1])
         self.scan_task._get_networks_list = MagicMock(return_value=IPSet(['127.0.0.2/31']))
-        self.scan_task.storage = MagicMock()
+        self.scan_task.executor = MagicMock()
 
         ports_masscan = [MagicMock()]
         ports_nmap = [MagicMock()]
@@ -229,4 +228,10 @@ class ScanTaskTest(TestCase):
         expected = 1470915752.842891
 
         self.assertEqual(result[0].scan.start, expected)
+
+    def test_get_nodes_for_scanning_with_topdis_exception(self):
+        self.scan_task._get_nodes = MagicMock(side_effect=TopdisConnectionException)
+        result = self.scan_task._get_nodes_for_scanning()
+        expected = []
+        self.assertEqual(result, expected)
 

@@ -60,7 +60,8 @@ def main():
     log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
 
     try:
-        fcntl.lockf(open(cfg.get('pid_file'), 'w'), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock = open(cfg.get('pid_file'), 'w')
+        fcntl.lockf(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
         log.error("There is another Aucote instance running already")
         sys.exit(1)
@@ -90,7 +91,7 @@ def main():
 
             aucote.run_scan(nodes=nodes, as_service=False)
         elif args.cmd == 'service':
-            aucote.run_service()
+            aucote.run_scan()
         elif args.cmd == 'syncdb':
             aucote.run_syncdb()
 
@@ -172,22 +173,6 @@ class Aucote(object):
             self.thread_pool.stop()
         except TopdisConnectionException:
             log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)
-
-    def run_service(self):
-        """
-        Run service for periodic scanning
-
-        Returns:
-            None
-
-        """
-        scheduler = sched.scheduler(time.time)
-        scan_period = parse_period(cfg.get('service.scans.period'))
-        scheduler.enter(0, 1, self.run_scan)
-        while True:
-            scheduler.run()
-            log.info("sleeping %s seconds", scan_period)
-            scheduler.enter(scan_period, 1, self.run_scan)
 
     def run_syncdb(self):
         """
