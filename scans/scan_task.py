@@ -141,7 +141,7 @@ class ScanTask(Task):
                 node.scan = Scan(start=timestamp)
                 nodes.append(node)
 
-        return node
+        return nodes
 
     def _get_nodes_for_scanning(self):
         """

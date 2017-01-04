@@ -106,8 +106,10 @@ class ScanTaskTest(TestCase):
     @patch('scans.scan_task.cfg.get', MagicMock())
     def test_getting_nodes_cannot_connect_to_topdis(self, urllib):
         urllib.side_effect = URLError('')
+        result = self.scan_task._get_nodes()
+        expected = []
 
-        self.assertRaises(TopdisConnectionException, self.scan_task._get_nodes)
+        self.assertEqual(result, expected)
 
     @patch('scans.scan_task.http.urlopen')
     def test_getting_nodes_unknown_exception(self, urllib):
@@ -142,7 +144,10 @@ class ScanTaskTest(TestCase):
 
         self.scan_task()
 
-        self.scan_task.scheduler.enterabs.assert_called_once_with(60, 1, self.scan_task.run_periodically)
+        result = self.scan_task.scheduler.enterabs.call_args_list[0][0]
+        expected = (60, 1, self.scan_task.run_periodically)
+
+        self.assertCountEqual(result, expected)
         self.scan_task.scheduler.run.assert_called_once_with()
 
     def test_call_as_service(self):
@@ -230,3 +235,29 @@ class ScanTaskTest(TestCase):
 
         self.assertEqual(result[0].scan.start, expected)
 
+    @patch('scans.scan_task.croniter')
+    @patch('scans.scan_task.cfg')
+    @patch('scans.scan_task.time.time', MagicMock(return_value=1337))
+    def test_reload_config(self, mock_cfg, mock_cron):
+        self.scan_task.scheduler = MagicMock()
+        current_task = self.scan_task.current_task
+        self.scan_task.reload_config()
+
+        mock_cfg.get.assert_called_any_with('service.scans.cron')
+        mock_cron.assert_called_once_with(mock_cfg.get.return_value, 1337)
+        self.assertEqual(self.scan_task.cron, mock_cron.return_value)
+        self.scan_task.scheduler.cancel.assert_called_once_with(current_task)
+        self.assertNotEqual(self.scan_task.current_task, current_task)
+        self.assertEqual(self.scan_task.current_task, self.scan_task.scheduler.enterabs.return_value)
+
+    @patch('scans.scan_task.cfg.get', MagicMock(side_effect=KeyError('test')))
+    @patch('scans.scan_task.log')
+    def test_reload_configuration_with_exception(self, mock_log):
+        self.scan_task.reload_config()
+        self.assertTrue(mock_log.error.called)
+
+    @patch('scans.scan_task.time.time', MagicMock(return_value=0))
+    def test_keep_update(self):
+        self.scan_task.scheduler = MagicMock()
+        self.scan_task.keep_update()
+        self.assertIn(self.scan_task.keep_update, self.scan_task.scheduler.enterabs.call_args[0])

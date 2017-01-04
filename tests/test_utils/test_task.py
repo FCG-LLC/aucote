@@ -59,3 +59,8 @@ class TaskTest(TestCase):
 
         self.assertDictEqual(result, expected)
         self.assertEqual(result['port'].scan.end, port.scan.end)
+
+    def test_reload_config(self):
+        result = self.task.reload_config()
+
+        self.assertIsNone(result)
