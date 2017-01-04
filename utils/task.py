@@ -84,3 +84,7 @@ class Task(object):
             None
         """
         pass
+
+    @property
+    def storage(self):
+        return self.executor.storage

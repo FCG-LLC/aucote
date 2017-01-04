@@ -55,9 +55,7 @@ class ScanTask(Task):
             None
 
         """
-        log.error("run_period")
         self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
-        log.error("run_after_period")
         self.run()
 
     def run(self):
@@ -73,13 +71,14 @@ class ScanTask(Task):
 
         nodes = [node for node in self._get_nodes_for_scanning() if node.ip.exploded in self._get_networks_list()]
 
+        if not nodes:
+            log.warning("List of nodes is empty")
+            return
+
         nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
         nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
 
         log.info('Scanning %i nodes (IPv4: %s, IPv6: %s)', len(nodes), len(nodes_ipv4), len(nodes_ipv6))
-
-        if not nodes:
-            return
 
         log.info("Scanning %i IPv4 nodes for open ports.", len(nodes_ipv4))
         ports = scanner_ipv4.scan_ports(nodes_ipv4)
@@ -111,7 +110,6 @@ class ScanTask(Task):
         else:
             self.run()
         self.scheduler.run()
-        log.error("finish scan task")
 
     @classmethod
     def _get_nodes(cls):

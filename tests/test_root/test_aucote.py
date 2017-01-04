@@ -50,7 +50,7 @@ class AucoteTest(TestCase):
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
             main()
 
-        self.assertEqual(mock_aucote.return_value.run_scan.call_count, 1)
+        mock_aucote.return_value.run_scan.assert_called_once_with()
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
