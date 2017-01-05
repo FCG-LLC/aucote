@@ -188,6 +188,5 @@ class ScanTask(Task):
 
     def keep_update(self):
         self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
-        log.error("cron update")
-        if time.time()%3600 == 0:
+        if time.time()%600 == 0:
             log.debug("keep cron update")
