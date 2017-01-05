@@ -136,4 +136,4 @@ class ConfigTest(TestCase):
         self.config.load = MagicMock()
         filename = 'test_filename'
         self.config.reload(filename)
-        self.config.load.assert_called_once_with(filename)
+        self.config.load.assert_called_once_with(filename, self.CONFIG)

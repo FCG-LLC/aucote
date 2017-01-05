@@ -5,13 +5,14 @@ from unittest import TestCase
 from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
 
 from aucote import main, Aucote
-from utils.exceptions import NmapUnsupported, TopdisConnectionException
+from utils.exceptions import NmapUnsupported, TopdisConnectionException, FinishThread
 from utils.storage import Storage
 
 
 @patch('aucote_cfg.cfg.get', Mock(return_value=":memory:"))
 @patch('aucote_cfg.cfg.load', Mock(return_value=""))
 @patch('utils.log.config', Mock(return_value=""))
+@patch('aucote.os.remove', MagicMock(side_effect=FileNotFoundError()))
 class AucoteTest(TestCase):
     def setUp(self):
         self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=MagicMock())
@@ -43,14 +44,18 @@ class AucoteTest(TestCase):
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl', MagicMock())
+    @patch('aucote.cfg')
     @patch('aucote.Aucote')
-    def test_main_service(self, mock_aucote):
+    def test_main_service(self, mock_aucote, mock_cfg):
         args = PropertyMock()
         args.configure_mock(cmd='service')
+        mock_aucote.return_value.run_scan.side_effect = (None, SystemExit(), )
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            main()
+            self.assertRaises(SystemExit, main)
 
-        mock_aucote.return_value.run_scan.assert_called_once_with()
+        mock_aucote.return_value.run_scan.assert_called_any_with()
+        self.assertEqual(mock_aucote.return_value.run_scan.call_count, 2)
+        mock_cfg.reload.assert_called_once_with(mock_cfg.get.return_value)
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
@@ -213,3 +218,9 @@ class AucoteTest(TestCase):
 
         self.aucote.run_scan.assert_called_once_with(as_service=True)
         self.aucote.thread_pool.stop.assert_called_once_with()
+
+    def test_graceful_stop(self):
+        self.aucote.scan_task = MagicMock()
+
+        self.assertRaises(FinishThread, self.aucote.graceful_stop, None)
+        self.aucote.scan_task.disable_scan.assert_called_once_with()

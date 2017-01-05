@@ -62,6 +62,7 @@ class ThreadPool(object):
             task = self._queue.get()
             if task is None:
                 log.debug("No more tasks in the queue to execute, finishing thread.")
+                self._queue.task_done()
                 return
             try:
                 log.debug("Task %s starting", task)

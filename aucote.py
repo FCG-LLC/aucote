@@ -18,7 +18,7 @@ from scans.executor_config import EXECUTOR_CONFIG
 from scans.scan_task import ScanTask
 from scans.task_mapper import TaskMapper
 import utils.log as log_cfg
-from utils.exceptions import NmapUnsupported, TopdisConnectionException
+from utils.exceptions import NmapUnsupported, TopdisConnectionException, FinishThread
 from utils.storage_task import StorageTask
 from utils.threads import ThreadPool
 from utils.kudu_queue import KuduQueue
@@ -82,7 +82,9 @@ def main():
         if args.cmd == 'scan':
             aucote.run_scan(as_service=False)
         elif args.cmd == 'service':
-            aucote.run_scan()
+            while True:
+                aucote.run_scan()
+                cfg.reload(cfg.get('config_filename'))
         elif args.cmd == 'syncdb':
             aucote.run_syncdb()
 
@@ -160,7 +162,7 @@ class Aucote(object):
             self.lock.release()
 
             if as_service:
-                self.add_task(WatchdogTask(file=cfg.get('config_filename'), action=self.reload, executor=self))
+                self.add_task(WatchdogTask(file=cfg.get('config_filename'), action=self.graceful_stop, executor=self))
 
             self.scan_task = ScanTask(executor=self, as_service=as_service)
             self.add_task(self.scan_task)
@@ -168,6 +170,9 @@ class Aucote(object):
 
             self.thread_pool.join()
             self.thread_pool.stop()
+
+            self.started = False
+
         except TopdisConnectionException:
             log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)
 
@@ -251,10 +256,14 @@ class Aucote(object):
         self.thread_pool.stop()
         self.run_scan(as_service=True)
 
+    def graceful_stop(self, file_name):
+        self.scan_task.disable_scan()
+        raise FinishThread
+
 
 # =================== start app =================
 
-if __name__ == "__main__": # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     chdir(dirname(realpath(__file__)))
 
     main()

@@ -1,4 +1,5 @@
 import ipaddress
+import sched
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from urllib.error import URLError
@@ -260,3 +261,13 @@ class ScanTaskTest(TestCase):
         self.scan_task.scheduler = MagicMock()
         self.scan_task.keep_update()
         self.assertIn(self.scan_task.keep_update, self.scan_task.scheduler.enterabs.call_args[0])
+
+    def test_disable_scan(self):
+        self.scan_task.scheduler = sched.scheduler()
+        self.scan_task.scheduler.enterabs(50, 0, None)
+        self.scan_task.scheduler.enterabs(50, 0, None)
+        self.scan_task.scheduler.enterabs(50, 0, None)
+
+        self.assertFalse(self.scan_task.scheduler.empty())
+        self.scan_task.disable_scan()
+        self.assertTrue(self.scan_task.scheduler.empty())

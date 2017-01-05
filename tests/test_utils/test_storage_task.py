@@ -1,3 +1,4 @@
+from queue import Empty
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -27,7 +28,7 @@ class StorageTaskTest(TestCase):
     @patch('utils.storage_task.Storage')
     def test_call(self, mock_storage):
         self.task._queue.task_done.side_effect = (None, None, Exception("TEST_FIN"))
-        self.task._queue.get.side_effect = ((1,), (2,), [(3, ), (4, )])
+        self.task._queue.get.side_effect = ((1,), Empty(), Empty(), (2,), [(3, ), (4, )])
 
         self.assertRaises(Exception, self.task)
         storage = mock_storage.return_value.__enter__.return_value
@@ -35,7 +36,7 @@ class StorageTaskTest(TestCase):
         self.assertEqual(self.executor.storage, storage)
         self.assertEqual(storage.cursor.execute.call_count, 4)
         self.assertEqual(storage.conn.commit.call_count, 3)
-        self.assertEqual(self.task._queue.get.call_count, 3)
+        self.assertEqual(self.task._queue.get.call_count, 5)
 
     def test_finish_task(self):
         self.executor.unfinished_tasks = 1
@@ -43,4 +44,5 @@ class StorageTaskTest(TestCase):
         self.task._queue = MagicMock()
 
         self.task()
+        self.assertIsNone(self.executor._storage)
         self.assertFalse(self.task._queue.get.called)

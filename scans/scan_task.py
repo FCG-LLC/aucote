@@ -2,7 +2,6 @@
 This module contains class responsible for scanning.
 
 """
-import datetime
 import ipaddress
 import json
 import sched
@@ -20,7 +19,6 @@ from scans.executor import Executor
 from structs import Node, Scan, PhysicalPort
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
-from utils.exceptions import TopdisConnectionException
 from utils.task import Task
 from utils.time import parse_period, parse_time_to_timestamp
 
@@ -184,8 +182,12 @@ class ScanTask(Task):
         except KeyError:
             log.error("Error while changing scanning cron")
 
+    def disable_scan(self):
+        for task in self.scheduler.queue:
+            self.scheduler.cancel(task)
+
     def keep_update(self):
         self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
-
+        log.error("cron update")
         if time.time()%3600 == 0:
             log.debug("keep cron update")

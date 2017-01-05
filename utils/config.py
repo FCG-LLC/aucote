@@ -112,4 +112,4 @@ class Config:
         return defaults
 
     def reload(self, file_name):
-        self.load(file_name)
+        self.load(file_name, self._cfg)

@@ -3,7 +3,7 @@ This module contains Task responsible for local store managing
 
 """
 import logging as log
-from queue import Queue
+from queue import Queue, Empty
 
 from utils.storage import Storage
 from utils.task import Task
@@ -27,6 +27,7 @@ class StorageTask(Task):
         super(StorageTask, self).__init__(*args, **kwargs)
         self.filename = filename
         self._queue = Queue()
+        self.executor.lock.acquire(True)
 
     def __call__(self, *args, **kwargs):
         """
@@ -40,7 +41,6 @@ class StorageTask(Task):
             None
 
         """
-        self.executor.lock.acquire(True)
         with Storage(self, self.filename) as storage:
             self.executor.storage = storage
             self.executor.lock.release()
@@ -48,8 +48,14 @@ class StorageTask(Task):
             while True:
                 if self.executor.unfinished_tasks == 1 and self.executor.started:
                     log.debug("No more tasks for executing. auto-destroying storage task.")
+                    self.executor._storage = None
                     return
-                query = self._queue.get()
+
+                try:
+                    query = self._queue.get(timeout=10)
+                except Empty:
+                    continue
+
                 if isinstance(query, list):
                     log.debug("executing %i queries", len(query))
                     for row in query:
