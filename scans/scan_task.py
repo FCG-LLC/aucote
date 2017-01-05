@@ -183,10 +183,23 @@ class ScanTask(Task):
             log.error("Error while changing scanning cron")
 
     def disable_scan(self):
+        """
+        Disable all future scans and cron updaters
+
+        Returns:
+            None
+
+        """
         for task in self.scheduler.queue:
             self.scheduler.cancel(task)
 
     def keep_update(self):
+        """
+        Keeps cron update every minnute
+
+        Returns:
+            None
+        """
         self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
         if time.time()%600 == 0:
             log.debug("keep cron update")

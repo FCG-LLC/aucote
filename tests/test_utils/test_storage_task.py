@@ -44,5 +44,5 @@ class StorageTaskTest(TestCase):
         self.task._queue = MagicMock()
 
         self.task()
-        self.assertIsNone(self.executor._storage)
+        self.assertIsNone(self.executor.storage)
         self.assertFalse(self.task._queue.get.called)

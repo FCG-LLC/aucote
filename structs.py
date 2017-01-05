@@ -25,6 +25,12 @@ class Scan(object):
 
     @property
     def start(self):
+        """
+        Time, when scan start
+
+        Returns:
+            int - timestamp
+        """
         return self._start
 
 

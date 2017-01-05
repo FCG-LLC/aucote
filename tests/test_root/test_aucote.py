@@ -172,6 +172,13 @@ class AucoteTest(TestCase):
 
         self.assertEqual(self.aucote.storage, expected)
 
+    def test_storage_setter_none(self):
+        self.aucote._storage = MagicMock()
+        expected = None
+        self.aucote.storage = expected
+
+        self.assertEqual(self.aucote.storage, expected)
+
     def test_storage_setter_set_already(self):
         expected = MagicMock()
         self.aucote._storage = expected
@@ -208,16 +215,6 @@ class AucoteTest(TestCase):
 
         mock_cfg.assert_Called_once_with(filename)
         self.aucote.scan_task.reload_config.assert_called_once_with()
-
-    def test_reload(self):
-        filename = 'test_filename'
-        self.aucote._thread_pool = MagicMock()
-        self.aucote.run_scan = MagicMock()
-
-        self.aucote.reload(file_name=filename)
-
-        self.aucote.run_scan.assert_called_once_with(as_service=True)
-        self.aucote.thread_pool.stop.assert_called_once_with()
 
     def test_graceful_stop(self):
         self.aucote.scan_task = MagicMock()

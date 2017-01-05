@@ -22,11 +22,11 @@ from utils.exceptions import NmapUnsupported, TopdisConnectionException, FinishT
 from utils.storage_task import StorageTask
 from utils.threads import ThreadPool
 from utils.kudu_queue import KuduQueue
+from utils.watchdog_task import WatchdogTask
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
 
 #constants
-from utils.watchdog_task import WatchdogTask
 
 VERSION = (0, 1, 0)
 APP_NAME = 'Automated Compliance Tests'
@@ -131,7 +131,7 @@ class Aucote(object):
 
     @storage.setter
     def storage(self, storage):
-        if not self._storage:
+        if not self._storage or storage is None:
             self._storage = storage
 
     @property
@@ -252,11 +252,20 @@ class Aucote(object):
         cfg.reload(file_name)
         self.scan_task.reload_config()
 
-    def reload(self, file_name):
-        self.thread_pool.stop()
-        self.run_scan(as_service=True)
-
     def graceful_stop(self, file_name):
+        """
+        Responsible for stop the threads in graceful way.
+
+        Args:
+            file_name: unused, keep for compability with watchdog action
+
+        Returns:
+            None
+
+        Raises:
+            FinishThread - info for watchdog process to stop itself
+
+        """
         self.scan_task.disable_scan()
         raise FinishThread
 

@@ -2,8 +2,8 @@
 Configuration related module
 
 """
-import yaml
 import logging as log
+import yaml
 
 
 
@@ -26,6 +26,12 @@ class Config:
         return self.get(key)
 
     def get(self, key):
+        """
+        Gets data from multilevel dictionary using keys with dots.
+        i.e. key="logging.file"
+        Raises KeyError if there is no configured value and no default value for the given key.
+
+        """
         try:
             return self._get(key)
         except KeyError:
@@ -37,8 +43,8 @@ class Config:
         Gets data from multilevel dictionary using keys with dots.
         i.e. key="logging.file"
         Raises KeyError if there is no configured value and no default value for the given key.
-        '''
 
+        '''
         keys = key.split('.')
 
         curr = self._cfg
@@ -112,4 +118,14 @@ class Config:
         return defaults
 
     def reload(self, file_name):
+        """
+        Reloads configuration based on file_name
+
+        Args:
+            file_name (str): filename
+
+        Returns:
+            None
+
+        """
         self.load(file_name, self._cfg)

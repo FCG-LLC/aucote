@@ -48,7 +48,7 @@ class StorageTask(Task):
             while True:
                 if self.executor.unfinished_tasks == 1 and self.executor.started:
                     log.debug("No more tasks for executing. auto-destroying storage task.")
-                    self.executor._storage = None
+                    self.executor.storage = None
                     return
 
                 try:

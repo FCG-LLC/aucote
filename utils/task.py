@@ -87,4 +87,10 @@ class Task(object):
 
     @property
     def storage(self):
+        """
+        Storage for aucote application
+
+        Returns:
+            None
+        """
         return self.executor.storage
