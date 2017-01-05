@@ -269,6 +269,19 @@ class Aucote(object):
         self.scan_task.disable_scan()
         raise FinishThread
 
+    def kill(self, filename):
+        """
+        Kill aucote by sending signal
+
+        Args:
+            filename: unused
+
+        Returns:
+            None
+
+        """
+        os.kill(os.getpid(), signal.SIGTERM)
+
 
 # =================== start app =================
 

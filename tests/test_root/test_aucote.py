@@ -4,6 +4,8 @@ Test main aucote file
 from unittest import TestCase
 from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
 
+import signal
+
 from aucote import main, Aucote
 from utils.exceptions import NmapUnsupported, TopdisConnectionException, FinishThread
 from utils.storage import Storage
@@ -221,3 +223,9 @@ class AucoteTest(TestCase):
 
         self.assertRaises(FinishThread, self.aucote.graceful_stop, None)
         self.aucote.scan_task.disable_scan.assert_called_once_with()
+
+    @patch('aucote.os.getpid', MagicMock(return_value=1337))
+    @patch('aucote.os.kill')
+    def test_kill(self, mock_kill):
+        self.aucote.kill(None)
+        mock_kill.assert_called_once_with(1337, signal.SIGTERM)
