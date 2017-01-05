@@ -1,6 +1,8 @@
 import logging as log
 import inotify.adapters
+from inotify.calls import InotifyError
 
+from utils.exceptions import FinishThread
 from utils.task import Task
 
 
@@ -23,5 +25,10 @@ class WatchdogTask(Task):
                     elif {"IN_DELETE_SELF", "IN_MODIFY"}.intersection(set(type_names)):
                         log.info("Detected change of configuration file (%s)!", self.file.decode())
                         self.action(self.file.decode())
+        except FinishThread:
+            pass
         finally:
-            self.notifier.remove_watch(self.file)
+            try:
+                self.notifier.remove_watch(self.file)
+            except InotifyError:
+                log.debug("Inotify Error")
