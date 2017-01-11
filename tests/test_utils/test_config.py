@@ -143,3 +143,6 @@ class ConfigTest(TestCase):
 
     def test_not_contains(self):
         self.assertNotIn('dog', self.config['alice.has.not'])
+
+    def test_not_list(self):
+        self.assertNotIn('dog', self.config['alice.has'])
