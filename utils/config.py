@@ -25,6 +25,11 @@ class Config:
         ''' Works like "get()" '''
         return self.get(key)
 
+    def __contains__(self, item):
+        if isinstance(self._cfg, (list, set)):
+            return item in self._cfg
+        return False
+
     def get(self, key):
         """
         Gets data from multilevel dictionary using keys with dots.

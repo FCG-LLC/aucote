@@ -137,3 +137,9 @@ class ConfigTest(TestCase):
         filename = 'test_filename'
         self.config.reload(filename)
         self.config.load.assert_called_once_with(filename, self.CONFIG)
+
+    def test_contains(self):
+        self.assertIn('cat', self.config['alice.has.not'])
+
+    def test_not_contains(self):
+        self.assertNotIn('dog', self.config['alice.has.not'])
