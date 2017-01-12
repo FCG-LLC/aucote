@@ -6,17 +6,18 @@ import logging as log
 from database.serializer import Serializer
 from structs import BroadcastPort
 from structs import PhysicalPort
+from tools.common.port_task import PortTask
 from tools.nmap.base import NmapBase
 from utils.task import Task
 
 
-class NmapPortInfoTask(Task):
+class NmapPortInfoTask(PortTask):
     """
     Scans one port using provided vulnerability scan
 
     """
 
-    def __init__(self, port, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         Initiazlize variables.
 
@@ -26,8 +27,7 @@ class NmapPortInfoTask(Task):
             **kwargs:
 
         """
-        super().__init__(*args, **kwargs)
-        self._port = port
+        super().__init__(exploits=[], *args, **kwargs)
         self.command = NmapBase()
 
     def prepare_args(self):
