@@ -62,11 +62,11 @@ class NmapPortScanTask(CommandTask):
             for script in self.scripts.values():
                 args.append('--script')
                 args.append(script.name)
-                if script.args is not None:
+                if script.args:
                     args.append('--script-args')
                     args.append(script.args)
 
-            if self._port == PhysicalPort():
+            if isinstance(self._port, PhysicalPort):
                 args.append('-e')
                 args.append(self._port.interface)
 
