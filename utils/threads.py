@@ -33,9 +33,10 @@ class ThreadPool(object):
         """
         Start threads
         """
-        self._threads = [Thread(target=self._worker) for _ in range(0, self._num_threads)]
+        self._threads = [Thread(target=self._worker, args=[number]) for number in range(0, self._num_threads)]
         for num, thread in enumerate(self._threads):
             thread.name = "%s%02d"%(self._name, num)
+            thread.task = None
             thread.daemon = True
             thread.start()
 
@@ -57,11 +58,13 @@ class ThreadPool(object):
         """
         self._queue.join()
 
-    def _worker(self):
+    def _worker(self, number):
         while True:
             task = self._queue.get()
+            self._threads[number].task = task
             if task is None:
                 log.debug("No more tasks in the queue to execute, finishing thread.")
+                self._threads[number].task = None
                 return
             try:
                 log.debug("Task %s starting", task)
@@ -73,6 +76,7 @@ class ThreadPool(object):
                 log.error('Exception %s while running %s', err, task, exc_info=err)
             finally:
                 self._queue.task_done()
+                self._threads[number].task = None
 
     @property
     def unfinished_tasks(self):
@@ -84,3 +88,30 @@ class ThreadPool(object):
 
         """
         return self._queue.unfinished_tasks
+
+    @property
+    def stats(self):
+        """
+        Simple statistics
+
+        Returns:
+            Dict with simple statistics
+        """
+        return_value = {'queue': [], 'threads': []}
+
+        for thread in self._threads:
+            if thread.task is None:
+                continue
+            return_value['threads'].append(self.get_task_info(thread.task))
+
+        for task in self._queue.queue:
+            return_value['queue'].append(self.get_task_info(task))
+
+        return return_value
+
+    @classmethod
+    def get_task_info(cls, task):
+        return {
+            'type': type(task).__name__,
+            'data': task.get_info()
+        }

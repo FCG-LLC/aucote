@@ -182,3 +182,22 @@ class ScanTest(TestCase):
     def test_init(self):
         self.assertEqual(self.scan.start, self.start)
         self.assertEqual(self.scan.end, self.end)
+
+
+class PhysicalPortTest(TestCase):
+    def setUp(self):
+        self.port = PhysicalPort()
+        self.port.interface = 'wlan0'
+
+    def test_str(self):
+        expected = "phy:wlan0"
+        self.assertEqual(str(self.port), expected)
+
+
+class BroadcastPortTest(TestCase):
+    def setUp(self):
+        self.port = BroadcastPort()
+
+    def test_str(self):
+        expected = "broadcast"
+        self.assertEqual(str(self.port), expected)

@@ -1,4 +1,5 @@
 import ipaddress
+from sched import Event
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from urllib.error import URLError
@@ -235,3 +236,36 @@ class ScanTaskTest(TestCase):
         expected = []
         self.assertEqual(result, expected)
 
+    def test_get_info(self):
+        self.scan_task.current_scan = [
+            Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1),
+            Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2),
+            Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
+        ]
+        self.scan_task.scheduler = MagicMock()
+        self.scan_task.scheduler.queue = [
+            Event(time=0, priority=0, action=type(None), argument=[], kwargs={}),
+            Event(time=5, priority=0, action=str, argument=[], kwargs={}),
+            Event(time=10, priority=0, action=int, argument=[], kwargs={}),
+        ]
+
+        result = self.scan_task.get_info()
+        expected = {
+            'nodes': ['127.0.0.1', '127.0.0.2', '127.0.0.3'],
+            'scheduler': [
+                {
+                    'action': "None",
+                    'time': 0,
+                },
+                {
+                    'action': "str",
+                    'time': 5,
+                },
+                {
+                    'action': "int",
+                    'time': 10,
+                }
+            ]
+        }
+
+        self.assertCountEqual(result, expected)

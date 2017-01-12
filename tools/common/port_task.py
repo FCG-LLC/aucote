@@ -37,3 +37,9 @@ class PortTask(Task):
         if len(self.current_exploits) == 1:
             return next(iter(self.current_exploits))
         return None
+
+    def get_info(self):
+        return {
+            'port': str(self._port),
+            'exploits': [exploit.name for exploit in self.current_exploits]
+        }

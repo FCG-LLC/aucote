@@ -36,6 +36,7 @@ class ScanTask(Task):
         self.nodes = nodes
         self.scheduler = sched.scheduler(time.time)
         self.as_service = as_service
+        self.current_scan = []
 
         try:
             self.cron = croniter(cfg.get('service.scans.cron'), time.time())
@@ -66,6 +67,7 @@ class ScanTask(Task):
         scanner_ipv6 = PortsScan()
 
         nodes = [node for node in self._get_nodes_for_scanning() if node.ip.exploded in self._get_networks_list()]
+        self.current_scan = nodes
 
         if not nodes:
             log.warning("List of nodes is empty")
@@ -98,6 +100,7 @@ class ScanTask(Task):
                 ports.append(port)
 
         self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
+        self.current_scan = []
 
     def __call__(self, *args, **kwargs):
         if self.as_service:
@@ -172,3 +175,9 @@ class ScanTask(Task):
         except KeyError:
             log.error("Please set service.scans.networks in configuration file!")
             exit()
+
+    def get_info(self):
+        return {
+            'nodes': [str(node.ip) for node in self.current_scan],
+            'scheduler': [{'action': task.action.__name__, 'time': task.time} for task in self.scheduler.queue],
+        }

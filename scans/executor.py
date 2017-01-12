@@ -135,3 +135,8 @@ class Executor(object):
                 continue
 
         return ports
+
+    def get_info(self):
+        return {
+            'nodes': [str(node) for node in self.ports],
+        }

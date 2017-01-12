@@ -79,3 +79,6 @@ class Task(object):
     @property
     def storage(self):
         return self.executor.storage
+
+    def get_info(self):
+        return None

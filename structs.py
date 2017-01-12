@@ -262,6 +262,9 @@ class BroadcastPort(SpecialPort):
     """
     PROTOCOL = TransportProtocol.UDP
 
+    def __str__(self):
+        return 'broadcast'
+
 
 class PhysicalPort(SpecialPort):
     """
@@ -269,6 +272,9 @@ class PhysicalPort(SpecialPort):
 
     """
     PROTOCOL = TransportProtocol.PHY
+
+    def __str__(self):
+        return 'phy:{0}'.format(self.interface)
 
 
 class Vulnerability(object):

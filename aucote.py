@@ -3,6 +3,7 @@ This is executable file of aucote project.
 """
 
 import argparse
+import json
 import logging as log
 import threading
 import os
@@ -113,6 +114,7 @@ class Aucote(object):
         self.filename = cfg.get('service.scans.storage')
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
+        signal.signal(signal.SIGUSR1, self.get_state)
         self.lock = threading.Lock()
         self.started = False
         self.load_tools(tools_config)
@@ -214,6 +216,22 @@ class Aucote(object):
         """
         log.error("Received signal %s at frame %s. Exiting.", sig, frame)
         sys.exit(1)
+
+    def get_state(self, sig, frame):
+        """
+        Handling signals from operating system. Exits applications (kills all threads).
+
+        Args:
+            sig:
+            frame:
+
+        Returns:
+
+        """
+        log.error("Received signal %s at frame %s.", sig, frame)
+        log.error("Summary: ")
+        log.error("Tasks: %s", self.unfinished_tasks)
+        log.error(json.dumps(self.thread_pool.stats, indent=2))
 
     @property
     def unfinished_tasks(self):

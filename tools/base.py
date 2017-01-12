@@ -65,3 +65,8 @@ class Tool(object):
             return cfg.get(key).cfg
         except KeyError:
             raise ImproperConfigurationException(key)
+
+    def get_info(self):
+        return {
+            'port': str(self.port)
+        }

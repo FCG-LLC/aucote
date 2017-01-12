@@ -72,3 +72,8 @@ class StorageTask(Task):
 
         """
         self._queue.put(query)
+
+    def get_info(self):
+        return {
+            'path': self.filename,
+        }

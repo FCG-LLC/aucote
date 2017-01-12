@@ -5,6 +5,7 @@ import logging as log
 from logging.handlers import RotatingFileHandler
 import sys
 
+from os import getpid
 
 _LOG_LEVEL = {
     'critical': log.CRITICAL,
@@ -30,3 +31,4 @@ def config(cfg):
     log_level = _LOG_LEVEL[cfg['level']]
     log.getLogger().setLevel(log_level)
     log.info("========================= Starting application =========================")
+    log.debug("PID: %s", getpid())
