@@ -204,7 +204,7 @@ class Port(object):
             Port: copy of port
 
         """
-        return_value = Port(node=self.node, number=self.number, transport_protocol=self.transport_protocol)
+        return_value = type(self)(node=self.node, number=self.number, transport_protocol=self.transport_protocol)
         return_value.vulnerabilities = self.vulnerabilities
         return_value.when_discovered = self.when_discovered
         return_value.service_name = self.service_name
@@ -250,9 +250,9 @@ class SpecialPort(Port):
     NODE_ID = 0xFFFFFFFF
     PROTOCOL = None
 
-    def __init__(self):
-        super(SpecialPort, self).__init__(node=Node(node_id=self.NODE_ID, ip=self.IP), number=0,
-                                          transport_protocol=self.PROTOCOL)
+    def __init__(self, node=None, number=None, transport_protocol=None):
+        super(SpecialPort, self).__init__(node=node or Node(node_id=self.NODE_ID, ip=self.IP), number=number or 0,
+                                          transport_protocol=transport_protocol or self.PROTOCOL)
 
 
 class BroadcastPort(SpecialPort):

@@ -182,3 +182,14 @@ class ScanTest(TestCase):
     def test_init(self):
         self.assertEqual(self.scan.start, self.start)
         self.assertEqual(self.scan.end, self.end)
+
+class SpecialPortTest(TestCase):
+    def setUp(self):
+        self.physical = PhysicalPort()
+        self.broadcast = BroadcastPort()
+
+    def test_copy_physical(self):
+        self.assertIsInstance(self.physical.copy(), PhysicalPort)
+
+    def test_copy_broadcast(self):
+        self.assertIsInstance(self.broadcast.copy(), BroadcastPort)
