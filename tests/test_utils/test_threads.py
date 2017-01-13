@@ -52,3 +52,6 @@ class ThreadPoolTest(TestCase):
 
         self.assertRaises(SystemExit, self.thread_pool._worker)
         self.thread_pool._queue.get.assert_called_once_with()
+
+    def test_unfinished(self):
+        self.assertEqual(self.thread_pool.unfinished_tasks, self.thread_pool._queue.unfinished_tasks)

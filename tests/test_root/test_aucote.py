@@ -18,6 +18,7 @@ from utils.storage import Storage
 class AucoteTest(TestCase):
     def setUp(self):
         self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=MagicMock())
+        self.aucote.storage_thread = MagicMock()
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
@@ -72,7 +73,7 @@ class AucoteTest(TestCase):
         self.assertEqual(mock_aucote.return_value.run_syncdb.call_count, 1)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
-    @patch('aucote.StorageTask')
+    @patch('aucote.StorageThread')
     @patch('aucote.ScanTask')
     def test_scan(self, mock_scan_tasks, mock_storage_task):
         self.aucote._thread_pool = MagicMock()
@@ -94,7 +95,7 @@ class AucoteTest(TestCase):
         self.aucote._thread_pool.stop.called_once_with()
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
-    @patch('aucote.StorageTask')
+    @patch('aucote.StorageThread')
     @patch('aucote.WatchdogTask')
     @patch('aucote.ScanTask')
     def test_service(self, mock_scan_tasks, mock_watchdog, mock_storage_task):
@@ -129,6 +130,7 @@ class AucoteTest(TestCase):
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
     @patch('aucote.ScanTask.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
+    @patch('aucote.StorageThread', MagicMock())
     @patch('scans.scan_task.Executor')
     def test_scan_with_exception(self, mock_executor):
         self.aucote.run_scan()
@@ -230,3 +232,6 @@ class AucoteTest(TestCase):
     def test_kill(self, mock_kill):
         self.aucote.kill()
         mock_kill.assert_called_once_with(1337, signal.SIGTERM)
+
+    def test_unfinished_tasks(self):
+        self.assertEqual(self.aucote.unfinished_tasks, self.aucote.thread_pool.unfinished_tasks)

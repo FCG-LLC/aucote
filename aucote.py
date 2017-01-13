@@ -18,8 +18,8 @@ from scans.executor_config import EXECUTOR_CONFIG
 from scans.scan_task import ScanTask
 from scans.task_mapper import TaskMapper
 import utils.log as log_cfg
-from utils.exceptions import NmapUnsupported, TopdisConnectionException, FinishThread
-from utils.storage_task import StorageTask
+from threads.storage_thread import StorageThread
+from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.threads import ThreadPool
 from utils.kudu_queue import KuduQueue
 from utils.watchdog_task import WatchdogTask
@@ -106,10 +106,10 @@ class Aucote(object):
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
         self.lock = threading.Lock()
-        self.started = False
         self.load_tools(tools_config)
         self.scan_task = None
         self.watch_task = None
+        self.storage_thread = None
 
     @property
     def kudu_queue(self):
@@ -154,9 +154,10 @@ class Aucote(object):
         """
 
         try:
-            self.thread_pool.start()
+            self.storage_thread = StorageThread(filename=self.filename, aucote=self)
+            self.storage_thread.start()
 
-            self.add_task(StorageTask(filename=self.filename, executor=self))
+            self.thread_pool.start()
 
             self.watch_task = WatchdogTask(file=cfg.get('config_filename'), action=self.graceful_stop, executor=self)
             if as_service:
@@ -168,8 +169,7 @@ class Aucote(object):
 
             self.thread_pool.join()
             self.thread_pool.stop()
-
-            self.started = False
+            self.storage_thread.stop()
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")
@@ -200,8 +200,7 @@ class Aucote(object):
         log.debug('Added task: %s', task)
         self.thread_pool.add_task(task)
 
-    @classmethod
-    def signal_handler(cls, sig, frame):
+    def signal_handler(self, sig, frame):
         """
         Handling signals from operating system. Exits applications (kills all threads).
 
@@ -213,6 +212,7 @@ class Aucote(object):
 
         """
         log.error("Received signal %s at frame %s. Exiting.", sig, frame)
+        self.storage_thread.stop()
         sys.exit(1)
 
     @property

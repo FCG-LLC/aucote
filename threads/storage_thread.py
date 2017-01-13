@@ -1,7 +1,5 @@
-"""
-This module contains Task responsible for local store managing
+from threading import Thread
 
-"""
 import logging as log
 from queue import Queue, Empty
 
@@ -11,28 +9,19 @@ from utils.storage import Storage
 from utils.task import Task
 
 
-class StorageTask(Task):
-    """
-    This task queues queries and execute them in order
+class StorageThread(Thread):
 
-    """
-    def __init__(self, filename=":memory:", *args, **kwargs):
-        """
-        Init values
-
-        Args:
-            filename (str):
-            *args:
-            **kwargs:
-
-        """
-        super(StorageTask, self).__init__(*args, **kwargs)
+    def __init__(self, filename, aucote):
+        super(StorageThread, self).__init__()
+        self.aucote = aucote
+        self.name = "Storage"
         self.filename = filename
         self._queue = Queue()
         self._storage = Storage(self, self.filename)
-        self.executor.storage = self._storage
+        self.aucote.storage = self._storage
+        self.finish = False
 
-    def __call__(self, *args, **kwargs):
+    def run(self):
         """
         Run infinite loop. while loop takes queries from queue and execute them
 
@@ -47,13 +36,13 @@ class StorageTask(Task):
         self._storage.connect()
         self._storage.clear_scan_details()
         while True:
-            if self.executor.unfinished_tasks == 1 and self.executor.started:
-                log.debug("No more tasks for executing. auto-destroying storage task.")
-                self.executor.storage = None
+            if self.finish:
+                log.debug("Exit")
+                self.aucote.storage = None
                 break
 
             try:
-                query = self._queue.get(timeout=10)
+                query = self._queue.get(timeout=1)
             except Empty:
                 continue
 
@@ -80,3 +69,7 @@ class StorageTask(Task):
 
         """
         self._queue.put(query)
+
+    def stop(self):
+        log.info("Stopping storage")
+        self.finish = True

@@ -10,7 +10,6 @@ from unittest.mock import MagicMock, patch
 from fixtures.exploits import Exploit
 from structs import Node, Port, TransportProtocol, Scan
 from utils.storage import Storage
-from utils.storage_task import StorageTask
 
 
 class StorageTest(TestCase):
@@ -284,7 +283,7 @@ class StorageTest(TestCase):
         start_scan = 17.0
         end_scan = 27.0
 
-        with Storage(StorageTask(executor=MagicMock()), filename=":memory:") as storage:
+        with Storage(MagicMock(), filename=":memory:") as storage:
             storage.cursor.execute("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, "
                                    "exploit_name text, node_id int, node_ip text, port_protocol int, port_number int, "
                                    "scan_start float, scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, "
@@ -336,46 +335,6 @@ class StorageTest(TestCase):
                                                       number=1, transport_protocol=TransportProtocol.TCP), app=None)
         self.assertEqual(result, [])
 
-    #
-    #     @patch('utils.storage.threading.Lock', MagicMock())
-    #     def test_clear_scan_details(self):
-    #         exploit = Exploit(exploit_id=14)
-    #         exploit.name = 'test_name'
-    #         exploit.app = 'test_app'
-    #
-    #         port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=3), number=12,
-    #                     transport_protocol=TransportProtocol.TCP)
-    #         port.scan = Scan()
-    #
-    #         start_scan = 17
-    #
-    #         with Storage(StorageTask(executor=MagicMock()), filename=":memory:") as storage:
-    #             port.scan.start = start_scan
-    #             storage.save_scan(exploit=exploit, port=port)
-    #
-    #             port.number += 1
-    #             port.scan.end = start_scan -1
-    #             storage.save_scan(exploit=exploit, port=port)
-    #
-    #             port.number += 1
-    #             port.scan.end +=1
-    #             storage.save_scan(exploit=exploit, port=port)
-    #
-    #             port.number += 1
-    #             port.scan.end += 1
-    #             storage.save_scan(exploit=exploit, port=port)
-    #
-    #             port.number += 1
-    #             port.scan.start = None
-    #             storage.save_scan(exploit=exploit, port=port)
-    #             storage.clear_scan_details()
-    #
-    #             result = len(storage.cursor.execute("SELECT * FROM scans").fetchall())
-    #
-    #         expected = 1
-    #
-    #         self.assertEqual(result, expected)
-    #
     def test_create_table(self):
         self.storage.create_tables()
         result = self.task.add_query.call_args_list
