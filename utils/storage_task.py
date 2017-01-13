@@ -30,7 +30,6 @@ class StorageTask(Task):
         self.filename = filename
         self._queue = Queue()
         self._storage = Storage(self, self.filename)
-        self._storage.connect()
         self.executor.storage = self._storage
 
     def __call__(self, *args, **kwargs):
@@ -45,6 +44,7 @@ class StorageTask(Task):
             None
 
         """
+        self._storage.connect()
         self._storage.clear_scan_details()
         while True:
             if self.executor.unfinished_tasks == 1 and self.executor.started:
