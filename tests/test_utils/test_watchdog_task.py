@@ -4,7 +4,6 @@ from unittest.mock import MagicMock
 from inotify.calls import InotifyError
 from inotify.constants import IN_IGNORED, IN_MODIFY, IN_DELETE_SELF
 
-from utils.exceptions import FinishThread
 from utils.watchdog_task import WatchdogTask
 
 class WatchdogTaskTest(TestCase):
@@ -42,9 +41,14 @@ class WatchdogTaskTest(TestCase):
         self.assertEqual(self.task.notifier.add_watch.call_count, 2)
         self.task.notifier.remove_watch.called_once_with()
 
-    def test_finally_exception(self):
+    def test_exception(self):
         self.task.notifier.add_watch = MagicMock()
-        self.task.notifier.event_gen = MagicMock(side_effect=FinishThread())
-        self.task.notifier.remove_watch = MagicMock(side_effect=InotifyError("test"))
+        self.task.notifier.event_gen = MagicMock(side_effect=InotifyError("test"))
+        self.task.notifier.remove_watch = MagicMock()
 
         self.task()
+
+    def test_stop(self):
+        self.task.notifier.remove_watch = MagicMock()
+        self.assertRaises(InotifyError, self.task.stop)
+        self.task.notifier.remove_watch.assert_Caaled_once_with(self.task.file)

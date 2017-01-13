@@ -220,8 +220,9 @@ class AucoteTest(TestCase):
 
     def test_graceful_stop(self):
         self.aucote.scan_task = MagicMock()
-
-        self.assertRaises(FinishThread, self.aucote.graceful_stop)
+        self.aucote.watch_task = MagicMock()
+        self.aucote.graceful_stop()
+        self.aucote.watch_task.stop.assert_called_once_with()
         self.aucote.scan_task.disable_scan.assert_called_once_with()
 
     @patch('aucote.os.getpid', MagicMock(return_value=1337))

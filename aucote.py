@@ -109,6 +109,7 @@ class Aucote(object):
         self.started = False
         self.load_tools(tools_config)
         self.scan_task = None
+        self.watch_task = None
 
     @property
     def kudu_queue(self):
@@ -159,9 +160,9 @@ class Aucote(object):
 
             self.lock.acquire(True)
             self.lock.release()
-
+            self.watch_task = WatchdogTask(file=cfg.get('config_filename'), action=self.graceful_stop, executor=self)
             if as_service:
-                self.add_task(WatchdogTask(file=cfg.get('config_filename'), action=self.graceful_stop, executor=self))
+                self.add_task(self.watch_task)
 
             self.scan_task = ScanTask(executor=self, as_service=as_service)
             self.add_task(self.scan_task)
@@ -263,7 +264,7 @@ class Aucote(object):
 
         """
         self.scan_task.disable_scan()
-        raise FinishThread
+        self.watch_task.stop()
 
     def kill(self):
         """

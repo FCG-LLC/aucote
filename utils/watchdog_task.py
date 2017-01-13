@@ -45,10 +45,11 @@ class WatchdogTask(Task):
                     elif (IN_DELETE_SELF | IN_MODIFY) & mask:
                         log.info("Detected change of configuration file (%s)!", self.file.decode())
                         self.action()
-        except FinishThread:
-            pass
+        except InotifyError:
+            log.debug("Inotify Error")
         finally:
-            try:
-                self.notifier.remove_watch(self.file)
-            except InotifyError:
-                log.debug("Inotify Error")
+            self.notifier.remove_watch(self.file)
+
+    def stop(self):
+        self.notifier.remove_watch(self.file)
+        raise InotifyError("Exiting watch task")
