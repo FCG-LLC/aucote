@@ -256,7 +256,7 @@ class ScanTaskTest(TestCase):
         self.scan_task.reload_config()
         self.assertTrue(mock_log.error.called)
 
-    @patch('scans.scan_task.time.time', MagicMock(return_value=0))
+    @patch('scans.scan_task.time.time', MagicMock(return_value=600.5))
     def test_keep_update(self):
         self.scan_task.scheduler = MagicMock()
         self.scan_task.keep_update()
