@@ -3,6 +3,7 @@ Configuration related module
 
 """
 import logging as log
+
 import yaml
 
 
@@ -17,6 +18,7 @@ class Config:
         if not cfg:
             cfg = {}
         self._cfg = cfg
+        self.default = self._cfg.copy()
 
     def __len__(self):
         return len(self._cfg)
@@ -139,4 +141,4 @@ class Config:
             None
 
         """
-        self.load(file_name, self._cfg)
+        self.load(file_name, self.default)
