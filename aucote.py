@@ -254,7 +254,7 @@ class Aucote(object):
 
     def graceful_stop(self):
         """
-        Responsible for stop the threads in graceful way.
+        Responsible for stopping the threads in graceful way.
 
         Returns:
             None
