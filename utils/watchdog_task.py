@@ -1,10 +1,11 @@
 """
-WatchdogTask is responsible for monitoring files and propagate updates to aucote core.
+WatchdogTask is responsible for monitoring files and propagating updates to aucote core.
 
 """
 import logging as log
 import inotify.adapters
 from inotify.calls import InotifyError
+from inotify.constants import IN_IGNORED, IN_MODIFY, IN_DELETE_SELF
 
 from utils.exceptions import FinishThread
 from utils.task import Task
@@ -38,10 +39,10 @@ class WatchdogTask(Task):
         try:
             for event in self.notifier.event_gen():
                 if event is not None:
-                    (_, type_names, _, _) = event
-                    if "IN_IGNORED" in type_names:
+                    mask = event[0].mask
+                    if IN_IGNORED & mask:
                         self.notifier.add_watch(self.file)
-                    elif {"IN_DELETE_SELF", "IN_MODIFY"}.intersection(set(type_names)):
+                    elif (IN_DELETE_SELF | IN_MODIFY) & mask:
                         log.info("Detected change of configuration file (%s)!", self.file.decode())
                         self.action()
         except FinishThread:

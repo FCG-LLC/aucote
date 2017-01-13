@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from inotify.calls import InotifyError
+from inotify.constants import IN_IGNORED, IN_MODIFY, IN_DELETE_SELF
 
 from utils.exceptions import FinishThread
 from utils.watchdog_task import WatchdogTask
@@ -15,8 +16,8 @@ class WatchdogTaskTest(TestCase):
 
     def test_call_is_modified(self):
         side_effects = ((
-            (None, ["IN_MODIFY"], None, self.file),
-            (None, ["IN_DELETE_SELF"], None, self.file),
+            (MagicMock(mask=IN_MODIFY), ["IN_MODIFY"], None, self.file),
+            (MagicMock(mask=IN_DELETE_SELF), ["IN_DELETE_SELF"], None, self.file),
         ), )
         self.task.notifier.event_gen = MagicMock(side_effect=side_effects)
         self.task.notifier.add_watch = MagicMock()
@@ -30,7 +31,7 @@ class WatchdogTaskTest(TestCase):
 
     def test_call_is_ignored(self):
         side_effects = ((
-            (None, ["IN_IGNORED"], None, self.file),
+            (MagicMock(mask=IN_IGNORED), ["IN_IGNORED"], None, self.file),
         ), )
         self.task.notifier.event_gen = MagicMock(side_effect=side_effects)
         self.task.notifier.add_watch = MagicMock()
