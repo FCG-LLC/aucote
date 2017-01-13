@@ -74,28 +74,34 @@ class Config:
         return self._cfg
 
     def load(self, file_name, defaults=None):
-        '''
+        """
         Loads configuration from provided file name.
 
         Args:
             file_name(str) - YAML file name with configuration
             defaults(dict) - default values in a form of multilevel dictionary with optional callable objects
-        '''
+
+        """
         if not defaults:
             defaults = {}
+
         defaults = self._simplify_defaults(defaults)
-
-        yaml_config = []
-        with open(file_name, 'r') as stream:
-            yaml_config.append(yaml.load(stream.read()))
-
-        for cfg in yaml_config:
-            self._cfg = self._recursive_merge(cfg, defaults)
-
+        cfg = yaml.load(open(file_name, 'r'))
+        self._cfg = self._recursive_merge(cfg, defaults)
         self._cfg['config_filename'] = file_name
 
     def _recursive_merge(self, data, defaults):
-        #recursively replace defaults with configured data
+        """
+        recursively replace defaults with configured data
+
+        Args:
+            data (list|dict): data which should be put into configuration
+            defaults (list|dict): default data configuration
+
+        Returns:
+            list|dict
+
+        """
         if isinstance(defaults, dict) and isinstance(data, dict):
             output = defaults.copy()
             for key, val in data.items():
