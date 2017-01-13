@@ -117,9 +117,8 @@ class ScanTask(Task):
         url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
         try:
             resource = http.urlopen(url)
-        except URLError as exception:
-            log.error('Cannot connect to topdis: %s:%s', cfg.get('topdis.api.host'), cfg.get('topdis.api.port'),
-                      exc_info=exception)
+        except URLError:
+            log.exception('Cannot connect to topdis: %s:%s', cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
             return []
 
         charset = resource.headers.get_content_charset() or 'utf-8'

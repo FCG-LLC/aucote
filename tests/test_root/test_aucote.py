@@ -227,6 +227,5 @@ class AucoteTest(TestCase):
     @patch('aucote.os.getpid', MagicMock(return_value=1337))
     @patch('aucote.os.kill')
     def test_kill(self, mock_kill):
-        # self.aucote.kill()
-        self.assertRaises(SystemExit, self.aucote.kill)
-        # mock_kill.assert_called_once_with(1337, signal.SIGTERM)
+        self.aucote.kill()
+        mock_kill.assert_called_once_with(1337, signal.SIGTERM)

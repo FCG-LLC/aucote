@@ -65,9 +65,8 @@ def main():
     exploit_filename = cfg.get('fixtures.exploits.filename')
     try:
         exploits = Exploits.read(file_name=exploit_filename)
-    except NmapUnsupported as exception:
-        log.error("Cofiguration seems to be invalid. Check ports and services or contact with collective-sense",
-                  exc_info=exception)
+    except NmapUnsupported:
+        log.exception("Cofiguration seems to be invalid. Check ports and services or contact with collective-sense")
         exit(1)
 
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
@@ -174,7 +173,7 @@ class Aucote(object):
             self.started = False
 
         except TopdisConnectionException:
-            log.error("Exception while connecting to Topdis", exc_info=TopdisConnectionException)
+            log.exception("Exception while connecting to Topdis")
 
     def run_syncdb(self):
         """

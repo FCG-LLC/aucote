@@ -70,8 +70,8 @@ class ThreadPool(object):
                 task()
                 log.debug('Task %s finished, took %s seconds. %i task left', task, time.monotonic() - start_time,
                           self._queue.unfinished_tasks)
-            except Exception as err:
-                log.error('Exception %s while running %s', err, task, exc_info=err)
+            except Exception:
+                log.exception('Exception while running %s', task)
             finally:
                 self._queue.task_done()
 
