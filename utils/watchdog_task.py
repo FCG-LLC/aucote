@@ -43,7 +43,7 @@ class WatchdogTask(Task):
                         self.notifier.add_watch(self.file)
                     elif {"IN_DELETE_SELF", "IN_MODIFY"}.intersection(set(type_names)):
                         log.info("Detected change of configuration file (%s)!", self.file.decode())
-                        self.action(self.file.decode())
+                        self.action()
         except FinishThread:
             pass
         finally:

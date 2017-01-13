@@ -252,12 +252,9 @@ class Aucote(object):
         cfg.reload(file_name)
         self.scan_task.reload_config()
 
-    def graceful_stop(self, file_name):
+    def graceful_stop(self):
         """
         Responsible for stop the threads in graceful way.
-
-        Args:
-            file_name: unused, keep for compability with watchdog action
 
         Returns:
             None
@@ -269,12 +266,9 @@ class Aucote(object):
         self.scan_task.disable_scan()
         raise FinishThread
 
-    def kill(self, filename):
+    def kill(self):
         """
         Kill aucote by sending signal
-
-        Args:
-            filename: unused
 
         Returns:
             None

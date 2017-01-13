@@ -221,11 +221,12 @@ class AucoteTest(TestCase):
     def test_graceful_stop(self):
         self.aucote.scan_task = MagicMock()
 
-        self.assertRaises(FinishThread, self.aucote.graceful_stop, None)
+        self.assertRaises(FinishThread, self.aucote.graceful_stop)
         self.aucote.scan_task.disable_scan.assert_called_once_with()
 
     @patch('aucote.os.getpid', MagicMock(return_value=1337))
     @patch('aucote.os.kill')
     def test_kill(self, mock_kill):
-        self.aucote.kill(None)
-        mock_kill.assert_called_once_with(1337, signal.SIGTERM)
+        # self.aucote.kill()
+        self.assertRaises(SystemExit, self.aucote.kill)
+        # mock_kill.assert_called_once_with(1337, signal.SIGTERM)
