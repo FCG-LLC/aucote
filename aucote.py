@@ -158,8 +158,6 @@ class Aucote(object):
 
             self.add_task(StorageTask(filename=self.filename, executor=self))
 
-            self.lock.acquire(True)
-            self.lock.release()
             self.watch_task = WatchdogTask(file=cfg.get('config_filename'), action=self.graceful_stop, executor=self)
             if as_service:
                 self.add_task(self.watch_task)

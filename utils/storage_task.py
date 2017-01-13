@@ -5,6 +5,8 @@ This module contains Task responsible for local store managing
 import logging as log
 from queue import Queue, Empty
 
+import time
+
 from utils.storage import Storage
 from utils.task import Task
 
@@ -27,7 +29,9 @@ class StorageTask(Task):
         super(StorageTask, self).__init__(*args, **kwargs)
         self.filename = filename
         self._queue = Queue()
-        self.executor.lock.acquire(True)
+        self._storage = Storage(self, self.filename)
+        self._storage.connect()
+        self.executor.storage = self._storage
 
     def __call__(self, *args, **kwargs):
         """
@@ -41,30 +45,28 @@ class StorageTask(Task):
             None
 
         """
-        with Storage(self, self.filename) as storage:
-            self.executor.storage = storage
-            self.executor.lock.release()
-            storage.clear_scan_details()
-            while True:
-                if self.executor.unfinished_tasks == 1 and self.executor.started:
-                    log.debug("No more tasks for executing. auto-destroying storage task.")
-                    self.executor.storage = None
-                    return
+        self._storage.clear_scan_details()
+        while True:
+            if self.executor.unfinished_tasks == 1 and self.executor.started:
+                log.debug("No more tasks for executing. auto-destroying storage task.")
+                self.executor.storage = None
+                break
 
-                try:
-                    query = self._queue.get(timeout=10)
-                except Empty:
-                    continue
+            try:
+                query = self._queue.get(timeout=10)
+            except Empty:
+                continue
 
-                if isinstance(query, list):
-                    log.debug("executing %i queries", len(query))
-                    for row in query:
-                        storage.cursor.execute(*row)
-                else:
-                    log.debug("executing query: %s", query[0])
-                    storage.cursor.execute(*query)
-                storage.conn.commit()
-                self._queue.task_done()
+            if isinstance(query, list):
+                log.debug("executing %i queries", len(query))
+                for row in query:
+                    self._storage.cursor.execute(*row)
+            else:
+                log.debug("executing query: %s", query[0])
+                self._storage.cursor.execute(*query)
+            self._storage.conn.commit()
+            self._queue.task_done()
+        self._storage.close()
 
     def add_query(self, query):
         """
