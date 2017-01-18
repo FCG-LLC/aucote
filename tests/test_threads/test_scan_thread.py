@@ -233,27 +233,6 @@ class ScanThreadTest(TestCase):
 
         self.assertEqual(result[0].scan.start, expected)
 
-    @patch('threads.scan_thread.croniter')
-    @patch('threads.scan_thread.cfg')
-    @patch('threads.scan_thread.time.time', MagicMock(return_value=1337))
-    def test_reload_config(self, mock_cfg, mock_cron):
-        self.thread.scheduler = MagicMock()
-        current_task = self.thread.current_task
-        self.thread.reload_config()
-
-        mock_cfg.get.assert_called_any_with('service.scans.cron')
-        mock_cron.assert_called_once_with(mock_cfg.get.return_value, 1337)
-        self.assertEqual(self.thread.cron, mock_cron.return_value)
-        self.thread.scheduler.cancel.assert_called_once_with(current_task)
-        self.assertNotEqual(self.thread.current_task, current_task)
-        self.assertEqual(self.thread.current_task, self.thread.scheduler.enterabs.return_value)
-
-    @patch('threads.scan_thread.cfg.get', MagicMock(side_effect=KeyError('test')))
-    @patch('threads.scan_thread.log')
-    def test_reload_configuration_with_exception(self, mock_log):
-        self.thread.reload_config()
-        self.assertTrue(mock_log.error.called)
-
     @patch('threads.scan_thread.time.time', MagicMock(return_value=600.5))
     def test_keep_update(self):
         self.thread.scheduler = MagicMock()

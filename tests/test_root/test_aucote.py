@@ -167,7 +167,9 @@ class AucoteTest(TestCase):
         mock_loader.called_once_With(cfg)
 
     def test_signal_handling(self):
-        self.assertRaises(SystemExit, self.aucote.signal_handler, 2, MagicMock())
+        self.aucote.kill = MagicMock()
+        self.aucote.signal_handler(2, None)
+        self.aucote.kill.assert_called_once_with()
 
     def test_load_tools(self):
         config = {
@@ -189,18 +191,6 @@ class AucoteTest(TestCase):
         config['apps']['app1']['loader'].assert_called_once_with(config['apps']['app1'], exploits)
         config['apps']['app2']['loader'].assert_called_once_with(config['apps']['app2'], exploits)
 
-    @patch('aucote.cfg')
-    def test_reload_config(self, mock_cfg):
-        filename = 'test_filename'
-        self.aucote.scan_task = MagicMock()
-        mock_cfg.get.return_value = filename
-
-        self.aucote.reload_config()
-
-        mock_cfg.get.assert_called_once_with('config_filename')
-        mock_cfg.reload.assert_called_once_with(mock_cfg.get.return_value)
-        self.aucote.scan_task.reload_config.assert_called_once_with()
-
     def test_graceful_stop(self):
         self.aucote.scan_task = MagicMock()
         self.aucote.watch_thread = MagicMock()
@@ -208,11 +198,10 @@ class AucoteTest(TestCase):
         self.aucote.watch_thread.stop.assert_called_once_with()
         self.aucote.scan_task.disable_scan.assert_called_once_with()
 
-    @patch('aucote.os.getpid', MagicMock(return_value=1337))
-    @patch('aucote.os.kill')
+    @patch('aucote.os._exit')
     def test_kill(self, mock_kill):
         self.aucote.kill()
-        mock_kill.assert_called_once_with(1337, signal.SIGTERM)
+        mock_kill.assert_called_once_with(1)
 
     def test_unfinished_tasks(self):
         self.assertEqual(self.aucote.unfinished_tasks, self.aucote.thread_pool.unfinished_tasks)

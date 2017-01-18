@@ -33,7 +33,6 @@ class ScanThread(Thread):
         super(ScanThread, self).__init__()
         self.scheduler = sched.scheduler(time.time)
         self.as_service = as_service
-        self.current_task = None
         self.name = "Scanner"
         self.aucote = aucote
 
@@ -104,7 +103,7 @@ class ScanThread(Thread):
     def run(self):
         log.debug("Starting scanner")
         if self.as_service:
-            self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
+            self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
             self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
         else:
             self.run_scan()
@@ -173,22 +172,6 @@ class ScanThread(Thread):
         except KeyError:
             log.error("Please set service.scans.networks in configuration file!")
             exit()
-
-    def reload_config(self):
-        """
-        Apply configuration to thread
-
-        Returns:
-            None
-
-        """
-        try:
-            log.info("Update cron to: '%s'", cfg.get('service.scans.cron'))
-            self.cron = croniter(cfg.get('service.scans.cron'), time.time())
-            self.scheduler.cancel(self.current_task)
-            self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
-        except KeyError:
-            log.error("Error while changing scanning cron")
 
     def disable_scan(self):
         """

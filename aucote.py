@@ -210,8 +210,7 @@ class Aucote(object):
 
         """
         log.error("Received signal %s at frame %s. Exiting.", sig, frame)
-        self.storage_thread.stop()
-        sys.exit(1)
+        self.kill()
 
     @property
     def unfinished_tasks(self):
@@ -237,17 +236,6 @@ class Aucote(object):
                 log.info('Loading %s', name)
                 app['loader'](app, self.exploits)
 
-    def reload_config(self):
-        """
-        Reload configuration and notify threads about it
-
-        Returns:
-            None
-
-        """
-        cfg.reload(cfg.get('config_filename'))
-        self.scan_task.reload_config()
-
     def graceful_stop(self):
         """
         Responsible for stopping the threads in graceful way.
@@ -271,7 +259,7 @@ class Aucote(object):
             None
 
         """
-        os.kill(os.getpid(), signal.SIGTERM)
+        os._exit(1)
 
 
 # =================== start app =================
