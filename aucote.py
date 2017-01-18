@@ -16,13 +16,13 @@ import signal
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
 from scans.task_mapper import TaskMapper
-import utils.log as log_cfg
 from threads.scan_thread import ScanThread
 from threads.storage_thread import StorageThread
 from threads.watchdog_thread import WatchdogThread
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.threads import ThreadPool
 from utils.kudu_queue import KuduQueue
+import utils.log as log_cfg
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
 
@@ -129,11 +129,6 @@ class Aucote(object):
         """
         return self._storage
 
-    @storage.setter
-    def storage(self, storage):
-        if not self._storage or storage is None:
-            self._storage = storage
-
     @property
     def thread_pool(self):
         """
@@ -154,7 +149,8 @@ class Aucote(object):
         """
 
         try:
-            self.storage_thread = StorageThread(filename=self.filename, aucote=self)
+            self.storage_thread = StorageThread(filename=self.filename)
+            self._storage = self.storage_thread.storage
             self.storage_thread.start()
 
             if as_service:
@@ -165,13 +161,13 @@ class Aucote(object):
             self.scan_task.start()
 
             self.thread_pool.start()
+            self.thread_pool.join()
             self.scan_task.join()
 
-            self.thread_pool.join()
             self.thread_pool.stop()
-
             self.storage_thread.stop()
             self.storage_thread.join()
+            self._storage = None
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")
@@ -266,7 +262,8 @@ class Aucote(object):
         self.scan_task.disable_scan()
         self.watch_thread.stop()
 
-    def kill(self):
+    @classmethod
+    def kill(cls):
         """
         Kill aucote by sending signal
 

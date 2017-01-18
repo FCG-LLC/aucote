@@ -169,27 +169,6 @@ class AucoteTest(TestCase):
     def test_signal_handling(self):
         self.assertRaises(SystemExit, self.aucote.signal_handler, 2, MagicMock())
 
-    def test_storage_setter_default(self):
-        self.aucote._storage = None
-        expected = MagicMock()
-        self.aucote.storage = expected
-
-        self.assertEqual(self.aucote.storage, expected)
-
-    def test_storage_setter_none(self):
-        self.aucote._storage = MagicMock()
-        expected = None
-        self.aucote.storage = expected
-
-        self.assertEqual(self.aucote.storage, expected)
-
-    def test_storage_setter_set_already(self):
-        expected = MagicMock()
-        self.aucote._storage = expected
-        self.aucote.storage = MagicMock()
-
-        self.assertEqual(self.aucote.storage, expected)
-
     def test_load_tools(self):
         config = {
             'apps': {

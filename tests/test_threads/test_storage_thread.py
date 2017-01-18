@@ -8,16 +8,14 @@ from threads.storage_thread import StorageThread
 class StorageThreadTest(TestCase):
     @patch('threads.storage_thread.Queue')
     def setUp(self, mock_queue):
-        self.executor = MagicMock()
         self.mock_queue = mock_queue
         self.filename = ":memory:"
-        self.task = StorageThread(aucote=self.executor, filename=self.filename)
+        self.task = StorageThread(filename=self.filename)
 
     @patch('threads.storage_thread.Queue')
     def test_init(self, mock_queue):
         self.assertEqual(self.task.filename, self.filename)
         self.assertEqual(self.task._queue, self.mock_queue())
-        self.assertEqual(self.task.aucote.storage, self.task._storage)
 
     def test_add_query(self):
         self.task._queue = MagicMock()
@@ -43,10 +41,12 @@ class StorageThreadTest(TestCase):
         self.task._queue = MagicMock()
 
         self.task.run()
-        self.assertIsNone(self.executor.storage)
         self.assertFalse(self.task._queue.get.called)
 
     def test_stop(self):
         self.assertFalse(self.task.finish)
         self.task.stop()
         self.assertTrue(self.task.finish)
+
+    def test_storage_getter(self):
+        self.assertEqual(self.task.storage, self.task._storage)

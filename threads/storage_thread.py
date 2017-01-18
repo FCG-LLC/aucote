@@ -1,24 +1,27 @@
+"""
+Thread responsible for local storage
+
+"""
+
 from threading import Thread
 
 import logging as log
 from queue import Queue, Empty
 
-import time
-
 from utils.storage import Storage
-from utils.task import Task
 
 
 class StorageThread(Thread):
+    """
+    Class which is separate thread. Creates and manages local storage
 
-    def __init__(self, filename, aucote):
+    """
+    def __init__(self, filename):
         super(StorageThread, self).__init__()
-        self.aucote = aucote
         self.name = "Storage"
         self.filename = filename
         self._queue = Queue()
         self._storage = Storage(self, self.filename)
-        self.aucote.storage = self._storage
         self.finish = False
 
     def run(self):
@@ -38,7 +41,6 @@ class StorageThread(Thread):
         while True:
             if self.finish:
                 log.debug("Exit")
-                self.aucote.storage = None
                 break
 
             try:
@@ -71,5 +73,23 @@ class StorageThread(Thread):
         self._queue.put(query)
 
     def stop(self):
+        """
+        Stop thread
+
+        Returns:
+            None
+
+        """
         log.info("Stopping storage")
         self.finish = True
+
+    @property
+    def storage(self):
+        """
+        Handler to local storage
+
+        Returns:
+            Storage
+
+        """
+        return self._storage

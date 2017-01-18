@@ -101,7 +101,7 @@ class ScanThread(Thread):
 
         self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports))
 
-    def run(self, *args, **kwargs):
+    def run(self):
         log.debug("Starting scanner")
         if self.as_service:
             self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
@@ -175,6 +175,13 @@ class ScanThread(Thread):
             exit()
 
     def reload_config(self):
+        """
+        Apply configuration to thread
+
+        Returns:
+            None
+
+        """
         try:
             log.info("Update cron to: '%s'", cfg.get('service.scans.cron'))
             self.cron = croniter(cfg.get('service.scans.cron'), time.time())
@@ -200,11 +207,29 @@ class ScanThread(Thread):
 
         Returns:
             None
+
         """
         self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
         if int(time.time()%600) == 0:
             log.debug("keep cron update")
 
+    def stop(self):
+        """
+        Stop thread.
+
+        Returns:
+            None
+
+        """
+        self.disable_scan()
+
     @property
     def storage(self):
+        """
+        Handler to application storage
+
+        Returns:
+            Storage
+
+        """
         return self.aucote.storage

@@ -269,3 +269,8 @@ class ScanThreadTest(TestCase):
         self.assertFalse(self.thread.scheduler.empty())
         self.thread.disable_scan()
         self.assertTrue(self.thread.scheduler.empty())
+
+    def test_stop(self):
+        self.thread.disable_scan = MagicMock()
+        self.thread.stop()
+        self.thread.disable_scan.assert_called_once_with()

@@ -1,5 +1,5 @@
 """
-WatchdogTask is responsible for monitoring files and propagating updates to aucote core.
+Contains thread responsible for monitoring files and propagating updates to aucote core.
 
 """
 import logging as log
@@ -8,9 +8,6 @@ from threading import Thread
 import inotify.adapters
 from inotify.calls import InotifyError
 from inotify.constants import IN_IGNORED, IN_MODIFY, IN_DELETE_SELF
-
-from utils.exceptions import FinishThread
-from utils.task import Task
 
 
 class WatchdogThread(Thread):
@@ -25,7 +22,7 @@ class WatchdogThread(Thread):
         self.action = action
         self.notifier = inotify.adapters.Inotify()
 
-    def run(self, *args, **kwargs):
+    def run(self):
         """
         Listen on self.file and execute self.action if file change
 
@@ -54,5 +51,12 @@ class WatchdogThread(Thread):
             self.notifier.remove_watch(self.file)
 
     def stop(self):
+        """
+        Stop thread.
+
+        Returns:
+            None
+
+        """
         self.notifier.remove_watch(self.file)
         raise InotifyError("Exiting watchdog task")
