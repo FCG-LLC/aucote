@@ -15,9 +15,9 @@ import signal
 
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
-from scans.scan_task import ScanTask
 from scans.task_mapper import TaskMapper
 import utils.log as log_cfg
+from threads.scan_thread import ScanThread
 from threads.storage_thread import StorageThread
 from threads.watchdog_thread import WatchdogThread
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
@@ -161,13 +161,15 @@ class Aucote(object):
                 self.watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
                 self.watch_thread.start()
 
+            self.scan_task = ScanThread(aucote=self, as_service=as_service)
+            self.scan_task.start()
+
             self.thread_pool.start()
-            self.scan_task = ScanTask(executor=self, as_service=as_service)
-            self.add_task(self.scan_task)
-            self.started = True
+            self.scan_task.join()
 
             self.thread_pool.join()
             self.thread_pool.stop()
+
             self.storage_thread.stop()
             self.storage_thread.join()
 

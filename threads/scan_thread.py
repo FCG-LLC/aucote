@@ -5,6 +5,7 @@ This module contains class responsible for scanning.
 import ipaddress
 import json
 import sched
+from threading import Thread
 from urllib.error import URLError
 import urllib.request as http
 import logging as log
@@ -19,22 +20,22 @@ from scans.executor import Executor
 from structs import Node, Scan, PhysicalPort
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
-from utils.task import Task
 from utils.time import parse_period, parse_time_to_timestamp
 
 
-class ScanTask(Task):
+class ScanThread(Thread):
     """
     Class responsible for scanning
 
     """
 
-    def __init__(self, as_service=True, *args, **kwargs):
-        log.debug("Initialize scan task")
-        super(ScanTask, self).__init__(*args, **kwargs)
+    def __init__(self, aucote, as_service=True):
+        super(ScanThread, self).__init__()
         self.scheduler = sched.scheduler(time.time)
         self.as_service = as_service
         self.current_task = None
+        self.name = "Scanner"
+        self.aucote = aucote
 
         try:
             self.cron = croniter(cfg.get('service.scans.cron'), time.time())
@@ -53,9 +54,9 @@ class ScanTask(Task):
 
         """
         self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
-        self.run()
+        self.run_scan()
 
-    def run(self):
+    def run_scan(self):
         """
         Run scanning.
 
@@ -98,14 +99,15 @@ class ScanTask(Task):
                 port.scan = Scan(start=time.time())
                 ports.append(port)
 
-        self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
+        self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports))
 
-    def __call__(self, *args, **kwargs):
+    def run(self, *args, **kwargs):
+        log.debug("Starting scanner")
         if self.as_service:
             self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
             self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
         else:
-            self.run()
+            self.run_scan()
         self.scheduler.run()
 
     @classmethod
@@ -202,3 +204,7 @@ class ScanTask(Task):
         self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
         if int(time.time()%600) == 0:
             log.debug("keep cron update")
+
+    @property
+    def storage(self):
+        return self.aucote.storage

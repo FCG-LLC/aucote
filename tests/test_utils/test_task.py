@@ -64,3 +64,6 @@ class TaskTest(TestCase):
         result = self.task.reload_config()
 
         self.assertIsNone(result)
+
+    def test_storage_property(self):
+        self.assertEqual(self.executor.storage, self.task.storage)

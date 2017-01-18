@@ -61,3 +61,14 @@ class ThreadPoolTest(TestCase):
         self.thread_pool.add_task(task)
 
         self.assertIn(task, self.thread_pool._queue.queue)
+
+    @patch('utils.threads.Thread')
+    def test_start(self, mock_thread):
+        self.thread_pool._num_threads = 10
+        self.thread_pool.start()
+
+        self.assertEqual(mock_thread.return_value.daemon, True)
+        self.assertEqual(mock_thread.return_value.start.call_count, 10)
+        self.assertEqual(mock_thread.call_count, 10)
+
+        self.assertEqual(len(self.thread_pool._threads), 10)

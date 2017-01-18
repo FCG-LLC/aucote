@@ -74,7 +74,7 @@ class AucoteTest(TestCase):
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.StorageThread')
-    @patch('aucote.ScanTask')
+    @patch('aucote.ScanThread')
     def test_scan(self, mock_scan_tasks, mock_storage_task):
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
@@ -83,7 +83,7 @@ class AucoteTest(TestCase):
         self.aucote.run_scan(as_service=False)
         result = mock_scan_tasks.call_args[1]
         expected = {
-            'executor': self.aucote,
+            'aucote': self.aucote,
             'as_service': False
         }
 
@@ -97,7 +97,7 @@ class AucoteTest(TestCase):
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.StorageThread')
     @patch('aucote.WatchdogThread')
-    @patch('aucote.ScanTask')
+    @patch('aucote.ScanThread')
     def test_service(self, mock_scan_tasks, mock_watchdog, mock_storage_task):
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
@@ -106,7 +106,7 @@ class AucoteTest(TestCase):
         self.aucote.run_scan(as_service=True)
         result = mock_scan_tasks.call_args[1]
         expected = {
-            'executor': self.aucote,
+            'aucote': self.aucote,
             'as_service': True
         }
 
@@ -129,9 +129,9 @@ class AucoteTest(TestCase):
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
-    @patch('aucote.ScanTask.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
+    @patch('aucote.ScanThread.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
     @patch('aucote.StorageThread', MagicMock())
-    @patch('scans.scan_task.Executor')
+    @patch('threads.scan_thread.Executor')
     def test_scan_with_exception(self, mock_executor):
         self.aucote.run_scan()
         self.assertEqual(mock_executor.call_count, 0)
