@@ -52,4 +52,4 @@ class WatchdogThreadTest(TestCase):
     def test_stop(self):
         self.thread.notifier.remove_watch = MagicMock()
         self.assertRaises(InotifyError, self.thread.stop)
-        self.thread.notifier.remove_watch.assert_Caaled_once_with(self.thread.file)
+        self.thread.notifier.remove_watch.assert_called_once_with(self.thread.file)

@@ -56,7 +56,7 @@ class AucoteTest(TestCase):
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
             self.assertRaises(SystemExit, main)
 
-        mock_aucote.return_value.run_scan.assert_called_any_with()
+        mock_aucote.return_value.run_scan.assert_any_call()
         self.assertEqual(mock_aucote.return_value.run_scan.call_count, 2)
         mock_cfg.reload.assert_called_once_with(mock_cfg.get.return_value)
 

@@ -37,13 +37,10 @@ class ThreadPoolTest(TestCase):
     @patch('utils.threads.ThreadPool.unfinished_tasks', new_callable=PropertyMock)
     def test_worker_task_empty_queue(self, mock_thread):
         self.thread_pool._queue = MagicMock()
-        task = MagicMock()
         self.thread_pool._finish = True
         mock_thread.side_effect=(1, 0)
         self.thread_pool._queue.get.side_effect = Empty()
         self.thread_pool._worker()
-
-        task.assert_caled_once_with()
 
     def test_worker_task_is_not_none(self):
         self.thread_pool._queue = MagicMock()
