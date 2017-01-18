@@ -237,7 +237,7 @@ class Aucote(object):
                 log.info('Loading %s', name)
                 app['loader'](app, self.exploits)
 
-    def reload_config(self, file_name):
+    def reload_config(self):
         """
         Reload configuration and notify threads about it
 
@@ -245,7 +245,7 @@ class Aucote(object):
             None
 
         """
-        cfg.reload(file_name)
+        cfg.reload(cfg.get('config_filename'))
         self.scan_task.reload_config()
 
     def graceful_stop(self):

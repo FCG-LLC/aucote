@@ -193,10 +193,12 @@ class AucoteTest(TestCase):
     def test_reload_config(self, mock_cfg):
         filename = 'test_filename'
         self.aucote.scan_task = MagicMock()
+        mock_cfg.get.return_value = filename
 
-        self.aucote.reload_config(filename)
+        self.aucote.reload_config()
 
-        mock_cfg.assert_Called_once_with(filename)
+        mock_cfg.get.assert_called_once_with('config_filename')
+        mock_cfg.reload.assert_called_once_with(mock_cfg.get.return_value)
         self.aucote.scan_task.reload_config.assert_called_once_with()
 
     def test_graceful_stop(self):
