@@ -3,6 +3,8 @@ WatchdogTask is responsible for monitoring files and propagating updates to auco
 
 """
 import logging as log
+from threading import Thread
+
 import inotify.adapters
 from inotify.calls import InotifyError
 from inotify.constants import IN_IGNORED, IN_MODIFY, IN_DELETE_SELF
@@ -11,18 +13,19 @@ from utils.exceptions import FinishThread
 from utils.task import Task
 
 
-class WatchdogTask(Task):
+class WatchdogThread(Thread):
     """
     Looks on file and propagate updates
 
     """
-    def __init__(self, file, action, *args, **kwargs):
-        super(WatchdogTask, self).__init__(*args, **kwargs)
+    def __init__(self, file, action):
+        super(WatchdogThread, self).__init__()
+        self.name = "Watchdog"
         self.file = file.encode("utf-8")
         self.action = action
         self.notifier = inotify.adapters.Inotify()
 
-    def __call__(self, *args, **kwargs):
+    def run(self, *args, **kwargs):
         """
         Listen on self.file and execute self.action if file change
 
@@ -52,4 +55,4 @@ class WatchdogTask(Task):
 
     def stop(self):
         self.notifier.remove_watch(self.file)
-        raise InotifyError("Exiting watch task")
+        raise InotifyError("Exiting watchdog task")

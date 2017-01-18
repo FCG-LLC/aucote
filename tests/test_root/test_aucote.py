@@ -96,7 +96,7 @@ class AucoteTest(TestCase):
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.StorageThread')
-    @patch('aucote.WatchdogTask')
+    @patch('aucote.WatchdogThread')
     @patch('aucote.ScanTask')
     def test_service(self, mock_scan_tasks, mock_watchdog, mock_storage_task):
         self.aucote._thread_pool = MagicMock()
@@ -222,9 +222,9 @@ class AucoteTest(TestCase):
 
     def test_graceful_stop(self):
         self.aucote.scan_task = MagicMock()
-        self.aucote.watch_task = MagicMock()
+        self.aucote.watch_thread = MagicMock()
         self.aucote.graceful_stop()
-        self.aucote.watch_task.stop.assert_called_once_with()
+        self.aucote.watch_thread.stop.assert_called_once_with()
         self.aucote.scan_task.disable_scan.assert_called_once_with()
 
     @patch('aucote.os.getpid', MagicMock(return_value=1337))

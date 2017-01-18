@@ -55,3 +55,9 @@ class ThreadPoolTest(TestCase):
 
     def test_unfinished(self):
         self.assertEqual(self.thread_pool.unfinished_tasks, self.thread_pool._queue.unfinished_tasks)
+
+    def test_add_task(self):
+        task = MagicMock()
+        self.thread_pool.add_task(task)
+
+        self.assertIn(task, self.thread_pool._queue.queue)

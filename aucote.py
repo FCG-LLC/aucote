@@ -19,10 +19,10 @@ from scans.scan_task import ScanTask
 from scans.task_mapper import TaskMapper
 import utils.log as log_cfg
 from threads.storage_thread import StorageThread
+from threads.watchdog_thread import WatchdogThread
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.threads import ThreadPool
 from utils.kudu_queue import KuduQueue
-from utils.watchdog_task import WatchdogTask
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
 
@@ -108,7 +108,7 @@ class Aucote(object):
         self.lock = threading.Lock()
         self.load_tools(tools_config)
         self.scan_task = None
-        self.watch_task = None
+        self.watch_thread = None
         self.storage_thread = None
 
     @property
@@ -157,12 +157,11 @@ class Aucote(object):
             self.storage_thread = StorageThread(filename=self.filename, aucote=self)
             self.storage_thread.start()
 
-            self.thread_pool.start()
-
-            self.watch_task = WatchdogTask(file=cfg.get('config_filename'), action=self.graceful_stop, executor=self)
             if as_service:
-                self.add_task(self.watch_task)
+                self.watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
+                self.watch_thread.start()
 
+            self.thread_pool.start()
             self.scan_task = ScanTask(executor=self, as_service=as_service)
             self.add_task(self.scan_task)
             self.started = True
@@ -170,6 +169,7 @@ class Aucote(object):
             self.thread_pool.join()
             self.thread_pool.stop()
             self.storage_thread.stop()
+            self.storage_thread.join()
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")
@@ -262,7 +262,7 @@ class Aucote(object):
 
         """
         self.scan_task.disable_scan()
-        self.watch_task.stop()
+        self.watch_thread.stop()
 
     def kill(self):
         """
