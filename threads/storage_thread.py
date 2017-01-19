@@ -8,6 +8,7 @@ from threading import Thread
 import logging as log
 from queue import Queue, Empty
 
+from structs import StorageQuery
 from utils.storage import Storage
 
 
@@ -38,11 +39,7 @@ class StorageThread(Thread):
         """
         self._storage.connect()
         self._storage.clear_scan_details()
-        while True:
-            if self.finish:
-                log.debug("Exit")
-                break
-
+        while not self.finish:
             try:
                 query = self._queue.get(timeout=1)
             except Empty:
@@ -52,12 +49,22 @@ class StorageThread(Thread):
                 log.debug("executing %i queries", len(query))
                 for row in query:
                     self._storage.cursor.execute(*row)
+            elif isinstance(query, StorageQuery):
+                try:
+                    query.result = self._storage.cursor.execute(*query.query).fetchall()
+                except Exception:
+                    log.exception("Exception while executing query: %s", query.query[0])
+                finally:
+                    query.lock.release()
+                    self._queue.task_done()
+                continue
             else:
                 log.debug("executing query: %s", query[0])
                 self._storage.cursor.execute(*query)
             self._storage.conn.commit()
             self._queue.task_done()
         self._storage.close()
+        log.debug("Exit")
 
     def add_query(self, query):
         """
@@ -67,10 +74,10 @@ class StorageThread(Thread):
             query:
 
         Returns:
-            None
-
+            returns query
         """
         self._queue.put(query)
+        return query
 
     def stop(self):
         """

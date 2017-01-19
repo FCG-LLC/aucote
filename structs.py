@@ -5,6 +5,7 @@ This file provides structures for project.
 import ipaddress
 from enum import Enum
 import time
+from threading import Lock
 
 
 class Scan(object):
@@ -297,3 +298,19 @@ class Vulnerability(object):
         self.output = str(output)
         self.exploit = exploit
         self.port = port
+
+
+class StorageQuery(object):
+
+    def __init__(self, query, args=None):
+        self._query = query
+        self._args = args
+        self.result = None
+        self.lock = Lock()
+        self.lock.acquire()
+
+    @property
+    def query(self):
+        if self._args:
+            return (self._query, self._args)
+        return (self._query, )

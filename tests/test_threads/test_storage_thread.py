@@ -2,6 +2,7 @@ from queue import Empty
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+from structs import StorageQuery
 from threads.storage_thread import StorageThread
 
 
@@ -50,3 +51,17 @@ class StorageThreadTest(TestCase):
 
     def test_storage_getter(self):
         self.assertEqual(self.task.storage, self.task._storage)
+
+    def test_storage_query_proceed(self):
+        self.task._queue.task_done.side_effect = (None, Exception("TEST_FIN"))
+        query = StorageQuery("test_query")
+        query.lock = MagicMock()
+        self.task._queue.get.side_effect = (query, StorageQuery(None))
+        self.task._storage = MagicMock()
+        result = MagicMock()
+        self.task._storage.cursor.execute.side_effect = (result, Exception("TEST_EXCEPTION"))
+
+        self.assertRaises(Exception, self.task.run)
+        self.assertEqual(self.task._storage.cursor.execute.call_count, 2)
+        query.lock.release.assert_called_once_with()
+        self.assertEqual(query.result, result.fetchall.return_value)
