@@ -7,7 +7,7 @@ import time
 import logging as log
 
 from fixtures.exploits import Exploit
-from structs import Node, Port, TransportProtocol
+from structs import Node, Port, TransportProtocol, StorageQuery
 from utils.database_interface import DbInterface
 
 
@@ -92,12 +92,13 @@ class Storage(DbInterface):
         timestamp = time.time() - pasttime
 
         nodes = []
-        try:
-            for node in self.cursor.execute("SELECT * FROM nodes where time > ?", (timestamp,)).fetchall():
-                nodes.append(Node(node_id=node[0], ip=ipaddress.ip_address(node[1])))
-            return nodes
-        except sqlite3.DatabaseError:
-            return []
+
+        query = self.task.add_query(StorageQuery("SELECT * FROM nodes where time > ?", (timestamp,)))
+        query.lock.acquire()
+
+        for node in query.result:
+            nodes.append(Node(node_id=node[0], ip=ipaddress.ip_address(node[1])))
+        return nodes
 
     def save_port(self, port):
         """
@@ -144,13 +145,14 @@ class Storage(DbInterface):
         timestamp = time.time() - pasttime
 
         ports = []
-        try:
-            for port in self.cursor.execute("SELECT * FROM ports where time > ?", (timestamp,)).fetchall():
-                ports.append(Port(node=Node(node_id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
-                                  transport_protocol=TransportProtocol.from_iana(port[3])))
-            return ports
-        except sqlite3.DatabaseError:
-            return []
+
+        query = self.task.add_query(StorageQuery("SELECT * FROM ports where time > ?", (timestamp,)))
+        query.lock.acquire()
+
+        for port in query.result:
+            ports.append(Port(node=Node(node_id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
+                              transport_protocol=TransportProtocol.from_iana(port[3])))
+        return ports
 
     def save_scan(self, exploit, port):
         """
@@ -235,24 +237,23 @@ class Storage(DbInterface):
         """
         return_value = []
 
-        try:
-            for row in self.cursor.execute("SELECT * FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? "
-                                           "AND port_protocol = ? AND port_number = ?",
-                                           [app, port.node.id, str(port.node.ip), port.transport_protocol.iana,
-                                            port.number]):
-                return_value.append({
-                    "exploit": Exploit(exploit_id=row[0]),
-                    "port": Port(node=Node(node_id=row[3], ip=ipaddress.ip_address(row[4])), number=row[6],
-                                 transport_protocol=TransportProtocol.from_iana(row[5])),
-                    "scan_start": row[7] or 0.,
-                    "scan_end": row[8] or 0.,
-                    "exploit_name": row[2]
-                })
+        query = self.task.add_query(StorageQuery("SELECT * FROM scans WHERE exploit_app = ? AND node_id = ?"
+                                                 "AND node_ip = ? AND port_protocol = ? AND port_number = ?",
+                                                 (app, port.node.id, str(port.node.ip),
+                                                  port.transport_protocol.iana, port.number)))
+        query.lock.acquire()
 
-            return return_value
+        for row in query.result:
+            return_value.append({
+                "exploit": Exploit(exploit_id=row[0]),
+                "port": Port(node=Node(node_id=row[3], ip=ipaddress.ip_address(row[4])), number=row[6],
+                             transport_protocol=TransportProtocol.from_iana(row[5])),
+                "scan_start": row[7] or 0.,
+                "scan_end": row[8] or 0.,
+                "exploit_name": row[2]
+            })
 
-        except sqlite3.DatabaseError:
-            return []
+        return return_value
 
     def clear_scan_details(self):
         """
