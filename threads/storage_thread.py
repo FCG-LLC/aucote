@@ -50,9 +50,13 @@ class StorageThread(Thread):
                 for row in query:
                     self._storage.cursor.execute(*row)
             elif isinstance(query, StorageQuery):
-                query.result = self._storage.cursor.execute(*query.query).fetchall()
-                query.lock.release()
-                self._queue.task_done()
+                try:
+                    query.result = self._storage.cursor.execute(*query.query).fetchall()
+                except Exception:
+                    log.exception("Exception while executing query: %s", query.query[0])
+                finally:
+                    query.lock.release()
+                    self._queue.task_done()
                 continue
             else:
                 log.debug("executing query: %s", query[0])
