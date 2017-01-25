@@ -124,7 +124,7 @@ class StorageThread(Thread):
                               transport_protocol=TransportProtocol.from_iana(port[3])))
         return ports
 
-    def get_nodes(self, pasttime=0):
+    def get_nodes(self, pasttime=0, timestamp=None):
         """
         Returns all nodes from local storage
 
@@ -135,7 +135,7 @@ class StorageThread(Thread):
 
         nodes = []
 
-        query = self.add_query(StorageQuery(*self._storage.get_nodes(pasttime)))
+        query = self.add_query(StorageQuery(*self._storage.get_nodes(pasttime, timestamp)))
         query.lock.acquire()
 
         for node in query.result:

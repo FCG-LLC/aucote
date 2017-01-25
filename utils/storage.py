@@ -21,7 +21,17 @@ class Storage(DbInterface):
     SAVE_SCAN_DETAIL_END = "UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND " \
                            "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?"
 
+    SAVE_NODE_QUERY = "INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)"
+    SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)"
+    SAVE_SCAN_DETAIL = "INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip," \
+                       "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    SAVE_SCAN_DETAIL_START = "UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND " \
+                             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?"
+    SAVE_SCAN_DETAIL_END = "UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND " \
+                           "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?"
+
     def __init__(self, filename="storage.sqlite3"):
+
         """
         Init storage
 
@@ -85,7 +95,7 @@ class Storage(DbInterface):
         return queries
 
     @classmethod
-    def get_nodes(cls, pasttime=0):
+    def get_nodes(cls, pasttime, timestamp):
         """
         Returns all nodes from local storage
 
@@ -93,7 +103,8 @@ class Storage(DbInterface):
             tuple
 
         """
-        timestamp = time.time() - pasttime
+        if timestamp is None:
+            timestamp = time.time() - pasttime
         return "SELECT * FROM nodes where time > ?", (timestamp,)
 
     @classmethod
@@ -111,7 +122,7 @@ class Storage(DbInterface):
 
         """
         return cls.SAVE_PORT_QUERY, (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
-                                      time.time())
+                                     time.time())
 
     @classmethod
     def save_ports(cls, ports):
@@ -131,7 +142,7 @@ class Storage(DbInterface):
         return queries
 
     @classmethod
-    def get_ports(cls, pasttime):
+    def get_ports(cls, pasttime,):
         """
         Query for port scan detail from scans from pasttime ago
 
@@ -168,18 +179,18 @@ class Storage(DbInterface):
                   port.scan.start, port.scan.end, exploit.id, port.node.id, str(port.node), str(port))
         queries = []
 
-        queries.append((cls.SAVE_SCAN_DETAIL, (exploit.id, exploit.app, exploit.name, port.node.id,
-                                                     str(port.node.ip), port.transport_protocol.iana, port.number)))
+        queries.append((cls.SAVE_SCAN_DETAIL, (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
+                                               port.transport_protocol.iana, port.number)))
 
         if port.scan.start:
             queries.append((cls.SAVE_SCAN_DETAIL_START, (port.scan.start, exploit.id, exploit.app, exploit.name,
-                                                               port.node.id, str(port.node.ip),
-                                                               port.transport_protocol.iana, port.number)))
+                                                         port.node.id, str(port.node.ip), port.transport_protocol.iana,
+                                                         port.number)))
 
         if port.scan.end:
             queries.append((cls.SAVE_SCAN_DETAIL_END, (port.scan.end, exploit.id, exploit.app, exploit.name,
-                                                             port.node.id, str(port.node.ip),
-                                                             port.transport_protocol.iana, port.number)))
+                                                       port.node.id, str(port.node.ip), port.transport_protocol.iana,
+                                                       port.number)))
         return queries
 
     @classmethod
@@ -250,15 +261,14 @@ class Storage(DbInterface):
             list
 
         """
-        queries = []
-        queries.append(("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, "
-                        "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
-                        "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, "
-                        "port_number))",))
+        queries = [("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, "
+                    "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
+                    "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, "
+                    "port_number))",),
 
-        queries.append(("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
-                        "primary key (id, ip, port, protocol))",))
+                   ("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
+                    "primary key (id, ip, port, protocol))",),
 
-        queries.append(("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))",))
+                   ("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))",)]
 
         return queries

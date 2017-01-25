@@ -11,7 +11,6 @@ import urllib.request as http
 import logging as log
 import time
 import netifaces
-
 from croniter import croniter
 from netaddr import IPSet
 
@@ -54,10 +53,10 @@ class ScanThread(Thread):
             None
 
         """
-        self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
-        self.run_scan()
+        self.scheduler.enterabs(next(self.cron), 10, self.run_periodically)
+        self.run_scan(self._get_nodes_for_scanning())
 
-    def run_scan(self):
+    def run_scan(self, nodes, scan_only=False):
         """
         Run scanning.
 
@@ -68,12 +67,14 @@ class ScanThread(Thread):
         scanner_ipv4 = MasscanPorts()
         scanner_ipv6 = PortsScan()
 
-        nodes = [node for node in self._get_nodes_for_scanning() if node.ip.exploded in self._get_networks_list()]
+        nodes = [node for node in nodes if node.ip.exploded in self._get_networks_list()]
         self.current_scan = nodes
 
         if not nodes:
             log.warning("List of nodes is empty")
             return
+
+        self.storage.save_nodes(nodes)
 
         nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
         nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
@@ -85,8 +86,6 @@ class ScanThread(Thread):
 
         log.info("Scanning %i IPv6 nodes for open ports.", len(nodes_ipv6))
         ports.extend(scanner_ipv6.scan_ports(nodes_ipv6))
-
-        self.storage.save_nodes(nodes)
 
         if cfg.get('service.scans.physical'):
             interfaces = netifaces.interfaces()
@@ -101,20 +100,20 @@ class ScanThread(Thread):
                 port.scan = Scan(start=time.time())
                 ports.append(port)
 
-        self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports))
+        self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports, scan_only=scan_only))
         self.current_scan = []
 
     def run(self):
         log.debug("Starting scanner")
         if self.as_service:
-            self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
+            self.scheduler.enterabs(next(self.cron), 10, self.run_periodically)
             self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
+            self.scheduler.run()
         else:
-            self.run_scan()
-        self.scheduler.run()
+            self.run_scan(self._get_nodes_for_scanning())
 
     @classmethod
-    def _get_nodes(cls):
+    def _get_topdis_nodes(cls):
         """
         Get nodes from todis application
 
@@ -131,7 +130,6 @@ class ScanThread(Thread):
         nodes_cfg = json.loads(nodes_txt)
 
         timestamp = parse_time_to_timestamp(nodes_cfg['meta']['requestTime'])
-        log.debug('Got nodes: %s', nodes_cfg)
         nodes = []
         for node_struct in nodes_cfg['nodes']:
             for node_ip in node_struct['ips']:
@@ -140,19 +138,18 @@ class ScanThread(Thread):
                 node.scan = Scan(start=timestamp)
                 nodes.append(node)
 
+        log.debug('Got %i nodes from topdis: %s', len(nodes), nodes)
         return nodes
 
-    def _get_nodes_for_scanning(self):
+    def _get_nodes_for_scanning(self, timestamp=None):
         """
         Returns:
             list of nodes to be scan
 
         """
-        topdis_nodes = self._get_nodes()
+        topdis_nodes = self._get_topdis_nodes()
 
-        log.info('Found %i nodes total', len(topdis_nodes))
-
-        storage_nodes = self.storage.get_nodes(parse_period(cfg.get('service.scans.node_period')))
+        storage_nodes = self.storage.get_nodes(parse_period(cfg.get('service.scans.node_period')), timestamp=timestamp)
 
         for node in storage_nodes:
             try:
@@ -197,6 +194,13 @@ class ScanThread(Thread):
 
         """
         self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
+        last_full_scan_time = croniter(cfg.get('service.scans.cron'), time.time()).get_prev()
+
+        nodes = self._get_nodes_for_scanning(timestamp=last_full_scan_time)
+        log.debug("Found %i nodes for potential scanning", len(nodes))
+        self.run_scan(nodes, scan_only=True)
+
+        self.run_scan(nodes, scan_only=True)
 
         if int(time.monotonic() % 600) == 0:
             log.debug("keep cron update")

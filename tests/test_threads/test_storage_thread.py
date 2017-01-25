@@ -164,7 +164,7 @@ class StorageThreadTest(TestCase):
         self.task.add_query.return_value.lock.acquire.assert_called_once_with()
         self.task.add_query.assert_called_once_with(mock_query.return_value)
         mock_query.assert_called_once_with(*self.task._storage.get_nodes.return_value)
-        self.task._storage.get_nodes.assert_called_once_with(100)
+        self.task._storage.get_nodes.assert_called_once_with(100, None)
 
         self.assertEqual(result[0].id, 1)
         self.assertEqual(result[1].id, 2)

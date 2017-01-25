@@ -160,8 +160,8 @@ class UserAPITest(AsyncHTTPTestCase):
         expected = {
             'port': str(port),
             'start_time': 15,
-            'creation_time': 78,
-            'name': 'Tool'
+            'name': 'Tool',
+            'creation_time': 78
         }
 
         self.assertDictEqual(result, expected)

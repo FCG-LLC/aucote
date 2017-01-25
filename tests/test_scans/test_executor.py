@@ -2,10 +2,8 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
-from aucote import Aucote
 from scans.executor import Executor
 from structs import Node, Port, TransportProtocol
-from utils.storage import Storage
 from utils.threads import ThreadPool
 
 
@@ -76,3 +74,16 @@ class ExecutorTest(TestCase):
 
         self.assertCountEqual(result, expected)
         self.assertNotEqual(id(result), id(expected))
+
+    @patch('scans.executor.NmapPortInfoTask')
+    @patch('scans.executor.cfg')
+    def test_scan_only(self, mock_cfg, mock_port_info):
+        mock_cfg.get = MagicMock(return_value="0s")
+        self.executor.scan_only = MagicMock()
+        self.executor._get_ports_for_scanning = MagicMock(return_value=[MagicMock()])
+        self.executor.run()
+
+        result = mock_port_info.call_args[1].get('scan_only')
+        expected = self.executor.scan_only
+
+        self.assertEqual(result, expected)

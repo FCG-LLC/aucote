@@ -82,10 +82,16 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
-    def test_tcp_scan(self):
+    def test_prepare_args(self):
+        self.port_info.prepare_args = MagicMock()
         self.port_info()
 
         result = self.port_info.command.call.call_args[1].get('args', [])
+        self.assertEqual(result, self.port_info.prepare_args.return_value)
+
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
+    def test_prepare_tcp_scan(self):
+        result = self.port_info.prepare_args()
 
         self.assertIn('-p', result)
         self.assertIn('22', result)
@@ -100,9 +106,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     def test_udp_scan(self):
         self.port_info._port.transport_protocol = TransportProtocol.UDP
-        self.port_info()
-
-        result = self.port_info.command.call.call_args[1].get('args', [])
+        result = self.port_info.prepare_args()
 
         self.assertIn('-p', result)
         self.assertIn('22', result)
@@ -167,3 +171,19 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         expected = 'https'
 
         self.assertEqual(result, expected)
+
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
+    def test_scan_only_true(self, mock_serializer):
+        self.port_info.scan_only = True
+        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
+        self.port_info()
+
+        self.assertFalse(self.aucote.task_mapper.assign_tasks.called)
+
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
+    def test_scan_only_false(self, mock_serializer):
+        self.port_info.scan_only = False
+        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
+        self.port_info()
+
+        self.assertTrue(self.aucote.task_mapper.assign_tasks.called)

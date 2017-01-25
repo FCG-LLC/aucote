@@ -61,7 +61,7 @@ class StorageTest(TestCase):
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
 
     def test_get_nodes(self):
-        result = self.storage.get_nodes(pasttime=700)
+        result = self.storage.get_nodes(pasttime=700, timestamp=None)
         expected = 'SELECT * FROM nodes where time > ?', (139300,)
         self.assertEqual(result, expected)
 
