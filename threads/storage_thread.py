@@ -102,6 +102,13 @@ class StorageThread(Thread):
         return self._storage
 
     def get_info(self):
+        """
+        Informations about storage status
+
+        Returns:
+            dict
+
+        """
         return {
             'path': self.filename,
         }

@@ -254,7 +254,13 @@ class ScanThreadTest(TestCase):
         self.thread.stop()
         self.thread.disable_scan.assert_called_once_with()
 
-    def test_get_info(self):
+    @patch('threads.scan_thread.cfg')
+    @patch('threads.scan_thread.time.time', MagicMock(return_value=595))
+    def test_get_info(self, mock_cfg):
+        mock_cfg.get.side_effect = [
+            MagicMock(cfg=['192.168.1.0/24', '::1/128']),
+            "*/10 * * * *"
+        ]
         self.thread.current_scan = [
             Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1),
             Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2),
@@ -283,7 +289,9 @@ class ScanThreadTest(TestCase):
                     'action': "int",
                     'time': 10,
                 }
-            ]
+            ],
+            'networks': '[192.168.1.0/24, ::1/128]',
+            'next_scan': 600
         }
 
         self.assertCountEqual(result, expected)

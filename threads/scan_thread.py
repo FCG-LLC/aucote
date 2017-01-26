@@ -221,7 +221,16 @@ class ScanThread(Thread):
         return self.aucote.storage
 
     def get_info(self):
+        """
+        Information about current scans
+
+        Returns:
+            dict
+
+        """
         return {
             'nodes': [str(node.ip) for node in self.current_scan],
             'scheduler': [{'action': task.action.__name__, 'time': task.time} for task in self.scheduler.queue],
+            'networks': cfg.get('service.scans.networks').cfg,
+            'next_scan': croniter(cfg.get('service.scans.cron'), time.time()).get_next()
         }

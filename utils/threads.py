@@ -102,6 +102,7 @@ class ThreadPool(object):
 
         Returns:
             Dict with simple statistics
+
         """
         return_value = {'queue': [], 'threads': []}
 
@@ -120,6 +121,15 @@ class ThreadPool(object):
 
     @classmethod
     def get_task_info(cls, task):
+        """
+        Returns informations about task
+
+        Args:
+            task:
+
+        Returns:
+            dict
+        """
         return {
             'type': type(task).__name__,
             'data': task.get_info(),
@@ -128,6 +138,15 @@ class ThreadPool(object):
 
     @classmethod
     def get_thread_info(cls, thread):
+        """
+        Returns dict with info about thread
+
+        Args:
+            thread:
+
+        Returns:
+            dict
+        """
         return_value = cls.get_task_info(thread.task)
         return_value['start_time'] = thread.start_time
         return_value['duration'] = time.time() - thread.start_time
