@@ -205,3 +205,9 @@ class AucoteTest(TestCase):
 
     def test_unfinished_tasks(self):
         self.assertEqual(self.aucote.unfinished_tasks, self.aucote.thread_pool.unfinished_tasks)
+
+    @patch('aucote.json.dumps')
+    def test_get_stats(self, mock_json):
+        self.aucote._thread_pool = MagicMock()
+        self.aucote.get_state(None, None)
+        mock_json.assert_called_once_with(self.aucote._thread_pool.stats, indent=2)

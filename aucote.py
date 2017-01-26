@@ -225,10 +225,10 @@ class Aucote(object):
         Returns:
 
         """
-        log.error("Received signal %s at frame %s.", sig, frame)
-        log.error("Summary: ")
-        log.error("Tasks: %s", self.unfinished_tasks)
-        log.error(json.dumps(self.thread_pool.stats, indent=2))
+        stats = self.thread_pool.stats
+        stats['scanner'] = self.scan_task.get_info()
+        stats['storage'] = self.storage_thread.get_info()
+        log.error(json.dumps(stats, indent=2))
 
     @property
     def unfinished_tasks(self):

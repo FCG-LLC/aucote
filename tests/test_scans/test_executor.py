@@ -68,3 +68,22 @@ class ExecutorTest(TestCase):
         self.executor()
 
         self.executor.run.assert_called_once_with()
+
+    def test_get_info(self):
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
+        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
+
+        port_1 = Port(node=node_1, number=80, transport_protocol=TransportProtocol.TCP)
+        port_2 = Port(node=node_2, number=80, transport_protocol=TransportProtocol.TCP)
+        port_3 = Port(node=node_3, number=80, transport_protocol=TransportProtocol.TCP)
+
+        self.executor.ports = [port_1, port_2, port_3]
+        result = self.executor.get_info()
+        expected = {
+            "nodes": [
+                str(node_1),
+                str(node_2),
+                str(node_3)
+            ]
+        }

@@ -45,10 +45,13 @@ class ThreadPoolTest(TestCase):
     def test_worker_task_is_not_none(self):
         self.thread_pool._queue = MagicMock()
         self.thread_pool._threads = self.threads
-        self.thread_pool._queue.task_done.side_effect = [SystemExit()]
+        self.thread_pool._queue.task_done.side_effect = [None, SystemExit()]
 
         self.assertRaises(SystemExit, self.thread_pool._worker, 0)
-        self.thread_pool._queue.get.assert_called_once_with(timeout=10)
+        self.assertEqual(self.thread_pool._queue.get.call_count, 2)
+
+        for i in range(2):
+            self.assertDictEqual(self.thread_pool._queue.get.call_args_list[i][1], {'timeout': 10})
 
     def test_worker_task_is_not_none_but_raises_exception(self):
         self.thread_pool._queue = MagicMock()
@@ -78,3 +81,33 @@ class ThreadPoolTest(TestCase):
         self.assertEqual(mock_thread.call_count, 10)
 
         self.assertEqual(len(self.thread_pool._threads), 10)
+
+    def test_stats(self):
+        thread1 = MagicMock()
+        thread2 = MagicMock()
+        thread3 = MagicMock(task=None)
+
+        thread4 = MagicMock()
+
+        self.thread_pool._threads = [thread1, thread2, thread3]
+        self.thread_pool._queue.queue = [thread4]
+
+        expected = {
+            'queue': [
+                self.thread_pool.get_task_info(thread4)
+            ],
+            'threads': [
+                self.thread_pool.get_task_info(thread1.task),
+                self.thread_pool.get_task_info(thread2.task),
+            ],
+            'queue_length': 1,
+            'threads_length': 2
+        }
+
+        result = self.thread_pool.stats
+
+        self.assertEqual(thread1.task.get_info.call_count, 2)
+        self.assertEqual(thread2.task.get_info.call_count, 2)
+        self.assertEqual(thread4.get_info.call_count, 2)
+
+        self.assertDictEqual(result, expected)

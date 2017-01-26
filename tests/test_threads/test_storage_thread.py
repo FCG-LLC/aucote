@@ -65,3 +65,11 @@ class StorageThreadTest(TestCase):
         self.assertEqual(self.task._storage.cursor.execute.call_count, 2)
         query.lock.release.assert_called_once_with()
         self.assertEqual(query.result, result.fetchall.return_value)
+
+    def test_get_info(self):
+        result = self.task.get_info()
+        expected = {
+            'path': self.filename
+        }
+
+        self.assertDictEqual(result, expected)

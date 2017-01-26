@@ -67,3 +67,7 @@ class TaskTest(TestCase):
 
     def test_storage_property(self):
         self.assertEqual(self.executor.storage, self.task.storage)
+
+    def test_get_info(self):
+        result = self.task.get_info()
+        self.assertIsNone(result)

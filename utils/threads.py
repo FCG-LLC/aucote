@@ -111,6 +111,9 @@ class ThreadPool(object):
         for task in self._queue.queue:
             return_value['queue'].append(self.get_task_info(task))
 
+        return_value['queue_length'] = len(return_value['queue'])
+        return_value['threads_length'] = len(return_value['threads'])
+
         return return_value
 
     @classmethod
