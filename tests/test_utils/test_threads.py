@@ -97,8 +97,8 @@ class ThreadPoolTest(TestCase):
                 self.thread_pool.get_task_info(thread4)
             ],
             'threads': [
-                self.thread_pool.get_task_info(thread1.task),
-                self.thread_pool.get_task_info(thread2.task),
+                self.thread_pool.get_thread_info(thread1),
+                self.thread_pool.get_thread_info(thread2),
             ],
             'queue_length': 1,
             'threads_length': 2
@@ -111,3 +111,15 @@ class ThreadPoolTest(TestCase):
         self.assertEqual(thread4.get_info.call_count, 2)
 
         self.assertDictEqual(result, expected)
+
+    @patch('utils.threads.time.time', MagicMock(return_value=300))
+    def test_get_thread_info(self):
+        thread = MagicMock()
+        thread.start_time = 100
+
+        result = self.thread_pool.get_thread_info(thread)
+        expected = self.thread_pool.get_task_info(thread.task)
+        expected['start_time'] = 100
+        expected['duration'] = 200
+
+        self.assertEqual(result, expected)

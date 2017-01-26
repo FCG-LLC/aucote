@@ -65,6 +65,7 @@ class ThreadPool(object):
             try:
                 task = self._queue.get(timeout=10)
                 self._threads[number].task = task
+                self._threads[number].start_time = time.time()
             except Empty:
                 continue
 
@@ -79,6 +80,7 @@ class ThreadPool(object):
             finally:
                 self._queue.task_done()
                 self._threads[number].task = None
+                self._threads[number].start_time = None
 
         log.debug("finishing thread.")
 
@@ -106,7 +108,7 @@ class ThreadPool(object):
         for thread in self._threads:
             if thread.task is None:
                 continue
-            return_value['threads'].append(self.get_task_info(thread.task))
+            return_value['threads'].append(self.get_thread_info(thread))
 
         for task in self._queue.queue:
             return_value['queue'].append(self.get_task_info(task))
@@ -120,5 +122,14 @@ class ThreadPool(object):
     def get_task_info(cls, task):
         return {
             'type': type(task).__name__,
-            'data': task.get_info()
+            'data': task.get_info(),
+            'start': task.start
         }
+
+    @classmethod
+    def get_thread_info(cls, thread):
+        return_value = cls.get_task_info(thread.task)
+        return_value['start_time'] = thread.start_time
+        return_value['duration'] = time.time() - thread.start_time
+
+        return return_value
