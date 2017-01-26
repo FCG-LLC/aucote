@@ -123,3 +123,14 @@ class ThreadPoolTest(TestCase):
         expected['duration'] = 200
 
         self.assertEqual(result, expected)
+
+    def test_get_task_info(self):
+        task = MagicMock()
+
+        result = self.thread_pool.get_task_info(task)
+        expected = {
+            'type': 'MagicMock',
+            'data': task.get_info.return_value
+        }
+
+        self.assertDictEqual(result, expected)

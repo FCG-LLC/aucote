@@ -133,7 +133,6 @@ class ThreadPool(object):
         return {
             'type': type(task).__name__,
             'data': task.get_info(),
-            'start': task.start
         }
 
     @classmethod

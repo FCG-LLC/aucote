@@ -231,5 +231,7 @@ class ScanThread(Thread):
         return {
             'nodes': [str(node.ip) for node in self.current_scan],
             'scheduler': [{'action': task.action.__name__, 'time': task.time} for task in self.scheduler.queue],
-            'networks': cfg.get('service.scans.networks').cfg
+            'networks': cfg.get('service.scans.networks').cfg,
+            'ports': cfg.get('service.scans.ports'),
+            'previous_scan': croniter(cfg.get('service.scans.cron'), time.time()).get_prev()
         }

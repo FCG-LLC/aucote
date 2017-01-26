@@ -259,6 +259,7 @@ class ScanThreadTest(TestCase):
     def test_get_info(self, mock_cfg):
         mock_cfg.get.side_effect = [
             MagicMock(cfg=['192.168.1.0/24', '::1/128']),
+            'T:0-65535',
             "*/10 * * * *"
         ]
         self.thread.current_scan = [
@@ -290,7 +291,9 @@ class ScanThreadTest(TestCase):
                     'time': 10,
                 }
             ],
-            'networks': '[192.168.1.0/24, ::1/128]'
+            'networks': '[192.168.1.0/24, ::1/128]',
+            'ports': 'T:0-65535',
+            'previous_scan': 480
         }
 
         self.assertCountEqual(result, expected)
