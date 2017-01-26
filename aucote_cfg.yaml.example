@@ -41,7 +41,8 @@ kuduworker:
 # This section provides configurations related to aucote as a service
 # service:
 #   scans:
-#     useragent <str> - User-Agent string used by Aucote scripts.
+#     useragent: <str> - User-Agent string used by Aucote scripts.
+#     storage: <str> - Path to local storage. Local storage is a SQLite3 database file.
 #     threads: <int> - Number of threads to be running
 #     rate: <int> - Rate in packets per seconds for scanning tool (e.g. masscan)
 #     cron: <cron-like format> - This options defines how often aucote should run scans. This time is in UTC!
@@ -62,6 +63,7 @@ kuduworker:
 service:
     scans:
         useragent: "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
+        storage: "tmp/storage.sqlite3"
         threads: 30
         rate: 1000
         period: 0s # deprecated

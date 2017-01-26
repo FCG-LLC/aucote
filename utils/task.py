@@ -76,8 +76,23 @@ class Task(object):
         msg = Serializer.serialize_port_vuln(vuln.port, vuln)
         self.kudu_queue.send_msg(msg)
 
+    def reload_config(self):
+        """
+        Should be executed by executor when, configuration is reloaded
+
+        Returns:
+            None
+        """
+        pass
+
     @property
     def storage(self):
+        """
+        Storage for aucote application
+
+        Returns:
+            None
+        """
         return self.executor.storage
 
     def get_info(self):

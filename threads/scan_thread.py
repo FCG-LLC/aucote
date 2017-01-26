@@ -5,6 +5,7 @@ This module contains class responsible for scanning.
 import ipaddress
 import json
 import sched
+from threading import Thread
 from urllib.error import URLError
 import urllib.request as http
 import logging as log
@@ -19,30 +20,30 @@ from scans.executor import Executor
 from structs import Node, Scan, PhysicalPort
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
-from utils.exceptions import TopdisConnectionException
-from utils.task import Task
 from utils.time import parse_period, parse_time_to_timestamp
 
 
-class ScanTask(Task):
+class ScanThread(Thread):
     """
     Class responsible for scanning
 
     """
 
-    def __init__(self, nodes=None, as_service=True, *args, **kwargs):
-        log.debug("Initialize scan task")
-        super(ScanTask, self).__init__(*args, **kwargs)
-        self.nodes = nodes
+    def __init__(self, aucote, as_service=True):
+        super(ScanThread, self).__init__()
         self.scheduler = sched.scheduler(time.time)
         self.as_service = as_service
         self.current_scan = []
+        self.name = "Scanner"
+        self.aucote = aucote
 
         try:
             self.cron = croniter(cfg.get('service.scans.cron'), time.time())
         except KeyError:
             log.error("Please configure service.scans.cron")
             exit(1)
+
+        self.keep_update_cron = croniter('* * * * *', time.time())
 
     def run_periodically(self):
         """
@@ -52,10 +53,10 @@ class ScanTask(Task):
             None
 
         """
-        self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
-        self.run()
+        self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
+        self.run_scan()
 
-    def run(self):
+    def run_scan(self):
         """
         Run scanning.
 
@@ -99,14 +100,16 @@ class ScanTask(Task):
                 port.scan = Scan(start=time.time())
                 ports.append(port)
 
-        self.executor.add_task(Executor(aucote=self.executor, nodes=ports))
+        self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports))
         self.current_scan = []
 
-    def __call__(self, *args, **kwargs):
+    def run(self):
+        log.debug("Starting scanner")
         if self.as_service:
             self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
+            self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
         else:
-            self.run()
+            self.run_scan()
         self.scheduler.run()
 
     @classmethod
@@ -119,8 +122,8 @@ class ScanTask(Task):
         try:
             resource = http.urlopen(url)
         except URLError:
-            log.error('Cannot connect to topdis: %s:%s', cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
-            raise TopdisConnectionException
+            log.exception('Cannot connect to topdis: %s:%s', cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
+            return []
 
         charset = resource.headers.get_content_charset() or 'utf-8'
         nodes_txt = resource.read().decode(charset)
@@ -144,10 +147,7 @@ class ScanTask(Task):
             list of nodes to be scan
 
         """
-        try:
-            topdis_nodes = self._get_nodes()
-        except TopdisConnectionException:
-            return []
+        topdis_nodes = self._get_nodes()
 
         log.info('Found %i nodes total', len(topdis_nodes))
 
@@ -175,6 +175,50 @@ class ScanTask(Task):
         except KeyError:
             log.error("Please set service.scans.networks in configuration file!")
             exit()
+
+    def disable_scan(self):
+        """
+        Disable all future scans and cron updaters
+
+        Returns:
+            None
+
+        """
+        for task in self.scheduler.queue:
+            self.scheduler.cancel(task)
+
+    def keep_update(self):
+        """
+        Keeps cron update every minnute
+
+        Returns:
+            None
+
+        """
+        self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
+        if int(time.time()%600) == 0:
+            log.debug("keep cron update")
+
+    def stop(self):
+        """
+        Stop thread.
+
+        Returns:
+            None
+
+        """
+        self.disable_scan()
+
+    @property
+    def storage(self):
+        """
+        Handler to application storage
+
+        Returns:
+            Storage
+
+        """
+        return self.aucote.storage
 
     def get_info(self):
         return {

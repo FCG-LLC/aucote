@@ -2,7 +2,7 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort
+from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, StorageQuery
 from structs import TransportProtocol
 
 
@@ -212,3 +212,22 @@ class BroadcastPortTest(TestCase):
     def test_str(self):
         expected = "broadcast"
         self.assertEqual(str(self.port), expected)
+
+
+class StorageQueryTest(TestCase):
+    def setUp(self):
+        self.test_query = "test_query"
+        self.args = ("test", "args")
+        self.only_query = StorageQuery(self.test_query)
+        self.query = StorageQuery(self.test_query, self.args)
+
+    def test_init(self):
+        self.assertTrue(self.query.lock.locked())
+
+    def test_args(self):
+        expected = (self.test_query, self.args)
+        self.assertEqual(self.query.query, expected)
+
+    def test_only_query(self):
+        expected = (self.test_query,)
+        self.assertEqual(self.only_query.query, expected)

@@ -1,7 +1,7 @@
 """
 File containing Threads-related functionality
 """
-from queue import Queue
+from queue import Queue, Empty
 import logging as log
 from threading import Thread
 import time
@@ -21,6 +21,7 @@ class ThreadPool(object):
         self._threads = []
         self._num_threads = num_threads
         self._name = name
+        self._finish = False
 
     def add_task(self, task):
         """
@@ -33,6 +34,7 @@ class ThreadPool(object):
         """
         Start threads
         """
+        self._finish = False
         self._threads = [Thread(target=self._worker, args=[number]) for number in range(0, self._num_threads)]
         for num, thread in enumerate(self._threads):
             thread.name = "%s%02d"%(self._name, num)
@@ -45,8 +47,8 @@ class ThreadPool(object):
         Stop threads by sending end-the-work signal
 
         """
-        for _ in self._threads:
-            self._queue.put(None)
+        self._finish = True
+
         for thread in self._threads:
             thread.join()
         self._threads = []
@@ -59,24 +61,26 @@ class ThreadPool(object):
         self._queue.join()
 
     def _worker(self, number):
-        while True:
-            task = self._queue.get()
-            self._threads[number].task = task
-            if task is None:
-                log.debug("No more tasks in the queue to execute, finishing thread.")
-                self._threads[number].task = None
-                return
+        while self.unfinished_tasks or not self._finish:
+            try:
+                task = self._queue.get(timeout=10)
+                self._threads[number].task = task
+            except Empty:
+                continue
+
             try:
                 log.debug("Task %s starting", task)
                 start_time = time.monotonic()
                 task()
                 log.debug('Task %s finished, took %s seconds. %i task left', task, time.monotonic() - start_time,
                           self._queue.unfinished_tasks)
-            except Exception as err:
-                log.error('Exception %s while running %s', err, task, exc_info=err)
+            except Exception:
+                log.exception('Exception while running %s', task)
             finally:
                 self._queue.task_done()
                 self._threads[number].task = None
+
+        log.debug("finishing thread.")
 
     @property
     def unfinished_tasks(self):
