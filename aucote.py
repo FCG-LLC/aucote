@@ -225,6 +225,7 @@ class Aucote(object):
         Returns:
 
         """
+        log.debug("Taking Aucotes statistics")
         stats = self.thread_pool.stats
         stats['scanner'] = self.scan_task.get_info()
         stats['storage'] = self.storage_thread.get_info()
