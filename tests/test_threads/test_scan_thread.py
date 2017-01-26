@@ -290,8 +290,7 @@ class ScanThreadTest(TestCase):
                     'time': 10,
                 }
             ],
-            'networks': '[192.168.1.0/24, ::1/128]',
-            'next_scan': 600
+            'networks': '[192.168.1.0/24, ::1/128]'
         }
 
         self.assertCountEqual(result, expected)
