@@ -208,6 +208,13 @@ class AucoteTest(TestCase):
 
     @patch('aucote.json.dumps')
     def test_get_stats(self, mock_json):
+        self.aucote.scan_task = MagicMock()
+        self.aucote.storage_thread = MagicMock()
         self.aucote._thread_pool = MagicMock()
         self.aucote.get_state(None, None)
-        mock_json.assert_called_once_with(self.aucote._thread_pool.stats, indent=2)
+
+        result = self.aucote._thread_pool.stats
+        result['scanner'] = self.aucote.scan_task.get_info()
+        result['storage'] = self.aucote.storage_thread.get_info()
+
+        mock_json.assert_called_once_with(result, indent=2)
