@@ -14,6 +14,8 @@ import fcntl
 
 import signal
 
+from tornado.ioloop import IOLoop
+
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
 from scans.task_mapper import TaskMapper
@@ -26,6 +28,7 @@ from utils.kudu_queue import KuduQueue
 import utils.log as log_cfg
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
+from utils.web_server import WebServer
 
 #constants
 
@@ -112,6 +115,7 @@ class Aucote(object):
         self.scan_task = None
         self.watch_thread = None
         self.storage_thread = None
+        self.web_server = WebServer(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
 
     @property
     def kudu_queue(self):
@@ -163,6 +167,8 @@ class Aucote(object):
             self.scan_task.start()
 
             self.thread_pool.start()
+            self.web_server.start()
+
             self.thread_pool.join()
             self.scan_task.join()
 
@@ -226,10 +232,14 @@ class Aucote(object):
 
         """
         log.debug("Taking Aucotes statistics")
+        log.error(json.dumps(self.get_status(), indent=2))
+
+    def get_status(self):
         stats = self.thread_pool.stats
         stats['scanner'] = self.scan_task.get_info()
         stats['storage'] = self.storage_thread.get_info()
-        log.error(json.dumps(stats, indent=2))
+        return stats
+
 
     @property
     def unfinished_tasks(self):
@@ -267,6 +277,7 @@ class Aucote(object):
 
         """
         self.scan_task.disable_scan()
+        IOLoop.current().add_callback(self.web_server.stop)
         self.watch_thread.stop()
 
     @classmethod
