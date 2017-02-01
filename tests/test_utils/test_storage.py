@@ -233,3 +233,6 @@ class StorageTest(TestCase):
         ]
 
         self.assertCountEqual(result, expected)
+
+    def test_cursor_property(self):
+        self.assertEqual(self.storage.cursor, self.storage._cursor)
