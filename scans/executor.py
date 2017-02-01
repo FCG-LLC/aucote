@@ -38,7 +38,7 @@ class Executor(object):
             Storage
 
         """
-        return self.aucote.storage_thread
+        return self.aucote.storage
 
     @property
     def kudu_queue(self):

@@ -106,9 +106,9 @@ class Aucote(object):
         signal.signal(signal.SIGTERM, self.signal_handler)
         self.lock = threading.Lock()
         self.load_tools(tools_config)
-        self.scan_thread = None
-        self.watch_thread = None
-        self.storage_thread = None
+        self._scan_thread = None
+        self._watch_thread = None
+        self._storage_thread = None
 
     @property
     def kudu_queue(self):
@@ -126,7 +126,7 @@ class Aucote(object):
             Storage
 
         """
-        return self.storage_thread
+        return self._storage_thread
 
     @property
     def thread_pool(self):
@@ -148,23 +148,23 @@ class Aucote(object):
         """
 
         try:
-            self.storage_thread = StorageThread(filename=self.filename)
-            self.storage_thread.start()
+            self._storage_thread = StorageThread(filename=self.filename)
+            self._storage_thread.start()
 
             if as_service:
-                self.watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
-                self.watch_thread.start()
+                self._watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
+                self._watch_thread.start()
 
-            self.scan_thread = ScanThread(aucote=self, as_service=as_service)
-            self.scan_thread.start()
+            self._scan_thread = ScanThread(aucote=self, as_service=as_service)
+            self._scan_thread.start()
 
             self.thread_pool.start()
             self.thread_pool.join()
-            self.scan_thread.join()
+            self._scan_thread.join()
 
             self.thread_pool.stop()
-            self.storage_thread.stop()
-            self.storage_thread.join()
+            self._storage_thread.stop()
+            self._storage_thread.join()
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")
@@ -241,8 +241,8 @@ class Aucote(object):
             None
 
         """
-        self.scan_thread.disable_scan()
-        self.watch_thread.stop()
+        self._scan_thread.disable_scan()
+        self._watch_thread.stop()
 
     @classmethod
     def kill(cls):
