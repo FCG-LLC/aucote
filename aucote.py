@@ -107,7 +107,7 @@ class Aucote(object):
         signal.signal(signal.SIGTERM, self.signal_handler)
         self.lock = threading.Lock()
         self.load_tools(tools_config)
-        self.scan_task = None
+        self.scan_thread = None
         self.watch_thread = None
         self.storage_thread = None
 
@@ -157,12 +157,12 @@ class Aucote(object):
                 self.watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
                 self.watch_thread.start()
 
-            self.scan_task = ScanThread(aucote=self, as_service=as_service)
-            self.scan_task.start()
+            self.scan_thread = ScanThread(aucote=self, as_service=as_service)
+            self.scan_thread.start()
 
             self.thread_pool.start()
             self.thread_pool.join()
-            self.scan_task.join()
+            self.scan_thread.join()
 
             self.thread_pool.stop()
             self.storage_thread.stop()
@@ -243,12 +243,10 @@ class Aucote(object):
         Returns:
             None
 
-        Raises:
-            FinishThread - info for watchdog process to stop itself
-
         """
-        self.scan_task.disable_scan()
+        self.scan_thread.disable_scan()
         self.watch_thread.stop()
+        self.watch_thread.join()
 
     @classmethod
     def kill(cls):
