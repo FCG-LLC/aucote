@@ -5,7 +5,7 @@ This file provides structures for project.
 import ipaddress
 from enum import Enum
 import time
-from threading import Lock
+from threading import Lock, Semaphore
 
 
 class Scan(object):
@@ -306,8 +306,7 @@ class StorageQuery(object):
         self._query = query
         self._args = args
         self.result = None
-        self.lock = Lock()
-        self.lock.acquire()
+        self.lock = Semaphore(value=0)
 
     @property
     def query(self):

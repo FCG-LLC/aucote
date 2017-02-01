@@ -183,6 +183,7 @@ class ScanTest(TestCase):
         self.assertEqual(self.scan.start, self.start)
         self.assertEqual(self.scan.end, self.end)
 
+
 class SpecialPortTest(TestCase):
     def setUp(self):
         self.physical = PhysicalPort()
@@ -194,6 +195,7 @@ class SpecialPortTest(TestCase):
     def test_copy_broadcast(self):
         self.assertIsInstance(self.broadcast.copy(), BroadcastPort)
 
+
 class StorageQueryTest(TestCase):
     def setUp(self):
         self.test_query = "test_query"
@@ -202,7 +204,7 @@ class StorageQueryTest(TestCase):
         self.query = StorageQuery(self.test_query, self.args)
 
     def test_init(self):
-        self.assertTrue(self.query.lock.locked())
+        self.assertEqual(self.query.lock._value, 0)
 
     def test_args(self):
         expected = (self.test_query, self.args)
