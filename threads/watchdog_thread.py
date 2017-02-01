@@ -3,7 +3,7 @@ Contains thread responsible for monitoring files and propagating updates to auco
 
 """
 import logging as log
-from threading import Thread
+from threading import Thread, Lock
 
 import inotify.adapters
 from inotify.calls import InotifyError
@@ -21,6 +21,8 @@ class WatchdogThread(Thread):
         self.file = file.encode("utf-8")
         self.action = action
         self.notifier = inotify.adapters.Inotify()
+        self._lock = Lock()
+        self._finish = False
 
     def run(self):
         """
@@ -45,10 +47,18 @@ class WatchdogThread(Thread):
                     elif (IN_DELETE_SELF | IN_MODIFY) & mask:
                         log.info("Detected change of configuration file (%s)!", self.file.decode())
                         self.action()
+                else:
+                    with self._lock:
+                        if self._finish:
+                            break
         except InotifyError:
             log.debug("Inotify Error")
+
         finally:
-            self.notifier.remove_watch(self.file)
+            try:
+                self.notifier.remove_watch(self.file)
+            except InotifyError:
+                pass
 
     def stop(self):
         """
@@ -58,5 +68,5 @@ class WatchdogThread(Thread):
             None
 
         """
-        self.notifier.remove_watch(self.file)
-        raise InotifyError("Exiting watchdog task")
+        with self._lock:
+            self._finish = True

@@ -193,7 +193,7 @@ class ScanThread(Thread):
 
         """
         self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
-        if int(time.time()%600) == 0:
+        if int(time.monotonic() % 600) == 0:
             log.debug("keep cron update")
 
     def stop(self):

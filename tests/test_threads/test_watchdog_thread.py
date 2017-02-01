@@ -30,12 +30,14 @@ class WatchdogThreadTest(TestCase):
         self.thread.notifier.remove_watch.called_once_with()
 
     def test_call_is_ignored(self):
+        self.thread._finish = True
         side_effects = ((
             (MagicMock(mask=IN_IGNORED), ["IN_IGNORED"], None, self.file),
+            None
         ), )
         self.thread.notifier.event_gen = MagicMock(side_effect=side_effects)
         self.thread.notifier.add_watch = MagicMock()
-        self.thread.notifier.remove_watch = MagicMock()
+        self.thread.notifier.remove_watch = MagicMock(side_effect=InotifyError("test"))
 
         self.thread.run()
 
@@ -51,5 +53,6 @@ class WatchdogThreadTest(TestCase):
 
     def test_stop(self):
         self.thread.notifier.remove_watch = MagicMock()
-        self.assertRaises(InotifyError, self.thread.stop)
-        self.thread.notifier.remove_watch.assert_called_once_with(self.thread.file)
+        self.thread._finish = False
+        self.thread.stop()
+        self.assertTrue(self.thread._finish)

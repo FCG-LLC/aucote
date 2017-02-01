@@ -246,7 +246,6 @@ class Aucote(object):
         """
         self.scan_thread.disable_scan()
         self.watch_thread.stop()
-        self.watch_thread.join()
 
     @classmethod
     def kill(cls):
