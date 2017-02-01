@@ -100,7 +100,6 @@ class Aucote(object):
         self.exploits = exploits
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
-        self._storage = None
         self.task_mapper = TaskMapper(self)
         self.filename = cfg.get('service.scans.storage')
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -127,7 +126,7 @@ class Aucote(object):
             Storage
 
         """
-        return self._storage
+        return self.storage_thread
 
     @property
     def thread_pool(self):
@@ -150,7 +149,6 @@ class Aucote(object):
 
         try:
             self.storage_thread = StorageThread(filename=self.filename)
-            self._storage = self.storage_thread.storage
             self.storage_thread.start()
 
             if as_service:
@@ -167,7 +165,6 @@ class Aucote(object):
             self.thread_pool.stop()
             self.storage_thread.stop()
             self.storage_thread.join()
-            self._storage = None
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")

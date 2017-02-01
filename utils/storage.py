@@ -17,7 +17,7 @@ class Storage(DbInterface):
 
     """
 
-    def __init__(self, task, filename="storage.sqlite3"):
+    def __init__(self, filename="storage.sqlite3"):
         """
         Init storage
 
@@ -28,12 +28,10 @@ class Storage(DbInterface):
         self.filename = filename
         self.conn = None
         self._cursor = None
-        self.task = task
 
     def connect(self):
         self.conn = sqlite3.connect(self.filename, check_same_thread=True)
         self._cursor = self.conn.cursor()
-        self.create_tables()
 
     def close(self):
         assert isinstance(self.conn, sqlite3.Connection)
@@ -50,7 +48,8 @@ class Storage(DbInterface):
         """
         return self._cursor
 
-    def save_node(self, node):
+    @staticmethod
+    def save_node(node):
         """
         Saves node into to the storage
 
@@ -58,13 +57,13 @@ class Storage(DbInterface):
             node (Node): node to save into storage
 
         Returns:
-            None
+            set
 
         """
-        self.task.add_query(("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)",
-                             (node.id, str(node.ip), time.time())))
+        return "INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)", (node.id, str(node.ip), time.time())
 
-    def save_nodes(self, nodes):
+    @staticmethod
+    def save_nodes(nodes):
         """
         Saves nodes into local storage
 
@@ -72,35 +71,30 @@ class Storage(DbInterface):
             nodes (list):
 
         Returns:
-            None
+            list
 
         """
         queries = [("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)",
                     (node.id, str(node.ip), time.time())) for node in nodes]
 
         log.debug("Saving nodes")
-        self.task.add_query(queries)
+        return queries
 
-    def get_nodes(self, pasttime=0):
+    @staticmethod
+    def get_nodes(pasttime=0):
         """
         Returns all nodes from local storage
 
         Returns:
-            list
+            set
 
         """
         timestamp = time.time() - pasttime
 
-        nodes = []
+        return "SELECT * FROM nodes where time > ?", (timestamp,)
 
-        query = self.task.add_query(StorageQuery("SELECT * FROM nodes where time > ?", (timestamp,)))
-        query.lock.acquire()
-
-        for node in query.result:
-            nodes.append(Node(node_id=node[0], ip=ipaddress.ip_address(node[1])))
-        return nodes
-
-    def save_port(self, port):
+    @staticmethod
+    def save_port(port):
         """
         Saves port to local storage
 
@@ -110,14 +104,14 @@ class Storage(DbInterface):
             lock (bool): define if thread should be locked
 
         Returns:
-            None
+            set
 
         """
-        self.task.add_query(("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
-                             (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
-                              time.time())))
+        return "INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)", (
+            port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana, time.time())
 
-    def save_ports(self, ports):
+    @staticmethod
+    def save_ports(ports):
         """
         Saves ports into local storage
 
@@ -125,36 +119,23 @@ class Storage(DbInterface):
             ports (list):
 
         Returns:
-            None
+            list
 
         """
         queries = [("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
                     (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
                      time.time())) for port in ports]
 
-        self.task.add_query(queries)
+        return queries
 
-    def get_ports(self, pasttime=900):
-        """
-        Returns all ports from local storage
-
-        Returns:
-            list
-
-        """
+    @staticmethod
+    def get_ports(pasttime):
         timestamp = time.time() - pasttime
 
-        ports = []
+        return "SELECT * FROM ports where time > ?", (timestamp,)
 
-        query = self.task.add_query(StorageQuery("SELECT * FROM ports where time > ?", (timestamp,)))
-        query.lock.acquire()
-
-        for port in query.result:
-            ports.append(Port(node=Node(node_id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
-                              transport_protocol=TransportProtocol.from_iana(port[3])))
-        return ports
-
-    def save_scan(self, exploit, port):
+    @staticmethod
+    def save_scan(exploit, port):
         """
         Saves scan information into storage. Create table scans if not exists
 
@@ -165,31 +146,34 @@ class Storage(DbInterface):
             lock (bool): define if thread should be locked
 
         Returns:
-            None
+            list
 
         """
 
         log.debug("Saving scan details: scan_start(%s), scan_end(%s), exploit_id(%s), node_id(%s), node(%s), port(%s)",
                   port.scan.start, port.scan.end, exploit.id, port.node.id, str(port.node), str(port))
+        queries = []
 
-        self.task.add_query(("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
-                             "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                             (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
-                              port.transport_protocol.iana, port.number)))
+        queries.append(("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
+                        "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
+                         port.transport_protocol.iana, port.number)))
 
         if port.scan.start:
-            self.task.add_query(("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
-                                 "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                 (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
-                                  str(port.node.ip), port.transport_protocol.iana, port.number)))
+            queries.append(("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
+                            "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+                            (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
+                             str(port.node.ip), port.transport_protocol.iana, port.number)))
 
         if port.scan.end:
-            self.task.add_query(("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
-                                 "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
-                                 (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
-                                  str(port.node.ip), port.transport_protocol.iana, port.number)))
+            queries.append(("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
+                            "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+                            (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
+                             str(port.node.ip), port.transport_protocol.iana, port.number)))
+        return queries
 
-    def save_scans(self, exploits, port):
+    @staticmethod
+    def save_scans(exploits, port):
         """
         Save scan details into local storage
 
@@ -198,7 +182,7 @@ class Storage(DbInterface):
             port (Port):
 
         Returns:
-            None
+            list
 
         """
         queries = []
@@ -221,9 +205,10 @@ class Storage(DbInterface):
                                 (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
                                  str(port.node.ip), port.transport_protocol.iana, port.number)))
 
-        self.task.add_query(queries)
+        return queries
 
-    def get_scan_info(self, port, app):
+    @staticmethod
+    def get_scan_info(port, app):
         """
         Gets scan details based on provided port and app name
 
@@ -235,53 +220,39 @@ class Storage(DbInterface):
             list - list of dictionaries with keys: exploit, port, scan_start, scan_end
 
         """
-        return_value = []
+        return "SELECT * FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? AND port_protocol = ? " \
+               "AND port_number = ?", (app, port.node.id, str(port.node.ip), port.transport_protocol.iana, port.number)
 
-        query = self.task.add_query(StorageQuery("SELECT * FROM scans WHERE exploit_app = ? AND node_id = ?"
-                                                 "AND node_ip = ? AND port_protocol = ? AND port_number = ?",
-                                                 (app, port.node.id, str(port.node.ip),
-                                                  port.transport_protocol.iana, port.number)))
-        query.lock.acquire()
-
-        for row in query.result:
-            return_value.append({
-                "exploit": Exploit(exploit_id=row[0]),
-                "port": Port(node=Node(node_id=row[3], ip=ipaddress.ip_address(row[4])), number=row[6],
-                             transport_protocol=TransportProtocol.from_iana(row[5])),
-                "scan_start": row[7] or 0.,
-                "scan_end": row[8] or 0.,
-                "exploit_name": row[2]
-            })
-
-        return return_value
-
-    def clear_scan_details(self):
+    @staticmethod
+    def clear_scan_details():
         """
         Remove unfinished scans from database
 
         Returns:
-            None
+            set
 
         """
         log.debug('Cleaning scan details')
-        self.task.add_query(("DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL "
-                             "OR SCAN_END IS NULL",))
+        return "DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL OR SCAN_END IS NULL",
 
-    def create_tables(self):
+    @staticmethod
+    def create_tables():
         """
         Create tables for local storage
 
         Returns:
-            None
+            list
 
         """
-
-        self.task.add_query(("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, "
+        queries = []
+        queries.append(("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, "
                              "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
                              "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, "
                              "port_number))",))
 
-        self.task.add_query(("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
+        queries.append(("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
                              "primary key (id, ip, port, protocol))",))
 
-        self.task.add_query(("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))",))
+        queries.append(("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))",))
+
+        return queries

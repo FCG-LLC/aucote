@@ -312,5 +312,5 @@ class StorageQuery(object):
     @property
     def query(self):
         if self._args:
-            return (self._query, self._args)
-        return (self._query, )
+            return self._query, self._args
+        return self._query,
