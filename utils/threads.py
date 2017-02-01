@@ -21,7 +21,6 @@ class ThreadPool(object):
         self._threads = []
         self._num_threads = num_threads
         self._name = name
-        self._finish = False
 
     def add_task(self, task):
         """
@@ -34,7 +33,6 @@ class ThreadPool(object):
         """
         Start threads
         """
-        self._finish = False
         self._threads = [Thread(target=self._worker) for _ in range(0, self._num_threads)]
         for num, thread in enumerate(self._threads):
             thread.name = "%s%02d"%(self._name, num)
@@ -46,7 +44,8 @@ class ThreadPool(object):
         Stop threads by sending end-the-work signal
 
         """
-        self._finish = True
+        for _ in self._threads:
+            self._queue.put(None)
 
         for thread in self._threads:
             thread.join()
@@ -60,11 +59,12 @@ class ThreadPool(object):
         self._queue.join()
 
     def _worker(self):
-        while self.unfinished_tasks or not self._finish:
-            try:
-                task = self._queue.get(timeout=10)
-            except Empty:
-                continue
+        while True:
+            task = self._queue.get()
+
+            if task is None:
+                log.debug("finishing thread.")
+                return
 
             try:
                 log.debug("Task %s starting", task)
@@ -76,8 +76,6 @@ class ThreadPool(object):
                 log.exception('Exception while running %s', task)
             finally:
                 self._queue.task_done()
-
-        log.debug("finishing thread.")
 
     @property
     def unfinished_tasks(self):

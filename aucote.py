@@ -159,8 +159,8 @@ class Aucote(object):
             self._scan_thread.start()
 
             self.thread_pool.start()
-            self.thread_pool.join()
             self._scan_thread.join()
+            self.thread_pool.join()
 
             self.thread_pool.stop()
             self._storage_thread.stop()
