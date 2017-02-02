@@ -2,6 +2,8 @@
 This module contains task related to port.
 
 """
+import time
+
 from utils.task import Task
 
 
@@ -41,7 +43,8 @@ class PortTask(Task):
     def get_info(self):
         return {
             'port': str(self._port),
-            'exploits': [exploit.name for exploit in self.current_exploits]
+            'exploits': [exploit.name for exploit in self.current_exploits],
+            'lifetime': time.time()-self.creation_time
         }
 
     def get_vulnerabilities(self, results):

@@ -3,6 +3,9 @@ Provide class for tasks
 
 """
 import logging as log
+
+import time
+
 from database.serializer import Serializer
 
 
@@ -17,6 +20,7 @@ class Task(object):
 
         """
         self.executor = executor
+        self.creation_time = time.time()
 
     @property
     def kudu_queue(self):
