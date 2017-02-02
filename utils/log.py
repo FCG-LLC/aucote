@@ -31,4 +31,3 @@ def config(cfg):
     log_level = _LOG_LEVEL[cfg['level']]
     log.getLogger().setLevel(log_level)
     log.info("========================= Starting application =========================")
-    log.debug("PID: %s", getpid())
