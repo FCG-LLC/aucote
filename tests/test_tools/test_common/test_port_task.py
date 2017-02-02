@@ -1,13 +1,14 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
+from structs import Port
 from tools.common.port_task import PortTask
 
 
 class PortTaskTest(TestCase):
     def setUp(self):
         self.executor = MagicMock()
-        self.port = MagicMock()
+        self.port = Port(node=None, transport_protocol=None, number=None)
         self.exploit = MagicMock()
         self.task = PortTask(executor=self.executor, port=self.port, exploits=[self.exploit])
 
@@ -22,3 +23,6 @@ class PortTaskTest(TestCase):
     def test_exploit_multiple(self):
         self.task.current_exploits = [MagicMock(), MagicMock()]
         self.assertEqual(self.task.exploit, None)
+
+    def test_get_vulnerabilities(self):
+        self.assertRaises(NotImplementedError, self.task.get_vulnerabilities, [])

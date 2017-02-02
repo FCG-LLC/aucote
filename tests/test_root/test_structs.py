@@ -2,7 +2,7 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort
+from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, StorageQuery
 from structs import TransportProtocol
 
 
@@ -155,6 +155,23 @@ class PortTest(TestCase):
 
         self.assertEqual(port1.url, expected)
 
+    def test_copy(self):
+        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        port = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
+        result = port.copy()
+
+        self.assertEqual(result, port)
+        self.assertEqual(result.interface, port.interface)
+        self.assertEqual(result.scan, port.scan)
+        self.assertEqual(result.banner, port.banner)
+        self.assertEqual(result.node, port.node)
+        self.assertEqual(result.number, port.number)
+        self.assertEqual(result.service_name, port.service_name)
+        self.assertEqual(result.service_version, port.service_version)
+        self.assertEqual(result.transport_protocol, port.transport_protocol)
+        self.assertEqual(result.vulnerabilities, port.vulnerabilities)
+        self.assertEqual(result.when_discovered, port.when_discovered)
+
 
 class ScanTest(TestCase):
     def setUp(self):
@@ -165,3 +182,34 @@ class ScanTest(TestCase):
     def test_init(self):
         self.assertEqual(self.scan.start, self.start)
         self.assertEqual(self.scan.end, self.end)
+
+
+class SpecialPortTest(TestCase):
+    def setUp(self):
+        self.physical = PhysicalPort()
+        self.broadcast = BroadcastPort()
+
+    def test_copy_physical(self):
+        self.assertIsInstance(self.physical.copy(), PhysicalPort)
+
+    def test_copy_broadcast(self):
+        self.assertIsInstance(self.broadcast.copy(), BroadcastPort)
+
+
+class StorageQueryTest(TestCase):
+    def setUp(self):
+        self.test_query = "test_query"
+        self.args = ("test", "args")
+        self.only_query = StorageQuery(self.test_query)
+        self.query = StorageQuery(self.test_query, self.args)
+
+    def test_init(self):
+        self.assertEqual(self.query.lock._value, 0)
+
+    def test_args(self):
+        expected = (self.test_query, self.args)
+        self.assertEqual(self.query.query, expected)
+
+    def test_only_query(self):
+        expected = (self.test_query,)
+        self.assertEqual(self.only_query.query, expected)

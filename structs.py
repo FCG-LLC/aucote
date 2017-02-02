@@ -5,6 +5,7 @@ This file provides structures for project.
 import ipaddress
 from enum import Enum
 import time
+from threading import Semaphore
 
 
 class Scan(object):
@@ -20,8 +21,18 @@ class Scan(object):
             end (int|float): end scan time
 
         """
-        self.start = start
+        self._start = start
         self.end = end
+
+    @property
+    def start(self):
+        """
+        Time, when scan start
+
+        Returns:
+            int - timestamp
+        """
+        return self._start
 
 
 class Node:
@@ -192,6 +203,24 @@ class Port(object):
     def __str__(self):
         return '%s:%s' % (self.node.ip, self.number)
 
+    def copy(self):
+        """
+        Return copy of port
+
+        Returns:
+            Port: copy of port
+
+        """
+        return_value = type(self)(node=self.node, number=self.number, transport_protocol=self.transport_protocol)
+        return_value.vulnerabilities = self.vulnerabilities
+        return_value.when_discovered = self.when_discovered
+        return_value.service_name = self.service_name
+        return_value.service_version = self.service_version
+        return_value.banner = self.banner
+        return_value.scan = self.scan
+        return_value.interface = self.interface
+        return return_value
+
     @property
     def is_ipv6(self):
         """
@@ -228,9 +257,9 @@ class SpecialPort(Port):
     NODE_ID = 0xFFFFFFFF
     PROTOCOL = None
 
-    def __init__(self):
-        super(SpecialPort, self).__init__(node=Node(node_id=self.NODE_ID, ip=self.IP), number=0,
-                                          transport_protocol=self.PROTOCOL)
+    def __init__(self, node=None, number=None, transport_protocol=None):
+        super(SpecialPort, self).__init__(node=node or Node(node_id=self.NODE_ID, ip=self.IP), number=number or 0,
+                                          transport_protocol=transport_protocol or self.PROTOCOL)
 
 
 class BroadcastPort(SpecialPort):
@@ -269,3 +298,28 @@ class Vulnerability(object):
         self.output = str(output)
         self.exploit = exploit
         self.port = port
+
+
+class StorageQuery(object):
+    """
+    Represents query to database which expects results
+
+    """
+    def __init__(self, query, args=None):
+        self._query = query
+        self._args = args
+        self.result = []
+        self.lock = Semaphore(value=0)
+
+    @property
+    def query(self):
+        """
+        Tuple of arguments for Sqlite3 execute function
+
+        Returns:
+            tuple
+
+        """
+        if self._args:
+            return self._query, self._args
+        return self._query,

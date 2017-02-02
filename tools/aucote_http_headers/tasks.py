@@ -32,10 +32,9 @@ class AucoteHttpHeadersTask(PortTask):
             'Accept-Encoding': 'gzip, deflate'
         }
 
-        try:
-            custom_headers['User-Agent'] = cfg.get('service.scans.useragent')
-        except Exception:
-            pass
+        useragent = cfg.get('service.scans.useragent')
+        if useragent is not None:
+            custom_headers['User-Agent'] = useragent
 
         try:
             response = requests.head(self._port.url, headers=custom_headers, verify=False)
@@ -68,25 +67,11 @@ class AucoteHttpHeadersTask(PortTask):
             return results
 
         vulnerabilities = self._get_vulnerabilities(results)
-
-        if vulnerabilities:
-            for vulnerability in vulnerabilities:
-                self.store_vulnerability(vulnerability)
+        self.store_vulnerabilities(vulnerabilities)
 
         return results
 
     def _get_vulnerabilities(self, results):
-        """
-        Gets vulnerabilities based upon results
-
-        Args:
-            results(list): list of AucoteHttpHeaderResult
-
-        Returns:
-            list: list of Vulneravbilities
-
-        """
-
         return_value = []
 
         for result in results:

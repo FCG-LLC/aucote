@@ -46,6 +46,7 @@ class ThreadPool(object):
         """
         for _ in self._threads:
             self._queue.put(None)
+
         for thread in self._threads:
             thread.join()
         self._threads = []
@@ -60,16 +61,20 @@ class ThreadPool(object):
     def _worker(self):
         while True:
             task = self._queue.get()
+
             if task is None:
-                log.debug("No more tasks in the queue to execute, finishing thread.")
+                log.debug("finishing thread.")
+                self._queue.task_done()
                 return
+
             try:
                 log.debug("Task %s starting", task)
                 start_time = time.monotonic()
                 task()
-                log.debug('Task %s finished, took %s seconds', task, time.monotonic() - start_time)
-            except Exception as err:
-                log.error('Exception %s while running %s', err, task, exc_info=err)
+                log.debug('Task %s finished, took %s seconds. %i task left', task, time.monotonic() - start_time,
+                          self._queue.unfinished_tasks)
+            except Exception:
+                log.exception('Exception while running %s', task)
             finally:
                 self._queue.task_done()
 

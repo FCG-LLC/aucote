@@ -57,7 +57,7 @@ The most important fields are:
  - service.scans.threads - defines hom many threads should be run
  - service.scans.rate - maximum number of packets per second. **This value should be set very carefully!**
  - service.scans.networks - list of networks which are allowed to be scanned. **This value should be set very carefully!**
- - service.scans.cron - cron-like scanning schedule
+ - service.scans.cron - cron-like scanning schedule **Time is always in UTC!**
 
 More details and options are describe in example configuration.
 

@@ -37,3 +37,16 @@ class PortTask(Task):
         if len(self.current_exploits) == 1:
             return next(iter(self.current_exploits))
         return None
+
+    def get_vulnerabilities(self, results):
+        """
+        Gets vulnerabilities based upon results
+
+        Args:
+            results(list): list of AucoteHttpHeaderResult
+
+        Returns:
+            list: list of Vulneravbilities
+
+        """
+        raise NotImplementedError

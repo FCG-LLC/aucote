@@ -1,8 +1,10 @@
+import ipaddress
 import subprocess
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
+from structs import Port, TransportProtocol, Node, Scan
 from tools.hydra.parsers import HydraParser
 from tools.hydra.tasks import HydraScriptTask
 
@@ -19,11 +21,9 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
 
     def setUp(self):
         self.executor = MagicMock()
-        self.port = MagicMock()
-        self.port.number = 22
-        self.port.node = MagicMock()
-        self.port.node.ip = '127.0.0.1'
+        self.port = Port(node=Node(ip='127.0.0.1', node_id=None), transport_protocol=TransportProtocol.TCP, number=22)
         self.port.service_name = 'ssh'
+        self.port.scan = Scan()
         self.exploit = Exploit(exploit_id=1)
 
         self.hydra_script_task = HydraScriptTask(exploits=[self.exploit], executor=self.executor, port=self.port,
@@ -50,3 +50,13 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
 
         self.assertDictEqual(result, expected)
         self.assertEqual(self.port.scan.end, 27)
+
+    @patch('tools.hydra.tasks.cfg.get', MagicMock(side_effect=('test_logins', 'test_passwords')))
+    def test_prepare_args_ipv6(self):
+        node = Node(12, ipaddress.ip_address("::1"))
+        self.port.node = node
+
+        result = self.hydra_script_task.prepare_args()
+        expected = ['-L', 'test_logins', '-6', '-P', 'test_passwords', '-s', '22', '::1', 'ssh']
+
+        self.assertEqual(result, expected)

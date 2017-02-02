@@ -16,8 +16,8 @@ pid_file: tmp/aucote.pid
 #                   message - log message
 
 logging:
-    file: aucote.log
-    level: info
+    file: logs/aucote.log
+    level: debug
     max_file_size: 10485760
     max_files: 5
     format: "%(levelname)s %(asctime)s %(threadName)s: %(message)s"
@@ -36,15 +36,16 @@ fixtures:
 
 kuduworker:
     queue:
-        address: ipc:///tmp/skaza-pipeline.ipc
+        address: ipc:///tmp/scar-pipeline.ipc
 
 # This section provides configurations related to aucote as a service
 # service:
 #   scans:
-#     useragent <str> - User-Agent string used by Aucote scripts.
+#     useragent: <str> - User-Agent string used by Aucote scripts.
+#     storage: <str> - Path to local storage. Local storage is a SQLite3 database file.
 #     threads: <int> - Number of threads to be running
 #     rate: <int> - Rate in packets per seconds for scanning tool (e.g. masscan)
-#     cron: <cron-like format> - This options defines how often aucote should run scans.
+#     cron: <cron-like format> - This options defines how often aucote should run scans. This time is in UTC!
 #                                Examples:
 #                                   "*/5 * * * *" - run every 5 minutes
 #                                   "1 2 3 4 5" - run every 3rd march at 2:01, if it is friday(5)
@@ -62,11 +63,12 @@ kuduworker:
 service:
     scans:
         useragent: "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
-        threads: 10
+        storage: "tmp/storage.sqlite3"
+        threads: 30
         rate: 1000
-        period: 12h
-        cron: "0 22 * * *" # run every day at 22:00
-        ports: T:0-65535,U:0-65535,S:65535 # TCP, UDP, SCTP: full range
+        period: 0s # deprecated
+        cron: "0 22 * * *" # run every day at 22:00 UTC
+        ports: T:0-65535,U:0-65535 # TCP, UDP: full range
         port_period: 15m
         node_period: 0s
         # networks: # Change it to proper values and uncomment
@@ -81,7 +83,7 @@ service:
 
 topdis:
     api:
-        host: 127.0.0.1
+        host: topdis
         port: 1234
 
 # In this section there is configuration related to the tools used by the aucote

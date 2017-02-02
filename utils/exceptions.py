@@ -63,3 +63,10 @@ class ImproperConfigurationException(KeyError):
     Raises if tool is not configured
 
     """
+
+
+class FinishThread(Exception):
+    """
+    Raises if thread should be finished
+
+    """

@@ -71,7 +71,6 @@ class NmapTool(Tool):
             else:
                 service_args = ""
 
-
             args = self.config.get('scripts', {}).get(name, {}).get('args', None)
             singular = self.config.get('scripts', {}).get(name, {}).get('singular', False)
 
