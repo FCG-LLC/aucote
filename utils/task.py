@@ -115,4 +115,11 @@ class Task(object):
         return self.executor.storage
 
     def get_info(self):
+        """
+        Obtain information related to task
+
+        Returns:
+            dict
+
+        """
         return None

@@ -3,7 +3,6 @@ This is executable file of aucote project.
 """
 
 import argparse
-import json
 import logging as log
 import os
 from os import chdir
@@ -25,9 +24,9 @@ from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.threads import ThreadPool
 from utils.kudu_queue import KuduQueue
 import utils.log as log_cfg
+from utils.web_server import WebServer
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
-from utils.web_server import WebServer
 
 #constants
 

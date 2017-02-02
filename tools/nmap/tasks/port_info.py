@@ -8,7 +8,6 @@ from structs import BroadcastPort
 from structs import PhysicalPort
 from tools.common.port_task import PortTask
 from tools.nmap.base import NmapBase
-from utils.task import Task
 
 
 class NmapPortInfoTask(PortTask):

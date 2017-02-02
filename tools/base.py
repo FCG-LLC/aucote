@@ -67,6 +67,13 @@ class Tool(object):
             raise ImproperConfigurationException(key)
 
     def get_info(self):
+        """
+        Obtain information related to tool
+
+        Returns:
+            dict
+
+        """
         return {
             'port': str(self.port)
         }
