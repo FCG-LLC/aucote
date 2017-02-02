@@ -233,7 +233,7 @@ class ScanThreadTest(TestCase):
 
         self.assertEqual(result[0].scan.start, expected)
 
-    @patch('threads.scan_thread.time.time', MagicMock(return_value=600.5))
+    @patch('threads.scan_thread.time.monotonic', MagicMock(return_value=600.5))
     def test_keep_update(self):
         self.thread.scheduler = MagicMock()
         self.thread.keep_update()

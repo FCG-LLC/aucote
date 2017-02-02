@@ -5,7 +5,6 @@ This is executable file of aucote project.
 import argparse
 import json
 import logging as log
-import threading
 import os
 from os import chdir
 from os.path import dirname, realpath
@@ -104,18 +103,14 @@ class Aucote(object):
         self.exploits = exploits
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
-        self._storage = None
         self.task_mapper = TaskMapper(self)
-        self.filename = cfg.get('service.scans.storage')
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
-        signal.signal(signal.SIGUSR1, self.get_state)
-        self.lock = threading.Lock()
-        self.load_tools(tools_config)
-        self.scan_task = None
-        self.watch_thread = None
-        self.storage_thread = None
         self.web_server = WebServer(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
+        self.load_tools(tools_config)
+        self._scan_thread = None
+        self._watch_thread = None
+        self._storage_thread = None
 
     @property
     def kudu_queue(self):
@@ -133,7 +128,7 @@ class Aucote(object):
             Storage
 
         """
-        return self._storage
+        return self._storage_thread
 
     @property
     def thread_pool(self):
@@ -155,27 +150,24 @@ class Aucote(object):
         """
 
         try:
-            self.storage_thread = StorageThread(filename=self.filename)
-            self._storage = self.storage_thread.storage
-            self.storage_thread.start()
+            self._storage_thread = StorageThread(filename=cfg.get('service.scans.storage'))
+            self._storage_thread.start()
 
             if as_service:
-                self.watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
-                self.watch_thread.start()
+                self._watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
+                self._watch_thread.start()
 
-            self.scan_task = ScanThread(aucote=self, as_service=as_service)
-            self.scan_task.start()
-
+            self._scan_thread = ScanThread(aucote=self, as_service=as_service)
+            self._scan_thread.start()
             self.thread_pool.start()
             self.web_server.start()
 
+            self._scan_thread.join()
             self.thread_pool.join()
-            self.scan_task.join()
 
             self.thread_pool.stop()
-            self.storage_thread.stop()
-            self.storage_thread.join()
-            self._storage = None
+            self._storage_thread.stop()
+            self._storage_thread.join()
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")
@@ -220,26 +212,18 @@ class Aucote(object):
         log.error("Received signal %s at frame %s. Exiting.", sig, frame)
         self.kill()
 
-    def get_state(self, sig, frame):
+    def get_status(self):
         """
-        Handling signals from operating system. Exits applications (kills all threads).
-
-        Args:
-            sig:
-            frame:
+        Get current status of aucote tasks
 
         Returns:
+            dict
 
         """
-        log.debug("Taking Aucotes statistics")
-        log.error(json.dumps(self.get_status(), indent=2))
-
-    def get_status(self):
         stats = self.thread_pool.stats
-        stats['scanner'] = self.scan_task.get_info()
-        stats['storage'] = self.storage_thread.get_info()
+        stats['scanner'] = self._scan_thread.get_info()
+        stats['storage'] = self._storage_thread.get_info()
         return stats
-
 
     @property
     def unfinished_tasks(self):
@@ -272,13 +256,10 @@ class Aucote(object):
         Returns:
             None
 
-        Raises:
-            FinishThread - info for watchdog process to stop itself
-
         """
-        self.scan_task.disable_scan()
+        self._scan_thread.disable_scan()
         IOLoop.current().add_callback(self.web_server.stop)
-        self.watch_thread.stop()
+        self._watch_thread.stop()
 
     @classmethod
     def kill(cls):

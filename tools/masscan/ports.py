@@ -2,43 +2,19 @@
 Provides class for scanning ports
 
 """
-from tools.common import OpenPortsParser
+from tools.common.scan_task import ScanTask
 from tools.masscan.base import MasscanBase
-from utils.exceptions import NonXMLOutputException
 from aucote_cfg import cfg
 
 
-class MasscanPorts(MasscanBase):
+class MasscanPorts(ScanTask):
     """
     Scans for open ports using masscan application
 
     """
 
-    def scan_ports(self, nodes):
-        """
-        Scan for ports
-
-        Args:
-            nodes (list):
-
-        Returns:
-            list
-
-        """
-        if not nodes:
-            return []
-
-        args = self.prepare_args(nodes)
-
-        try:
-            xml = self.call(args)
-        except NonXMLOutputException:
-            return []
-
-        parser = OpenPortsParser()
-        node_by_ip = {node.ip: node for node in nodes}
-        ports = parser.parse(xml, node_by_ip)
-        return ports
+    def __init__(self):
+        super(MasscanPorts, self).__init__(MasscanBase())
 
     @classmethod
     def prepare_args(cls, nodes):

@@ -18,7 +18,7 @@ from utils.storage import Storage
 class AucoteTest(TestCase):
     def setUp(self):
         self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=MagicMock())
-        self.aucote.storage_thread = MagicMock()
+        self.aucote._storage_thread = MagicMock()
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
@@ -195,11 +195,11 @@ class AucoteTest(TestCase):
         config['apps']['app2']['loader'].assert_called_once_with(config['apps']['app2'], exploits)
 
     def test_graceful_stop(self):
-        self.aucote.scan_task = MagicMock()
-        self.aucote.watch_thread = MagicMock()
+        self.aucote._scan_thread = MagicMock()
+        self.aucote._watch_thread = MagicMock()
         self.aucote.graceful_stop()
-        self.aucote.watch_thread.stop.assert_called_once_with()
-        self.aucote.scan_task.disable_scan.assert_called_once_with()
+        self.aucote._watch_thread.stop.assert_called_once_with()
+        self.aucote._scan_thread.disable_scan.assert_called_once_with()
 
     @patch('aucote.os._exit')
     def test_kill(self, mock_kill):
@@ -211,13 +211,13 @@ class AucoteTest(TestCase):
 
     @patch('aucote.json.dumps')
     def test_get_stats(self, mock_json):
-        self.aucote.scan_task = MagicMock()
-        self.aucote.storage_thread = MagicMock()
+        self.aucote._scan_thread = MagicMock()
+        self.aucote._storage_thread = MagicMock()
         self.aucote._thread_pool = MagicMock()
-        self.aucote.get_state(None, None)
+        result = self.aucote.get_status()
 
-        result = self.aucote._thread_pool.stats
-        result['scanner'] = self.aucote.scan_task.get_info()
-        result['storage'] = self.aucote.storage_thread.get_info()
+        expected = self.aucote._thread_pool.stats
+        expected['scanner'] = self.aucote._scan_thread.get_info()
+        expected['storage'] = self.aucote._storage_thread.get_info()
 
-        mock_json.assert_called_once_with(result, indent=2)
+        self.assertEqual(result, expected)

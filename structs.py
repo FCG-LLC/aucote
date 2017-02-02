@@ -5,7 +5,7 @@ This file provides structures for project.
 import ipaddress
 from enum import Enum
 import time
-from threading import Lock
+from threading import Semaphore
 
 
 class Scan(object):
@@ -308,15 +308,25 @@ class Vulnerability(object):
 
 class StorageQuery(object):
 
+    """
+    Represents query to database which expects results
+
+    """
     def __init__(self, query, args=None):
         self._query = query
         self._args = args
-        self.result = None
-        self.lock = Lock()
-        self.lock.acquire()
+        self.result = []
+        self.lock = Semaphore(value=0)
 
     @property
     def query(self):
+        """
+        Tuple of arguments for Sqlite3 execute function
+
+        Returns:
+            tuple
+
+        """
         if self._args:
-            return (self._query, self._args)
-        return (self._query, )
+            return self._query, self._args
+        return self._query,

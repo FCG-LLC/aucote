@@ -53,7 +53,7 @@ class ScanThread(Thread):
             None
 
         """
-        self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
+        self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
         self.run_scan()
 
     def run_scan(self):
@@ -196,7 +196,8 @@ class ScanThread(Thread):
 
         """
         self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
-        if int(time.time()%600) == 0:
+
+        if int(time.monotonic() % 600) == 0:
             log.debug("keep cron update")
 
     def stop(self):

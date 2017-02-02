@@ -43,3 +43,16 @@ class PortTask(Task):
             'port': str(self._port),
             'exploits': [exploit.name for exploit in self.current_exploits]
         }
+
+    def get_vulnerabilities(self, results):
+        """
+        Gets vulnerabilities based upon results
+
+        Args:
+            results(list): list of AucoteHttpHeaderResult
+
+        Returns:
+            list: list of Vulneravbilities
+
+        """
+        raise NotImplementedError

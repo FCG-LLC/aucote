@@ -32,3 +32,6 @@ class PortTaskTest(TestCase):
         }
 
         self.assertDictEqual(result, expected)
+
+    def test_get_vulnerabilities(self):
+        self.assertRaises(NotImplementedError, self.task.get_vulnerabilities, [])
