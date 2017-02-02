@@ -36,7 +36,7 @@ class WebServer(object):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.setblocking(0)
         sock.bind((self.host, self.port))
-        sock.listen(1)
+        sock.listen(5)
 
         self.server = HTTPServer(app)
         self.server.add_socket(sock)
