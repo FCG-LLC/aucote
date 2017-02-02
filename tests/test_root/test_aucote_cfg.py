@@ -20,8 +20,7 @@ class AucoteCfgTest(TestCase):
         self.assertRaises(SystemExit, load('test'))
 
     @patch('aucote_cfg.cfg')
-    @patch('aucote_cfg.stderr', MagicMock())
     @patch('os.path.join', MagicMock(return_value='test'))
     def test_invalid_file_load(self, mock_cfg):
-        mock_cfg.load.side_effect = [TypeError()]
+        mock_cfg.load.side_effect = TypeError
         self.assertRaises(SystemExit, load, 'test')

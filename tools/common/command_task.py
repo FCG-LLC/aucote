@@ -62,27 +62,12 @@ class CommandTask(PortTask):
         self.store_scan_end(exploits=self.current_exploits, port=self._port)
 
         if not results:
-            log.debug("Process %s does not return any result.", self.command.NAME)
             return None
 
         vulnerabilities = self._get_vulnerabilities(results)
-        log.info("Found %i vulnerabilities for %s", len(vulnerabilities), str(self._port))
-
-        if vulnerabilities:
-            for vulnerability in vulnerabilities:
-                self.store_vulnerability(vulnerability)
+        self.store_vulnerabilities(vulnerabilities)
 
         return results
 
     def _get_vulnerabilities(self, results):
-        """
-        Gets vulnerabilities based upon results
-
-        Args:
-            results:
-
-        Returns:
-            list
-
-        """
         return [Vulnerability(exploit=self.exploit, port=self._port, output=results)]

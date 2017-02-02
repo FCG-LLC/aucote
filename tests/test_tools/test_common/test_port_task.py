@@ -23,3 +23,6 @@ class PortTaskTest(TestCase):
     def test_exploit_multiple(self):
         self.task.current_exploits = [MagicMock(), MagicMock()]
         self.assertEqual(self.task.exploit, None)
+
+    def test_get_vulnerabilities(self):
+        self.assertRaises(NotImplementedError, self.task.get_vulnerabilities, [])

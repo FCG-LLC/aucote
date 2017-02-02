@@ -2,8 +2,10 @@
 Configuration related module
 
 """
-import yaml
 import logging as log
+
+import yaml
+
 
 
 class Config:
@@ -16,6 +18,7 @@ class Config:
         if not cfg:
             cfg = {}
         self._cfg = cfg
+        self.default = self._cfg.copy()
 
     def __len__(self):
         return len(self._cfg)
@@ -24,7 +27,18 @@ class Config:
         ''' Works like "get()" '''
         return self.get(key)
 
+    def __contains__(self, item):
+        if isinstance(self._cfg, (list, set)):
+            return item in self._cfg
+        return False
+
     def get(self, key):
+        """
+        Gets data from multilevel dictionary using keys with dots.
+        i.e. key="logging.file"
+        Raises KeyError if there is no configured value and no default value for the given key.
+
+        """
         try:
             return self._get(key)
         except KeyError:
@@ -36,8 +50,8 @@ class Config:
         Gets data from multilevel dictionary using keys with dots.
         i.e. key="logging.file"
         Raises KeyError if there is no configured value and no default value for the given key.
-        '''
 
+        '''
         keys = key.split('.')
 
         curr = self._cfg
@@ -62,25 +76,34 @@ class Config:
         return self._cfg
 
     def load(self, file_name, defaults=None):
-        '''
+        """
         Loads configuration from provided file name.
 
         Args:
             file_name(str) - YAML file name with configuration
             defaults(dict) - default values in a form of multilevel dictionary with optional callable objects
-        '''
+
+        """
         if not defaults:
             defaults = {}
+
         defaults = self._simplify_defaults(defaults)
-
-        with open(file_name, 'r') as stream:
-            cfg = yaml.load(stream.read())
-            self._cfg = self._recursive_merge(cfg, defaults)
-
+        cfg = yaml.load(open(file_name, 'r'))
+        self._cfg = self._recursive_merge(cfg, defaults)
         self._cfg['config_filename'] = file_name
 
     def _recursive_merge(self, data, defaults):
-        #recursively replace defaults with configured data
+        """
+        recursively replace defaults with configured data
+
+        Args:
+            data (list|dict): data which should be put into configuration
+            defaults (list|dict): default data configuration
+
+        Returns:
+            list|dict
+
+        """
         if isinstance(defaults, dict) and isinstance(data, dict):
             output = defaults.copy()
             for key, val in data.items():
@@ -106,3 +129,16 @@ class Config:
         if isinstance(defaults, list):
             return [self._simplify_defaults(val) for val in defaults]
         return defaults
+
+    def reload(self, file_name):
+        """
+        Reloads configuration based on file_name
+
+        Args:
+            file_name (str): filename
+
+        Returns:
+            None
+
+        """
+        self.load(file_name, self.default)

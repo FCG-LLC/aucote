@@ -131,3 +131,25 @@ class ConfigTest(TestCase):
         result = self.config['alice.has.a']
 
         self.assertEqual(result, expected)
+
+    def test_reload(self):
+        self.config.load = MagicMock()
+        filename = 'test_filename'
+        self.config.reload(filename)
+        self.config.load.assert_called_once_with(filename, self.CONFIG)
+
+    def test_reload_after_change_cfg(self):
+        self.config.load = MagicMock()
+        self.config._cfg['alice'] = None
+        filename = 'test_filename'
+        self.config.reload(filename)
+        self.config.load.assert_called_once_with(filename, self.CONFIG)
+
+    def test_contains(self):
+        self.assertIn('cat', self.config['alice.has.not'])
+
+    def test_not_contains(self):
+        self.assertNotIn('dog', self.config['alice.has.not'])
+
+    def test_not_list(self):
+        self.assertNotIn('dog', self.config['alice.has'])
