@@ -59,8 +59,7 @@ class StorageTest(TestCase):
         self.assertIsInstance(result, list)
 
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
-    @patch('utils.storage.StorageQuery')
-    def test_get_nodes(self, mock_result_query):
+    def test_get_nodes(self):
         result = self.storage.get_nodes(pasttime=700)
         expected = 'SELECT * FROM nodes where time > ?', (139300,)
         self.assertEqual(result, expected)
@@ -102,8 +101,7 @@ class StorageTest(TestCase):
         self.assertIsInstance(result, list)
 
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
-    @patch('utils.storage.StorageQuery')
-    def test_get_ports(self, mock_result_query):
+    def test_get_ports(self):
         result = self.storage.get_ports(700)
         expected = 'SELECT * FROM ports where time > ?', (139300,)
         self.assertEqual(result, expected)
@@ -208,8 +206,7 @@ class StorageTest(TestCase):
         self.assertCountEqual(result, expected)
 
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
-    @patch('utils.storage.StorageQuery')
-    def test_get_scan_info(self, mock_result_query):
+    def test_get_scan_info(self):
         port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=3), number=12,
                     transport_protocol=TransportProtocol.TCP)
 

@@ -1,13 +1,10 @@
 """
 This file contains class for storage temporary information like last date of scanning port
 """
-import ipaddress
 import sqlite3
 import time
 import logging as log
 
-from fixtures.exploits import Exploit
-from structs import Node, Port, TransportProtocol, StorageQuery
 from utils.database_interface import DbInterface
 
 
@@ -57,7 +54,7 @@ class Storage(DbInterface):
             node (Node): node to save into storage
 
         Returns:
-            set
+            tuple
 
         """
         return "INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)", (node.id, str(node.ip), time.time())
@@ -86,7 +83,7 @@ class Storage(DbInterface):
         Returns all nodes from local storage
 
         Returns:
-            set
+            tuple
 
         """
         timestamp = time.time() - pasttime
@@ -96,7 +93,7 @@ class Storage(DbInterface):
     @staticmethod
     def save_port(port):
         """
-        Saves port to local storage
+        Query for saving port scan into database
 
         Args:
             port (Port): port to save into storage
@@ -104,7 +101,7 @@ class Storage(DbInterface):
             lock (bool): define if thread should be locked
 
         Returns:
-            set
+            tuple
 
         """
         return "INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)", (
@@ -113,7 +110,7 @@ class Storage(DbInterface):
     @staticmethod
     def save_ports(ports):
         """
-        Saves ports into local storage
+        Queries for saving ports scans into database
 
         Args:
             ports (list):
@@ -130,6 +127,17 @@ class Storage(DbInterface):
 
     @staticmethod
     def get_ports(pasttime):
+        """
+        Query for port scan detail from scans from pasttime ago
+
+        Args:
+            port (Port):
+            app (str): app name
+
+        Returns:
+            tuple
+
+        """
         timestamp = time.time() - pasttime
 
         return "SELECT * FROM ports where time > ?", (timestamp,)
@@ -137,7 +145,7 @@ class Storage(DbInterface):
     @staticmethod
     def save_scan(exploit, port):
         """
-        Saves scan information into storage. Create table scans if not exists
+        Queries for saving scan into database
 
         Args:
             exploit (Exploit): needs some exploit details to save into storage
@@ -175,7 +183,7 @@ class Storage(DbInterface):
     @staticmethod
     def save_scans(exploits, port):
         """
-        Save scan details into local storage
+        Queries for saving scans into database
 
         Args:
             exploits (list): List of Exploits
@@ -210,14 +218,14 @@ class Storage(DbInterface):
     @staticmethod
     def get_scan_info(port, app):
         """
-        Gets scan details based on provided port and app name
+        Query for scan detail for provided port and app
 
         Args:
             port (Port):
             app (str): app name
 
         Returns:
-            list - list of dictionaries with keys: exploit, port, scan_start, scan_end
+            tuple
 
         """
         return "SELECT * FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? AND port_protocol = ? " \
@@ -226,10 +234,10 @@ class Storage(DbInterface):
     @staticmethod
     def clear_scan_details():
         """
-        Remove unfinished scans from database
+        Query for cleaning table
 
         Returns:
-            set
+            tuple
 
         """
         log.debug('Cleaning scan details')
@@ -238,7 +246,7 @@ class Storage(DbInterface):
     @staticmethod
     def create_tables():
         """
-        Create tables for local storage
+        List of queries for table creation
 
         Returns:
             list
@@ -246,12 +254,12 @@ class Storage(DbInterface):
         """
         queries = []
         queries.append(("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, "
-                             "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
-                             "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, "
-                             "port_number))",))
+                        "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
+                        "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, "
+                        "port_number))",))
 
         queries.append(("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
-                             "primary key (id, ip, port, protocol))",))
+                        "primary key (id, ip, port, protocol))",))
 
         queries.append(("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))",))
 

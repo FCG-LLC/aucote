@@ -52,7 +52,7 @@ class ScanThread(Thread):
             None
 
         """
-        self.current_task = self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
+        self.scheduler.enterabs(next(self.cron), 1, self.run_periodically)
         self.run_scan()
 
     def run_scan(self):

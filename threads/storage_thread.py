@@ -155,7 +155,7 @@ class StorageThread(Thread):
         """
         return_value = []
 
-        query = self.add_query(StorageQuery(*self._storage.get_scan_info(port,app)))
+        query = self.add_query(StorageQuery(*self._storage.get_scan_info(port, app)))
 
         query.lock.acquire()
 
@@ -172,22 +172,88 @@ class StorageThread(Thread):
         return return_value
 
     def save_ports(self, ports):
+        """
+        Save ports to storage
+
+        Args:
+            ports (list):
+
+        Returns:
+            None
+
+        """
         self.add_query(self._storage.save_ports(ports))
 
     def save_node(self, node):
+        """
+        Save node to storage
+
+        Args:
+            node (Node):
+
+        Returns:
+            None
+
+        """
         self.add_query(self._storage.save_node(node))
 
     def save_nodes(self, nodes):
+        """
+        Save nodes to storage
+
+        Args:
+            nodes (list):
+
+        Returns:
+            None
+
+        """
         self.add_query(self._storage.save_nodes(nodes))
 
     def save_scan(self, exploit, port):
+        """
+        Save scan to storage
+
+        Args:
+            exploit (Exploit):
+            port (Port):
+
+        Returns:
+            None
+
+        """
         self.add_query(self._storage.save_scan(exploit, port))
 
     def save_scans(self, exploits, port):
+        """
+        Save scans to storage
+
+        Args:
+            exploits (list):
+            port (Port):
+
+        Returns:
+            None
+
+        """
         self.add_query(self._storage.save_scans(exploits, port))
 
     def clear_scan_details(self):
+        """
+        Clear scan details in storage
+
+        Returns:
+            None
+
+        """
         self.add_query(self._storage.clear_scan_details())
 
     def create_tables(self):
+        """
+        Create tables
+
+        Returns:
+            None
+
+        """
         self.add_query(self._storage.create_tables())
