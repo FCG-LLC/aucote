@@ -74,6 +74,7 @@ class ThreadPoolTest(TestCase):
 
         self.thread_pool._threads = [thread1, thread2, thread3]
         self.thread_pool._queue.queue = [thread4]
+        self.thread_pool._num_threads = 123
 
         expected = {
             'queue': [
@@ -84,7 +85,8 @@ class ThreadPoolTest(TestCase):
                 self.thread_pool.get_thread_info(thread2),
             ],
             'queue_length': 1,
-            'threads_length': 2
+            'threads_length': 2,
+            'threads_limit': 123
         }
 
         result = self.thread_pool.stats

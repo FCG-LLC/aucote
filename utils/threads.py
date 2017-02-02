@@ -118,6 +118,7 @@ class ThreadPool(object):
 
         return_value['queue_length'] = len(return_value['queue'])
         return_value['threads_length'] = len(return_value['threads'])
+        return_value['threads_limit'] = self._num_threads
 
         return return_value
 
