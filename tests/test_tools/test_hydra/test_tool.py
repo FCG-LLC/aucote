@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 from fixtures.exploits import Exploit
 from structs import RiskLevel, Port, Scan, Node, TransportProtocol
 from tools.hydra.tool import HydraTool
+from utils import Config
 from utils.storage import Storage
 
 
@@ -63,7 +64,7 @@ class HydraToolTest(TestCase):
 
         self.assertFalse(result)
 
-    @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=['test'])))
+    @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=Config(['test'])))
     def test_disabled_service(self):
         self.hydra_tool()
 

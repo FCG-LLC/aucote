@@ -1,5 +1,6 @@
+from queue import Empty
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, PropertyMock
 
 from utils.threads import ThreadPool
 
@@ -32,18 +33,18 @@ class ThreadPoolTest(TestCase):
 
         self.thread_pool._queue.join.assert_called_once_with()
 
-    def test_worker_task_is_none(self):
-        self.thread_pool._queue = MagicMock()
-        self.thread_pool._queue.get.return_value = None
-
-        self.assertIsNone(self.thread_pool._worker())
-
     def test_worker_task_is_not_none(self):
         self.thread_pool._queue = MagicMock()
         self.thread_pool._queue.task_done.side_effect = [SystemExit()]
 
         self.assertRaises(SystemExit, self.thread_pool._worker)
         self.thread_pool._queue.get.assert_called_once_with()
+
+    def test_worker_task_is_none(self):
+        self.thread_pool._queue = MagicMock()
+        self.thread_pool._queue.get.return_value = None
+        self.assertIsNone(self.thread_pool._worker())
+        self.thread_pool._queue.task_done.assert_called_once_with()
 
     def test_worker_task_is_not_none_but_raises_exception(self):
         self.thread_pool._queue = MagicMock()
@@ -52,3 +53,23 @@ class ThreadPoolTest(TestCase):
 
         self.assertRaises(SystemExit, self.thread_pool._worker)
         self.thread_pool._queue.get.assert_called_once_with()
+
+    def test_unfinished(self):
+        self.assertEqual(self.thread_pool.unfinished_tasks, self.thread_pool._queue.unfinished_tasks)
+
+    def test_add_task(self):
+        task = MagicMock()
+        self.thread_pool.add_task(task)
+
+        self.assertIn(task, self.thread_pool._queue.queue)
+
+    @patch('utils.threads.Thread')
+    def test_start(self, mock_thread):
+        self.thread_pool._num_threads = 10
+        self.thread_pool.start()
+
+        self.assertEqual(mock_thread.return_value.daemon, True)
+        self.assertEqual(mock_thread.return_value.start.call_count, 10)
+        self.assertEqual(mock_thread.call_count, 10)
+
+        self.assertEqual(len(self.thread_pool._threads), 10)

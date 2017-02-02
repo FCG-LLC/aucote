@@ -7,3 +7,4 @@ netifaces
 requests
 croniter
 pytz
+inotify

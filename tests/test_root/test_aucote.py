@@ -4,17 +4,21 @@ Test main aucote file
 from unittest import TestCase
 from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
 
+import signal
+
 from aucote import main, Aucote
-from utils.exceptions import NmapUnsupported, TopdisConnectionException
+from utils.exceptions import NmapUnsupported, TopdisConnectionException, FinishThread
 from utils.storage import Storage
 
 
 @patch('aucote_cfg.cfg.get', Mock(return_value=":memory:"))
 @patch('aucote_cfg.cfg.load', Mock(return_value=""))
 @patch('utils.log.config', Mock(return_value=""))
+@patch('aucote.os.remove', MagicMock(side_effect=FileNotFoundError()))
 class AucoteTest(TestCase):
     def setUp(self):
         self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=MagicMock())
+        self.aucote._storage_thread = MagicMock()
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
@@ -43,14 +47,18 @@ class AucoteTest(TestCase):
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl', MagicMock())
+    @patch('aucote.cfg')
     @patch('aucote.Aucote')
-    def test_main_service(self, mock_aucote):
+    def test_main_service(self, mock_aucote, mock_cfg):
         args = PropertyMock()
         args.configure_mock(cmd='service')
+        mock_aucote.return_value.run_scan.side_effect = (None, SystemExit(), )
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            main()
+            self.assertRaises(SystemExit, main)
 
-        mock_aucote.return_value.run_scan.assert_called_once_with()
+        mock_aucote.return_value.run_scan.assert_any_call()
+        self.assertEqual(mock_aucote.return_value.run_scan.call_count, 2)
+        mock_cfg.reload.assert_called_once_with(mock_cfg.get.return_value)
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
@@ -65,8 +73,8 @@ class AucoteTest(TestCase):
         self.assertEqual(mock_aucote.return_value.run_syncdb.call_count, 1)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
-    @patch('aucote.StorageTask')
-    @patch('aucote.ScanTask')
+    @patch('aucote.StorageThread')
+    @patch('aucote.ScanThread')
     def test_scan(self, mock_scan_tasks, mock_storage_task):
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
@@ -75,13 +83,36 @@ class AucoteTest(TestCase):
         self.aucote.run_scan(as_service=False)
         result = mock_scan_tasks.call_args[1]
         expected = {
-            'executor': self.aucote,
-            'nodes': None,
+            'aucote': self.aucote,
             'as_service': False
         }
 
         self.assertEqual(mock_scan_tasks.call_count, 1)
         self.assertEqual(mock_storage_task.call_count, 1)
+        self.assertDictEqual(result, expected)
+        self.aucote._thread_pool.start.called_once_with()
+        self.aucote._thread_pool.join.called_once_with()
+        self.aucote._thread_pool.stop.called_once_with()
+
+    @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
+    @patch('aucote.StorageThread')
+    @patch('aucote.WatchdogThread')
+    @patch('aucote.ScanThread')
+    def test_service(self, mock_scan_tasks, mock_watchdog, mock_storage_task):
+        self.aucote._thread_pool = MagicMock()
+        self.aucote._storage = MagicMock()
+        self.aucote._kudu_queue = MagicMock()
+
+        self.aucote.run_scan(as_service=True)
+        result = mock_scan_tasks.call_args[1]
+        expected = {
+            'aucote': self.aucote,
+            'as_service': True
+        }
+
+        self.assertEqual(mock_scan_tasks.call_count, 1)
+        self.assertEqual(mock_storage_task.call_count, 1)
+        self.assertEqual(mock_watchdog.call_count, 1)
         self.assertDictEqual(result, expected)
         self.aucote._thread_pool.start.called_once_with()
         self.aucote._thread_pool.join.called_once_with()
@@ -98,8 +129,9 @@ class AucoteTest(TestCase):
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
-    @patch('aucote.ScanTask.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
-    @patch('scans.scan_task.Executor')
+    @patch('aucote.ScanThread.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
+    @patch('aucote.StorageThread', MagicMock())
+    @patch('threads.scan_thread.Executor')
     def test_scan_with_exception(self, mock_executor):
         self.aucote.run_scan()
         self.assertEqual(mock_executor.call_count, 0)
@@ -119,7 +151,8 @@ class AucoteTest(TestCase):
         args = PropertyMock()
         args.configure_mock(cmd='service')
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            self.assertRaises(SystemExit, main)
+            with patch('aucote.Aucote.run_scan'):
+                self.assertRaises(SystemExit, main)
 
     @patch('aucote.Aucote.load_tools')
     def test_init(self, mock_loader):
@@ -134,21 +167,9 @@ class AucoteTest(TestCase):
         mock_loader.called_once_With(cfg)
 
     def test_signal_handling(self):
-        self.assertRaises(SystemExit, self.aucote.signal_handler, 2, MagicMock())
-
-    def test_storage_setter_default(self):
-        self.aucote._storage = None
-        expected = MagicMock()
-        self.aucote.storage = expected
-
-        self.assertEqual(self.aucote.storage, expected)
-
-    def test_storage_setter_set_already(self):
-        expected = MagicMock()
-        self.aucote._storage = expected
-        self.aucote.storage = MagicMock()
-
-        self.assertEqual(self.aucote.storage, expected)
+        self.aucote.kill = MagicMock()
+        self.aucote.signal_handler(2, None)
+        self.aucote.kill.assert_called_once_with()
 
     def test_load_tools(self):
         config = {
@@ -169,3 +190,18 @@ class AucoteTest(TestCase):
 
         config['apps']['app1']['loader'].assert_called_once_with(config['apps']['app1'], exploits)
         config['apps']['app2']['loader'].assert_called_once_with(config['apps']['app2'], exploits)
+
+    def test_graceful_stop(self):
+        self.aucote._scan_thread = MagicMock()
+        self.aucote._watch_thread = MagicMock()
+        self.aucote.graceful_stop()
+        self.aucote._watch_thread.stop.assert_called_once_with()
+        self.aucote._scan_thread.disable_scan.assert_called_once_with()
+
+    @patch('aucote.os._exit')
+    def test_kill(self, mock_kill):
+        self.aucote.kill()
+        mock_kill.assert_called_once_with(1)
+
+    def test_unfinished_tasks(self):
+        self.assertEqual(self.aucote.unfinished_tasks, self.aucote.thread_pool.unfinished_tasks)
