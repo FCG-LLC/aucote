@@ -64,6 +64,7 @@ class ThreadPool(object):
 
             if task is None:
                 log.debug("finishing thread.")
+                self._queue.task_done()
                 return
 
             try:

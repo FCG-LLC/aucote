@@ -4,7 +4,6 @@ This is executable file of aucote project.
 
 import argparse
 import logging as log
-import threading
 import os
 from os import chdir
 from os.path import dirname, realpath
@@ -101,10 +100,8 @@ class Aucote(object):
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
         self.task_mapper = TaskMapper(self)
-        self.filename = cfg.get('service.scans.storage')
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
-        self.lock = threading.Lock()
         self.load_tools(tools_config)
         self._scan_thread = None
         self._watch_thread = None
@@ -148,7 +145,7 @@ class Aucote(object):
         """
 
         try:
-            self._storage_thread = StorageThread(filename=self.filename)
+            self._storage_thread = StorageThread(filename=cfg.get('service.scans.storage'))
             self._storage_thread.start()
 
             if as_service:
@@ -157,8 +154,8 @@ class Aucote(object):
 
             self._scan_thread = ScanThread(aucote=self, as_service=as_service)
             self._scan_thread.start()
-
             self.thread_pool.start()
+
             self._scan_thread.join()
             self.thread_pool.join()
 

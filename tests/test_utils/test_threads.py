@@ -44,6 +44,7 @@ class ThreadPoolTest(TestCase):
         self.thread_pool._queue = MagicMock()
         self.thread_pool._queue.get.return_value = None
         self.assertIsNone(self.thread_pool._worker())
+        self.thread_pool._queue.task_done.assert_called_once_with()
 
     def test_worker_task_is_not_none_but_raises_exception(self):
         self.thread_pool._queue = MagicMock()
