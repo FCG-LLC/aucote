@@ -59,6 +59,10 @@ kuduworker:
 #     networks: - list of networks, which should be scanned
 #       - 127.0.0.1/32 - example ipv4 network
 #       - ::1/128 - example ipv6 network
+#   api:
+#     v1:
+#       host: <ip>  - IP on which web server should listen
+#       port: (int) - port on which web server should listen
 
 service:
     scans:
@@ -74,6 +78,10 @@ service:
         # networks: # Change it to proper values and uncomment
         #    - 127.0.0.1/32
         #    - ::1/128
+    api:
+        v1:
+            host: 0.0.0.0
+            port: 1235
 
 # This section contains configuration related to topdis service
 # topdis:
