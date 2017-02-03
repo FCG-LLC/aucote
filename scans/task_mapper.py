@@ -5,8 +5,11 @@ Class responsible for mapping scans and port, service
 import time
 import logging as log
 
+from netaddr import IPSet
+
 from aucote_cfg import cfg
 from scans.executor_config import EXECUTOR_CONFIG
+from structs import SpecialPort
 from utils.time import parse_period
 
 
@@ -37,7 +40,7 @@ class TaskMapper:
 
             log.info("Found %i exploits", len(exploits))
 
-            try:
+            try:  # TODO: Move it to Tucan once it is ready.
                 periods = cfg.get('tools.{0}.periods'.format(app)).cfg
             except KeyError:
                 periods = {}
@@ -51,6 +54,26 @@ class TaskMapper:
 
                 if scan['scan_end'] + period > time.time():
                     exploits.remove(scan['exploit'])
+
+            if not isinstance(port, SpecialPort):
+                try:  # TODO: Move it to Tucan once it is ready.
+                    script_networks = cfg.get('tools.{0}.script_networks'.format(app)).cfg
+                except KeyError:
+                    script_networks = {}
+
+                try:  # TODO: Move it to Tucan once it is ready.
+                    app_networks = cfg.get('tools.{0}.networks'.format(app)).cfg
+                except KeyError:
+                    app_networks = None
+
+                for exploit in exploits:
+                    networks = script_networks.get(exploit.name, None)
+
+                    if networks is None:
+                        networks = app_networks
+
+                    if networks is not None and port.node.ip.exploded not in IPSet(networks):
+                        exploits.remove(exploit)
 
             log.info("Using %i exploits against %s", len(exploits), port)
             self.store_scan_details(port=port, exploits=exploits, storage=storage)

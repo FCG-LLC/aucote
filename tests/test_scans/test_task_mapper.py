@@ -54,8 +54,18 @@ class TaskMapperTest(unittest.TestCase):
         self.assertEqual(self.task_mapper.executor, self.executor)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    @patch('aucote_cfg.cfg.get', MagicMock(side_effect=(True, MagicMock(), True, MagicMock())))
-    def test_app_running(self):
+    @patch('scans.task_mapper.cfg', new_callable=Config)
+    def test_app_running(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'test': {
+                    'enable': True,
+                },
+                'test2': {
+                    'enable': True,
+                }
+            }
+        }
         self.executor.storage.get_scan_info.return_value = []
         self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
 
@@ -71,8 +81,19 @@ class TaskMapperTest(unittest.TestCase):
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 0)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    @patch('aucote_cfg.cfg.get', MagicMock(side_effect=(False, True, MagicMock())))
-    def test_disable_first_app_running(self):
+    @patch('scans.task_mapper.cfg', new_callable=Config)
+    def test_disable_first_app_running(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'test': {
+                    'enable': False,
+                },
+                'test2': {
+                    'enable': True,
+                    'period': '0s'
+                }
+            }
+        }
         self.executor.storage.get_scan_info.return_value = []
         self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
 
@@ -80,10 +101,23 @@ class TaskMapperTest(unittest.TestCase):
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 1)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    @patch('aucote_cfg.cfg.get')
+    @patch('scans.task_mapper.cfg', new_callable=Config)
     @patch('time.time', MagicMock(return_value=25.0))
-    def test_storage_all_scanned_recently(self, mock_cfg):
-        mock_cfg.side_effect = (True, Config({'test_1': '1d', 'test_2': '2d'}), False)
+    def test_storage_all_scanned_recently(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'test': {
+                    'enable': True,
+                    'periods': {
+                        'test_1': '1d',
+                        'test_2': '2d'
+                    }
+                },
+                'test2': {
+                    'enable': False,
+                }
+            }
+        }
 
         self.executor.storage.get_scan_info.return_value = [
             {
@@ -110,10 +144,23 @@ class TaskMapperTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    @patch('aucote_cfg.cfg.get')
+    @patch('scans.task_mapper.cfg', new_callable=Config)
     @patch('time.time', MagicMock(return_value=25.0))
-    def test_storage_one_scanned_recently(self, mock_cfg):
-        mock_cfg.side_effect = (True, Config({'test_1': '1d', 'test_2': '1s'}), False)
+    def test_storage_one_scanned_recently(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'test': {
+                    'enable': True,
+                    'periods': {
+                        'test_1': '1d',
+                        'test_2': '1s'
+                    }
+                },
+                'test2': {
+                    'enable': False,
+                }
+            }
+        }
 
         self.executor.storage.get_scan_info.return_value = [
             {
@@ -162,9 +209,19 @@ class TaskMapperTest(unittest.TestCase):
         self.assertDictEqual(result, expected)
         self.assertEqual(result['port'].scan.start, self.UDP.scan.start)
 
-    @patch('aucote_cfg.cfg.get', MagicMock(side_effect=(True, KeyError, False)))
+    @patch('scans.task_mapper.cfg', new_callable=Config)
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    def test_assign_tasks_config_exception(self):
+    def test_assign_tasks_config_exception(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'test': {
+                    'enable': True,
+                },
+                'test2': {
+                    'enable': False,
+                }
+            }
+        }
         self.executor.storage.get_scan_info = MagicMock(return_value=[])
         self.task_mapper.assign_tasks(port=self.UDP, storage=self.executor.storage)
 
@@ -174,10 +231,123 @@ class TaskMapperTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    @patch('aucote_cfg.cfg.get', MagicMock(side_effect=(True, MagicMock(), True, MagicMock())))
-    def test_copying_port(self):
+    @patch('scans.task_mapper.cfg', new_callable=Config)
+    def test_copying_port(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'test': {
+                    'enable': True,
+                    'period': '0s'
+                },
+                'test2': {
+                    'enable': True,
+                    'period': '0s'
+                }
+            }
+        }
         self.executor.storage.get_scan_info.return_value = []
         self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
 
         self.assertNotEqual(id(self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['port']), id(self.UDP))
         self.assertNotEqual(id(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_args[1]['port']), id(self.TCP))
+
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
+    @patch('scans.task_mapper.cfg', new_callable=Config)
+    def test_restricted_script_network(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'test': {
+                    'enable': True,
+                    'periods': {
+                        'test_1': '1s',
+                        'test_2': '1s'
+                    },
+                    'script_networks': {
+                        'test_1': [
+                            '0.0.0.0/32'
+                        ]
+                    },
+                    'networks': [
+                        '0.0.0.0/0'
+                    ]
+                },
+                'test2': {
+                    'enable': False,
+                }
+            }
+        }
+
+        self.executor.storage.get_scan_info.return_value = [
+            {
+                "exploit": self.exploits['test'][0],
+                "port": self.UDP,
+                "scan_start": 17.0,
+                "scan_end": 26.0,
+                "exploit_name": "test_1"
+            },
+            {
+                "exploit": self.exploits['test'][1],
+                "port": self.UDP,
+                "scan_start": 12.0,
+                "scan_end": 17.0,
+                "exploit_name": "test_2"
+            }
+        ]
+
+        self.task_mapper.store_scan_details = MagicMock()
+
+        expected = [self.exploits['test'][1]]
+
+        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+
+        result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
+
+        self.assertEqual(result, expected)
+
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
+    @patch('scans.task_mapper.cfg', new_callable=Config)
+    def test_restricted_app_network(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'test': {
+                    'enable': True,
+                    'periods': {
+                        'test_1': '1s',
+                        'test_2': '1s'
+                    },
+                    'networks': [
+                        '0.0.0.0/0'
+                    ]
+                },
+                'test2': {
+                    'enable': False,
+                }
+            }
+        }
+
+        self.executor.storage.get_scan_info.return_value = [
+            {
+                "exploit": self.exploits['test'][0],
+                "port": self.UDP,
+                "scan_start": 17.0,
+                "scan_end": 26.0,
+                "exploit_name": "test_1"
+            },
+            {
+                "exploit": self.exploits['test'][1],
+                "port": self.UDP,
+                "scan_start": 12.0,
+                "scan_end": 17.0,
+                "exploit_name": "test_2"
+            }
+        ]
+
+        self.task_mapper.store_scan_details = MagicMock()
+
+        expected = [self.exploits['test'][0], self.exploits['test'][1]]
+
+        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+
+        result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
+
+        self.assertEqual(result, expected)
