@@ -260,10 +260,18 @@ class TaskMapperTest(unittest.TestCase):
                     'enable': True,
                     'periods': {
                         'test_1': '1s',
-                        'test_2': '1s'
+                        'test_2': '1s',
+                        'test_3': '1s',
+                        'test_4': '1s'
                     },
                     'script_networks': {
                         'test_1': [
+                            '0.0.0.0/32'
+                        ],
+                        'test_3': [
+                            '0.0.0.0/32'
+                        ],
+                        'test_4': [
                             '0.0.0.0/32'
                         ]
                     },
@@ -276,6 +284,17 @@ class TaskMapperTest(unittest.TestCase):
                 }
             }
         }
+
+        self.exploits = OrderedDict({
+            'test': [
+                Exploit(exploit_id=1, name='test_1'),
+                Exploit(exploit_id=2, name='test_2'),
+                Exploit(exploit_id=3, name='test_3'),
+                Exploit(exploit_id=4, name='test_4')
+            ]
+        })
+        self.executor.exploits.find_all_matching.return_value = self.exploits
+        self.task_mapper._executor = self.executor
 
         self.executor.storage.get_scan_info.return_value = [
             {
