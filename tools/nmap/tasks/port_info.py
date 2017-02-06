@@ -79,7 +79,8 @@ class NmapPortInfoTask(PortTask):
                 if service.get('tunnel') == 'ssl':
                     self._port.service_name = 'https'
 
-            self._port.service_version = service.get('version')
+            self._port.service_version = "{0} {1}".format(service.get('product') or "",
+                                                          service.get('version') or "").strip()
 
         self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
 

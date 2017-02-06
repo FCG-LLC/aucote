@@ -57,6 +57,7 @@ kuduworker:
 #     broadcast: (True|False) - Enable broadcast scanning if True (default)
 #     physical: (True|False) - Enable scanning of aucote's host physical interfaces (e.g. eth0) if True (default)
 #     networks: - list of networks, which should be scanned
+#       - <address/mask>
 #       - 127.0.0.1/32 - example ipv4 network
 #       - ::1/128 - example ipv6 network
 #   api:
@@ -114,6 +115,11 @@ topdis:
 #                These values are higher priority than 'period'.
 #       module1: <period> - Period for module1
 #       module2: <period> - Period for module2
+#     networks: - list of networks, which should be scanned by tool
+#     script_networks: - list of modules and restricted networks per module
+#       module1: - list of networks, which should be scanned by module/script. This option overwrite tools.app.networks!
+#         - <address/mask> - ip address of restricted network
+#         - <address/mask>
 #
 # This subsection provides app-specific options
 #
