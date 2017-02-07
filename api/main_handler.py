@@ -31,7 +31,7 @@ class MainHandler(Handler):
         """
         stats = self.aucote.thread_pool.stats
         stats['scanner'] = self.scanning_status(self.aucote.scan_thread)
-        stats['storage'] = self.aucote.storage.get_info()
+        stats['storage'] = self.storage_status(self.aucote.storage)
         return stats
 
     def scanning_status(self, scan_thread):
@@ -55,4 +55,17 @@ class MainHandler(Handler):
         return {
             'action': task.action.__name__,
             'time': task.time
+        }
+
+    @staticmethod
+    def storage_status(storage):
+        """
+        Informations about storage status
+
+        Returns:
+            dict
+
+        """
+        return {
+            'path': storage.filename,
         }

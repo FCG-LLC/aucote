@@ -66,14 +66,6 @@ class StorageThreadTest(TestCase):
         query.lock.release.assert_called_once_with()
         self.assertEqual(query.result, result.fetchall.return_value)
 
-    def test_get_info(self):
-        result = self.task.get_info()
-        expected = {
-            'path': self.filename
-        }
-
-        self.assertDictEqual(result, expected)
-
     def test_save_ports(self):
         self.task._storage = MagicMock()
         self.task.add_query = MagicMock()

@@ -3,7 +3,7 @@ Thread responsible for local storage
 
 """
 import ipaddress
-from threading import Thread
+from threading import Thread, Lock
 import logging as log
 from queue import Queue, Empty
 
@@ -20,6 +20,8 @@ class StorageThread(Thread):
     def __init__(self, filename):
         super(StorageThread, self).__init__()
         self.name = "Storage"
+        self._lock = Lock()
+        self._filename = ""
         self.filename = filename
         self._queue = Queue()
         self._storage = Storage(self.filename)
@@ -102,19 +104,6 @@ class StorageThread(Thread):
 
         """
         return self._storage
-
-
-    def get_info(self):
-        """
-        Informations about storage status
-
-        Returns:
-            dict
-
-        """
-        return {
-            'path': self.filename,
-        }
 
     def get_ports(self, pasttime=900):
         """
@@ -269,3 +258,13 @@ class StorageThread(Thread):
 
         """
         self.add_query(self._storage.create_tables())
+
+    @property
+    def filename(self):
+        with self._lock:
+            return self._filename
+
+    @filename.setter
+    def filename(self, val):
+        with self._lock:
+            self._filename = val

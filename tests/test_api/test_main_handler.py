@@ -25,13 +25,15 @@ class UserAPITest(AsyncHTTPTestCase):
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         self.assertEqual(json.loads(response.body.decode()), expected)
 
+    @patch('api.main_handler.MainHandler.storage_status')
     @patch('api.main_handler.MainHandler.scanning_status')
-    def test_aucote_status(self, mock_scan_info):
-        result = self.handler.aucote_status()
+    def test_aucote_status(self, mock_scan_info, storage_status):
+        storage_status.return_value = 'test_storage'
 
+        result = self.handler.aucote_status()
         expected = self.aucote.thread_pool.stats
         expected['scanner'] = mock_scan_info.return_value
-        expected['storage'] = self.aucote.storage_thread.get_info()
+        expected['storage'] = 'test_storage'
 
         self.assertEqual(result, expected)
 
@@ -80,3 +82,14 @@ class UserAPITest(AsyncHTTPTestCase):
         result = MainHandler.scheduler_task_status(task)
 
         self.assertCountEqual(result, expected)
+
+    def test_storage_task_info(self):
+        storage = MagicMock()
+        storage.filename = 'test_filename'
+        result = MainHandler.storage_status(storage)
+
+        expected = {
+            'path': 'test_filename'
+        }
+
+        self.assertDictEqual(result, expected)
