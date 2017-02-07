@@ -143,7 +143,7 @@ class Executor(object):
     @property
     def ports(self):
         with self.lock:
-            return self._ports
+            return self._ports[:]
 
     @ports.setter
     def ports(self, val):
