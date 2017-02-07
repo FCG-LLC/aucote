@@ -222,22 +222,6 @@ class ScanThread(Thread):
         """
         return self.aucote.storage
 
-    def get_info(self):
-        """
-        Information about current scans
-
-        Returns:
-            dict
-
-        """
-        return {
-            'nodes': [str(node.ip) for node in self.current_scan],
-            'scheduler': [{'action': task.action.__name__, 'time': task.time} for task in self.tasks],
-            'networks': cfg.get('service.scans.networks').cfg,
-            'ports': cfg.get('service.scans.ports'),
-            'previous_scan': self.previous_scan
-        }
-
     @property
     def current_scan(self):
         with self.lock:

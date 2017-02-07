@@ -10,6 +10,7 @@ from netaddr import IPSet
 
 from structs import Node, PhysicalPort
 from threads.scan_thread import ScanThread
+from utils import Config
 
 
 class ScanThreadTest(TestCase):
@@ -254,46 +255,35 @@ class ScanThreadTest(TestCase):
         self.thread.stop()
         self.thread.disable_scan.assert_called_once_with()
 
-    @patch('threads.scan_thread.cfg')
-    @patch('threads.scan_thread.time.time', MagicMock(return_value=595))
-    def test_get_info(self, mock_cfg):
-        mock_cfg.get.side_effect = [
-            MagicMock(cfg=['192.168.1.0/24', '::1/128']),
-            'T:0-65535',
-            "*/10 * * * *"
-        ]
-        self.thread.current_scan = [
-            Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1),
-            Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2),
-            Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
-        ]
-        self.thread.scheduler = MagicMock()
-        self.thread.scheduler.queue = [
-            sched.Event(time=0, priority=0, action=type(None), argument=[], kwargs={}),
-            sched.Event(time=5, priority=0, action=str, argument=[], kwargs={}),
-            sched.Event(time=10, priority=0, action=int, argument=[], kwargs={}),
-        ]
-
-        result = self.thread.get_info()
-        expected = {
-            'nodes': ['127.0.0.1', '127.0.0.2', '127.0.0.3'],
-            'scheduler': [
-                {
-                    'action': "None",
-                    'time': 0,
-                },
-                {
-                    'action': "str",
-                    'time': 5,
-                },
-                {
-                    'action': "int",
-                    'time': 10,
-                }
-            ],
-            'networks': '[192.168.1.0/24, ::1/128]',
-            'ports': 'T:0-65535',
-            'previous_scan': 480
-        }
+    def test_current_scan_getter(self):
+        expected = [MagicMock(), MagicMock()]
+        self.thread._current_scan = expected
+        result = self.thread.current_scan
 
         self.assertCountEqual(result, expected)
+        self.assertNotEqual(id(result), id(expected))
+
+    def test_tasks_getter(self):
+        expected = [MagicMock(), MagicMock()]
+        self.thread.scheduler = MagicMock()
+        self.thread.scheduler.queue = expected
+        result = self.thread.tasks
+
+        self.assertCountEqual(result, expected)
+        self.assertNotEqual(id(result), id(expected))
+
+    @patch('threads.scan_thread.cfg', new_callable=Config)
+    @patch('threads.scan_thread.time.time', MagicMock(return_value=595))
+    def test_previous_scan(self, mock_cfg):
+        mock_cfg._cfg = {
+            'service': {
+                'scans': {
+                    'cron': '* * * * *'
+                }
+            }
+        }
+
+        expected = 480
+        result = self.thread.previous_scan
+
+        self.assertEqual(result, expected)
