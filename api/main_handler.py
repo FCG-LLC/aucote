@@ -4,6 +4,7 @@ Handler responsible for returns status of aucote
 """
 from api.handler import Handler
 from aucote_cfg import cfg
+import time
 
 
 class MainHandler(Handler):
@@ -29,12 +30,13 @@ class MainHandler(Handler):
             dict
 
         """
-        stats = self.aucote.thread_pool.stats
+        stats = self.thread_pool_status(self.aucote.thread_pool)
         stats['scanner'] = self.scanning_status(self.aucote.scan_thread)
         stats['storage'] = self.storage_status(self.aucote.storage)
         return stats
 
-    def scanning_status(self, scan_thread):
+    @classmethod
+    def scanning_status(cls, scan_thread):
         """
         Information about current scans
 
@@ -44,21 +46,21 @@ class MainHandler(Handler):
         """
         return {
             'nodes': [str(node.ip) for node in scan_thread.current_scan],
-            'scheduler': [self.scheduler_task_status(task) for task in scan_thread.tasks],
+            'scheduler': [cls.scheduler_task_status(task) for task in scan_thread.tasks],
             'networks': cfg.get('service.scans.networks').cfg,
             'ports': cfg.get('service.scans.ports'),
             'previous_scan': scan_thread.previous_scan
         }
 
-    @staticmethod
-    def scheduler_task_status(task):
+    @classmethod
+    def scheduler_task_status(cls, task):
         return {
             'action': task.action.__name__,
             'time': task.time
         }
 
-    @staticmethod
-    def storage_status(storage):
+    @classmethod
+    def storage_status(cls, storage):
         """
         Informations about storage status
 
@@ -69,3 +71,64 @@ class MainHandler(Handler):
         return {
             'path': storage.filename,
         }
+
+    @classmethod
+    def thread_pool_status(cls, thread_pool):
+        """
+        Obtain status of thread pool
+
+        Args:
+            thread_pool (ThreadPool):
+
+        Returns:
+            dict
+
+        """
+        return_value = {'queue': [], 'threads': []}
+
+        for thread in thread_pool.threads:
+            if thread.task is None:
+                continue
+            return_value['threads'].append(cls.thread_pool_thread_status(thread))
+
+        for task in thread_pool.task_queue:
+            return_value['queue'].append(cls.task_status(task))
+
+        return_value['queue_length'] = len(return_value['queue'])
+        return_value['threads_length'] = len(return_value['threads'])
+        return_value['threads_limit'] = thread_pool.num_threads
+
+        return return_value
+
+    @classmethod
+    def task_status(cls, task):
+        """
+        Returns informations about task
+
+        Args:
+            task:
+
+        Returns:
+            dict
+        """
+        return {
+            'type': type(task).__name__,
+            'data': task.get_info(),
+        }
+
+    @classmethod
+    def thread_pool_thread_status(cls, thread):
+        """
+        Returns dict with info about thread
+
+        Args:
+            thread:
+
+        Returns:
+            dict
+        """
+        return_value = cls.task_status(thread.task)
+        return_value['start_time'] = thread.start_time
+        return_value['duration'] = time.time() - thread.start_time
+
+        return return_value

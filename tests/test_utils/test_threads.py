@@ -1,3 +1,4 @@
+from collections import deque
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -65,61 +66,6 @@ class ThreadPoolTest(TestCase):
 
         self.assertIn(task, self.thread_pool._queue.queue)
 
-    def test_stats(self):
-        thread1 = MagicMock()
-        thread2 = MagicMock()
-        thread3 = MagicMock(task=None)
-
-        thread4 = MagicMock()
-
-        self.thread_pool._threads = [thread1, thread2, thread3]
-        self.thread_pool._queue.queue = [thread4]
-        self.thread_pool._num_threads = 123
-
-        expected = {
-            'queue': [
-                self.thread_pool.get_task_info(thread4)
-            ],
-            'threads': [
-                self.thread_pool.get_thread_info(thread1),
-                self.thread_pool.get_thread_info(thread2),
-            ],
-            'queue_length': 1,
-            'threads_length': 2,
-            'threads_limit': 123
-        }
-
-        result = self.thread_pool.stats
-
-        self.assertEqual(thread1.task.get_info.call_count, 2)
-        self.assertEqual(thread2.task.get_info.call_count, 2)
-        self.assertEqual(thread4.get_info.call_count, 2)
-
-        self.assertDictEqual(result, expected)
-
-    @patch('utils.threads.time.time', MagicMock(return_value=300))
-    def test_get_thread_info(self):
-        thread = MagicMock()
-        thread.start_time = 100
-
-        result = self.thread_pool.get_thread_info(thread)
-        expected = self.thread_pool.get_task_info(thread.task)
-        expected['start_time'] = 100
-        expected['duration'] = 200
-
-        self.assertEqual(result, expected)
-
-    def test_get_task_info(self):
-        task = MagicMock()
-
-        result = self.thread_pool.get_task_info(task)
-        expected = {
-            'type': 'MagicMock',
-            'data': task.get_info.return_value
-        }
-
-        self.assertDictEqual(result, expected)
-
     @patch('utils.threads.Thread')
     def test_start(self, mock_thread):
         self.thread_pool._num_threads = 10
@@ -130,3 +76,22 @@ class ThreadPoolTest(TestCase):
         self.assertEqual(mock_thread.call_count, 10)
 
         self.assertEqual(len(self.thread_pool._threads), 10)
+
+    def test_num_threads_getter(self):
+        self.assertEqual(self.thread_pool.num_threads, self.thread_pool._num_threads)
+
+    def test_task_queue_getter(self):
+        expected = [MagicMock(), MagicMock()]
+        self.thread_pool._queue.queue = deque(expected)
+        result = self.thread_pool.task_queue
+
+        self.assertEqual(result, expected)
+        self.assertNotEqual(id(result), id(expected))
+
+    def test_threads_getter(self):
+        expected = [MagicMock(), MagicMock()]
+        self.thread_pool._threads = expected
+        result = self.thread_pool.threads
+
+        self.assertEqual(result, expected)
+        self.assertNotEqual(id(result), id(expected))

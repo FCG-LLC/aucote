@@ -25,15 +25,15 @@ class UserAPITest(AsyncHTTPTestCase):
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         self.assertEqual(json.loads(response.body.decode()), expected)
 
+    @patch('api.main_handler.MainHandler.thread_pool_status')
     @patch('api.main_handler.MainHandler.storage_status')
     @patch('api.main_handler.MainHandler.scanning_status')
-    def test_aucote_status(self, mock_scan_info, storage_status):
+    def test_aucote_status(self, mock_scan_info, storage_status, thread_pool_status):
+        thread_pool_status.return_value = {'test': 'test_2'}
         storage_status.return_value = 'test_storage'
 
         result = self.handler.aucote_status()
-        expected = self.aucote.thread_pool.stats
-        expected['scanner'] = mock_scan_info.return_value
-        expected['storage'] = 'test_storage'
+        expected = {'test': 'test_2', 'scanner': mock_scan_info.return_value, 'storage': 'test_storage'}
 
         self.assertEqual(result, expected)
 
@@ -90,6 +90,60 @@ class UserAPITest(AsyncHTTPTestCase):
 
         expected = {
             'path': 'test_filename'
+        }
+
+        self.assertDictEqual(result, expected)
+
+    @patch('api.main_handler.MainHandler.thread_pool_thread_status')
+    @patch('api.main_handler.MainHandler.task_status')
+    def test_stats(self, mock_status, thread_pool_thread_status):
+        thread_pool = MagicMock()
+
+        thread1 = MagicMock()
+        thread2 = MagicMock()
+        thread3 = MagicMock(task=None)
+        thread4 = MagicMock()
+
+        thread_pool.threads = [thread1, thread2, thread3]
+        thread_pool.task_queue = [thread4]
+        thread_pool.num_threads = 123
+
+        expected = {
+            'queue': [
+                mock_status.return_value
+            ],
+            'threads': [
+                thread_pool_thread_status.return_value,
+                thread_pool_thread_status.return_value
+            ],
+            'queue_length': 1,
+            'threads_length': 2,
+            'threads_limit': 123
+        }
+
+        result = self.handler.thread_pool_status(thread_pool)
+
+        self.assertDictEqual(result, expected)
+
+    @patch('utils.threads.time.time', MagicMock(return_value=300))
+    def test_thread_status(self):
+        thread = MagicMock()
+        thread.start_time = 100
+
+        result = MainHandler.thread_pool_thread_status(thread)
+        expected = MainHandler.task_status(thread.task)
+        expected['start_time'] = 100
+        expected['duration'] = 200
+
+        self.assertEqual(result, expected)
+
+    def test_get_task_info(self):
+        task = MagicMock()
+
+        result = MainHandler.task_status(task)
+        expected = {
+            'type': 'MagicMock',
+            'data': task.get_info.return_value
         }
 
         self.assertDictEqual(result, expected)

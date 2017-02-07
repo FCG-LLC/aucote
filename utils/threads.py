@@ -3,7 +3,7 @@ File containing Threads-related functionality
 """
 from queue import Queue
 import logging as log
-from threading import Thread
+from threading import Thread, Lock
 import time
 
 
@@ -17,8 +17,9 @@ class ThreadPool(object):
         Args:
             num_threads(int) - number of threads in the pool
         """
+        self._lock = Lock()
         self._queue = Queue() #thread safe
-        self._threads = []
+        self.threads = []
         self._num_threads = num_threads
         self._name = name
 
@@ -33,7 +34,7 @@ class ThreadPool(object):
         """
         Start threads
         """
-        self._threads = [Thread(target=self._worker, args=[number]) for number in range(0, self._num_threads)]
+        self.threads = [Thread(target=self._worker, args=[number]) for number in range(0, self._num_threads)]
         for num, thread in enumerate(self._threads):
             thread.name = "%s%02d"%(self._name, num)
             thread.task = None
@@ -98,59 +99,20 @@ class ThreadPool(object):
         return self._queue.unfinished_tasks
 
     @property
-    def stats(self):
-        """
-        Simple statistics
+    def num_threads(self):
+        return self._num_threads
 
-        Returns:
-            Dict with simple statistics
+    @property
+    def threads(self):
+        with self._lock:
+            return self._threads[:]
 
-        """
-        return_value = {'queue': [], 'threads': []}
+    @threads.setter
+    def threads(self, val):
+        with self._lock:
+            self._threads = val
 
-        for thread in self._threads:
-            if thread.task is None:
-                continue
-            return_value['threads'].append(self.get_thread_info(thread))
-
-        for task in self._queue.queue:
-            return_value['queue'].append(self.get_task_info(task))
-
-        return_value['queue_length'] = len(return_value['queue'])
-        return_value['threads_length'] = len(return_value['threads'])
-        return_value['threads_limit'] = self._num_threads
-
-        return return_value
-
-    @classmethod
-    def get_task_info(cls, task):
-        """
-        Returns informations about task
-
-        Args:
-            task:
-
-        Returns:
-            dict
-        """
-        return {
-            'type': type(task).__name__,
-            'data': task.get_info(),
-        }
-
-    @classmethod
-    def get_thread_info(cls, thread):
-        """
-        Returns dict with info about thread
-
-        Args:
-            thread:
-
-        Returns:
-            dict
-        """
-        return_value = cls.get_task_info(thread.task)
-        return_value['start_time'] = thread.start_time
-        return_value['duration'] = time.time() - thread.start_time
-
-        return return_value
+    @property
+    def task_queue(self):
+        with self._lock:
+            return list(self._queue.queue)
