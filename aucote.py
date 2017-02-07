@@ -11,6 +11,7 @@ import sys
 import fcntl
 
 import signal
+from threading import Lock
 
 from tornado.ioloop import IOLoop
 
@@ -99,6 +100,7 @@ class Aucote(object):
     """
 
     def __init__(self, exploits, kudu_queue, tools_config):
+        self.lock = Lock()
         self.exploits = exploits
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
@@ -127,7 +129,8 @@ class Aucote(object):
             Storage
 
         """
-        return self._storage_thread
+        with self.lock:
+            return self._storage_thread
 
     @property
     def thread_pool(self):
@@ -149,24 +152,27 @@ class Aucote(object):
         """
 
         try:
-            self._storage_thread = StorageThread(filename=cfg.get('service.scans.storage'))
-            self._storage_thread.start()
+            with self.lock:
+                self._storage_thread = StorageThread(filename=cfg.get('service.scans.storage'))
+                self._storage_thread.start()
 
             if as_service:
                 self._watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
                 self._watch_thread.start()
 
-            self._scan_thread = ScanThread(aucote=self, as_service=as_service)
-            self._scan_thread.start()
+            with self.lock:
+                self._scan_thread = ScanThread(aucote=self, as_service=as_service)
+                self._scan_thread.start()
+
             self.thread_pool.start()
             self.web_server.start()
 
-            self._scan_thread.join()
+            self.scan_thread.join()
             self.thread_pool.join()
 
             self.thread_pool.stop()
-            self._storage_thread.stop()
-            self._storage_thread.join()
+            self.storage.stop()
+            self.storage.join()
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")
@@ -223,6 +229,11 @@ class Aucote(object):
         stats['scanner'] = self._scan_thread.get_info()
         stats['storage'] = self._storage_thread.get_info()
         return stats
+
+    @property
+    def scan_thread(self):
+        with self.lock:
+            return self._scan_thread
 
     @property
     def unfinished_tasks(self):
