@@ -3,8 +3,8 @@ Provide class for tasks
 
 """
 import logging as log
-
 import time
+from multiprocessing import Lock
 
 from database.serializer import Serializer
 
@@ -19,6 +19,7 @@ class Task(object):
         Assign executor
 
         """
+        self._lock = Lock()
         self.executor = executor
         self.creation_time = time.time()
 
@@ -117,13 +118,3 @@ class Task(object):
             None
         """
         return self.executor.storage
-
-    def get_info(self):
-        """
-        Obtain information related to task
-
-        Returns:
-            dict
-
-        """
-        return None

@@ -24,17 +24,5 @@ class PortTaskTest(TestCase):
         self.task.current_exploits = [MagicMock(), MagicMock()]
         self.assertEqual(self.task.exploit, None)
 
-    @patch('tools.common.port_task.time.time', MagicMock(return_value=123))
-    def test_get_info(self):
-        self.task.creation_time = 23
-        result = self.task.get_info()
-        expected = {
-            "port": str(self.port),
-            "exploits": [self.exploit.name],
-            "lifetime": 100
-        }
-
-        self.assertDictEqual(result, expected)
-
     def test_get_vulnerabilities(self):
         self.assertRaises(NotImplementedError, self.task.get_vulnerabilities, [])

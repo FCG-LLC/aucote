@@ -25,7 +25,7 @@ class PortTask(Task):
         """
         super().__init__(*args, **kwargs)
         self._port = port
-        self.current_exploits = exploits
+        self._current_exploits = exploits
 
     @property
     def exploit(self):
@@ -40,13 +40,6 @@ class PortTask(Task):
             return next(iter(self.current_exploits))
         return None
 
-    def get_info(self):
-        return {
-            'port': str(self._port),
-            'exploits': [exploit.name for exploit in self.current_exploits],
-            'lifetime': time.time()-self.creation_time
-        }
-
     def get_vulnerabilities(self, results):
         """
         Gets vulnerabilities based upon results
@@ -59,3 +52,18 @@ class PortTask(Task):
 
         """
         raise NotImplementedError
+
+    @property
+    def current_exploits(self):
+        with self._lock:
+            return self._current_exploits
+
+    @current_exploits.setter
+    def current_exploits(self, val):
+        with self._lock:
+            self._current_exploits = val
+
+    @property
+    def port(self):
+        with self._lock:
+            return self._port

@@ -1,8 +1,14 @@
+import ipaddress
 import json
 from unittest.mock import MagicMock, patch
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 from api.main_handler import MainHandler
+from fixtures.exploits import Exploit
+from scans.executor import Executor
+from structs import Port, Node
+from tools.base import Tool
+from tools.common.port_task import PortTask
 from utils import Config
 
 
@@ -137,13 +143,73 @@ class UserAPITest(AsyncHTTPTestCase):
 
         self.assertEqual(result, expected)
 
-    def test_get_task_info(self):
+    @patch('api.main_handler.MainHandler.detailed_task_status')
+    def test_get_task_info(self, mock_status):
         task = MagicMock()
 
         result = MainHandler.task_status(task)
         expected = {
             'type': 'MagicMock',
-            'data': task.get_info.return_value
+            'data': mock_status.return_value
+        }
+
+        self.assertDictEqual(result, expected)
+
+    def test_detailed_task_status_tool(self):
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=12)
+        port = Port(node=node, number=20, transport_protocol=None)
+
+        task = Tool(config=None, executor=None, exploits=None, port=port)
+
+        result = MainHandler.detailed_task_status(task)
+        expected = {
+            'port': str(port)
+        }
+
+        self.assertDictEqual(result, expected)
+
+    @patch('api.main_handler.time.time', MagicMock(side_effect=(100, 120, 170)))
+    def test_detailed_task_status_port_task(self):
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=12)
+        port = Port(node=node, number=20, transport_protocol=None)
+        exploits = [
+            Exploit(exploit_id=1, name='test_1'),
+            Exploit(exploit_id=1, name='test_2'),
+            Exploit(exploit_id=1, name='test_3'),
+            Exploit(exploit_id=1, name='test_4'),
+            Exploit(exploit_id=1, name='test_5'),
+        ]
+
+        task = PortTask(executor=None, exploits=exploits, port=port)
+
+        result = MainHandler.detailed_task_status(task)
+        expected = {
+            'port': str(port),
+            'exploits': ['test_1', 'test_2', 'test_3', 'test_4', 'test_5', ],
+            'lifetime': 50
+        }
+
+        self.assertDictEqual(result, expected)
+
+    @patch('scans.executor.cfg', new_callable=Config)
+    def test_detailed_task_status_executor(self, cfg):
+        cfg._cfg = {
+            'service': {
+                'scans': {
+                    'broadcast': False
+                }
+            }
+        }
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=12)
+        ports = [
+            Port(node=node, number=20, transport_protocol=None),
+            Port(node=node, number=22, transport_protocol=None),
+            Port(node=node, number=24, transport_protocol=None)]
+        task = Executor(aucote=MagicMock(), nodes=ports)
+
+        result = MainHandler.detailed_task_status(task)
+        expected = {
+            'nodes': ['127.0.0.1:20', '127.0.0.1:22', '127.0.0.1:24']
         }
 
         self.assertDictEqual(result, expected)

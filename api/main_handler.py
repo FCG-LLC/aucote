@@ -5,6 +5,11 @@ Handler responsible for returns status of aucote
 from api.handler import Handler
 from aucote_cfg import cfg
 import time
+import logging as log
+
+from scans.executor import Executor
+from tools.base import Tool
+from tools.common.port_task import PortTask
 
 
 class MainHandler(Handler):
@@ -113,7 +118,7 @@ class MainHandler(Handler):
         """
         return {
             'type': type(task).__name__,
-            'data': task.get_info(),
+            'data': cls.detailed_task_status(task),
         }
 
     @classmethod
@@ -130,5 +135,21 @@ class MainHandler(Handler):
         return_value = cls.task_status(thread.task)
         return_value['start_time'] = thread.start_time
         return_value['duration'] = time.time() - thread.start_time
+
+        return return_value
+
+    @classmethod
+    def detailed_task_status(cls, task):
+        return_value = {}
+
+        if isinstance(task, (Tool, PortTask)):
+            return_value['port'] = str(task.port)
+
+        if isinstance(task, Executor):
+            return_value['nodes'] = [str(node) for node in task.ports]
+
+        if isinstance(task, PortTask):
+            return_value['lifetime'] = time.time() - task.creation_time
+            return_value['exploits'] = [exploit.name for exploit in task.current_exploits]
 
         return return_value

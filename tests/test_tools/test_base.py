@@ -37,11 +37,3 @@ class ToolTest(TestCase):
         result = Tool.get_config('key')
 
         self.assertEqual(result, expected)
-
-    def test_get_info(self):
-        result = self.tool.get_info()
-        expected = {
-            "port": str(self.port)
-        }
-
-        self.assertDictEqual(result, expected)

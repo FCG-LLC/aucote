@@ -140,18 +140,6 @@ class Executor(object):
 
         return ports
 
-    def get_info(self):
-        """
-        Obtain information related to executor
-
-        Returns:
-            dict
-
-        """
-        return {
-            'nodes': [str(node) for node in self.ports],
-        }
-
     @property
     def ports(self):
         with self.lock:

@@ -70,18 +70,6 @@ class Tool(object):
         except KeyError:
             raise ImproperConfigurationException(key)
 
-    def get_info(self):
-        """
-        Obtain information related to tool
-
-        Returns:
-            dict
-
-        """
-        return {
-            'port': str(self.port)
-        }
-
     @property
     def port(self):
         with self.lock:
