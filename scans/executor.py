@@ -5,6 +5,8 @@ This is main module of aucote scanning functionality.
 import logging as log
 import time
 
+from multiprocessing import Lock
+
 from aucote_cfg import cfg
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.time import parse_period
@@ -23,6 +25,8 @@ class Executor(object):
 
         """
         self.aucote = aucote
+        self.lock = Lock()
+        self._ports = []
         self.ports = nodes or []
         if cfg.get('service.scans.broadcast'):
             broadcast_port = BroadcastPort()
@@ -147,3 +151,13 @@ class Executor(object):
         return {
             'nodes': [str(node) for node in self.ports],
         }
+
+    @property
+    def ports(self):
+        with self.lock:
+            return self._ports
+
+    @ports.setter
+    def ports(self, val):
+        with self.lock:
+            self._ports = val

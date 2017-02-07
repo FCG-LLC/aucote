@@ -5,7 +5,7 @@ This module contains class responsible for scanning.
 import ipaddress
 import json
 import sched
-from threading import Thread
+from threading import Thread, Lock
 from urllib.error import URLError
 import urllib.request as http
 import logging as log
@@ -33,9 +33,10 @@ class ScanThread(Thread):
         super(ScanThread, self).__init__()
         self.scheduler = sched.scheduler(time.time)
         self.as_service = as_service
-        self.current_scan = []
+        self._current_scan = []
         self.name = "Scanner"
         self.aucote = aucote
+        self.lock = Lock()
 
         try:
             self.cron = croniter(cfg.get('service.scans.cron'), time.time())
@@ -231,8 +232,27 @@ class ScanThread(Thread):
         """
         return {
             'nodes': [str(node.ip) for node in self.current_scan],
-            'scheduler': [{'action': task.action.__name__, 'time': task.time} for task in self.scheduler.queue],
+            'scheduler': [{'action': task.action.__name__, 'time': task.time} for task in self.tasks],
             'networks': cfg.get('service.scans.networks').cfg,
             'ports': cfg.get('service.scans.ports'),
-            'previous_scan': croniter(cfg.get('service.scans.cron'), time.time()).get_prev()
+            'previous_scan': self.previous_scan
         }
+
+    @property
+    def current_scan(self):
+        with self.lock:
+            return self._current_scan[:]
+
+    @current_scan.setter
+    def current_scan(self, val):
+        with self.lock:
+            self._current_scan = val
+
+    @property
+    def previous_scan(self):
+        return croniter(cfg.get('service.scans.cron'), time.time()).get_prev()
+
+    @property
+    def tasks(self):
+        with self.lock:
+            return self.scheduler.queue[:]

@@ -2,6 +2,8 @@
 Defines abstract Tool class
 
 """
+from multiprocessing import Lock
+
 from aucote_cfg import cfg
 from utils.exceptions import ImproperConfigurationException
 
@@ -22,6 +24,8 @@ class Tool(object):
             config: tool configuration
 
         """
+        self.lock = Lock()
+        self._port = None
         self.executor = executor
         self.exploits = exploits
         self.config = config
@@ -77,3 +81,13 @@ class Tool(object):
         return {
             'port': str(self.port)
         }
+
+    @property
+    def port(self):
+        with self.lock:
+            return self._port
+
+    @port.setter
+    def port(self, val):
+        with self.lock:
+            self._port = val
