@@ -18,4 +18,17 @@ class MainHandler(Handler):
             None - writes aucote status in JSON
 
         """
-        self.write(self.aucote.get_status())
+        self.write(self.aucote_status())
+
+    def aucote_status(self):
+        """
+        Get current status of aucote tasks
+
+        Returns:
+            dict
+
+        """
+        stats = self.aucote.thread_pool.stats
+        stats['scanner'] = self.aucote.scan_thread.get_info()
+        stats['storage'] = self.aucote.storage.get_info()
+        return stats

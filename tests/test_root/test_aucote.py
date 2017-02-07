@@ -208,15 +208,3 @@ class AucoteTest(TestCase):
 
     def test_unfinished_tasks(self):
         self.assertEqual(self.aucote.unfinished_tasks, self.aucote.thread_pool.unfinished_tasks)
-
-    def test_get_stats(self):
-        self.aucote._scan_thread = MagicMock()
-        self.aucote._storage_thread = MagicMock()
-        self.aucote._thread_pool = MagicMock()
-        result = self.aucote.get_status()
-
-        expected = self.aucote._thread_pool.stats
-        expected['scanner'] = self.aucote._scan_thread.get_info()
-        expected['storage'] = self.aucote._storage_thread.get_info()
-
-        self.assertEqual(result, expected)

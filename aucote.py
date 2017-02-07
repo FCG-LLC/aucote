@@ -217,19 +217,6 @@ class Aucote(object):
         log.error("Received signal %s at frame %s. Exiting.", sig, frame)
         self.kill()
 
-    def get_status(self):
-        """
-        Get current status of aucote tasks
-
-        Returns:
-            dict
-
-        """
-        stats = self.thread_pool.stats
-        stats['scanner'] = self._scan_thread.get_info()
-        stats['storage'] = self._storage_thread.get_info()
-        return stats
-
     @property
     def scan_thread(self):
         with self.lock:
