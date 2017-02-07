@@ -66,7 +66,7 @@ class TaskMapper:
                 except KeyError:
                     app_networks = None
 
-                for exploit in exploits:
+                for exploit in reversed(exploits):
                     networks = script_networks.get(exploit.name, None)
 
                     if networks is None:
