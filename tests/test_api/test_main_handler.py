@@ -1,3 +1,4 @@
+import json
 from unittest.mock import MagicMock, patch
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
@@ -10,10 +11,10 @@ class UserAPITest(AsyncHTTPTestCase):
         self.app = Application([('/', MainHandler, {'aucote': self.aucote})])
         return self.app
 
-    @patch('api.main_handler.json.dumps')
-    def test_user_profile_annoymous(self, mock_json):
-        mock_json.return_value = "test"
+    def test_user_profile_anonymous(self):
+        expected = {"test": "test_value"}
+        self.aucote.get_status.return_value = expected
         response = self.fetch('/', method='GET')
-        mock_json.assert_called_once_with(self.aucote.get_status.return_value, indent=2)
-        self.assertEqual(response.body, b"test")
-        self.assertEqual(response.headers['Content-Type'], "application/json")
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
+        self.assertEqual(json.loads(response.body.decode()), expected)

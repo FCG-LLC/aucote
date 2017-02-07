@@ -2,8 +2,6 @@
 Handler responsible for returns status of aucote
 
 """
-import json
-
 from api.handler import Handler
 
 
@@ -20,5 +18,4 @@ class MainHandler(Handler):
             None - writes aucote status in JSON
 
         """
-        self.set_header("Content-Type", "application/json")
-        self.write(json.dumps(self.aucote.get_status(), indent=2))
+        self.write(self.aucote.get_status())
