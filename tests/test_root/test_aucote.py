@@ -75,7 +75,7 @@ class AucoteTest(TestCase):
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.StorageThread')
     @patch('aucote.ScanThread')
-    @patch('aucote.WebServer', MagicMock())
+    @patch('aucote.WebServerThread', MagicMock())
     def test_scan(self, mock_scan_tasks, mock_storage_task):
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()

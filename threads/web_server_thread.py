@@ -3,6 +3,7 @@ Web server for API
 
 """
 import socket
+from threading import Thread
 
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -13,18 +14,20 @@ from api.kill_handler import KillHandler
 from api.main_handler import MainHandler
 
 
-class WebServer(object):
+class WebServerThread(Thread):
     """
     Web server
 
     """
-    def __init__(self, aucote, host, port):
+    def __init__(self, aucote, host, port, *args, **kwargs):
+        super(WebServerThread, self).__init__(*args, **kwargs)
         self.server = None
         self.port = port
         self.host = host
         self.aucote = aucote
+        self.name = "WebServer"
 
-    def start(self):
+    def run(self):
         """
         Start server
 
