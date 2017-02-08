@@ -1,12 +1,11 @@
 """
-Handler responsible for returns status of aucote
+Handler responsible for returning status of aucote
 
 """
+import time
+
 from api.handler import Handler
 from aucote_cfg import cfg
-import time
-import logging as log
-
 from scans.executor import Executor
 from tools.base import Tool
 from tools.common.port_task import PortTask
@@ -43,7 +42,10 @@ class MainHandler(Handler):
     @classmethod
     def scanning_status(cls, scan_thread):
         """
-        Information about current scans
+        Information about scan
+
+        Args:
+            scan_thread (ScanThread):
 
         Returns:
             dict
@@ -59,6 +61,16 @@ class MainHandler(Handler):
 
     @classmethod
     def scheduler_task_status(cls, task):
+        """
+        Returns information about schedulers task
+
+        Args:
+            task : named tuple representing scheduler task
+
+        Returns:
+            dict
+
+        """
         return {
             'action': task.action.__name__,
             'time': task.time
@@ -67,7 +79,10 @@ class MainHandler(Handler):
     @classmethod
     def storage_status(cls, storage):
         """
-        Informations about storage status
+        Returns information about storage
+
+        Args:
+            storage (StorageThread):
 
         Returns:
             dict
@@ -108,13 +123,14 @@ class MainHandler(Handler):
     @classmethod
     def task_status(cls, task):
         """
-        Returns informations about task
+        Returns information about task
 
         Args:
-            task:
+            task(Task):
 
         Returns:
             dict
+
         """
         return {
             'type': type(task).__name__,
@@ -127,10 +143,11 @@ class MainHandler(Handler):
         Returns dict with info about thread
 
         Args:
-            thread:
+            thread(Thread):
 
         Returns:
             dict
+
         """
         return_value = cls.task_status(thread.task)
         return_value['start_time'] = thread.start_time
@@ -140,6 +157,16 @@ class MainHandler(Handler):
 
     @classmethod
     def detailed_task_status(cls, task):
+        """
+        Returns information about task
+
+        Args:
+            task (Task):
+
+        Returns:
+            dict
+
+        """
         return_value = {}
 
         if isinstance(task, (Tool, PortTask)):

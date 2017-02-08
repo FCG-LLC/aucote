@@ -55,6 +55,7 @@ class Tool(object):
     def get_config(cls, key):
         """
         Get configuration in suitable format (dict, list)
+
         Args:
             key (str): configuration key
 
@@ -72,6 +73,13 @@ class Tool(object):
 
     @property
     def port(self):
+        """
+        Port, which is under testing
+
+        Returns:
+            Port
+
+        """
         with self.lock:
             return self._port
 

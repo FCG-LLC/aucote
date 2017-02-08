@@ -261,6 +261,13 @@ class StorageThread(Thread):
 
     @property
     def filename(self):
+        """
+        Return storage filename
+
+        Returns:
+            str
+
+        """
         with self._lock:
             return self._filename
 

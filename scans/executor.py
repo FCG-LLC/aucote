@@ -142,6 +142,13 @@ class Executor(object):
 
     @property
     def ports(self):
+        """
+        List of ports
+
+        Returns:
+            list - list of Ports
+
+        """
         with self.lock:
             return self._ports[:]
 

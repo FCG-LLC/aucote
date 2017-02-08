@@ -5,8 +5,6 @@ import logging as log
 from logging.handlers import RotatingFileHandler
 import sys
 
-from os import getpid
-
 _LOG_LEVEL = {
     'critical': log.CRITICAL,
     'error': log.ERROR,

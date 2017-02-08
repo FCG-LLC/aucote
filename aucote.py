@@ -219,6 +219,13 @@ class Aucote(object):
 
     @property
     def scan_thread(self):
+        """
+        Scan thread
+
+        Returns:
+            ScanThread
+
+        """
         with self.lock:
             return self._scan_thread
 

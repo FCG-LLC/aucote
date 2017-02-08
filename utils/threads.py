@@ -8,6 +8,10 @@ import time
 
 
 class Worker(Thread):
+    """
+    Worker responsible for executing task from ThreadPool task queue
+
+    """
     def __init__(self, queue, *args, **kwargs):
         super(Worker, self).__init__(*args, **kwargs)
         self._task = None
@@ -44,6 +48,12 @@ class Worker(Thread):
 
     @property
     def task(self):
+        """
+        Currently executing task
+
+        Returns:
+
+        """
         with self._lock:
             return self._task
 
@@ -54,6 +64,12 @@ class Worker(Thread):
 
     @property
     def start_time(self):
+        """
+        Current task execution start time
+
+        Returns:
+
+        """
         with self._lock:
             return self._start_time
 
@@ -75,7 +91,7 @@ class ThreadPool(object):
         """
         self._lock = Lock()
         self._queue = Queue() #thread safe
-        self.threads = []
+        self._threads = []
         self._num_threads = num_threads
         self._name = name
 
@@ -127,10 +143,23 @@ class ThreadPool(object):
 
     @property
     def num_threads(self):
+        """
+        Number of used threads
+
+        Returns:
+            int
+        """
         return self._num_threads
 
     @property
     def threads(self):
+        """
+        List of threads
+
+        Returns:
+            list
+
+        """
         with self._lock:
             return self._threads[:]
 
@@ -141,5 +170,12 @@ class ThreadPool(object):
 
     @property
     def task_queue(self):
+        """
+        List of task waiting in queue
+
+        Returns:
+            list
+
+        """
         with self._lock:
             return list(self._queue.queue)

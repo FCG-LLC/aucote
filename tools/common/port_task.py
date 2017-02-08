@@ -2,8 +2,6 @@
 This module contains task related to port.
 
 """
-import time
-
 from utils.task import Task
 
 
@@ -55,8 +53,15 @@ class PortTask(Task):
 
     @property
     def current_exploits(self):
+        """
+        List of exploits, which are used by task
+
+        Returns:
+            list
+
+        """
         with self._lock:
-            return self._current_exploits
+            return self._current_exploits[:]
 
     @current_exploits.setter
     def current_exploits(self, val):
@@ -65,5 +70,12 @@ class PortTask(Task):
 
     @property
     def port(self):
+        """
+        Port
+
+        Returns:
+            Port
+
+        """
         with self._lock:
             return self._port

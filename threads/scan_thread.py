@@ -224,6 +224,13 @@ class ScanThread(Thread):
 
     @property
     def current_scan(self):
+        """
+        List of currently scan nodes
+
+        Returns:
+            list
+
+        """
         with self.lock:
             return self._current_scan[:]
 
@@ -234,9 +241,23 @@ class ScanThread(Thread):
 
     @property
     def previous_scan(self):
+        """
+        Returns previous scan timestamp
+
+        Returns:
+            float
+
+        """
         return croniter(cfg.get('service.scans.cron'), time.time()).get_prev()
 
     @property
     def tasks(self):
+        """
+        List of tasks in scheduler
+
+        Returns:
+            list
+
+        """
         with self.lock:
             return self.scheduler.queue[:]
