@@ -6,6 +6,7 @@ import socket
 
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
+from tornado.netutil import bind_sockets
 from tornado.web import Application
 
 from api.kill_handler import KillHandler
@@ -32,16 +33,10 @@ class WebServer(object):
 
         """
         app = self.make_app()
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.setblocking(0)
-        sock.bind((self.host, self.port))
-        sock.listen(5)
-
+        sockets = bind_sockets(self.port, address=self.host, reuse_port=True)
         self.server = HTTPServer(app)
-        self.server.add_socket(sock)
-
-        IOLoop.instance().start()
+        self.server.add_sockets(sockets)
+        IOLoop.current().start()
 
     def stop(self):
         """
@@ -61,7 +56,7 @@ class WebServer(object):
         Create application
 
         Returns:
-            None
+            Application
 
         """
         return Application([

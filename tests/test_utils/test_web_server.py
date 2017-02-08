@@ -12,21 +12,15 @@ class WebServerTest(TestCase):
         self.aucote = MagicMock()
         self.web_server = WebServer(self.aucote, self.host, self.port)
 
-    @patch('utils.web_server.socket.socket.listen')
-    @patch('utils.web_server.socket.socket.bind')
+    @patch('utils.web_server.bind_sockets')
     @patch('utils.web_server.IOLoop')
     @patch('utils.web_server.HTTPServer')
-    def test_start(self, mock_server, mock_ioloop, sock_bind, sock_listen):
+    def test_start(self, mock_server, mock_ioloop, sock_bind):
         self.web_server.start()
 
-        sock = mock_server.return_value.add_socket.call_args[0][0]
-
-        self.assertEqual(sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR), 1)
-        self.assertEqual(sock.proto, socket.IPPROTO_TCP)
-        self.assertEqual(sock.family, socket.AF_INET)
-        self.assertTrue(sock.type & socket.SOCK_STREAM)
-        self.assertEqual(sock.getsockopt(socket.SOL_SOCKET, socket.EWOULDBLOCK), 0)
-        sock_bind.assert_called_once_with((self.host, self.port))
+        sock_bind.assert_called_once_with(self.web_server.port, reuse_port=True, address=self.web_server.host)
+        self.web_server.server.add_sockets.assert_called_once_with(sock_bind.return_value)
+        self.assertEqual(self.web_server.server, mock_server.return_value)
 
     @patch('utils.web_server.IOLoop')
     def test_stop(self, mock_ioloop):
