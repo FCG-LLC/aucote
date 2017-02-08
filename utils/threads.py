@@ -7,6 +7,62 @@ from threading import Thread, Lock
 import time
 
 
+class Worker(Thread):
+    def __init__(self, queue, *args, **kwargs):
+        super(Worker, self).__init__(*args, **kwargs)
+        self._task = None
+        self._lock = Lock()
+        self._queue = queue
+        self._start_time = None
+
+    def run(self):
+        while True:
+            task = self._queue.get()
+
+            if task is None:
+                log.debug("finishing thread.")
+                self.task = None
+                self.start_time = None
+                self._queue.task_done()
+                return
+
+            self.task = task
+            self.start_time = time.time()
+
+            try:
+                log.debug("Task %s starting", task)
+                start_time = time.monotonic()
+                task()
+                log.debug('Task %s finished, took %s seconds. %i task left', task, time.monotonic() - start_time,
+                          self._queue.unfinished_tasks)
+            except Exception:
+                log.exception('Exception while running %s', task)
+            finally:
+                self.task = None
+                self.start_time = None
+                self._queue.task_done()
+
+    @property
+    def task(self):
+        with self._lock:
+            return self._task
+
+    @task.setter
+    def task(self, val):
+        with self._lock:
+            self._task = val
+
+    @property
+    def start_time(self):
+        with self._lock:
+            return self._start_time
+
+    @start_time.setter
+    def start_time(self, val):
+        with self._lock:
+            self._start_time = val
+
+
 class ThreadPool(object):
     """
     Provides a pool of threads and a queue to execute callable tasks.
@@ -34,10 +90,9 @@ class ThreadPool(object):
         """
         Start threads
         """
-        self.threads = [Thread(target=self._worker, args=[number]) for number in range(0, self._num_threads)]
+        self.threads = [Worker(queue=self._queue) for _ in range(0, self._num_threads)]
         for num, thread in enumerate(self._threads):
             thread.name = "%s%02d"%(self._name, num)
-            thread.task = None
             thread.daemon = True
             thread.start()
 
@@ -58,34 +113,6 @@ class ThreadPool(object):
 
         """
         self._queue.join()
-
-    def _worker(self, number):
-        while True:
-            task = self._queue.get()
-
-            if task is None:
-                log.debug("finishing thread.")
-                self._threads[number].task = None
-                self._threads[number].start_time = None
-                self._queue.task_done()
-                return
-
-            self._threads[number].task = task
-            self._threads[number].start_time = time.time()
-
-            try:
-                log.debug("Task %s starting", task)
-                start_time = time.monotonic()
-                task()
-                log.debug('Task %s finished, took %s seconds. %i task left', task, time.monotonic() - start_time,
-                          self._queue.unfinished_tasks)
-            except Exception:
-                log.exception('Exception while running %s', task)
-            finally:
-                self._threads[number].task = None
-                self._threads[number].start_time = None
-                self._queue.task_done()
-
 
     @property
     def unfinished_tasks(self):
