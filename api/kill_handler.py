@@ -15,10 +15,11 @@ class KillHandler(Handler):
     """
     def post(self):
         """
-        Kills aucote
+        Kills aucote. Require password POST argument
 
         Returns:
             None - kill application
+
         """
         password = self.get_argument('password', None)
         if password is None or hashlib.sha512(password.encode()).hexdigest() != cfg.get('service.api.password'):
