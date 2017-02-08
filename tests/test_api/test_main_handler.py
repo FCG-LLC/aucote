@@ -31,15 +31,27 @@ class UserAPITest(AsyncHTTPTestCase):
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         self.assertEqual(json.loads(response.body.decode()), expected)
 
+    @patch('api.main_handler.MainHandler.metadata')
     @patch('api.main_handler.MainHandler.thread_pool_status')
     @patch('api.main_handler.MainHandler.storage_status')
     @patch('api.main_handler.MainHandler.scanning_status')
-    def test_aucote_status(self, mock_scan_info, storage_status, thread_pool_status):
+    def test_aucote_status(self, mock_scan_info, storage_status, thread_pool_status, metadata):
         thread_pool_status.return_value = {'test': 'test_2'}
         storage_status.return_value = 'test_storage'
+        metadata.return_value = 'test_meta'
 
         result = self.handler.aucote_status()
-        expected = {'test': 'test_2', 'scanner': mock_scan_info.return_value, 'storage': 'test_storage'}
+        expected = {'test': 'test_2', 'scanner': mock_scan_info.return_value, 'storage': 'test_storage',
+                    'meta': 'test_meta'}
+
+        self.assertEqual(result, expected)
+
+    @patch('api.main_handler.time.time', MagicMock(return_value=16.7))
+    def test_metadata(self):
+        result = MainHandler.metadata()
+        expected = {
+            'timestamp': 16.7
+        }
 
         self.assertEqual(result, expected)
 

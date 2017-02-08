@@ -37,7 +37,14 @@ class MainHandler(Handler):
         stats = self.thread_pool_status(self.aucote.thread_pool)
         stats['scanner'] = self.scanning_status(self.aucote.scan_thread)
         stats['storage'] = self.storage_status(self.aucote.storage)
+        stats['meta'] = self.metadata()
         return stats
+
+    @classmethod
+    def metadata(cls):
+        return {
+            'timestamp': time.time()
+        }
 
     @classmethod
     def scanning_status(cls, scan_thread):
