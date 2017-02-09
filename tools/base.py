@@ -2,7 +2,7 @@
 Defines abstract Tool class
 
 """
-from multiprocessing import Lock
+from threading import Lock
 
 from aucote_cfg import cfg
 from utils.exceptions import ImproperConfigurationException

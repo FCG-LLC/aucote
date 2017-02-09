@@ -4,7 +4,7 @@ Provide class for tasks
 """
 import logging as log
 import time
-from multiprocessing import Lock
+from threading import Lock
 
 from database.serializer import Serializer
 

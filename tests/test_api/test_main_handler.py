@@ -107,7 +107,6 @@ class UserAPITest(AsyncHTTPTestCase):
         result = MainHandler.storage_status(storage)
 
         expected = {
-            'path': 'test_filename'
         }
 
         self.assertDictEqual(result, expected)
@@ -132,10 +131,9 @@ class UserAPITest(AsyncHTTPTestCase):
             ],
             'threads': [
                 thread_pool_thread_status.return_value,
+                thread_pool_thread_status.return_value,
                 thread_pool_thread_status.return_value
             ],
-            'queue_length': 1,
-            'threads_length': 2,
             'threads_limit': 123
         }
 
@@ -151,7 +149,15 @@ class UserAPITest(AsyncHTTPTestCase):
         result = MainHandler.thread_pool_thread_status(thread)
         expected = MainHandler.task_status(thread.task)
         expected['start_time'] = 100
-        expected['duration'] = 200
+
+        self.assertEqual(result, expected)
+
+    def test_thread_status_task_is_none(self):
+        thread = MagicMock()
+        thread.task = None
+
+        result = MainHandler.thread_pool_thread_status(thread)
+        expected = {}
 
         self.assertEqual(result, expected)
 
@@ -198,7 +204,7 @@ class UserAPITest(AsyncHTTPTestCase):
         expected = {
             'port': str(port),
             'exploits': ['test_1', 'test_2', 'test_3', 'test_4', 'test_5', ],
-            'lifetime': 50
+            'creation_time': 120
         }
 
         self.assertDictEqual(result, expected)

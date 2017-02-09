@@ -96,7 +96,7 @@ class MainHandler(Handler):
 
         """
         return {
-            'path': storage.filename,
+
         }
 
     @classmethod
@@ -114,15 +114,11 @@ class MainHandler(Handler):
         return_value = {'queue': [], 'threads': []}
 
         for thread in thread_pool.threads:
-            if thread.task is None:
-                continue
             return_value['threads'].append(cls.thread_pool_thread_status(thread))
 
         for task in thread_pool.task_queue:
             return_value['queue'].append(cls.task_status(task))
 
-        return_value['queue_length'] = len(return_value['queue'])
-        return_value['threads_length'] = len(return_value['threads'])
         return_value['threads_limit'] = thread_pool.num_threads
 
         return return_value
@@ -156,9 +152,12 @@ class MainHandler(Handler):
             dict
 
         """
+        task = thread.task
+        if task is None:
+            return {}
+
         return_value = cls.task_status(thread.task)
         return_value['start_time'] = thread.start_time
-        return_value['duration'] = time.time() - thread.start_time
 
         return return_value
 
@@ -183,7 +182,7 @@ class MainHandler(Handler):
             return_value['nodes'] = [str(node) for node in task.ports]
 
         if isinstance(task, PortTask):
-            return_value['lifetime'] = time.time() - task.creation_time
+            return_value['creation_time'] = task.creation_time
             return_value['exploits'] = [exploit.name for exploit in task.current_exploits]
 
         return return_value

@@ -151,17 +151,15 @@ class Aucote(object):
         """
 
         try:
-            with self.lock:
-                self._storage_thread = StorageThread(filename=cfg.get('service.scans.storage'))
-                self._storage_thread.start()
+            self._storage_thread = StorageThread(filename=cfg.get('service.scans.storage'))
+            self._storage_thread.start()
 
             if as_service:
                 self._watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
                 self._watch_thread.start()
 
-            with self.lock:
-                self._scan_thread = ScanThread(aucote=self, as_service=as_service)
-                self._scan_thread.start()
+            self._scan_thread = ScanThread(aucote=self, as_service=as_service)
+            self._scan_thread.start()
 
             self.thread_pool.start()
             web_server = WebServerThread(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
@@ -176,6 +174,10 @@ class Aucote(object):
             self.thread_pool.stop()
             self.storage.stop()
             self.storage.join()
+
+            self._scan_thread = None
+            self._watch_thread = None
+            self._storage_thread = None
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")

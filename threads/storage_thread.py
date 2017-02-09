@@ -258,20 +258,3 @@ class StorageThread(Thread):
 
         """
         self.add_query(self._storage.create_tables())
-
-    @property
-    def filename(self):
-        """
-        Return storage filename
-
-        Returns:
-            str
-
-        """
-        with self._lock:
-            return self._filename
-
-    @filename.setter
-    def filename(self, val):
-        with self._lock:
-            self._filename = val

@@ -35,7 +35,7 @@ class WebServerThread(Thread):
             None
 
         """
-        app = self.make_app()
+        app = self._make_app()
         sockets = bind_sockets(self.port, address=self.host, reuse_port=True)
         self.server = HTTPServer(app)
         self.server.add_sockets(sockets)
@@ -54,7 +54,7 @@ class WebServerThread(Thread):
             self.server.stop()
             self.server = None
 
-    def make_app(self):
+    def _make_app(self):
         """
         Create application
 
