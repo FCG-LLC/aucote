@@ -148,7 +148,6 @@ class UserAPITest(AsyncHTTPTestCase):
 
         result = MainHandler.thread_pool_thread_status(thread)
         expected = MainHandler.task_status(thread.task)
-        expected['start_time'] = 100
 
         self.assertEqual(result, expected)
 
@@ -173,15 +172,19 @@ class UserAPITest(AsyncHTTPTestCase):
 
         self.assertDictEqual(result, expected)
 
+    @patch('api.main_handler.time.time', MagicMock(return_value=78))
     def test_detailed_task_status_tool(self):
         node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=12)
         port = Port(node=node, number=20, transport_protocol=None)
 
-        task = Tool(config=None, executor=None, exploits=None, port=port)
+        task = Tool(config=None, aucote=None, exploits=None, port=port)
+        task.start_time = 15
 
         result = MainHandler.detailed_task_status(task)
         expected = {
-            'port': str(port)
+            'port': str(port),
+            'start_time': 15,
+            'creation_time': 78
         }
 
         self.assertDictEqual(result, expected)
@@ -198,17 +201,19 @@ class UserAPITest(AsyncHTTPTestCase):
             Exploit(exploit_id=1, name='test_5'),
         ]
 
-        task = PortTask(executor=None, exploits=exploits, port=port)
+        task = PortTask(aucote=None, exploits=exploits, port=port)
 
         result = MainHandler.detailed_task_status(task)
         expected = {
             'port': str(port),
             'exploits': ['test_1', 'test_2', 'test_3', 'test_4', 'test_5', ],
-            'creation_time': 120
+            'creation_time': 120,
+            'start_time': None
         }
 
         self.assertDictEqual(result, expected)
 
+    @patch('api.main_handler.time.time', MagicMock(return_value=123))
     @patch('scans.executor.cfg', new_callable=Config)
     def test_detailed_task_status_executor(self, cfg):
         cfg._cfg = {
@@ -224,10 +229,13 @@ class UserAPITest(AsyncHTTPTestCase):
             Port(node=node, number=22, transport_protocol=None),
             Port(node=node, number=24, transport_protocol=None)]
         task = Executor(aucote=MagicMock(), nodes=ports)
+        task.start_time = 15
 
         result = MainHandler.detailed_task_status(task)
         expected = {
-            'nodes': ['127.0.0.1:20', '127.0.0.1:22', '127.0.0.1:24']
+            'nodes': ['127.0.0.1:20', '127.0.0.1:22', '127.0.0.1:24'],
+            'start_time': 15,
+            'creation_time': 123
         }
 
         self.assertDictEqual(result, expected)

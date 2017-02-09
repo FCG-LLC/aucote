@@ -19,20 +19,20 @@ class TaskMapper:
 
     """
 
-    def __init__(self, executor):
+    def __init__(self, aucote):
         """
         Args:
             executor (Executor): tasks executor
 
         """
-        self._executor = executor
+        self._aucote = aucote
 
     def assign_tasks(self, port, storage):
         """
         Assign tasks for a provided port
 
         """
-        scripts = self._executor.exploits.find_all_matching(port)
+        scripts = self._aucote.exploits.find_all_matching(port)
 
         for app, exploits in scripts.items():
             if not cfg.get('tools.{0}.enable'.format(app)):
@@ -77,18 +77,10 @@ class TaskMapper:
 
             log.info("Using %i exploits against %s", len(exploits), port)
             self.store_scan_details(port=port, exploits=exploits, storage=storage)
-            task = EXECUTOR_CONFIG['apps'][app]['class'](executor=self._executor, exploits=exploits, port=port.copy(),
+            task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, port=port.copy(),
                                                          config=EXECUTOR_CONFIG['apps'][app])
 
-            self.executor.add_task(task)
-
-    @property
-    def executor(self):
-        """
-        Returns: Executor
-
-        """
-        return self._executor
+            self._aucote.add_task(task)
 
     @property
     def exploits(self):
@@ -96,7 +88,7 @@ class TaskMapper:
         Executor's exploits
 
         """
-        return self._executor.exploits
+        return self._aucote.exploits
 
     @classmethod
     def store_scan_details(cls, port, exploits, storage):

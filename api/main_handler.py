@@ -9,6 +9,7 @@ from aucote_cfg import cfg
 from scans.executor import Executor
 from tools.base import Tool
 from tools.common.port_task import PortTask
+from utils.task import Task
 
 
 class MainHandler(Handler):
@@ -157,7 +158,6 @@ class MainHandler(Handler):
             return {}
 
         return_value = cls.task_status(thread.task)
-        return_value['start_time'] = thread.start_time
 
         return return_value
 
@@ -175,6 +175,10 @@ class MainHandler(Handler):
         """
         return_value = {}
 
+        if isinstance(task, Task):
+            return_value['start_time'] = task.start_time
+            return_value['creation_time'] = task.creation_time
+
         if isinstance(task, (Tool, PortTask)):
             return_value['port'] = str(task.port)
 
@@ -182,7 +186,6 @@ class MainHandler(Handler):
             return_value['nodes'] = [str(node) for node in task.ports]
 
         if isinstance(task, PortTask):
-            return_value['creation_time'] = task.creation_time
             return_value['exploits'] = [exploit.name for exploit in task.current_exploits]
 
         return return_value

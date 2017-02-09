@@ -70,7 +70,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 </nmaprun>'''
 
     def setUp(self):
-        self.executor = MagicMock()
+        self.aucote = MagicMock()
 
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         self.node_ipv6 = Node(ip=ipaddress.ip_address('::1'), node_id=None)
@@ -78,7 +78,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port = Port(number=22, transport_protocol=TransportProtocol.TCP, node=self.node)
         self.port_ipv6 = Port(number=22, node=self.node_ipv6, transport_protocol=TransportProtocol.TCP)
 
-        self.port_info = NmapPortInfoTask(executor=self.executor, port=self.port)
+        self.port_info = NmapPortInfoTask(aucote=self.aucote, port=self.port)
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
@@ -95,7 +95,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertIn(str(self.port.node.ip), result)
 
     def test_init(self):
-        self.assertEqual(self.port_info.executor, self.executor)
+        self.assertEqual(self.port_info.aucote, self.aucote)
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     def test_udp_scan(self):
@@ -136,8 +136,8 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port_info._port = BroadcastPort()
         self.port_info()
 
-        result = self.executor.task_mapper.assign_tasks.call_args[0]
-        expected = (BroadcastPort(), self.executor.storage)
+        result = self.aucote.task_mapper.assign_tasks.call_args[0]
+        expected = (BroadcastPort(), self.aucote.storage)
 
         self.assertEqual(result, expected)
 

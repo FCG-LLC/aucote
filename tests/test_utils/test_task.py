@@ -12,6 +12,7 @@ class TaskTest(TestCase):
     Testing task behaviour
     """
 
+    @patch('utils.task.time.time', MagicMock(return_value=17))
     def setUp(self):
         """
         Set up init variables
@@ -20,15 +21,15 @@ class TaskTest(TestCase):
         self.executor.kudu_queue = MagicMock()
         self.executor.exploits = MagicMock()
 
-        self.task = Task(executor=self.executor)
+        self.task = Task(aucote=self.executor)
 
     def test_init(self):
         """
         Test init and properties
         """
-        self.assertEqual(self.task.executor, self.executor)
+        self.assertEqual(self.task.aucote, self.executor)
+        self.assertEqual(self.task.creation_time, 17)
         self.assertEqual(self.task.kudu_queue, self.executor.kudu_queue)
-        self.assertEqual(self.task.exploits, self.executor.exploits)
 
     def test_call(self):
         """
@@ -50,7 +51,7 @@ class TaskTest(TestCase):
 
         self.task.store_scan_end(exploits=[exploit], port=port)
 
-        result = self.task.executor.storage.save_scans.call_args[1]
+        result = self.task.aucote.storage.save_scans.call_args[1]
 
         expected = {
             'exploits': [exploit],

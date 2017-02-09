@@ -40,7 +40,7 @@ class AucoteHttpHeadersTaskTest(TestCase):
     def setUp(self):
         self.port = Port(node=MagicMock(), transport_protocol=None, number=None)
         self.port.scan = Scan()
-        self.executor = MagicMock()
+        self.aucote = MagicMock()
         self.exploit = MagicMock()
         self.exploit.name = "test"
         self.config = {
@@ -49,7 +49,7 @@ class AucoteHttpHeadersTaskTest(TestCase):
             }
         }
         self.custom_headers = {'Accept-Encoding': 'gzip, deflate', 'User-Agent': 'test'}
-        self.task = AucoteHttpHeadersTask(port=self.port, executor=self.executor, exploits=[self.exploit],
+        self.task = AucoteHttpHeadersTask(port=self.port, aucote=self.aucote, exploits=[self.exploit],
                                           config=self.config)
 
     @patch('tools.aucote_http_headers.tasks.requests')
