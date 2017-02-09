@@ -59,7 +59,7 @@ class NmapPortInfoTask(PortTask):
 
         """
         if isinstance(self._port, (BroadcastPort, PhysicalPort)):
-            self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)
+            self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)
             return
 
         args = self.prepare_args()
@@ -84,4 +84,4 @@ class NmapPortInfoTask(PortTask):
 
         self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
 
-        self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)
+        self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)

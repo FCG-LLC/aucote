@@ -13,8 +13,6 @@ import fcntl
 import signal
 from threading import Lock
 
-from tornado.ioloop import IOLoop
-
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
 from scans.task_mapper import TaskMapper
@@ -100,7 +98,7 @@ class Aucote(object):
     """
 
     def __init__(self, exploits, kudu_queue, tools_config):
-        self.lock = Lock()
+        self._lock = Lock()
         self.exploits = exploits
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
@@ -128,7 +126,7 @@ class Aucote(object):
             Storage
 
         """
-        with self.lock:
+        with self._lock:
             return self._storage_thread
 
     @property
@@ -231,7 +229,7 @@ class Aucote(object):
             ScanThread
 
         """
-        with self.lock:
+        with self._lock:
             return self._scan_thread
 
     @property

@@ -14,14 +14,16 @@ class Task(object):
     Base class for tasks, e.g. scan, nmap, hydra
 
     """
-    def __init__(self, executor):
+    def __init__(self, aucote):
         """
         Assign executor
 
         """
         self._lock = Lock()
-        self.executor = executor
+        self.aucote = aucote
         self.creation_time = time.time()
+        self.start_time = None
+        self._name = None
 
     @property
     def kudu_queue(self):
@@ -29,15 +31,15 @@ class Task(object):
         Return executors kudu_queue
 
         """
-        return self.executor.kudu_queue
+        return self.aucote.kudu_queue
 
-    @property
-    def exploits(self):
-        """
-        Return executors exploits
-
-        """
-        return self.executor.exploits
+    # @property
+    # def exploits(self):
+    #     """
+    #     Return executors exploits
+    #
+    #     """
+    #     return self.aucote.exploits
 
     def __call__(self, *args, **kwargs):
         """
@@ -64,7 +66,7 @@ class Task(object):
         Returns:
             None
         """
-        self.executor.storage.save_scans(exploits=exploits, port=port)
+        self.aucote.storage.save_scans(exploits=exploits, port=port)
 
     def store_vulnerability(self, vuln):
         """
@@ -117,4 +119,8 @@ class Task(object):
         Returns:
             None
         """
-        return self.executor.storage
+        return self.aucote.storage
+
+    @property
+    def name(self):
+        return self._name or type(self).__name__

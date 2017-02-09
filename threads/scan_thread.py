@@ -36,7 +36,7 @@ class ScanThread(Thread):
         self._current_scan = []
         self.name = "Scanner"
         self.aucote = aucote
-        self.lock = Lock()
+        self._lock = Lock()
 
         try:
             self.cron = croniter(cfg.get('service.scans.cron'), time.time())
@@ -231,12 +231,12 @@ class ScanThread(Thread):
             list
 
         """
-        with self.lock:
+        with self._lock:
             return self._current_scan[:]
 
     @current_scan.setter
     def current_scan(self, val):
-        with self.lock:
+        with self._lock:
             self._current_scan = val
 
     @property
@@ -259,5 +259,5 @@ class ScanThread(Thread):
             list
 
         """
-        with self.lock:
+        with self._lock:
             return self.scheduler.queue[:]

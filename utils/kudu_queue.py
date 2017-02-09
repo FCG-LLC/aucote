@@ -77,8 +77,8 @@ class KuduMsg:
     def add_datetime(self, val):
         """
         Add timestamp value to data
-        """
 
+        """
         if val is None:
             self.add_long(0)
             return

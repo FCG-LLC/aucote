@@ -38,33 +38,12 @@ class WorkerTest(TestCase):
         self.worker._lock.__enter__.assert_called_once_with()
         self.assertTrue(self.worker._lock.__exit__.called)
 
-    def test_start_time_setter(self):
-        expected = MagicMock()
-
-        self.worker._lock = MagicMock()
-        self.worker.start_time = expected
-
-        self.assertEqual(expected, self.worker._start_time)
-        self.worker._lock.__enter__.assert_called_once_with()
-        self.assertTrue(self.worker._lock.__exit__.called)
-
     def test_task_getter(self):
         expected = MagicMock()
 
         self.worker._lock = MagicMock()
         self.worker._task = expected
         result = self.worker.task
-
-        self.assertEqual(result, expected)
-        self.worker._lock.__enter__.assert_called_once_with()
-        self.assertTrue(self.worker._lock.__exit__.called)
-
-    def test_start_time_getter(self):
-        expected = MagicMock()
-
-        self.worker._lock = MagicMock()
-        self.worker._start_time = expected
-        result = self.worker.start_time
 
         self.assertEqual(result, expected)
         self.worker._lock.__enter__.assert_called_once_with()

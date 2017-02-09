@@ -17,7 +17,6 @@ class Worker(Thread):
         self._task = None
         self._lock = Lock()
         self._queue = queue
-        self._start_time = None
 
     def run(self):
         while True:
@@ -26,12 +25,11 @@ class Worker(Thread):
             if task is None:
                 log.debug("finishing thread.")
                 self.task = None
-                self.start_time = None
                 self._queue.task_done()
                 return
 
             self.task = task
-            self.start_time = time.time()
+            self.task.start_time = time.time()
 
             try:
                 log.debug("Task %s starting", task)
@@ -43,7 +41,6 @@ class Worker(Thread):
                 log.exception('Exception while running %s', task)
             finally:
                 self.task = None
-                self.start_time = None
                 self._queue.task_done()
 
     @property
@@ -62,21 +59,6 @@ class Worker(Thread):
         with self._lock:
             self._task = val
 
-    @property
-    def start_time(self):
-        """
-        Current task execution start time
-
-        Returns:
-
-        """
-        with self._lock:
-            return self._start_time
-
-    @start_time.setter
-    def start_time(self, val):
-        with self._lock:
-            self._start_time = val
 
 
 class ThreadPool(object):

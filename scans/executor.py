@@ -5,27 +5,25 @@ This is main module of aucote scanning functionality.
 import logging as log
 import time
 
-from multiprocessing import Lock
-
 from aucote_cfg import cfg
 from tools.nmap.tasks.port_info import NmapPortInfoTask
+from utils.task import Task
 from utils.time import parse_period
 from structs import Scan, BroadcastPort
 
 
-class Executor(object):
+class Executor(Task):
     """
     Gets the information about nodes and starts the tasks
 
     """
 
-    def __init__(self, aucote, nodes=None):
+    def __init__(self, nodes=None, *args, **kwargs):
         """
         Init executor. Sets kudu_queue and nodes
 
         """
-        self.aucote = aucote
-        self.lock = Lock()
+        super(Executor, self).__init__(*args, **kwargs)
         self._ports = []
         self.ports = nodes or []
         if cfg.get('service.scans.broadcast'):
@@ -80,7 +78,7 @@ class Executor(object):
         self.storage.save_ports(ports)
 
         for port in ports:
-            self.add_task(NmapPortInfoTask(executor=self.aucote, port=port))
+            self.add_task(NmapPortInfoTask(aucote=self.aucote, port=port))
 
     def __call__(self, *args, **kwargs):
         """
@@ -149,10 +147,10 @@ class Executor(object):
             list - list of Ports
 
         """
-        with self.lock:
+        with self._lock:
             return self._ports[:]
 
     @ports.setter
     def ports(self, val):
-        with self.lock:
+        with self._lock:
             self._ports = val

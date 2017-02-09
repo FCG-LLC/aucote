@@ -35,9 +35,9 @@ class HydraToolTest(TestCase):
         self.port_no_login.service_name = 'vnc'
         self.port_no_login.scan = Scan(start=14)
 
-        self.executor = MagicMock()
-        self.hydra_tool = HydraTool(executor=self.executor, exploits=self.exploits, port=self.port, config=self.config)
-        self.hydra_tool_without_login = HydraTool(executor=self.executor, exploits=self.exploits,
+        self.aucote = MagicMock()
+        self.hydra_tool = HydraTool(aucote=self.aucote, exploits=self.exploits, port=self.port, config=self.config)
+        self.hydra_tool_without_login = HydraTool(aucote=self.aucote, exploits=self.exploits,
                                                   port=self.port_no_login, config=self.config)
 
     @patch('tools.hydra.tool.HydraScriptTask')
@@ -45,22 +45,22 @@ class HydraToolTest(TestCase):
     def test_call(self, hydra_task_mock):
         self.hydra_tool()
 
-        hydra_task_mock.assert_called_once_with(executor=self.executor, service='ssh', port=self.port, login=True,
-                                                exploits=[self.executor.exploits.find.return_value])
+        hydra_task_mock.assert_called_once_with(aucote=self.aucote, service='ssh', port=self.port, login=True,
+                                                exploits=[self.aucote.exploits.find.return_value])
 
     @patch('tools.hydra.tool.HydraScriptTask')
     @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=[])))
     def test_call_without_login(self, hydra_task_mock):
         self.hydra_tool_without_login()
 
-        hydra_task_mock.assert_called_once_with(executor=self.executor, service='vnc', port=self.port_no_login,
-                                                login=False, exploits=[self.executor.exploits.find.return_value])
+        hydra_task_mock.assert_called_once_with(aucote=self.aucote, service='vnc', port=self.port_no_login,
+                                                login=False, exploits=[self.aucote.exploits.find.return_value])
 
     def test_non_implemented_service(self):
         self.config['mapper']['test'] = 'test'
-        HydraTool(port=MagicMock(), exploits=MagicMock(), executor=self.executor, config=self.config)()
+        HydraTool(port=MagicMock(), exploits=MagicMock(), aucote=self.aucote, config=self.config)()
 
-        result = self.executor.add_task.called
+        result = self.aucote.add_task.called
 
         self.assertFalse(result)
 
@@ -68,9 +68,9 @@ class HydraToolTest(TestCase):
     def test_disabled_service(self):
         self.hydra_tool()
 
-        result = self.executor.add_task.called
+        result = self.aucote.add_task.called
 
         self.assertFalse(result)
 
     def tearDown(self):
-        self.executor.reset_mock()
+        self.aucote.reset_mock()

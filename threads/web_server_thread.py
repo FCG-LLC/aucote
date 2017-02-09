@@ -2,7 +2,6 @@
 Web server for API
 
 """
-import socket
 from threading import Thread
 
 from tornado.httpserver import HTTPServer

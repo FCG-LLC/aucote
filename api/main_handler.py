@@ -9,6 +9,7 @@ from aucote_cfg import cfg
 from scans.executor import Executor
 from tools.base import Tool
 from tools.common.port_task import PortTask
+from utils.task import Task
 
 
 class MainHandler(Handler):
@@ -36,12 +37,17 @@ class MainHandler(Handler):
         """
         stats = self.thread_pool_status(self.aucote.thread_pool)
         stats['scanner'] = self.scanning_status(self.aucote.scan_thread)
-        stats['storage'] = self.storage_status(self.aucote.storage)
         stats['meta'] = self.metadata()
         return stats
 
     @classmethod
     def metadata(cls):
+        """
+        Meta of API request
+
+        Returns:
+            dict
+        """
         return {
             'timestamp': time.time()
         }
@@ -84,22 +90,6 @@ class MainHandler(Handler):
         }
 
     @classmethod
-    def storage_status(cls, storage):
-        """
-        Returns information about storage
-
-        Args:
-            storage (StorageThread):
-
-        Returns:
-            dict
-
-        """
-        return {
-
-        }
-
-    @classmethod
     def thread_pool_status(cls, thread_pool):
         """
         Obtain status of thread pool
@@ -124,23 +114,6 @@ class MainHandler(Handler):
         return return_value
 
     @classmethod
-    def task_status(cls, task):
-        """
-        Returns information about task
-
-        Args:
-            task(Task):
-
-        Returns:
-            dict
-
-        """
-        return {
-            'type': type(task).__name__,
-            'data': cls.detailed_task_status(task),
-        }
-
-    @classmethod
     def thread_pool_thread_status(cls, thread):
         """
         Returns dict with info about thread
@@ -157,12 +130,11 @@ class MainHandler(Handler):
             return {}
 
         return_value = cls.task_status(thread.task)
-        return_value['start_time'] = thread.start_time
 
         return return_value
 
     @classmethod
-    def detailed_task_status(cls, task):
+    def task_status(cls, task):
         """
         Returns information about task
 
@@ -175,6 +147,11 @@ class MainHandler(Handler):
         """
         return_value = {}
 
+        if isinstance(task, Task):
+            return_value['start_time'] = task.start_time
+            return_value['creation_time'] = task.creation_time
+            return_value['name'] = task.name
+
         if isinstance(task, (Tool, PortTask)):
             return_value['port'] = str(task.port)
 
@@ -182,7 +159,6 @@ class MainHandler(Handler):
             return_value['nodes'] = [str(node) for node in task.ports]
 
         if isinstance(task, PortTask):
-            return_value['creation_time'] = task.creation_time
             return_value['exploits'] = [exploit.name for exploit in task.current_exploits]
 
         return return_value

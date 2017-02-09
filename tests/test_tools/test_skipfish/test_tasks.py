@@ -24,15 +24,15 @@ class SkipfishScanTaskTest(TestCase):
 [+] This was a great day for science!'''
 
     def setUp(self):
-        self.executor = MagicMock()
+        self.aucote = MagicMock()
 
         self.node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         self.port = Port(transport_protocol=TransportProtocol.TCP, number = 80, node=self.node)
         self.port.scan = Scan()
         self.exploit = Exploit(exploit_id=1)
 
-        self.task = SkipfishScanTask(executor=self.executor, port=self.port, exploits=[self.exploit])
-        self.task.executor.exploits.find.return_value = self.exploit
+        self.task = SkipfishScanTask(aucote=self.aucote, port=self.port, exploits=[self.exploit])
+        self.task.aucote.exploits.find.return_value = self.exploit
         self.task.store_scan_end = MagicMock()
 
     @patch('time.time', MagicMock(return_value=27.0))
