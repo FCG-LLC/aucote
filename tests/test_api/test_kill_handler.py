@@ -12,7 +12,7 @@ class UserAPITest(AsyncHTTPTestCase):
         self.app = Application([('/', KillHandler, {'aucote': self.aucote})])
         return self.app
 
-    @patch('api.kill_handler.cfg', new_callable=Config)
+    @patch('api.handler.cfg', new_callable=Config)
     def test_user_profile_annoymous(self, cfg):
         cfg._cfg = {
             'service': {
@@ -22,15 +22,15 @@ class UserAPITest(AsyncHTTPTestCase):
                 }
             }
         }
-        self.fetch('/', method='POST', body='password=test')
+        self.fetch('/', method='POST', headers={'Authorization': 'Bearer test'}, body='')
         self.aucote.kill.assert_called_once_with()
 
     def test_no_password(self):
-        result = self.fetch('/', method='POST', body='')
+        result = self.fetch('/', method='POST', headers={'Authorization': ''}, body='')
         self.assertFalse(self.aucote.kill.called)
-        self.assertEqual(result.code, 403)
+        self.assertEqual(result.code, 401)
 
-    @patch('api.kill_handler.cfg', new_callable=Config)
+    @patch('api.handler.cfg', new_callable=Config)
     def test_bad_password(self, cfg):
         cfg._cfg = {
             'service': {
@@ -40,6 +40,6 @@ class UserAPITest(AsyncHTTPTestCase):
                 }
             }
         }
-        result = self.fetch('/', method='POST', body='password=abs')
+        result = self.fetch('/', method='POST', headers={'Authorization': 'Bearer testt'}, body='')
         self.assertFalse(self.aucote.kill.called)
-        self.assertEqual(result.code, 403)
+        self.assertEqual(result.code, 401)

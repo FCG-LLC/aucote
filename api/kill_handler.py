@@ -7,7 +7,7 @@ import hashlib
 from api.handler import Handler
 from aucote_cfg import cfg
 
-
+@Handler.auth
 class KillHandler(Handler):
     """
     Kills aucote
@@ -21,9 +21,5 @@ class KillHandler(Handler):
             None - kill application
 
         """
-        password = self.get_argument('password', None)
-        if password is None or hashlib.sha512(password.encode()).hexdigest() != cfg.get('service.api.password'):
-            self.set_status(403)
-            return
 
         self.aucote.kill()
