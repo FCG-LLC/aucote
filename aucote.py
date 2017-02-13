@@ -264,7 +264,7 @@ class Aucote(object):
             None
 
         """
-        self._scan_thread.disable_scan()
+        self._scan_thread.stop()
         self._watch_thread.stop()
 
     @classmethod

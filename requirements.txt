@@ -8,3 +8,4 @@ croniter==0.3.13
 pytz==2016.10
 inotify==0.2.8
 tornado==4.4.2
+tornado-crontab==0.3.2

@@ -7,8 +7,10 @@ from threading import Thread, Lock
 import logging as log
 from queue import Queue, Empty
 
+import time
+
 from fixtures.exploits import Exploit
-from structs import StorageQuery, Port, Node, TransportProtocol
+from structs import StorageQuery, Port, Node, TransportProtocol, Scan
 from utils.storage import Storage
 
 
@@ -122,6 +124,23 @@ class StorageThread(Thread):
         for port in query.result:
             ports.append(Port(node=Node(node_id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
                               transport_protocol=TransportProtocol.from_iana(port[3])))
+        return ports
+
+    def get_ports_by_node(self, node, pasttime=0, timestamp=None):
+
+        ports = []
+
+        if timestamp is None:
+            timestamp = time.time() - pasttime
+
+        query = self.add_query(StorageQuery(*self._storage.get_ports_by_node(node, timestamp)))
+        query.lock.acquire()
+
+        for row in query.result:
+            port = Port(node=node, number=row[2], transport_protocol=TransportProtocol.from_iana(row[3]))
+            port.scan = Scan(start=port.node.scan.start)
+            ports.append(port)
+
         return ports
 
     def get_nodes(self, pasttime=0, timestamp=None):

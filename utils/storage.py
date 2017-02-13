@@ -272,3 +272,19 @@ class Storage(DbInterface):
                    ("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))",)]
 
         return queries
+
+    @classmethod
+    def get_ports_by_node(cls, node, timestamp=None):
+        """
+        Query for port scan detail from scans from pasttime ago
+
+        Args:
+            port (Port):
+            app (str): app name
+
+        Returns:
+            tuple
+
+        """
+
+        return "SELECT * FROM ports where id=? AND ip=? AND time > ?", (node.id, str(node.ip), timestamp,)

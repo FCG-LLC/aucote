@@ -25,7 +25,7 @@ class WebServerThread(Thread):
         self.host = host
         self.aucote = aucote
         self.name = "WebServer"
-        self._ioloop = None
+        self._ioloop = IOLoop()
 
     def run(self):
         """

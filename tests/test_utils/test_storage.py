@@ -236,3 +236,10 @@ class StorageTest(TestCase):
 
     def test_cursor_property(self):
         self.assertEqual(self.storage.cursor, self.storage._cursor)
+
+    def test_get_ports_by_node(self):
+        node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
+        result = self.storage.get_ports_by_node(node, 1200)
+        expected = "SELECT * FROM ports where id=? AND ip=? AND time > ?", (3, '127.0.0.1', 1200,)
+
+        self.assertEqual(result, expected)

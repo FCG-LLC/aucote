@@ -198,7 +198,7 @@ class AucoteTest(TestCase):
         self.aucote._watch_thread = MagicMock()
         self.aucote.graceful_stop()
         self.aucote._watch_thread.stop.assert_called_once_with()
-        self.aucote._scan_thread.disable_scan.assert_called_once_with()
+        self.aucote._scan_thread.stop.assert_called_once_with()
 
     @patch('aucote.os._exit')
     def test_kill(self, mock_kill):

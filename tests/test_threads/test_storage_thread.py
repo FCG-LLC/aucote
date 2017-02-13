@@ -150,6 +150,33 @@ class StorageThreadTest(TestCase):
         self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
         self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
 
+    @patch('threads.storage_thread.time.time', MagicMock(return_value=300))
+    @patch('threads.storage_thread.StorageQuery')
+    def test_get_ports_by_node_pasttime(self, mock_query):
+        self.task._storage = MagicMock()
+        self.task.add_query = MagicMock()
+        self.task.add_query.return_value = MagicMock(result=(
+            (1, '127.0.0.1', 20, 6),
+            (2, '::1', 23, 17),
+        ))
+
+        node = MagicMock()
+        result = self.task.get_ports_by_node(node, 100)
+
+        self.task.add_query.return_value.lock.acquire.assert_called_once_with()
+        self.task.add_query.assert_called_once_with(mock_query.return_value)
+        mock_query.assert_called_once_with(*self.task._storage.get_ports.return_value)
+        self.task._storage.get_ports_by_node.assert_called_once_with(node, 200)
+
+        self.assertEqual(result[0].node, node)
+        self.assertEqual(result[1].node, node)
+
+        self.assertEqual(result[0].number, 20)
+        self.assertEqual(result[1].number, 23)
+
+        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
+        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
+
     @patch('threads.storage_thread.StorageQuery')
     def test_get_nodes(self, mock_query):
         self.task._storage = MagicMock()

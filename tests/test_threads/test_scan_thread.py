@@ -1,7 +1,7 @@
 import ipaddress
 import sched
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock, call
 from urllib.error import URLError
 
 import time
@@ -79,13 +79,22 @@ class ScanThreadTest(TestCase):
 
     @patch('threads.scan_thread.ScanThread._get_topdis_nodes', MagicMock(return_value=[]))
     @patch('threads.scan_thread.croniter', MagicMock(return_value=croniter('* * * * *', time.time())))
-    @patch('threads.scan_thread.cfg.get', MagicMock())
-    def setUp(self):
+    @patch('threads.scan_thread.cfg', new_callable=Config)
+    def setUp(self, cfg):
+        cfg._cfg = {
+            'service': {
+                'scans': {
+                    'cron': '* * * * *',
+                    'tools_cron': '* * * * *'
+                }
+            }
+        }
         self.urllib_response = MagicMock()
         self.urllib_response.read = MagicMock()
         self.urllib_response.read.return_value = self.TODIS_RESPONSE
         self.urllib_response.headers.get_content_charset = MagicMock(return_value='utf-8')
         self.thread = ScanThread(aucote=MagicMock(storage=MagicMock()))
+        self.thread._ioloop = MagicMock()
 
     @patch('threads.scan_thread.cfg.get', MagicMock(side_effect=KeyError('test')))
     def test_init_with_exception(self):
@@ -136,19 +145,18 @@ class ScanThreadTest(TestCase):
 
         self.assertListEqual(result, expected)
 
-    def test_call_magic(self):
+    def test_run(self):
         self.thread.scheduler = MagicMock()
         self.thread.as_service = True
-        self.thread.run_periodically = MagicMock()
-        self.thread.cron = croniter('* * * * *', 0)
+        self.thread._periodical_tools_scan = MagicMock()
+        self.thread._periodical_scan_callback = MagicMock()
+        self.thread._ioloop = MagicMock()
 
         self.thread.run()
 
-        result = self.thread.scheduler.enterabs.call_args_list[0][0]
-        expected = (60, 10, self.thread.run_periodically)
-
-        self.assertCountEqual(result, expected)
-        self.thread.scheduler.run.assert_called_once_with()
+        self.thread._periodical_tools_scan.start.assert_called_once_with()
+        self.thread._periodical_scan_callback.start.assert_called_once_with()
+        self.thread._ioloop.start.assert_called_once_with()
 
     def test_call_as_non_service(self):
         self.thread.as_service = False
@@ -200,19 +208,6 @@ class ScanThreadTest(TestCase):
         self.thread.run_scan(self.thread._get_nodes_for_scanning())
         self.assertFalse(self.thread.storage.save_nodes.called)
 
-    def test_run_periodically(self):
-        self.thread.scheduler = MagicMock()
-        self.thread._get_nodes_for_scanning = MagicMock()
-        self.thread.run_scan = MagicMock()
-        self.thread.cron = croniter('* * * * *', 0)
-        self.thread.run_periodically()
-
-        result = self.thread.scheduler.enterabs.call_args[0]
-        expected = (60, 10, self.thread.run_periodically)
-
-        self.assertEqual(result, expected)
-        self.thread.run_scan.assert_called_once_with(self.thread._get_nodes_for_scanning.return_value)
-
     @patch('threads.scan_thread.cfg.get', MagicMock(return_value=MagicMock(cfg=['127.0.0.1/24', '128.0.0.1/13'])))
     def test_get_networks_list(self):
         result = self.thread._get_networks_list()
@@ -238,41 +233,27 @@ class ScanThreadTest(TestCase):
     @patch('threads.scan_thread.time.monotonic', MagicMock(return_value=600.5))
     @patch('threads.scan_thread.time.time', MagicMock(return_value=600.5))
     @patch('threads.scan_thread.cfg.get', MagicMock(return_value="* * * * *"))
-    def test_keep_update(self):
-        self.thread._get_nodes_for_scanning = MagicMock()
-        self.thread.scheduler = MagicMock()
-        self.thread.keep_update()
-        self.assertIn(self.thread.keep_update, self.thread.scheduler.enterabs.call_args[0])
-        self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=540)
-
-    def test_disable_scan(self):
-        self.thread.scheduler = sched.scheduler()
-        self.thread.scheduler.enterabs(50, 0, None)
-        self.thread.scheduler.enterabs(50, 0, None)
-        self.thread.scheduler.enterabs(50, 0, None)
-
-        self.assertFalse(self.thread.scheduler.empty())
-        self.thread.disable_scan()
-        self.assertTrue(self.thread.scheduler.empty())
+    def test_periodical_Scan(self):
+        nodes = MagicMock()
+        self.thread._get_nodes_for_scanning = MagicMock(return_value=nodes)
+        self.thread.run_scan = MagicMock()
+        self.thread._periodical_scan()
+        self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None)
+        self.thread.run_scan.assert_called_once_with(nodes, scan_only=True)
 
     def test_stop(self):
-        self.thread.disable_scan = MagicMock()
+        self.thread._periodical_scan_callback = MagicMock()
+        self.thread._periodical_tools_scan = MagicMock()
+        self.thread._ioloop = MagicMock()
         self.thread.stop()
-        self.thread.disable_scan.assert_called_once_with()
+        self.thread._periodical_scan_callback.stop.assert_called_once_with()
+        self.thread._periodical_tools_scan.stop.assert_called_once_with()
+        self.thread._ioloop.stop.assert_called_once_with()
 
     def test_current_scan_getter(self):
         expected = [MagicMock(), MagicMock()]
         self.thread._current_scan = expected
         result = self.thread.current_scan
-
-        self.assertCountEqual(result, expected)
-        self.assertNotEqual(id(result), id(expected))
-
-    def test_tasks_getter(self):
-        expected = [MagicMock(), MagicMock()]
-        self.thread.scheduler = MagicMock()
-        self.thread.scheduler.queue = expected
-        result = self.thread.tasks
 
         self.assertCountEqual(result, expected)
         self.assertNotEqual(id(result), id(expected))
@@ -289,6 +270,22 @@ class ScanThreadTest(TestCase):
         }
 
         expected = 480
+        result = self.thread.previous_scan
+
+        self.assertEqual(result, expected)
+
+    @patch('threads.scan_thread.cfg', new_callable=Config)
+    @patch('threads.scan_thread.time.time', MagicMock(return_value=595))
+    def test_previous_scan_second_test(self, mock_cfg):
+        mock_cfg._cfg = {
+            'service': {
+                'scans': {
+                    'cron': '*/12 * * * *'
+                }
+            }
+        }
+
+        expected = 0
         result = self.thread.previous_scan
 
         self.assertEqual(result, expected)
@@ -327,3 +324,35 @@ class ScanThreadTest(TestCase):
 
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=ports, scan_only=scan_only)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
+
+    @patch('threads.scan_thread.ScanThread.previous_scan', new_callable=PropertyMock)
+    def test_get_ports_for_script_scan(self, mock_previous):
+        nodes = [MagicMock(), MagicMock(), MagicMock()]
+        self.thread._get_topdis_nodes = MagicMock(return_value=nodes)
+        mock_previous.return_value = 100
+        ports = [
+            MagicMock(),
+            MagicMock(),
+            MagicMock()
+        ]
+        self.thread.storage.get_ports_by_node.side_effect = (
+            [ports[0], ports[1]],
+            [ports[2]],
+            []
+        )
+
+        result = self.thread.get_ports_for_script_scan()
+
+        self.assertEqual(result, ports)
+        self.thread.storage.get_ports_by_node.assert_has_calls([call(nodes[0], timestamp=100),
+                                                                call(nodes[1], timestamp=100),
+                                                                call(nodes[2], timestamp=100)])
+    @patch('threads.scan_thread.Executor')
+    def test_run_scripts(self, mock_executor):
+        ports = MagicMock()
+
+        self.thread.get_ports_for_script_scan = MagicMock(return_value=ports)
+        self.thread._run_tools()
+
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=ports)
+        self.thread.aucote.add_task.assert_called_once_with(mock_executor.return_value)
