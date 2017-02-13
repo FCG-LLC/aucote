@@ -2,7 +2,6 @@ import ipaddress
 from queue import Empty
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
-
 from structs import StorageQuery, TransportProtocol
 from threads.storage_thread import StorageThread
 
@@ -215,3 +214,4 @@ class StorageThreadTest(TestCase):
 
         self.assertEqual(result[0]['exploit'].id, 11)
         self.assertEqual(result[1]['exploit'].id, 22)
+

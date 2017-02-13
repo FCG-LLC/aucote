@@ -20,25 +20,25 @@ Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 14:19:36
 Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
 
     def setUp(self):
-        self.executor = MagicMock()
+        self.aucote = MagicMock()
         self.port = Port(node=Node(ip='127.0.0.1', node_id=None), transport_protocol=TransportProtocol.TCP, number=22)
         self.port.service_name = 'ssh'
         self.port.scan = Scan()
         self.exploit = Exploit(exploit_id=1)
 
-        self.hydra_script_task = HydraScriptTask(exploits=[self.exploit], executor=self.executor, port=self.port,
+        self.hydra_script_task = HydraScriptTask(exploits=[self.exploit], aucote=self.aucote, port=self.port,
                                                  service=self.port.service_name)
         self.hydra_script_task.store_scan_end = MagicMock()
-        self.hydra_script_task.executor.exploits.find.return_value = self.exploit
+        self.hydra_script_task.aucote.exploits.find.return_value = self.exploit
 
     def test_init(self):
-        self.assertEqual(self.hydra_script_task.executor, self.executor)
+        self.assertEqual(self.hydra_script_task.aucote, self.aucote)
         self.assertEqual(self.hydra_script_task._port, self.port)
 
     @patch('time.time', MagicMock(return_value=27.0))
     def test_storage(self):
         self.hydra_script_task.command.call = MagicMock(return_value=MagicMock())
-        self.hydra_script_task.executor.kudu_queue = MagicMock()
+        self.hydra_script_task.aucote.kudu_queue = MagicMock()
         self.hydra_script_task.store_vulnerability = MagicMock()
         self.hydra_script_task()
 

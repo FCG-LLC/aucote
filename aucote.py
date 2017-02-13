@@ -11,6 +11,7 @@ import sys
 import fcntl
 
 import signal
+from threading import Lock
 
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
@@ -18,6 +19,7 @@ from scans.task_mapper import TaskMapper
 from threads.scan_thread import ScanThread
 from threads.storage_thread import StorageThread
 from threads.watchdog_thread import WatchdogThread
+from threads.web_server_thread import WebServerThread
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.threads import ThreadPool
 from utils.kudu_queue import KuduQueue
@@ -96,6 +98,7 @@ class Aucote(object):
     """
 
     def __init__(self, exploits, kudu_queue, tools_config):
+        self._lock = Lock()
         self.exploits = exploits
         self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
@@ -123,7 +126,8 @@ class Aucote(object):
             Storage
 
         """
-        return self._storage_thread
+        with self._lock:
+            return self._storage_thread
 
     @property
     def thread_pool(self):
@@ -154,14 +158,24 @@ class Aucote(object):
 
             self._scan_thread = ScanThread(aucote=self, as_service=as_service)
             self._scan_thread.start()
-            self.thread_pool.start()
 
-            self._scan_thread.join()
+            self.thread_pool.start()
+            web_server = WebServerThread(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
+            web_server.start()
+
+            self.scan_thread.join()
             self.thread_pool.join()
 
+            web_server.stop()
+            web_server.join()
+
             self.thread_pool.stop()
-            self._storage_thread.stop()
-            self._storage_thread.join()
+            self.storage.stop()
+            self.storage.join()
+
+            self._scan_thread = None
+            self._watch_thread = None
+            self._storage_thread = None
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")
@@ -205,6 +219,18 @@ class Aucote(object):
         """
         log.error("Received signal %s at frame %s. Exiting.", sig, frame)
         self.kill()
+
+    @property
+    def scan_thread(self):
+        """
+        Scan thread
+
+        Returns:
+            ScanThread
+
+        """
+        with self._lock:
+            return self._scan_thread
 
     @property
     def unfinished_tasks(self):

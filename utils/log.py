@@ -5,7 +5,6 @@ import logging as log
 from logging.handlers import RotatingFileHandler
 import sys
 
-
 _LOG_LEVEL = {
     'critical': log.CRITICAL,
     'error': log.ERROR,

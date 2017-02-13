@@ -195,6 +195,23 @@ class SpecialPortTest(TestCase):
     def test_copy_broadcast(self):
         self.assertIsInstance(self.broadcast.copy(), BroadcastPort)
 
+class PhysicalPortTest(TestCase):
+    def setUp(self):
+        self.port = PhysicalPort()
+        self.port.interface = 'wlan0'
+
+    def test_str(self):
+        expected = "phy:wlan0"
+        self.assertEqual(str(self.port), expected)
+
+
+class BroadcastPortTest(TestCase):
+    def setUp(self):
+        self.port = BroadcastPort()
+
+    def test_str(self):
+        expected = "broadcast"
+        self.assertEqual(str(self.port), expected)
 
 class StorageQueryTest(TestCase):
     def setUp(self):

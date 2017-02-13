@@ -60,6 +60,13 @@ kuduworker:
 #       - <address/mask>
 #       - 127.0.0.1/32 - example ipv4 network
 #       - ::1/128 - example ipv6 network
+#   api:
+#     v1:
+#       host: <ip>  - IP on which web server should listen
+#       port: (int) - port on which web server should listen
+#     password: <hexstr> - SHA512 hash of password in hexadecimal format
+#                          Require for admin operations, e.g. killing aucote process.
+#                          Please do not use default password!
 
 service:
     scans:
@@ -75,6 +82,11 @@ service:
         # networks: # Change it to proper values and uncomment
         #    - 127.0.0.1/32
         #    - ::1/128
+    api:
+        v1:
+            host: 0.0.0.0
+            port: 1235
+        # password: ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff # password: test
 
 # This section contains configuration related to topdis service
 # topdis:

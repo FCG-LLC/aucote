@@ -32,5 +32,5 @@ class HydraTool(Tool):
 
         login = service_name not in self.config.get('without-login', [])
 
-        self.executor.add_task(HydraScriptTask(executor=self.executor, port=self.port, service=service_name,
-                                               exploits=[self.executor.exploits.find('hydra', 'hydra')], login=login))
+        self.aucote.add_task(HydraScriptTask(aucote=self.aucote, port=self.port, service=service_name,
+                                             exploits=[self.aucote.exploits.find('hydra', 'hydra')], login=login))

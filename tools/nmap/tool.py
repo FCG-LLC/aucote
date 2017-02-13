@@ -43,8 +43,8 @@ class NmapTool(Tool):
         packs = itertools.zip_longest(*by_name.values())
 
         for pack in packs:
-            self.executor.add_task(NmapPortScanTask(executor=self.executor, port=self.port,
-                                                    script_classes=[val for val in pack if val is not None]))
+            self.aucote.add_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
+                                                  script_classes=[val for val in pack if val is not None]))
 
     def _get_tasks(self):
         """
@@ -94,8 +94,8 @@ class NmapTool(Tool):
                     task = VulnNmapScript(exploit=exploit, port=self.port, name=name, args=arg)
 
                 if singular:
-                    self.executor.add_task(NmapPortScanTask(executor=self.executor, port=self.port,
-                                                            script_classes=[task]))
+                    self.aucote.add_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
+                                                          script_classes=[task]))
                     continue
                 tasks.append(task)
 

@@ -4,7 +4,6 @@ This file contains class for storage temporary information like last date of sca
 import sqlite3
 import time
 import logging as log
-
 from utils.database_interface import DbInterface
 
 
@@ -87,7 +86,6 @@ class Storage(DbInterface):
 
         """
         timestamp = time.time() - pasttime
-
         return "SELECT * FROM nodes where time > ?", (timestamp,)
 
     @staticmethod
@@ -139,6 +137,7 @@ class Storage(DbInterface):
 
         """
         timestamp = time.time() - pasttime
+
 
         return "SELECT * FROM ports where time > ?", (timestamp,)
 

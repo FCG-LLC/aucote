@@ -8,16 +8,16 @@ from tools.common.command_task import CommandTask
 
 class CommandTaskTest(TestCase):
     def setUp(self):
-        self.executor = MagicMock()
+        self.aucote = MagicMock()
         self.port = Port(node=MagicMock(), transport_protocol=None, number=None)
         self.port.scan = Scan()
         self.command = MagicMock()
         self.exploit = MagicMock()
-        self.task = CommandTask(executor=self.executor, port=self.port, command=self.command, exploits=[self.exploit])
+        self.task = CommandTask(aucote=self.aucote, port=self.port, command=self.command, exploits=[self.exploit])
 
     def test_init(self):
         self.assertEqual(self.task._port, self.port)
-        self.assertEqual(self.task.executor, self.executor)
+        self.assertEqual(self.task.aucote, self.aucote)
         self.assertEqual(self.task.command, self.command)
         self.assertEqual(self.task.exploit, self.exploit)
 
@@ -53,7 +53,7 @@ class CommandTaskTest(TestCase):
         self.command.call.side_effect = CalledProcessError(returncode=127, cmd='test')
 
         result = self.task()
-        args_storage = self.executor.storage.save_scans.call_args[1]
+        args_storage = self.aucote.storage.save_scans.call_args[1]
         self.assertEqual(result, None)
         self.assertEqual(args_storage['port'].scan.end, 0)
         self.assertEqual(args_storage['port'].scan.start, 0)

@@ -7,16 +7,16 @@ from utils.exceptions import ImproperConfigurationException
 
 class ToolTest(TestCase):
     def setUp(self):
-        self.executor = MagicMock()
-        self.executor.storage.filename = ":memory:"
+        self.aucote = MagicMock()
+        self.aucote.storage.filename = ":memory:"
         self.exploits = MagicMock()
         self.config = MagicMock()
         self.port = MagicMock()
 
-        self.tool = Tool(executor=self.executor, exploits=self.exploits, port=self.port, config=self.config)
+        self.tool = Tool(aucote=self.aucote, exploits=self.exploits, port=self.port, config=self.config)
 
     def test_init(self):
-        self.assertEqual(self.tool.executor, self.executor)
+        self.assertEqual(self.tool.aucote, self.aucote)
         self.assertEqual(self.tool.exploits, self.exploits)
         self.assertEqual(self.tool.config, self.config)
         self.assertEqual(self.tool.port, self.port)

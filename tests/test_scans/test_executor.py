@@ -68,3 +68,11 @@ class ExecutorTest(TestCase):
         self.executor()
 
         self.executor.run.assert_called_once_with()
+
+    def test_ports_getter(self):
+        expected = [MagicMock(), MagicMock()]
+        self.executor.ports = expected
+        result = self.executor.ports
+
+        self.assertCountEqual(result, expected)
+        self.assertNotEqual(id(result), id(expected))

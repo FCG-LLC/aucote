@@ -10,6 +10,7 @@ from netaddr import IPSet
 
 from structs import Node, PhysicalPort
 from threads.scan_thread import ScanThread
+from utils import Config
 
 
 class ScanThreadTest(TestCase):
@@ -253,3 +254,36 @@ class ScanThreadTest(TestCase):
         self.thread.disable_scan = MagicMock()
         self.thread.stop()
         self.thread.disable_scan.assert_called_once_with()
+
+    def test_current_scan_getter(self):
+        expected = [MagicMock(), MagicMock()]
+        self.thread._current_scan = expected
+        result = self.thread.current_scan
+
+        self.assertCountEqual(result, expected)
+        self.assertNotEqual(id(result), id(expected))
+
+    def test_tasks_getter(self):
+        expected = [MagicMock(), MagicMock()]
+        self.thread.scheduler = MagicMock()
+        self.thread.scheduler.queue = expected
+        result = self.thread.tasks
+
+        self.assertCountEqual(result, expected)
+        self.assertNotEqual(id(result), id(expected))
+
+    @patch('threads.scan_thread.cfg', new_callable=Config)
+    @patch('threads.scan_thread.time.time', MagicMock(return_value=595))
+    def test_previous_scan(self, mock_cfg):
+        mock_cfg._cfg = {
+            'service': {
+                'scans': {
+                    'cron': '* * * * *'
+                }
+            }
+        }
+
+        expected = 480
+        result = self.thread.previous_scan
+
+        self.assertEqual(result, expected)

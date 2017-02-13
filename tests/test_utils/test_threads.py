@@ -1,8 +1,53 @@
-from queue import Empty
+from collections import deque
 from unittest import TestCase
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
-from utils.threads import ThreadPool
+from utils.threads import ThreadPool, Worker
+
+
+class WorkerTest(TestCase):
+    def setUp(self):
+        self.queue = MagicMock()
+        self.worker = Worker(self.queue)
+
+    def test_worker_task_is_none(self):
+        self.queue.get.return_value = None
+
+        self.assertIsNone(self.worker.run())
+
+    def test_worker_task_is_not_none(self):
+        self.queue.task_done.side_effect = [SystemExit()]
+
+        self.assertRaises(SystemExit, self.worker.run)
+        self.queue.get.assert_called_once_with()
+
+    def test_worker_task_is_not_none_but_raises_exception(self):
+        self.queue.get.return_value.side_effect = [Exception()]
+        self.queue.task_done.side_effect = [SystemExit()]
+
+        self.assertRaises(SystemExit, self.worker.run)
+        self.queue.get.assert_called_once_with()
+
+    def test_task_setter(self):
+        expected = MagicMock()
+
+        self.worker._lock = MagicMock()
+        self.worker.task = expected
+
+        self.assertEqual(expected, self.worker._task)
+        self.worker._lock.__enter__.assert_called_once_with()
+        self.assertTrue(self.worker._lock.__exit__.called)
+
+    def test_task_getter(self):
+        expected = MagicMock()
+
+        self.worker._lock = MagicMock()
+        self.worker._task = expected
+        result = self.worker.task
+
+        self.assertEqual(result, expected)
+        self.worker._lock.__enter__.assert_called_once_with()
+        self.assertTrue(self.worker._lock.__exit__.called)
 
 
 class ThreadPoolTest(TestCase):
@@ -33,27 +78,6 @@ class ThreadPoolTest(TestCase):
 
         self.thread_pool._queue.join.assert_called_once_with()
 
-    def test_worker_task_is_not_none(self):
-        self.thread_pool._queue = MagicMock()
-        self.thread_pool._queue.task_done.side_effect = [SystemExit()]
-
-        self.assertRaises(SystemExit, self.thread_pool._worker)
-        self.thread_pool._queue.get.assert_called_once_with()
-
-    def test_worker_task_is_none(self):
-        self.thread_pool._queue = MagicMock()
-        self.thread_pool._queue.get.return_value = None
-        self.assertIsNone(self.thread_pool._worker())
-        self.thread_pool._queue.task_done.assert_called_once_with()
-
-    def test_worker_task_is_not_none_but_raises_exception(self):
-        self.thread_pool._queue = MagicMock()
-        self.thread_pool._queue.get.return_value.side_effect = [Exception()]
-        self.thread_pool._queue.task_done.side_effect = [SystemExit()]
-
-        self.assertRaises(SystemExit, self.thread_pool._worker)
-        self.thread_pool._queue.get.assert_called_once_with()
-
     def test_unfinished(self):
         self.assertEqual(self.thread_pool.unfinished_tasks, self.thread_pool._queue.unfinished_tasks)
 
@@ -63,7 +87,7 @@ class ThreadPoolTest(TestCase):
 
         self.assertIn(task, self.thread_pool._queue.queue)
 
-    @patch('utils.threads.Thread')
+    @patch('utils.threads.Worker')
     def test_start(self, mock_thread):
         self.thread_pool._num_threads = 10
         self.thread_pool.start()
@@ -73,3 +97,22 @@ class ThreadPoolTest(TestCase):
         self.assertEqual(mock_thread.call_count, 10)
 
         self.assertEqual(len(self.thread_pool._threads), 10)
+
+    def test_num_threads_getter(self):
+        self.assertEqual(self.thread_pool.num_threads, self.thread_pool._num_threads)
+
+    def test_task_queue_getter(self):
+        expected = [MagicMock(), MagicMock()]
+        self.thread_pool._queue.queue = deque(expected)
+        result = self.thread_pool.task_queue
+
+        self.assertEqual(result, expected)
+        self.assertNotEqual(id(result), id(expected))
+
+    def test_threads_getter(self):
+        expected = [MagicMock(), MagicMock()]
+        self.thread_pool._threads = expected
+        result = self.thread_pool.threads
+
+        self.assertEqual(result, expected)
+        self.assertNotEqual(id(result), id(expected))

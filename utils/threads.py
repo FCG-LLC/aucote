@@ -3,8 +3,62 @@ File containing Threads-related functionality
 """
 from queue import Queue
 import logging as log
-from threading import Thread
+from threading import Thread, Lock
 import time
+
+
+class Worker(Thread):
+    """
+    Worker responsible for executing task from ThreadPool task queue
+
+    """
+    def __init__(self, queue, *args, **kwargs):
+        super(Worker, self).__init__(*args, **kwargs)
+        self._task = None
+        self._lock = Lock()
+        self._queue = queue
+
+    def run(self):
+        while True:
+            task = self._queue.get()
+
+            if task is None:
+                log.debug("finishing thread.")
+                self.task = None
+                self._queue.task_done()
+                return
+
+            self.task = task
+            self.task.start_time = time.time()
+
+            try:
+                log.debug("Task %s starting", task)
+                start_time = time.monotonic()
+                task()
+                log.debug('Task %s finished, took %s seconds. %i task left', task, time.monotonic() - start_time,
+                          self._queue.unfinished_tasks)
+            except Exception:
+                log.exception('Exception while running %s', task)
+            finally:
+                self.task = None
+                self._queue.task_done()
+
+    @property
+    def task(self):
+        """
+        Currently executing task
+
+        Returns:
+
+        """
+        with self._lock:
+            return self._task
+
+    @task.setter
+    def task(self, val):
+        with self._lock:
+            self._task = val
+
 
 
 class ThreadPool(object):
@@ -17,6 +71,7 @@ class ThreadPool(object):
         Args:
             num_threads(int) - number of threads in the pool
         """
+        self._lock = Lock()
         self._queue = Queue() #thread safe
         self._threads = []
         self._num_threads = num_threads
@@ -33,7 +88,7 @@ class ThreadPool(object):
         """
         Start threads
         """
-        self._threads = [Thread(target=self._worker) for _ in range(0, self._num_threads)]
+        self.threads = [Worker(queue=self._queue) for _ in range(0, self._num_threads)]
         for num, thread in enumerate(self._threads):
             thread.name = "%s%02d"%(self._name, num)
             thread.daemon = True
@@ -46,7 +101,6 @@ class ThreadPool(object):
         """
         for _ in self._threads:
             self._queue.put(None)
-
         for thread in self._threads:
             thread.join()
         self._threads = []
@@ -58,26 +112,6 @@ class ThreadPool(object):
         """
         self._queue.join()
 
-    def _worker(self):
-        while True:
-            task = self._queue.get()
-
-            if task is None:
-                log.debug("finishing thread.")
-                self._queue.task_done()
-                return
-
-            try:
-                log.debug("Task %s starting", task)
-                start_time = time.monotonic()
-                task()
-                log.debug('Task %s finished, took %s seconds. %i task left', task, time.monotonic() - start_time,
-                          self._queue.unfinished_tasks)
-            except Exception:
-                log.exception('Exception while running %s', task)
-            finally:
-                self._queue.task_done()
-
     @property
     def unfinished_tasks(self):
         """
@@ -88,3 +122,42 @@ class ThreadPool(object):
 
         """
         return self._queue.unfinished_tasks
+
+    @property
+    def num_threads(self):
+        """
+        Number of used threads
+
+        Returns:
+            int
+        """
+        return self._num_threads
+
+    @property
+    def threads(self):
+        """
+        List of threads
+
+        Returns:
+            list
+
+        """
+        with self._lock:
+            return self._threads[:]
+
+    @threads.setter
+    def threads(self, val):
+        with self._lock:
+            self._threads = val
+
+    @property
+    def task_queue(self):
+        """
+        List of task waiting in queue
+
+        Returns:
+            list
+
+        """
+        with self._lock:
+            return list(self._queue.queue)

@@ -110,7 +110,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
             exploit, port, exploits, script, vulnerability, scan_task
 
         """
-        self.executor = MagicMock()
+        self.aucote = MagicMock()
 
         self.exploit = Exploit(exploit_id=1, app='nmap', name='test')
         self.exploit_vuln_non_exist = Exploit(exploit_id=2, app='nmap', name='test2')
@@ -129,7 +129,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.script = InfoNmapScript(port=self.port, exploit=self.exploit, name='test', args='test_args')
         self.script.get_result = MagicMock(return_value='test')
         self.script2 = VulnNmapScript(port=self.port, exploit=self.exploit_vuln_non_exist, name='test2')
-        self.scan_task = NmapPortScanTask(executor=self.executor, port=self.port,
+        self.scan_task = NmapPortScanTask(aucote=self.aucote, port=self.port,
                                           script_classes=[self.script, self.script2])
         self.scan_task.store_scan_end = MagicMock()
 
@@ -137,7 +137,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task.command.call.return_value = ElementTree.fromstring(self.XML)
 
     def test_init(self):
-        self.assertEqual(self.scan_task.executor, self.executor)
+        self.assertEqual(self.scan_task.aucote, self.aucote)
         self.assertEqual(self.scan_task.port, self.port)
         self.assertEqual(self.scan_task.script_classes, [self.script, self.script2])
 

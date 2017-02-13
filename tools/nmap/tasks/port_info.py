@@ -6,17 +6,17 @@ import logging as log
 from database.serializer import Serializer
 from structs import BroadcastPort
 from structs import PhysicalPort
+from tools.common.port_task import PortTask
 from tools.nmap.base import NmapBase
-from utils.task import Task
 
 
-class NmapPortInfoTask(Task):
+class NmapPortInfoTask(PortTask):
     """
     Scans one port using provided vulnerability scan
 
     """
 
-    def __init__(self, port, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         Initiazlize variables.
 
@@ -26,8 +26,7 @@ class NmapPortInfoTask(Task):
             **kwargs:
 
         """
-        super().__init__(*args, **kwargs)
-        self._port = port
+        super().__init__(exploits=[], *args, **kwargs)
         self.command = NmapBase()
 
     def prepare_args(self):
@@ -60,7 +59,7 @@ class NmapPortInfoTask(Task):
 
         """
         if isinstance(self._port, (BroadcastPort, PhysicalPort)):
-            self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)
+            self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)
             return
 
         args = self.prepare_args()
@@ -85,4 +84,4 @@ class NmapPortInfoTask(Task):
 
         self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
 
-        self.executor.task_mapper.assign_tasks(self._port, self.executor.storage)
+        self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)

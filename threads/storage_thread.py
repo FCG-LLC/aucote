@@ -3,8 +3,7 @@ Thread responsible for local storage
 
 """
 import ipaddress
-from threading import Thread
-
+from threading import Thread, Lock
 import logging as log
 from queue import Queue, Empty
 
@@ -21,6 +20,8 @@ class StorageThread(Thread):
     def __init__(self, filename):
         super(StorageThread, self).__init__()
         self.name = "Storage"
+        self._lock = Lock()
+        self._filename = ""
         self.filename = filename
         self._queue = Queue()
         self._storage = Storage(self.filename)

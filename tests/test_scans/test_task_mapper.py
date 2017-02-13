@@ -42,7 +42,7 @@ class TaskMapperTest(unittest.TestCase):
 
         self.exploits.update(test2=[Exploit(exploit_id=3)])
         self.executor.exploits.find_all_matching.return_value = self.exploits
-        self.task_mapper = TaskMapper(self.executor)
+        self.task_mapper = TaskMapper(aucote=self.executor)
 
     def tearDown(self):
         self.EXECUTOR_CONFIG['apps']['test']['class'].reset_mock()
@@ -51,7 +51,7 @@ class TaskMapperTest(unittest.TestCase):
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     def test_properties(self):
         self.assertEqual(self.task_mapper.exploits, self.executor.exploits)
-        self.assertEqual(self.task_mapper.executor, self.executor)
+        self.assertEqual(self.task_mapper._aucote, self.executor)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)

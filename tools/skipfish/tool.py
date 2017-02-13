@@ -18,5 +18,5 @@ class SkipfishTool(Tool):
         if self.port.is_ipv6:
             log.warning("Skipfish doesn't support ipv6 scanning")
             return
-        self.executor.add_task(SkipfishScanTask(executor=self.executor, port=self.port,
-                                                exploits=[self.executor.exploits.find('skipfish', 'skipfish')]))
+        self.aucote.add_task(SkipfishScanTask(aucote=self.aucote, port=self.port,
+                                              exploits=[self.aucote.exploits.find('skipfish', 'skipfish')]))

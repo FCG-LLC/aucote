@@ -23,7 +23,7 @@ class PortTask(Task):
         """
         super().__init__(*args, **kwargs)
         self._port = port
-        self.current_exploits = exploits
+        self._current_exploits = exploits
 
     @property
     def exploit(self):
@@ -50,3 +50,32 @@ class PortTask(Task):
 
         """
         raise NotImplementedError
+
+    @property
+    def current_exploits(self):
+        """
+        List of exploits, which are used by task
+
+        Returns:
+            list
+
+        """
+        with self._lock:
+            return self._current_exploits[:]
+
+    @current_exploits.setter
+    def current_exploits(self, val):
+        with self._lock:
+            self._current_exploits = val
+
+    @property
+    def port(self):
+        """
+        Port
+
+        Returns:
+            Port
+
+        """
+        with self._lock:
+            return self._port

@@ -5,7 +5,7 @@ This module contains class responsible for scanning.
 import ipaddress
 import json
 import sched
-from threading import Thread
+from threading import Thread, Lock
 from urllib.error import URLError
 import urllib.request as http
 import logging as log
@@ -33,8 +33,10 @@ class ScanThread(Thread):
         super(ScanThread, self).__init__()
         self.scheduler = sched.scheduler(time.time)
         self.as_service = as_service
+        self._current_scan = []
         self.name = "Scanner"
         self.aucote = aucote
+        self._lock = Lock()
 
         try:
             self.cron = croniter(cfg.get('service.scans.cron'), time.time())
@@ -67,6 +69,7 @@ class ScanThread(Thread):
         scanner_ipv6 = PortsScan()
 
         nodes = [node for node in self._get_nodes_for_scanning() if node.ip.exploded in self._get_networks_list()]
+        self.current_scan = nodes
 
         if not nodes:
             log.warning("List of nodes is empty")
@@ -99,6 +102,7 @@ class ScanThread(Thread):
                 ports.append(port)
 
         self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports))
+        self.current_scan = []
 
     def run(self):
         log.debug("Starting scanner")
@@ -193,6 +197,7 @@ class ScanThread(Thread):
 
         """
         self.scheduler.enterabs(next(self.keep_update_cron), 1, self.keep_update)
+
         if int(time.monotonic() % 600) == 0:
             log.debug("keep cron update")
 
@@ -216,3 +221,43 @@ class ScanThread(Thread):
 
         """
         return self.aucote.storage
+
+    @property
+    def current_scan(self):
+        """
+        List of currently scan nodes
+
+        Returns:
+            list
+
+        """
+        with self._lock:
+            return self._current_scan[:]
+
+    @current_scan.setter
+    def current_scan(self, val):
+        with self._lock:
+            self._current_scan = val
+
+    @property
+    def previous_scan(self):
+        """
+        Returns previous scan timestamp
+
+        Returns:
+            float
+
+        """
+        return croniter(cfg.get('service.scans.cron'), time.time()).get_prev()
+
+    @property
+    def tasks(self):
+        """
+        List of tasks in scheduler
+
+        Returns:
+            list
+
+        """
+        with self._lock:
+            return self.scheduler.queue[:]

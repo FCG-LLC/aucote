@@ -38,8 +38,8 @@ class NmapToolTest(TestCase):
         self.port.scan = Scan(start=14, end=13)
         self.port.service_name = 'test_service'
 
-        self.executor = MagicMock(storage=Storage(":memory:"))
-        self.nmap_tool = NmapTool(executor=self.executor, exploits=self.exploits, port=self.port, config=self.config)
+        self.aucote = MagicMock(storage=Storage(":memory:"))
+        self.nmap_tool = NmapTool(aucote=self.aucote, exploits=self.exploits, port=self.port, config=self.config)
 
     @patch('tools.nmap.tool.VulnNmapScript')
     @patch('tools.nmap.tool.InfoNmapScript')
@@ -63,7 +63,7 @@ class NmapToolTest(TestCase):
         self.exploit2.name = 'test_name2'
         self.nmap_tool()
 
-        result = self.nmap_tool.executor.add_task.call_count
+        result = self.nmap_tool.aucote.add_task.call_count
         expected = 1
 
         self.assertEqual(result, expected)
@@ -74,7 +74,7 @@ class NmapToolTest(TestCase):
         self.exploit2.name = 'test_name2'
         self.nmap_tool()
 
-        result = self.nmap_tool.executor.add_task.call_count
+        result = self.nmap_tool.aucote.add_task.call_count
         expected = 2
 
         self.assertEqual(result, expected)
