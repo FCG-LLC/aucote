@@ -35,12 +35,13 @@ class WebServerThread(Thread):
             None
 
         """
-        self._ioloop = IOLoop.current()
+        self._ioloop.make_current()
         app = self._make_app()
         sockets = bind_sockets(self.port, address=self.host, reuse_port=True)
         self.server = HTTPServer(app)
         self.server.add_sockets(sockets)
         self._ioloop.start()
+        self._ioloop.close()
 
     def stop(self):
         """

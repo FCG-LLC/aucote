@@ -123,4 +123,10 @@ class Task(object):
 
     @property
     def name(self):
+        """
+        task name
+
+        Returns:
+            str
+        """
         return self._name or type(self).__name__

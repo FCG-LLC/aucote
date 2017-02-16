@@ -66,7 +66,6 @@ class MainHandler(Handler):
         """
         return {
             'nodes': [str(node.ip) for node in scan_thread.current_scan],
-            'scheduler': [cls.scheduler_task_status(task) for task in scan_thread.tasks],
             'networks': cfg.get('service.scans.networks').cfg,
             'ports': cfg.get('service.scans.ports'),
             'previous_scan': scan_thread.previous_scan

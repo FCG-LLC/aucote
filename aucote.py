@@ -13,10 +13,13 @@ import fcntl
 import signal
 from threading import Lock
 
+from tornado import gen
+from tornado.ioloop import IOLoop
+
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
+from scans.scan_async_task import ScanAsyncTask
 from scans.task_mapper import TaskMapper
-from threads.scan_thread import ScanThread
 from threads.storage_thread import StorageThread
 from threads.watchdog_thread import WatchdogThread
 from threads.web_server_thread import WebServerThread
@@ -109,6 +112,7 @@ class Aucote(object):
         self._scan_thread = None
         self._watch_thread = None
         self._storage_thread = None
+        self.ioloop = None
 
     @property
     def kudu_queue(self):
@@ -147,8 +151,10 @@ class Aucote(object):
         Returns: None
 
         """
-
         try:
+            log.debug("Create ioloop")
+            self.ioloop = IOLoop.current()
+
             self._storage_thread = StorageThread(filename=cfg.get('service.scans.storage'))
             self._storage_thread.start()
 
@@ -156,14 +162,16 @@ class Aucote(object):
                 self._watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
                 self._watch_thread.start()
 
-            self._scan_thread = ScanThread(aucote=self, as_service=as_service)
-            self._scan_thread.start()
+            self._scan_thread = ScanAsyncTask(aucote=self, as_service=as_service)
+            self._scan_thread.run()
 
             self.thread_pool.start()
             web_server = WebServerThread(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
             web_server.start()
 
-            self.scan_thread.join()
+            self.ioloop.start()
+            self.ioloop.close()
+
             self.thread_pool.join()
 
             web_server.stop()
@@ -176,6 +184,9 @@ class Aucote(object):
             self._scan_thread = None
             self._watch_thread = None
             self._storage_thread = None
+
+            IOLoop.clear_current()
+            IOLoop.clear_instance()
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")
@@ -226,7 +237,7 @@ class Aucote(object):
         Scan thread
 
         Returns:
-            ScanThread
+            ScanAsyncTask
 
         """
         with self._lock:
@@ -256,6 +267,7 @@ class Aucote(object):
                 log.info('Loading %s', name)
                 app['loader'](app, self.exploits)
 
+    @gen.coroutine
     def graceful_stop(self):
         """
         Responsible for stopping the threads in graceful way.
@@ -264,8 +276,10 @@ class Aucote(object):
             None
 
         """
-        self._scan_thread.stop()
+        log.debug("Stop gracefuly")
         self._watch_thread.stop()
+        yield self._scan_thread.stop()
+        self.ioloop.stop()
 
     @classmethod
     def kill(cls):

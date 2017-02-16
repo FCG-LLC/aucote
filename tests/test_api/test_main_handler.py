@@ -78,7 +78,6 @@ class UserAPITest(AsyncHTTPTestCase):
                 '127.0.0.1',
                 '::1'
             ],
-            'scheduler': ['test', 'test'],
             'networks': ['test_cfg1'],
             'ports': ['test_cfg2'],
             'previous_scan': scan_thread.previous_scan

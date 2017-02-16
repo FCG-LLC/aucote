@@ -127,7 +127,17 @@ class StorageThread(Thread):
         return ports
 
     def get_ports_by_node(self, node, pasttime=0, timestamp=None):
+        """
+        Get node's ports after given timestamp or for pasttime
+        Args:
+            node (Node):
+            pasttime (float):
+            timestamp (float):
 
+        Returns:
+            list
+
+        """
         ports = []
 
         if timestamp is None:

@@ -6,6 +6,9 @@ import tempfile
 import logging as log
 import subprocess
 
+from tornado import gen
+from tornado import process
+
 from aucote_cfg import cfg
 from tools.common.parsers import Parser
 
@@ -42,6 +45,37 @@ class Command(object):
             temp_file.truncate()
             try:
                 return self.parser.parse(subprocess.check_output(all_args, stderr=temp_file).decode('utf-8'))
+            except subprocess.CalledProcessError as exception:
+                temp_file.seek(0)
+                log.warning("Command '%s' Failed:\n\n%s", " ".join(all_args),
+                            "".join([line.decode() for line in temp_file.readlines()]))
+                raise exception
+
+    @gen.coroutine
+    def async_call(self, args=None):
+        """
+        Calls system command and return parsed output or standard error output
+
+        Args:
+            args (list):
+
+        Returns:
+
+        """
+        if args is None:
+            args = []
+
+        all_args = [cfg.get('tools.%s.cmd' % self.NAME)]
+        all_args.extend(self.COMMON_ARGS)
+        all_args.extend(args)
+        log.debug('Executing: %s', ' '.join(all_args))
+        with tempfile.TemporaryFile() as temp_file:
+            temp_file.truncate()
+            try:
+                task = process.Subprocess(all_args, stderr=temp_file, stdout=process.Subprocess.STREAM)
+                yield task.wait_for_exit()
+                result = yield task.stdout.read_until_close()
+                return self.parser.parse(result.decode('utf-8'))
             except subprocess.CalledProcessError as exception:
                 temp_file.seek(0)
                 log.warning("Command '%s' Failed:\n\n%s", " ".join(all_args),

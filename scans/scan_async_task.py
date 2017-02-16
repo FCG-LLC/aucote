@@ -4,16 +4,20 @@ This module contains class responsible for scanning.
 """
 import ipaddress
 import json
-from threading import Thread, Lock
+from functools import partial
 from urllib.error import URLError
 import urllib.request as http
 import logging as log
 import time
 import netifaces
+
 from croniter import croniter
 from netaddr import IPSet
+from tornado import gen
 from tornado.ioloop import IOLoop
+from tornado.locks import Event
 from tornado_crontab import CronTabCallback
+from threading import Lock
 
 from aucote_cfg import cfg
 from scans.executor import Executor
@@ -23,38 +27,81 @@ from tools.nmap.ports import PortsScan
 from utils.time import parse_period, parse_time_to_timestamp
 
 
-class ScanThread(Thread):
+def _lock_task(function):
+    """
+    Decorator for locking async function. Restrict function to be run once at this same time
+
+    Args:
+        function :
+
+    Returns:
+        function
+
+    """
+
+    @gen.coroutine
+    def return_function(self, *args, **kwargs):
+
+        with self._lock:
+            if self._run_tasks[function.__name__]:
+                return
+            self._run_tasks[function.__name__] = True
+
+        yield function(self, *args, **kwargs)
+
+        with self._lock:
+            self._run_tasks[function.__name__] = False
+
+    return return_function
+
+
+class ScanAsyncTask(object):
     """
     Class responsible for scanning
 
     """
-
     def __init__(self, aucote, as_service=True):
-        super(ScanThread, self).__init__()
         self.as_service = as_service
         self._current_scan = []
-        self.name = "Scanner"
         self.aucote = aucote
         self._lock = Lock()
-        self._ioloop = IOLoop()
+        self._run_tasks = {}
+        self._shutdown_condition = Event()
+
         try:
-            self._periodical_scan_callback = CronTabCallback(self._periodical_scan, cfg.get('service.scans.cron'))
-            self._periodical_tools_scan = CronTabCallback(self._run_tools, cfg.get('service.scans.tools_cron'))
+            self._cron_tasks = {
+                '_scan': CronTabCallback(self._scan, cfg.get('service.scans.cron'),
+                                         io_loop=IOLoop().current()),
+
+                '_run_tools': CronTabCallback(self._run_tools, cfg.get('service.scans.tools_cron'),
+                                              io_loop=IOLoop().current())
+            }
+
+            for task in self._cron_tasks:
+                self._run_tasks[task] = False
+
         except KeyError:
             log.error("Please configure service.scans.cron and service.scans.tools_cron")
             exit(1)
 
     def run(self):
-        log.debug("Starting Thread")
-        self._ioloop.make_current()
-        if self.as_service:
-            self._periodical_scan_callback.start()
-            self._periodical_tools_scan.start()
-            self._ioloop.start()
-        else:
-            self.run_scan(self._get_nodes_for_scanning())
+        """
+        Run tasks
 
-    def _periodical_scan(self):
+        Returns:
+            None
+
+        """
+        log.debug("Starting cron")
+        if self.as_service:
+            for task in self._cron_tasks.values():
+                task.start()
+        else:
+            IOLoop.current().add_callback(partial(self.run_scan, self._get_nodes_for_scanning()))
+
+    @_lock_task
+    @gen.coroutine
+    def _scan(self):
         """
         Keeps cron update every minute
 
@@ -62,13 +109,26 @@ class ScanThread(Thread):
             None
 
         """
+        log.info("Starting port scan")
         nodes = self._get_nodes_for_scanning(timestamp=None)
         log.debug("Found %i nodes for potential scanning", len(nodes))
-        self.run_scan(nodes, scan_only=True)
+        yield self.run_scan(nodes, scan_only=True)
 
-        if int(time.monotonic() % 600) == 0:
-            log.debug("keep cron update")
+    @_lock_task
+    @gen.coroutine
+    def _run_tools(self):
+        """
+        Run scan by using tools and historical port data
 
+        Returns:
+            None
+
+        """
+        log.info("Starting security scan")
+        ports = self.get_ports_for_script_scan()
+        self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports))
+
+    @gen.coroutine
     def run_scan(self, nodes, scan_only=False):
         """
         Run scanning.
@@ -95,10 +155,11 @@ class ScanThread(Thread):
         log.info('Scanning %i nodes (IPv4: %s, IPv6: %s)', len(nodes), len(nodes_ipv4), len(nodes_ipv6))
 
         log.info("Scanning %i IPv4 nodes for open ports.", len(nodes_ipv4))
-        ports = scanner_ipv4.scan_ports(nodes_ipv4)
+        ports = yield scanner_ipv4.scan_ports(nodes_ipv4)
 
         log.info("Scanning %i IPv6 nodes for open ports.", len(nodes_ipv6))
-        ports.extend(scanner_ipv6.scan_ports(nodes_ipv6))
+        ports_ipv6 = yield scanner_ipv6.scan_ports(nodes_ipv6)
+        ports.extend(ports_ipv6)
 
         if cfg.get('service.scans.physical'):
             interfaces = netifaces.interfaces()
@@ -116,17 +177,8 @@ class ScanThread(Thread):
         self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports, scan_only=scan_only))
         self.current_scan = []
 
-    def _run_tools(self):
-        """
-        Run scan by using tools and historical port data
-
-        Returns:
-            None
-
-        """
-        log.info("Attempt to run tools")
-        ports = self.get_ports_for_script_scan()
-        self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports))
+        if not self.as_service:
+            IOLoop.current().stop()
 
     @classmethod
     def _get_topdis_nodes(cls):
@@ -190,17 +242,34 @@ class ScanThread(Thread):
             log.error("Please set service.scans.networks in configuration file!")
             exit()
 
+    @gen.coroutine
     def stop(self):
         """
-        Stop thread.
+        Stop tasks
 
         Returns:
             None
 
         """
-        self._periodical_scan_callback.stop()
-        self._periodical_tools_scan.stop()
-        self._ioloop.stop()
+        for task in self._cron_tasks.values():
+            task.stop()
+        IOLoop.current().add_callback(self.monitor_ioloop_shutdown)
+        yield [self._shutdown_condition.wait()]
+
+    def monitor_ioloop_shutdown(self):
+        """
+        Wait for tasks finish
+
+        Returns:
+            None
+
+        """
+        with self._lock:
+            if any([task.is_running() for task in self._cron_tasks.values()]) or any(self._run_tasks.values()):
+                IOLoop.current().add_callback(self.monitor_ioloop_shutdown)
+                return
+
+        self._shutdown_condition.set()
 
     @property
     def storage(self):
@@ -240,9 +309,16 @@ class ScanThread(Thread):
 
         """
 
-        return croniter(cfg.get('service.scans.cron'), time.time()).get_prev()
+        return croniter(cfg.get('service.scans.tools_cron'), time.time()).get_prev()
 
     def get_ports_for_script_scan(self):
+        """
+        Get ports for scanning. Topdis data combined with stored results.
+
+        Returns:
+            list
+
+        """
         nodes = self._get_topdis_nodes()
         ports = []
 

@@ -1,23 +1,24 @@
 """
 Test main aucote file
 """
-from unittest import TestCase
 from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
 
-import signal
+from tornado.concurrent import Future
+from tornado.testing import AsyncTestCase, gen_test
 
 from aucote import main, Aucote
-from utils.exceptions import NmapUnsupported, TopdisConnectionException, FinishThread
-from utils.storage import Storage
+from utils.exceptions import NmapUnsupported, TopdisConnectionException
 
 
 @patch('aucote_cfg.cfg.get', Mock(return_value=":memory:"))
 @patch('aucote_cfg.cfg.load', Mock(return_value=""))
 @patch('utils.log.config', Mock(return_value=""))
 @patch('aucote.os.remove', MagicMock(side_effect=FileNotFoundError()))
-class AucoteTest(TestCase):
+class AucoteTest(AsyncTestCase):
     def setUp(self):
+        super(AucoteTest, self).setUp()
         self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=MagicMock())
+        self.aucote.ioloop = MagicMock()
         self.aucote._storage_thread = MagicMock()
 
     @patch('builtins.open', mock_open())
@@ -74,8 +75,9 @@ class AucoteTest(TestCase):
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.StorageThread')
-    @patch('aucote.ScanThread')
+    @patch('aucote.ScanAsyncTask')
     @patch('aucote.WebServerThread', MagicMock())
+    @patch('aucote.IOLoop', MagicMock())
     def test_scan(self, mock_scan_tasks, mock_storage_task):
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
@@ -98,8 +100,9 @@ class AucoteTest(TestCase):
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.StorageThread')
     @patch('aucote.WatchdogThread')
-    @patch('aucote.ScanThread')
+    @patch('aucote.ScanAsyncTask')
     @patch('aucote.WebServerThread', MagicMock())
+    @patch('aucote.IOLoop', MagicMock())
     def test_service(self, mock_scan_tasks, mock_watchdog, mock_storage_task):
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
@@ -131,9 +134,9 @@ class AucoteTest(TestCase):
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
-    @patch('aucote.ScanThread.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
+    @patch('aucote.ScanAsyncTask.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
     @patch('aucote.StorageThread', MagicMock())
-    @patch('threads.scan_thread.Executor')
+    @patch('scans.scan_async_task.Executor')
     def test_scan_with_exception(self, mock_executor):
         self.aucote.run_scan()
         self.assertEqual(mock_executor.call_count, 0)
@@ -193,12 +196,20 @@ class AucoteTest(TestCase):
         config['apps']['app1']['loader'].assert_called_once_with(config['apps']['app1'], exploits)
         config['apps']['app2']['loader'].assert_called_once_with(config['apps']['app2'], exploits)
 
+    @gen_test
     def test_graceful_stop(self):
         self.aucote._scan_thread = MagicMock()
+
+        future_1 = Future()
+        future_1.set_result(None)
+        self.aucote._scan_thread.stop.return_value = future_1
+
         self.aucote._watch_thread = MagicMock()
-        self.aucote.graceful_stop()
+        yield self.aucote.graceful_stop()
+
         self.aucote._watch_thread.stop.assert_called_once_with()
         self.aucote._scan_thread.stop.assert_called_once_with()
+        self.aucote.ioloop.stop.assert_called_once_with()
 
     @patch('aucote.os._exit')
     def test_kill(self, mock_kill):
@@ -207,3 +218,6 @@ class AucoteTest(TestCase):
 
     def test_unfinished_tasks(self):
         self.assertEqual(self.aucote.unfinished_tasks, self.aucote.thread_pool.unfinished_tasks)
+
+    def test_scan_thread(self):
+        self.assertEqual(self.aucote.scan_thread, self.aucote._scan_thread)

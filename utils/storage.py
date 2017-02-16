@@ -137,12 +137,12 @@ class Storage(DbInterface):
 
         """
         queries = [(cls.SAVE_PORT_QUERY, (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
-                                           time.time())) for port in ports]
+                                          time.time())) for port in ports]
 
         return queries
 
     @classmethod
-    def get_ports(cls, pasttime,):
+    def get_ports(cls, pasttime, ):
         """
         Query for port scan detail from scans from pasttime ago
 
@@ -155,7 +155,6 @@ class Storage(DbInterface):
 
         """
         timestamp = time.time() - pasttime
-
 
         return "SELECT * FROM ports where time > ?", (timestamp,)
 
@@ -210,17 +209,17 @@ class Storage(DbInterface):
 
         for exploit in exploits:
             queries.append((cls.SAVE_SCAN_DETAIL, (exploit.id, exploit.app, exploit.name, port.node.id,
-                                                    str(port.node.ip), port.transport_protocol.iana, port.number)))
+                                                   str(port.node.ip), port.transport_protocol.iana, port.number)))
 
             if port.scan.start:
                 queries.append((cls.SAVE_SCAN_DETAIL_START, (port.scan.start, exploit.id, exploit.app, exploit.name,
-                                                              port.node.id, str(port.node.ip),
-                                                              port.transport_protocol.iana, port.number)))
+                                                             port.node.id, str(port.node.ip),
+                                                             port.transport_protocol.iana, port.number)))
 
             if port.scan.end:
                 queries.append((cls.SAVE_SCAN_DETAIL_END, (port.scan.end, exploit.id, exploit.app, exploit.name,
-                                                            port.node.id, str(port.node.ip),
-                                                            port.transport_protocol.iana, port.number)))
+                                                           port.node.id, str(port.node.ip),
+                                                           port.transport_protocol.iana, port.number)))
 
         return queries
 
