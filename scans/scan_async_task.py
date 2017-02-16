@@ -24,35 +24,8 @@ from scans.executor import Executor
 from structs import Node, Scan, PhysicalPort
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
+from utils.async_task_manager import AsyncTaskManager
 from utils.time import parse_period, parse_time_to_timestamp
-
-
-def _lock_task(function):
-    """
-    Decorator for locking async function. Restrict function to be run once at this same time
-
-    Args:
-        function :
-
-    Returns:
-        function
-
-    """
-
-    @gen.coroutine
-    def return_function(self, *args, **kwargs):
-
-        with self._lock:
-            if self._run_tasks[function.__name__]:
-                return
-            self._run_tasks[function.__name__] = True
-
-        yield function(self, *args, **kwargs)
-
-        with self._lock:
-            self._run_tasks[function.__name__] = False
-
-    return return_function
 
 
 class ScanAsyncTask(object):
@@ -69,17 +42,12 @@ class ScanAsyncTask(object):
         self._shutdown_condition = Event()
 
         try:
-            self._cron_tasks = {
-                '_scan': CronTabCallback(self._scan, cfg.get('service.scans.cron'),
-                                         io_loop=IOLoop().current()),
+            AsyncTaskManager.add_task('_scan', CronTabCallback(self._scan, cfg.get('service.scans.cron'),
+                                                               io_loop=IOLoop().current()))
 
-                '_run_tools': CronTabCallback(self._run_tools, cfg.get('service.scans.tools_cron'),
-                                              io_loop=IOLoop().current())
-            }
-
-            for task in self._cron_tasks:
-                self._run_tasks[task] = False
-
+            AsyncTaskManager.add_task('_run_tools',
+                                      CronTabCallback(self._run_tools, cfg.get('service.scans.tools_cron'),
+                                                      io_loop=IOLoop().current()))
         except KeyError:
             log.error("Please configure service.scans.cron and service.scans.tools_cron")
             exit(1)
@@ -94,12 +62,11 @@ class ScanAsyncTask(object):
         """
         log.debug("Starting cron")
         if self.as_service:
-            for task in self._cron_tasks.values():
-                task.start()
+            AsyncTaskManager.start()
         else:
             IOLoop.current().add_callback(partial(self.run_scan, self._get_nodes_for_scanning()))
 
-    @_lock_task
+    @AsyncTaskManager.lock_task
     @gen.coroutine
     def _scan(self):
         """
@@ -114,7 +81,7 @@ class ScanAsyncTask(object):
         log.debug("Found %i nodes for potential scanning", len(nodes))
         yield self.run_scan(nodes, scan_only=True)
 
-    @_lock_task
+    @AsyncTaskManager.lock_task
     @gen.coroutine
     def _run_tools(self):
         """
@@ -241,35 +208,6 @@ class ScanAsyncTask(object):
         except KeyError:
             log.error("Please set service.scans.networks in configuration file!")
             exit()
-
-    @gen.coroutine
-    def stop(self):
-        """
-        Stop tasks
-
-        Returns:
-            None
-
-        """
-        for task in self._cron_tasks.values():
-            task.stop()
-        IOLoop.current().add_callback(self.monitor_ioloop_shutdown)
-        yield [self._shutdown_condition.wait()]
-
-    def monitor_ioloop_shutdown(self):
-        """
-        Wait for tasks finish
-
-        Returns:
-            None
-
-        """
-        with self._lock:
-            if any([task.is_running() for task in self._cron_tasks.values()]) or any(self._run_tasks.values()):
-                IOLoop.current().add_callback(self.monitor_ioloop_shutdown)
-                return
-
-        self._shutdown_condition.set()
 
     @property
     def storage(self):

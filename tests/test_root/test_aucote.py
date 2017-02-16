@@ -196,19 +196,20 @@ class AucoteTest(AsyncTestCase):
         config['apps']['app1']['loader'].assert_called_once_with(config['apps']['app1'], exploits)
         config['apps']['app2']['loader'].assert_called_once_with(config['apps']['app2'], exploits)
 
+    @patch('aucote.AsyncTaskManager.stop')
     @gen_test
-    def test_graceful_stop(self):
-        self.aucote._scan_thread = MagicMock()
+    def test_graceful_stop(self, mock_async_task):
+        self.aucote._scan_task = MagicMock()
 
         future_1 = Future()
         future_1.set_result(None)
-        self.aucote._scan_thread.stop.return_value = future_1
+        mock_async_task.return_value = future_1
 
         self.aucote._watch_thread = MagicMock()
         yield self.aucote.graceful_stop()
 
         self.aucote._watch_thread.stop.assert_called_once_with()
-        self.aucote._scan_thread.stop.assert_called_once_with()
+        mock_async_task.assert_called_once_with()
         self.aucote.ioloop.stop.assert_called_once_with()
 
     @patch('aucote.os._exit')
@@ -219,5 +220,5 @@ class AucoteTest(AsyncTestCase):
     def test_unfinished_tasks(self):
         self.assertEqual(self.aucote.unfinished_tasks, self.aucote.thread_pool.unfinished_tasks)
 
-    def test_scan_thread(self):
-        self.assertEqual(self.aucote.scan_thread, self.aucote._scan_thread)
+    def test_scan_task_property(self):
+        self.assertEqual(self.aucote.scan_task, self.aucote._scan_task)

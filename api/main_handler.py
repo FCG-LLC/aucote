@@ -36,7 +36,7 @@ class MainHandler(Handler):
 
         """
         stats = self.thread_pool_status(self.aucote.thread_pool)
-        stats['scanner'] = self.scanning_status(self.aucote.scan_thread)
+        stats['scanner'] = self.scanning_status(self.aucote.scan_task)
         stats['meta'] = self.metadata()
         return stats
 
@@ -53,22 +53,22 @@ class MainHandler(Handler):
         }
 
     @classmethod
-    def scanning_status(cls, scan_thread):
+    def scanning_status(cls, scan_task):
         """
         Information about scan
 
         Args:
-            scan_thread (ScanThread):
+            scan_task (ScanAsyncTask):
 
         Returns:
             dict
 
         """
         return {
-            'nodes': [str(node.ip) for node in scan_thread.current_scan],
+            'nodes': [str(node.ip) for node in scan_task.current_scan],
             'networks': cfg.get('service.scans.networks').cfg,
             'ports': cfg.get('service.scans.ports'),
-            'previous_scan': scan_thread.previous_scan
+            'previous_scan': scan_task.previous_scan
         }
 
     @classmethod

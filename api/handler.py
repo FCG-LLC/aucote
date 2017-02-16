@@ -48,10 +48,10 @@ class Handler(RequestHandler):
                     return False
 
                 password = auth_header[7:]
-                hash = hashlib.sha512(password.encode()).hexdigest()
+                password_hash = hashlib.sha512(password.encode()).hexdigest()
                 correct = cfg.get('service.api.password')
 
-                if hash != correct:
+                if password_hash != correct:
                     handler.set_status(401)
                     handler._transforms = []
                     handler.finish()

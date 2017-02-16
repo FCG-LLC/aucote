@@ -11,6 +11,7 @@ from tornado.testing import AsyncTestCase, gen_test
 from scans.scan_async_task import ScanAsyncTask
 from structs import Node, PhysicalPort
 from utils import Config
+from utils.async_task_manager import AsyncTaskManager
 
 
 class ScanAsyncTaskTest(AsyncTestCase):
@@ -100,6 +101,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
             2: MagicMock()
         }
 
+    def tearDown(self):
+        AsyncTaskManager.clear()
+
     @patch('scans.scan_async_task.cfg.get', MagicMock(side_effect=KeyError('test')))
     def test_init_with_exception(self):
         self.assertRaises(SystemExit, ScanAsyncTask, aucote=MagicMock())
@@ -149,7 +153,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         self.assertListEqual(result, expected)
 
-    def test_run_as_service(self):
+    @patch('scans.scan_async_task.AsyncTaskManager.start')
+    def test_run_as_service(self, mock_start):
         self.thread.scheduler = MagicMock()
         self.thread.as_service = True
 
@@ -159,8 +164,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         self.thread.run()
 
-        self.thread._cron_tasks[1].start.assert_called_once_with()
-        self.thread._cron_tasks[2].start.assert_called_once_with()
+        mock_start.called_once_with()
 
     @patch('scans.scan_async_task.IOLoop')
     @patch('scans.scan_async_task.partial')
@@ -328,30 +332,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None)
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True)
 
-    @gen_test
-    def test_periodical_scan_parallel(self):
-        nodes = MagicMock()
-        self.thread._get_nodes_for_scanning = MagicMock(return_value=nodes)
-
-        future_run_scan = Future()
-        future_run_scan.set_result(None)
-        self.thread.run_scan = MagicMock(return_value=future_run_scan)
-
-        self.thread._run_tasks['_scan'] = True
-
-        yield self.thread._scan()
-        self.assertFalse(self.thread._get_nodes_for_scanning.called)
-
-    @gen_test
-    def test_stop(self):
-        self.thread.monitor_ioloop_shutdown = MagicMock()
-        self.thread.monitor_ioloop_shutdown.side_effect = self.thread._shutdown_condition.set
-        yield self.thread.stop()
-
-        self.thread._cron_tasks[1].stop.assert_called_once_with()
-        self.thread._cron_tasks[2].stop.assert_called_once_with()
-        self.thread.monitor_ioloop_shutdown.assert_called_once_with()
-
     def test_current_scan_getter(self):
         expected = [MagicMock(), MagicMock()]
         self.thread._current_scan = expected
@@ -427,49 +407,3 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=ports)
         self.thread.aucote.add_task.assert_called_once_with(mock_executor.return_value)
-
-    @gen_test
-    def test_run_scripts_parallel(self):
-        ports = MagicMock()
-        self.thread._run_tasks['_run_tools'] = True
-
-        self.thread.get_ports_for_script_scan = MagicMock(return_value=ports)
-        yield self.thread._run_tools()
-
-        self.assertFalse(self.thread.aucote.add_task.called)
-
-    def test_monitor_ioloop_shutdown(self):
-        self.thread._shutdown_condition = MagicMock()
-
-        self.thread._cron_tasks[1].is_running.return_value = False
-        self.thread._cron_tasks[2].is_running.return_value = False
-
-        self.thread._run_tasks = {1: False, 2: False}
-
-        self.thread.monitor_ioloop_shutdown()
-
-        self.thread._shutdown_condition.set.assert_called_once_with()
-
-    def test_monitor_ioloop_shutdown_failed_because_of_task(self):
-        self.thread._shutdown_condition = MagicMock()
-
-        self.thread._cron_tasks[1].is_running.return_value = False
-        self.thread._cron_tasks[2].is_running.return_value = False
-
-        self.thread._run_tasks = {1: False, 2: True}
-
-        self.thread.monitor_ioloop_shutdown()
-
-        self.assertFalse(self.thread._shutdown_condition.set.called)
-
-    def test_monitor_ioloop_shutdown_failed_because_of_cron_task(self):
-        self.thread._shutdown_condition = MagicMock()
-
-        self.thread._cron_tasks[1].is_running.return_value = True
-        self.thread._cron_tasks[2].is_running.return_value = False
-
-        self.thread._run_tasks = {1: False, 2: False}
-
-        self.thread.monitor_ioloop_shutdown()
-
-        self.assertFalse(self.thread._shutdown_condition.set.called)
