@@ -27,7 +27,6 @@ from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.threads import ThreadPool
 from utils.kudu_queue import KuduQueue
-import utils.log as log_cfg
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
 
@@ -57,7 +56,6 @@ def main():
     # read configuration
     cfg_load(args.cfg)
 
-    log_cfg.config(cfg.get('logging'))
     log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
 
     try:

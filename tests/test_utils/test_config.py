@@ -1,7 +1,8 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch, mock_open, call
 
 from utils import Config
+from utils.exceptions import ToucanException
 
 
 class ConfigTest(TestCase):
@@ -153,3 +154,46 @@ class ConfigTest(TestCase):
 
     def test_not_list(self):
         self.assertNotIn('dog', self.config['alice.has'])
+
+    @patch('utils.config.Toucan')
+    def test_load_toucan(self, toucan):
+        self.config._cfg = {
+            'toucan': {
+                'api': {
+                    'host': 'localhost',
+                    'port': '3000',
+                    'protocol': 'http'
+                }
+            }
+        }
+        keys = [
+            ['key_1', 'key_2', 'key_3', 'key_4']
+        ]
+        toucan.return_value.get.side_effect = ('test_1', 'test_2', ToucanException("test_exception"), 'test_3')
+        self.config.load_toucan(keys=keys)
+
+        self.assertEqual(self.config['key_1'], 'test_1')
+        self.assertEqual(self.config['key_2'], 'test_2')
+        self.assertEqual(self.config['key_4'], 'test_3')
+        self.assertNotIn('key_3', self.config._cfg)
+
+    def test_set(self):
+        expected = MagicMock()
+        self.config['test.adding.key'] = expected
+        result = self.config._cfg.get('test', {}).get('adding', {}).get('key', None)
+
+        self.assertEqual(result, expected)
+
+    def test_set_exist_key(self):
+        self.config._cfg = {
+            'test': {
+                'adding': {
+                    'key': 'exist_key'
+                }
+            }
+        }
+        expected = MagicMock()
+        self.config['test.adding.key'] = expected
+        result = self.config._cfg.get('test', {}).get('adding', {}).get('key', None)
+
+        self.assertEqual(result, expected)

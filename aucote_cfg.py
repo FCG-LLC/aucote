@@ -3,6 +3,9 @@ This module provides default configuration and the global instance for the utils
 '''
 import os.path as path
 from sys import stderr
+import utils.log as log_cfg
+
+import exrex
 
 from utils import Config
 
@@ -93,6 +96,11 @@ _DEFAULT = {
     'pid_file': 'aucote.pid'
 }
 
+_TOUCAN_KEYS = [
+    exrex.generate('service\.scans\.(useragent|ports|rate|port_period|node_period|physical|broadcast)'),
+    exrex.generate('tools\.(nmap|aucote-http-headers)\.(enable)'),
+]
+
 #global cfg
 cfg = Config(_DEFAULT)
 
@@ -115,3 +123,7 @@ def load(file_name=None):
     except Exception:
         stderr.write("Cannot load configuration file {0}".format(file_name))
         exit()
+
+    log_cfg.config(cfg.get('logging'))
+
+    cfg.load_toucan(_TOUCAN_KEYS)
