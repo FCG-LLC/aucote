@@ -6,6 +6,7 @@ import logging as log
 
 import yaml
 
+from utils.toucan import Toucan
 
 
 class Config:
@@ -19,6 +20,7 @@ class Config:
             cfg = {}
         self._cfg = cfg
         self.default = self._cfg.copy()
+        self.toucan = None
 
     def __len__(self):
         return len(self._cfg)
@@ -142,3 +144,8 @@ class Config:
 
         """
         self.load(file_name, self.default)
+
+    def load_toucan_config(self):
+        self.toucan = Toucan(host=self.get('toucan.api.host'),
+                             port=self.get('toucan.api.port'),
+                             protocol=self.get('toucan.api.protocol'))

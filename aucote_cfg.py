@@ -3,6 +3,7 @@ This module provides default configuration and the global instance for the utils
 '''
 import os.path as path
 from sys import stderr
+import logging as log
 
 from utils import Config
 
@@ -115,3 +116,5 @@ def load(file_name=None):
     except Exception:
         stderr.write("Cannot load configuration file {0}".format(file_name))
         exit()
+
+    cfg.load_toucan_config()

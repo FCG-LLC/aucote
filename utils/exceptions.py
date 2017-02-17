@@ -72,3 +72,10 @@ class FinishThread(Exception):
     Raises if thread should be finished
 
     """
+
+
+class ToucanException(Exception):
+    """
+    Raises if toucan cannot return configuration
+
+    """
