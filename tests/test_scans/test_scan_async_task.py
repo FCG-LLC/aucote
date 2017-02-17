@@ -100,9 +100,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
             1: MagicMock(),
             2: MagicMock()
         }
+        self.task_manager = AsyncTaskManager.instance()
+        self.task_manager.run_tasks = {
+            '_run_tools': False,
+            '_scan': False
+        }
 
     def tearDown(self):
-        AsyncTaskManager.clear()
+        AsyncTaskManager.instance().clear()
 
     @patch('scans.scan_async_task.cfg.get', MagicMock(side_effect=KeyError('test')))
     def test_init_with_exception(self):

@@ -55,7 +55,7 @@ class StorageThreadTest(TestCase):
     def test_storage_query_proceed(self):
         self.task._queue.task_done.side_effect = (None, Exception("TEST_FIN"))
         query = StorageQuery("test_query")
-        query.lock = MagicMock()
+        query.semaphore = MagicMock()
         self.task._queue.get.side_effect = (query, StorageQuery(None))
         self.task._storage = MagicMock()
         result = MagicMock()
@@ -63,7 +63,7 @@ class StorageThreadTest(TestCase):
 
         self.assertRaises(Exception, self.task.run)
         self.assertEqual(self.task._storage.cursor.execute.call_count, 2)
-        query.lock.release.assert_called_once_with()
+        query.semaphore.release.assert_called_once_with()
         self.assertEqual(query.result, result.fetchall.return_value)
 
     def test_save_ports(self):
@@ -133,7 +133,7 @@ class StorageThreadTest(TestCase):
 
         result = self.task.get_ports(100)
 
-        self.task.add_query.return_value.lock.acquire.assert_called_once_with()
+        self.task.add_query.return_value.semaphore.acquire.assert_called_once_with()
         self.task.add_query.assert_called_once_with(mock_query.return_value)
         mock_query.assert_called_once_with(*self.task._storage.get_ports.return_value)
         self.task._storage.get_ports.assert_called_once_with(100)
@@ -163,7 +163,7 @@ class StorageThreadTest(TestCase):
         node = MagicMock()
         result = self.task.get_ports_by_node(node, 100)
 
-        self.task.add_query.return_value.lock.acquire.assert_called_once_with()
+        self.task.add_query.return_value.semaphore.acquire.assert_called_once_with()
         self.task.add_query.assert_called_once_with(mock_query.return_value)
         mock_query.assert_called_once_with(*self.task._storage.get_ports.return_value)
         self.task._storage.get_ports_by_node.assert_called_once_with(node, 200)
@@ -188,7 +188,7 @@ class StorageThreadTest(TestCase):
 
         result = self.task.get_nodes(100)
 
-        self.task.add_query.return_value.lock.acquire.assert_called_once_with()
+        self.task.add_query.return_value.semaphore.acquire.assert_called_once_with()
         self.task.add_query.assert_called_once_with(mock_query.return_value)
         mock_query.assert_called_once_with(*self.task._storage.get_nodes.return_value)
         self.task._storage.get_nodes.assert_called_once_with(100, None)
@@ -213,7 +213,7 @@ class StorageThreadTest(TestCase):
 
         result = self.task.get_scan_info(port, app)
 
-        self.task.add_query.return_value.lock.acquire.assert_called_once_with()
+        self.task.add_query.return_value.semaphore.acquire.assert_called_once_with()
         self.task.add_query.assert_called_once_with(mock_query.return_value)
         mock_query.assert_called_once_with(*self.task._storage.get_scan_info.return_value)
         self.task._storage.get_scan_info.assert_called_once_with(port, app)

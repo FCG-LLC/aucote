@@ -334,7 +334,7 @@ class StorageQuery(object):
         self._query = query
         self._args = args
         self.result = []
-        self.lock = Semaphore(value=0)
+        self.semaphore = Semaphore(value=0)
 
     @property
     def query(self):

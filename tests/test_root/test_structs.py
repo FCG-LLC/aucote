@@ -228,7 +228,7 @@ class StorageQueryTest(TestCase):
         self.query = StorageQuery(self.test_query, self.args)
 
     def test_init(self):
-        self.assertEqual(self.query.lock._value, 0)
+        self.assertEqual(self.query.semaphore._value, 0)
 
     def test_args(self):
         expected = (self.test_query, self.args)

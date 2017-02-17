@@ -12,13 +12,23 @@ class AsyncTaskManager(object):
     Aucote uses asynchronous task executed in ioloop. Some of them,
     especially scanners, should finish before ioloop will stop
 
+    This class should be accessed by instance class method, which returns global instance of task manager
+
     """
-    _SHUTDOWN_CONDITION = Event()
-    _CRON_TASKS = {}
-    _RUN_TASKS = {}
+    _instance = None
+
+    def __init__(self):
+        self._shutdown_condition = Event()
+        self._cron_tasks = {}
+        self.run_tasks = {}
 
     @classmethod
-    def start(cls):
+    def instance(cls):
+        if cls._instance is None:
+            cls._instance = AsyncTaskManager()
+        return cls._instance
+
+    def start(self):
         """
         Start CronTabCallback tasks
 
@@ -26,11 +36,10 @@ class AsyncTaskManager(object):
             None
 
         """
-        for task in cls._CRON_TASKS.values():
+        for task in self._cron_tasks.values():
             task.start()
 
-    @classmethod
-    def add_task(cls, name, task):
+    def add_task(self, name, task):
         """
         Add cron task. name is name of function, task is CronTabCallback object
 
@@ -42,12 +51,11 @@ class AsyncTaskManager(object):
             None
 
         """
-        cls._CRON_TASKS[name] = task
-        cls._RUN_TASKS[name] = False
+        self._cron_tasks[name] = task
+        self.run_tasks[name] = False
 
-    @classmethod
     @gen.coroutine
-    def stop(cls):
+    def stop(self):
         """
         Stop CronTabCallback tasks and wait on them to finish
 
@@ -55,10 +63,10 @@ class AsyncTaskManager(object):
             None
 
         """
-        for task in cls._CRON_TASKS.values():
+        for task in self._cron_tasks.values():
             task.stop()
-        IOLoop.current().add_callback(cls.monitor_ioloop_shutdown)
-        yield [cls._SHUTDOWN_CONDITION.wait()]
+        IOLoop.current().add_callback(self.monitor_ioloop_shutdown)
+        yield [self._shutdown_condition.wait()]
 
     @classmethod
     def lock_task(cls, function):
@@ -85,18 +93,18 @@ class AsyncTaskManager(object):
                 None
 
             """
-            if cls._RUN_TASKS[function.__name__]:
+            if cls.instance().run_tasks[function.__name__]:
                 return
-            cls._RUN_TASKS[function.__name__] = True
+
+            cls.instance().run_tasks[function.__name__] = True
 
             yield function(*args, **kwargs)
 
-            cls._RUN_TASKS[function.__name__] = False
+            cls.instance().run_tasks[function.__name__] = False
 
         return return_function
 
-    @classmethod
-    def monitor_ioloop_shutdown(cls):
+    def monitor_ioloop_shutdown(self):
         """
         Check if ioloop can be stopped
 
@@ -104,14 +112,13 @@ class AsyncTaskManager(object):
             None
 
         """
-        if any([task.is_running() for task in cls._CRON_TASKS.values()]) or any(cls._RUN_TASKS.values()):
-            IOLoop.current().add_callback(cls.monitor_ioloop_shutdown)
+        if any(task.is_running() for task in self._cron_tasks.values()) or any(self.run_tasks.values()):
+            IOLoop.current().add_callback(self.monitor_ioloop_shutdown)
             return
 
-        cls._SHUTDOWN_CONDITION.set()
-
-    @classmethod
-    def clear(cls):
+        self._shutdown_condition.set()
+    
+    def clear(self):
         """
         Clear list of tasks
 
@@ -119,5 +126,5 @@ class AsyncTaskManager(object):
             None
 
         """
-        cls._CRON_TASKS = {}
-        cls._RUN_TASKS = {}
+        self._cron_tasks = {}
+        self.run_tasks = {}

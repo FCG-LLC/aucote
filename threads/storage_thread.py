@@ -22,7 +22,6 @@ class StorageThread(Thread):
     def __init__(self, filename):
         super(StorageThread, self).__init__()
         self.name = "Storage"
-        self._lock = Lock()
         self._filename = ""
         self.filename = filename
         self._queue = Queue()
@@ -61,7 +60,7 @@ class StorageThread(Thread):
                 except Exception:
                     log.exception("Exception while executing query: %s", query.query[0])
                 finally:
-                    query.lock.release()
+                    query.semaphore.release()
                     self._queue.task_done()
                 continue
             else:
@@ -119,7 +118,7 @@ class StorageThread(Thread):
         ports = []
 
         query = self.add_query(StorageQuery(*self._storage.get_ports(pasttime)))
-        query.lock.acquire()
+        query.semaphore.acquire()
 
         for port in query.result:
             ports.append(Port(node=Node(node_id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
@@ -144,7 +143,7 @@ class StorageThread(Thread):
             timestamp = time.time() - pasttime
 
         query = self.add_query(StorageQuery(*self._storage.get_ports_by_node(node, timestamp)))
-        query.lock.acquire()
+        query.semaphore.acquire()
 
         for row in query.result:
             port = Port(node=node, number=row[2], transport_protocol=TransportProtocol.from_iana(row[3]))
@@ -165,7 +164,7 @@ class StorageThread(Thread):
         nodes = []
 
         query = self.add_query(StorageQuery(*self._storage.get_nodes(pasttime, timestamp)))
-        query.lock.acquire()
+        query.semaphore.acquire()
 
         for node in query.result:
             nodes.append(Node(node_id=node[0], ip=ipaddress.ip_address(node[1])))
@@ -187,7 +186,7 @@ class StorageThread(Thread):
 
         query = self.add_query(StorageQuery(*self._storage.get_scan_info(port, app)))
 
-        query.lock.acquire()
+        query.semaphore.acquire()
 
         for row in query.result:
             return_value.append({

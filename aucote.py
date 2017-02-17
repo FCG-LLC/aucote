@@ -114,6 +114,7 @@ class Aucote(object):
         self._watch_thread = None
         self._storage_thread = None
         self.ioloop = IOLoop.current()
+        self.async_task_manager = AsyncTaskManager.instance()
 
     @property
     def kudu_queue(self):
@@ -272,7 +273,7 @@ class Aucote(object):
         """
         log.debug("Stop gracefuly")
         self._watch_thread.stop()
-        yield AsyncTaskManager.stop()
+        yield self.async_task_manager.stop()
         self.ioloop.stop()
 
     @classmethod

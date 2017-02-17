@@ -40,11 +40,11 @@ class ScanAsyncTask(object):
         self._lock = Lock()
 
         try:
-            AsyncTaskManager.add_task('_scan', CronTabCallback(self._scan, cfg.get('service.scans.cron'),
-                                                               io_loop=IOLoop().current()))
+            self.aucote.async_task_manager.add_task('_scan', CronTabCallback(self._scan, cfg.get('service.scans.cron'),
+                                                                         io_loop=IOLoop().current()))
 
-            AsyncTaskManager.add_task('_run_tools',
-                                      CronTabCallback(self._run_tools, cfg.get('service.scans.tools_cron'),
+            self.aucote.async_task_manager.add_task('_run_tools',
+                                                CronTabCallback(self._run_tools, cfg.get('service.scans.tools_cron'),
                                                       io_loop=IOLoop().current()))
         except KeyError:
             log.error("Please configure service.scans.cron and service.scans.tools_cron")
@@ -60,7 +60,7 @@ class ScanAsyncTask(object):
         """
         log.debug("Starting cron")
         if self.as_service:
-            AsyncTaskManager.start()
+            self.aucote.async_task_manager.start()
         else:
             IOLoop.current().add_callback(partial(self.run_scan, self._get_nodes_for_scanning()))
 
@@ -189,13 +189,7 @@ class ScanAsyncTask(object):
 
         storage_nodes = self.storage.get_nodes(parse_period(cfg.get('service.scans.node_period')), timestamp=timestamp)
 
-        for node in storage_nodes:
-            try:
-                topdis_nodes.remove(node)
-            except ValueError:
-                continue
-
-        return topdis_nodes
+        return list(set(topdis_nodes) - set(storage_nodes))
 
     @classmethod
     def _get_networks_list(cls):
