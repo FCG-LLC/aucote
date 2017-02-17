@@ -38,8 +38,6 @@ class ScanAsyncTask(object):
         self._current_scan = []
         self.aucote = aucote
         self._lock = Lock()
-        self._run_tasks = {}
-        self._shutdown_condition = Event()
 
         try:
             AsyncTaskManager.add_task('_scan', CronTabCallback(self._scan, cfg.get('service.scans.cron'),
@@ -70,7 +68,7 @@ class ScanAsyncTask(object):
     @gen.coroutine
     def _scan(self):
         """
-        Keeps cron update every minute
+        Scan nodes for open ports
 
         Returns:
             None
@@ -178,8 +176,13 @@ class ScanAsyncTask(object):
 
     def _get_nodes_for_scanning(self, timestamp=None):
         """
+        Get nodes for scan since timestamp. If timestamp is None, it is equal: current timestamp - node scan period
+
+        Args:
+            timestamp (float):
+
         Returns:
-            list of nodes to be scan
+            list
 
         """
         topdis_nodes = self._get_topdis_nodes()
@@ -247,11 +250,15 @@ class ScanAsyncTask(object):
 
         """
 
+        return croniter(cfg.get('service.scans.cron'), time.time()).get_prev()
+
+    @property
+    def previous_tool_scan(self):
         return croniter(cfg.get('service.scans.tools_cron'), time.time()).get_prev()
 
     def get_ports_for_script_scan(self):
         """
-        Get ports for scanning. Topdis data combined with stored results.
+        Get ports for scanning. Topdis node data combined with stored open ports data.
 
         Returns:
             list
@@ -264,3 +271,25 @@ class ScanAsyncTask(object):
             ports.extend(self.storage.get_ports_by_node(node, timestamp=self.previous_scan))
 
         return ports
+
+    @property
+    def next_scan(self):
+        """
+        Time of next regular scan
+
+        Returns:
+            float
+
+        """
+        return croniter(cfg.get('service.scans.cron'), time.time()).get_next()
+
+    @property
+    def next_tool_scan(self):
+        """
+        Time of next regular scan
+
+        Returns:
+            float
+
+        """
+        return croniter(cfg.get('service.scans.tools_cron'), time.time()).get_next()

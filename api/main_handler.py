@@ -68,7 +68,12 @@ class MainHandler(Handler):
             'nodes': [str(node.ip) for node in scan_task.current_scan],
             'networks': cfg.get('service.scans.networks').cfg,
             'ports': cfg.get('service.scans.ports'),
-            'previous_scan': scan_task.previous_scan
+            'previous_scan': scan_task.previous_scan,
+            'previous_tool_scan': scan_task.previous_tool_scan,
+            'next_scan': scan_task.next_scan,
+            'next_tool_scan': scan_task.next_tool_scan,
+            'scan_cron': cfg.get('service.scans.scan_cron'),
+            'tool_scan_cron': cfg.get('service.scans.tool_scan_cron')
         }
 
     @classmethod

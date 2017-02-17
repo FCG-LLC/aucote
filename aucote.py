@@ -76,10 +76,10 @@ def main():
 
     with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
 
-        # try:
-        #     os.remove(cfg.get('service.scans.storage'))
-        # except FileNotFoundError:
-        #     pass
+        try:
+            os.remove(cfg.get('service.scans.storage'))
+        except FileNotFoundError:
+            pass
 
         aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=EXECUTOR_CONFIG)
 

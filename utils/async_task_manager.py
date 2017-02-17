@@ -63,7 +63,7 @@ class AsyncTaskManager(object):
     @classmethod
     def lock_task(cls, function):
         """
-        Decorator which aloow execution only one instance of function at same time
+        Decorator which allow execution only one instance of function this same time
 
         Args:
             function:

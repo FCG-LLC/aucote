@@ -358,6 +358,23 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertEqual(result, expected)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @patch('scans.scan_async_task.time.time', MagicMock(return_value=1595))
+    def test_previous_tools_scan(self, mock_cfg):
+        mock_cfg._cfg = {
+            'service': {
+                'scans': {
+                    'cron': '* * * * *',
+                    'tools_cron': '*/8 * * * *',
+                }
+            }
+        }
+
+        expected = 1440
+        result = self.thread.previous_tool_scan
+
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.time.time', MagicMock(return_value=595))
     def test_previous_scan_second_test(self, mock_cfg):
         mock_cfg._cfg = {
@@ -407,3 +424,37 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=ports)
         self.thread.aucote.add_task.assert_called_once_with(mock_executor.return_value)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @patch('scans.scan_async_task.time.time', MagicMock(return_value=595))
+    def test_next_scan(self, mock_cfg):
+        mock_cfg._cfg = {
+            'service': {
+                'scans': {
+                    'cron': '*/5 * * * *',
+                    'tools_cron': '*/12 * * * *'
+                }
+            }
+        }
+
+        expected = 600
+        result = self.thread.next_scan
+
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @patch('scans.scan_async_task.time.time', MagicMock(return_value=595))
+    def test_next_tool_scan(self, mock_cfg):
+        mock_cfg._cfg = {
+            'service': {
+                'scans': {
+                    'cron': '*/12 * * * *',
+                    'tools_cron': '*/12 * * * *'
+                }
+            }
+        }
+
+        expected = 720
+        result = self.thread.next_tool_scan
+
+        self.assertEqual(result, expected)
