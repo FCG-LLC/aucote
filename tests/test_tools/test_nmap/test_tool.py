@@ -6,6 +6,7 @@ from fixtures.exploits import Exploit
 from structs import RiskLevel, Port, TransportProtocol, Node, Scan
 from tools.nmap.base import InfoNmapScript
 from tools.nmap.tool import NmapTool
+from utils import Config
 from utils.exceptions import ImproperConfigurationException
 from utils.storage import Storage
 
@@ -31,6 +32,23 @@ class NmapToolTest(TestCase):
             }
         }
 
+        self.cfg = {
+            'tools': {
+                'nmap': {
+                    'disable_scripts': [],
+                },
+                'common': {
+                    'rate': 1337
+                }
+            },
+            'service': {
+                'scans': {
+                    'useragent': 'test_useragent'
+                }
+            },
+            'config_filename': ''
+        }
+
         self.exploits = [self.exploit, self.exploit2]
         self.port = Port(number=13, transport_protocol=TransportProtocol.TCP,
                          node=Node(node_id=1,ip=ipaddress.ip_address('127.0.0.1')))
@@ -44,8 +62,9 @@ class NmapToolTest(TestCase):
     @patch('tools.nmap.tool.VulnNmapScript')
     @patch('tools.nmap.tool.InfoNmapScript')
     @patch('tools.nmap.tool.NmapPortScanTask')
-    @patch('tools.nmap.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=[])))
-    def test_call(self, port_scan_mock, info_scan_script, vuln_scan_script):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_call(self, cfg, port_scan_mock, info_scan_script, vuln_scan_script):
+        cfg._cfg = self.cfg
 
         self.nmap_tool()
         info_scan_script.assert_called_once_with(exploit=self.exploit, port=self.port, name='test_name',
@@ -58,8 +77,9 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(result, expected)
 
-    @patch('tools.nmap.tool.cfg.get', MagicMock(side_effect=(MagicMock(cfg=set())),))
-    def test_enable(self):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_enable(self, cfg):
+        cfg._cfg = self.cfg
         self.exploit2.name = 'test_name2'
         self.nmap_tool()
 
@@ -68,8 +88,9 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(result, expected)
 
-    @patch('tools.nmap.tool.cfg.get', MagicMock(side_effect=(MagicMock(cfg=set())),))
-    def test_single_mode(self):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_single_mode(self, cfg):
+        cfg._cfg = self.cfg
         self.nmap_tool.config['scripts']['test_name']['singular'] = True
         self.exploit2.name = 'test_name2'
         self.nmap_tool()
@@ -80,8 +101,9 @@ class NmapToolTest(TestCase):
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.tool.VulnNmapScript')
-    @patch('tools.nmap.tool.cfg.get', MagicMock(side_effect=(MagicMock(cfg=set())),))
-    def test_configurable_args(self, vuln_scan_script):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_configurable_args(self, cfg, vuln_scan_script):
+        cfg._cfg = self.cfg
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.config['scripts']['test_name2']['args'].return_value = 'dynamic_conf_test'
         self.nmap_tool()
@@ -89,8 +111,8 @@ class NmapToolTest(TestCase):
                                                  args='dynamic_conf_test')
 
     @patch('tools.nmap.tool.NmapPortScanTask')
-    @patch('tools.nmap.tool.cfg.get', MagicMock(side_effect=(MagicMock(cfg=set())),))
-    def test_exploits_with_this_same_scripts_name(self, port_scan_mock):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_exploits_with_this_same_scripts_name(self, cfg, port_scan_mock):
         """
         Test executing exploits with this same script name
         Args:
@@ -99,6 +121,7 @@ class NmapToolTest(TestCase):
         Returns:
 
         """
+        cfg._cfg = self.cfg
 
         self.config['scripts']['test_name']['args'] = ['test', 'test2']
         self.nmap_tool._get_tasks = MagicMock()
@@ -110,25 +133,26 @@ class NmapToolTest(TestCase):
         self.nmap_tool()
         self.assertEqual(port_scan_mock.call_count, 2)
 
-    @patch('tools.base.cfg.get')
-    def test_custom_args_dns_zone_transfer(self, mock_cfg):
-        mock_cfg.return_value.cfg = ['test.host', 'test.host2']
+    @patch('tools.base.cfg', new_callable=Config)
+    def test_custom_args_dns_zone_transfer(self, cfg):
+        cfg._cfg = self.cfg
+        cfg._cfg['tools']['nmap']['domains'] = ['test.host', 'test.host2']
         expected = ['dns-zone-transfer.domain=test.host', 'dns-zone-transfer.domain=test.host2']
 
         self.assertEqual(NmapTool.custom_args_dns_zone_transfer(), expected)
-        mock_cfg.assert_called_once_with('tools.nmap.domains')
 
-    @patch('tools.base.cfg.get')
-    def test_custom_args_dns_check_zone(self, mock_cfg):
-        mock_cfg.return_value.cfg = ['test.host', 'test.host2']
+    @patch('tools.base.cfg', new_callable=Config)
+    def test_custom_args_dns_check_zone(self, cfg):
+        cfg._cfg = self.cfg
+        cfg._cfg['tools']['nmap']['domains'] = ['test.host', 'test.host2']
         expected = ['dns-check-zone.domain=test.host', 'dns-check-zone.domain=test.host2']
 
         self.assertEqual(NmapTool.custom_args_dns_check_zone(), expected)
-        mock_cfg.assert_called_once_with('tools.nmap.domains')
 
     @patch('tools.nmap.tool.VulnNmapScript')
-    @patch('tools.nmap.tool.cfg.get', MagicMock(side_effect=(MagicMock(cfg=set()), 'test')))
-    def test_improper_configure_args(self, vuln_scan_script):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_improper_configure_args(self, cfg, vuln_scan_script):
+        cfg._cfg = self.cfg
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.config['scripts']['test_name2']['args'].side_effect = ImproperConfigurationException('test.test2')
         self.nmap_tool()
@@ -137,8 +161,11 @@ class NmapToolTest(TestCase):
 
     @patch('tools.nmap.tool.VulnNmapScript')
     @patch('tools.nmap.tool.InfoNmapScript')
-    @patch('tools.nmap.tool.cfg.get', MagicMock(return_value=MagicMock(cfg={'test_name', 'test_name2'})))
-    def test_disable_script_by_cfg(self, info_scan_script, vuln_scan_script):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_disable_script_by_cfg(self, cfg, info_scan_script, vuln_scan_script):
+        cfg._cfg = self.cfg
+        cfg._cfg['tools']['nmap']['disable_scripts'] = Config({'test_name', 'test_name2'})
+
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.nmap_tool()
 
@@ -155,29 +182,28 @@ class NmapToolTest(TestCase):
         self.assertFalse(vuln_scan_script.called)
         self.assertFalse(info_scan_script.called)
 
-    @patch('tools.base.cfg.get')
-    def test_custom_args_dns_srv_enum(self, mock_cfg):
-        mock_cfg.return_value.cfg = ['test.host', 'test.host2']
+    @patch('tools.base.cfg', new_callable=Config)
+    def test_custom_args_dns_srv_enum(self, cfg):
+        cfg._cfg = self.cfg
+        cfg._cfg['tools']['nmap']['domains'] = ['test.host', 'test.host2']
         expected = ['dns-srv-enum.domain=test.host', 'dns-srv-enum.domain=test.host2']
 
         self.assertEqual(NmapTool.custom_args_dns_srv_enum(), expected)
-        mock_cfg.assert_called_once_with('tools.nmap.domains')
 
-    @patch('tools.base.cfg.get')
-    def test_custom_args_http_domino_enum_passwords(self, mock_cfg):
-        mock_cfg.return_value.cfg = {"username": "test_usernm", "password": "test_passwd"}
+    @patch('tools.base.cfg', new_callable=Config)
+    def test_custom_args_http_domino_enum_passwords(self, cfg):
+        cfg._cfg = self.cfg
+        cfg._cfg['tools']['nmap']['domino-http'] = {"username": "test_usernm", "password": "test_passwd"}
         expected = "domino-enum-passwords.username='test_usernm',domino-enum-passwords.password=test_passwd"
 
         self.assertEqual(NmapTool.custom_args_http_domino_enum_passwords(), expected)
-        mock_cfg.assert_called_once_with('tools.nmap.domino-http')
 
-    @patch('tools.nmap.tool.cfg.get')
-    def test_custom_args_http_useragent(self, mock_cfg):
-        mock_cfg.return_value = "test_useragent"
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_custom_args_http_useragent(self, cfg):
+        cfg._cfg = self.cfg
         expected = "http.useragent='test_useragent'"
 
         self.assertEqual(NmapTool.custom_args_http_useragent(), expected)
-        mock_cfg.assert_called_once_with('service.scans.useragent')
 
     def test_custom_service_args(self):
         custom_args = MagicMock(return_value="test_arg")
@@ -195,7 +221,6 @@ class NmapToolTest(TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].args, expected)
 
-
     def test_empty_custom_service_args(self):
         self.nmap_tool.config = self.config
         self.nmap_tool.exploits = [self.exploit]
@@ -205,3 +230,34 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].args, expected)
+
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_rate_from_tools_common(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'common': {
+                    'rate': 1337
+                }
+            }
+        }
+        result = self.nmap_tool.rate
+        expected = 1337
+
+        self.assertEqual(result, expected)
+
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_rate(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'common': {
+                    'rate': 1337
+                },
+                'nmap': {
+                    'rate': 7331
+                }
+            }
+        }
+        result = self.nmap_tool.rate
+        expected = 7331
+
+        self.assertEqual(result, expected)

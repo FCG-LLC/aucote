@@ -44,7 +44,8 @@ kuduworker:
 #     useragent: <str> - User-Agent string used by Aucote scripts.
 #     storage: <str> - Path to local storage. Local storage is a SQLite3 database file.
 #     threads: <int> - Number of threads to be running
-#     rate: <int> - Rate in packets per seconds for scanning tool (e.g. masscan)
+#     network_scan_rate: <int> - Rate in packets per seconds for scanning network
+#     port_scan_rate: <int> - Rate in packets per seconds for scanning particular port
 #     scan_cron: <cron-like format> - This options defines how often aucote should run scans. This time is in UTC!
 #                                Examples:
 #                                   "*/5 * * * *" - run every 5 minutes
@@ -74,7 +75,8 @@ service:
         useragent: "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
         storage: "tmp/storage.sqlite3"
         threads: 30
-        rate: 1000
+        network_scan_rate: 1000
+        port_scan_rate: 1000
         period: 0s # deprecated
         scan_cron: "0 */2 * * *" # run every 2 hours
         tools_cron: "0 22 * * *" # run every day at 22:00 UTC
@@ -113,7 +115,9 @@ topdis:
 #        - aucote-http-headers - HTTP security headers scanner
 #
 # tools:
-#   (nmap|masscan|hydra|skipfish|aucote-http-headers):
+#   common: - Contains default values for tools
+#     rate: <int> - Rate of port scanning by using tool in pps (can be overwrite in detailed tool configuration below)
+#   (nmap|masscan|hydra|skipfish|aucote-http-headers): - Detailed tool configuration
 #     enable: (True|False) - Enable tool
 #     cmd: <str> - Command used to run application
 #     period: <str> - Defines how often use application
@@ -155,6 +159,8 @@ topdis:
 
 
 tools:
+    common:
+        rate: 80
     nmap:
         cmd: nmap
         enable: True

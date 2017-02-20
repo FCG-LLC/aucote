@@ -44,7 +44,8 @@ class NmapTool(Tool):
 
         for pack in packs:
             self.aucote.add_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
-                                                  script_classes=[val for val in pack if val is not None]))
+                                                  script_classes=[val for val in pack if val is not None],
+                                                  rate=self.rate))
 
     def _get_tasks(self):
         """
@@ -95,7 +96,7 @@ class NmapTool(Tool):
 
                 if singular:
                     self.aucote.add_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
-                                                          script_classes=[task]))
+                                                          script_classes=[task], rate=self.rate))
                     continue
                 tasks.append(task)
 
@@ -162,3 +163,17 @@ class NmapTool(Tool):
         config = cfg.get('service.scans.useragent')
         if config:
             return "http.useragent='{0}'".format(config)
+
+    @property
+    def rate(self):
+        """
+        Rate for Nmap scripts
+
+        Returns:
+            int
+
+        """
+        try:
+            return cfg.get('tools.nmap.rate')
+        except KeyError:
+            return cfg.get('tools.common.rate')

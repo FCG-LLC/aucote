@@ -19,8 +19,10 @@ class PortsScan(ScanTask):
     @classmethod
     def prepare_args(cls, nodes):
         args = ['-sV', '--script', 'banner', '-6']
-        args.extend(['-p', str(cfg.get('service.scans.ports')), '--min-rate', str(cfg.get('service.scans.rate')),
-                     '--max-rate', str(cfg.get('service.scans.rate'))])
+        args.extend(('-p', str(cfg.get('service.scans.ports')),
+                     '--min-rate', str(cfg.get('service.scans.network_scan_rate')),
+                     '--max-rate', str(cfg.get('service.scans.network_scan_rate'))
+                     ))
 
         args.extend([str(node.ip) for node in nodes])
         return args

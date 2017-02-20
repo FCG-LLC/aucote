@@ -21,7 +21,7 @@ class PortScanTest(TestCase):
         mock_config._cfg = {
             'service': {
                 'scans': {
-                    'rate': 1000,
+                    'network_scan_rate': 1000,
                     'ports': 'T:17-45'
                 }
             },
