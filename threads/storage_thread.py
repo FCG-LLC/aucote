@@ -152,6 +152,35 @@ class StorageThread(Thread):
 
         return ports
 
+    def get_ports_by_nodes(self, nodes, pasttime=0, timestamp=None):
+        """
+        Get nodes' ports after given timestamp or for pasttime
+
+        Args:
+            node (Node):
+            pasttime (float):
+            timestamp (float):
+
+        Returns:
+            list
+
+        """
+        ports = []
+
+        if timestamp is None:
+            timestamp = time.time() - pasttime
+
+        query = self.add_query(StorageQuery(*self._storage.get_ports_by_nodes(nodes, timestamp)))
+        query.semaphore.acquire()
+
+        for row in query.result:
+            node = nodes[nodes.index(Node(node_id=row[0], ip=ipaddress.ip_address(row[1])))]
+            port = Port(node=node, number=row[2], transport_protocol=TransportProtocol.from_iana(row[3]))
+            port.scan = Scan(start=port.node.scan.start)
+            ports.append(port)
+
+        return ports
+
     def get_nodes(self, pasttime=0, timestamp=None):
         """
         Returns all nodes from local storage

@@ -396,7 +396,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         self.assertEqual(result, expected)
 
-    @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', new_callable=PropertyMock)
+    @patch('scans.scan_async_task.ScanAsyncTask.previous_tool_scan', new_callable=PropertyMock)
     def test_get_ports_for_script_scan(self, mock_previous):
         nodes = [MagicMock(), MagicMock(), MagicMock()]
         self.thread._get_topdis_nodes = MagicMock(return_value=nodes)
@@ -406,18 +406,12 @@ class ScanAsyncTaskTest(AsyncTestCase):
             MagicMock(),
             MagicMock()
         ]
-        self.thread.storage.get_ports_by_node.side_effect = (
-            [ports[0], ports[1]],
-            [ports[2]],
-            []
-        )
+        self.thread.storage.get_ports_by_nodes.return_value = ports
 
         result = self.thread.get_ports_for_script_scan()
 
         self.assertEqual(result, ports)
-        self.thread.storage.get_ports_by_node.assert_has_calls([call(nodes[0], timestamp=100),
-                                                                call(nodes[1], timestamp=100),
-                                                                call(nodes[2], timestamp=100)])
+        self.thread.storage.get_ports_by_nodes.assert_has_calls([call(nodes, timestamp=100)])
 
     @patch('scans.scan_async_task.Executor')
     @gen_test

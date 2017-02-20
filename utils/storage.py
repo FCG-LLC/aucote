@@ -287,3 +287,26 @@ class Storage(DbInterface):
         """
 
         return "SELECT * FROM ports where id=? AND ip=? AND time > ?", (node.id, str(node.ip), timestamp,)
+
+    @classmethod
+    def get_ports_by_nodes(cls, nodes, timestamp):
+        """
+        Query for port scan detail from scans from pasttime ago
+
+        Args:
+            port (Port):
+            app (str): app name
+
+        Returns:
+            tuple
+
+        """
+        parameters = []
+        for node in nodes:
+            parameters.extend((node.id, str(node.ip)))
+
+        parameters.append(timestamp)
+
+        where = 'OR'.join([' (id=? AND ip=?) '] * len(nodes))
+
+        return "SELECT * FROM ports where ({where}) AND time > ?".format(where=where), parameters

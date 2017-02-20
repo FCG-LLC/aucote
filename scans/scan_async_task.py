@@ -91,6 +91,7 @@ class ScanAsyncTask(object):
         """
         log.info("Starting security scan")
         ports = self.get_ports_for_script_scan()
+        log.debug("Ports for security scan: %s", ports)
         self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports))
 
     @gen.coroutine
@@ -258,13 +259,7 @@ class ScanAsyncTask(object):
             list
 
         """
-        nodes = self._get_topdis_nodes()
-        ports = []
-
-        for node in nodes:
-            ports.extend(self.storage.get_ports_by_node(node, timestamp=self.previous_scan))
-
-        return ports
+        return self.storage.get_ports_by_nodes(self._get_topdis_nodes(), timestamp=self.previous_tool_scan)
 
     @property
     def next_scan(self):

@@ -243,3 +243,17 @@ class StorageTest(TestCase):
         expected = "SELECT * FROM ports where id=? AND ip=? AND time > ?", (3, '127.0.0.1', 1200,)
 
         self.assertEqual(result, expected)
+
+    def test_get_ports_by_nodes(self):
+        nodes = [
+            Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1')),
+            Node(node_id=7, ip=ipaddress.ip_address('::1'))
+        ]
+
+        result = self.storage.get_ports_by_nodes(nodes, 1200)
+        expected = (
+            "SELECT * FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ?",
+            [3, '127.0.0.1', 7, '::1', 1200]
+        )
+
+        self.assertEqual(result, expected)
