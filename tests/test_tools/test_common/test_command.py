@@ -44,7 +44,7 @@ class CommandTest(AsyncTestCase):
         result = yield self.command.async_call()
         self.assertEqual(result, self.SCRIPT_XML.decode("utf-8"))
 
-    @patch('tools.common.command.process.Subprocess')
+    @patch('tools.common.command.process.Subprocess.wait_for_exit')
     @gen_test
     def test_async_call_with_exception(self, mock_subprocess):
         mock_subprocess.side_effect = subprocess.CalledProcessError(1, 'test')
