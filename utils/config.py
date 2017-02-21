@@ -6,6 +6,7 @@ import logging as log
 
 import yaml
 
+from utils.exceptions import ToucanException
 from utils.toucan import Toucan
 
 
@@ -47,6 +48,19 @@ class Config:
             log.warning("%s not found in configuration file", key)
             raise KeyError(key)
 
+    def set(self, key, value):
+        keys = key.split('.')
+        current = self._cfg
+
+        for subkey in keys[:-1]:
+            current.setdefault(subkey, {})
+            current = current.get(subkey)
+
+        current[keys[-1]] = value
+
+    def __setitem__(self, key, value):
+        self.set(key, value)
+
     def _get(self, key):
         '''
         Gets data from multilevel dictionary using keys with dots.
@@ -57,13 +71,13 @@ class Config:
         keys = key.split('.')
 
         curr = self._cfg
-        for k in keys:
+        for subkey in keys:
             if isinstance(curr, dict):
-                curr = curr[k]
+                curr = curr[subkey]
             elif isinstance(curr, list):
-                curr = curr[int(k)]
+                curr = curr[int(subkey)]
             else:
-                raise KeyError(k)
+                raise KeyError(subkey)
 
         if isinstance(curr, dict) or isinstance(curr, list):
             return Config(curr)
@@ -145,7 +159,14 @@ class Config:
         """
         self.load(file_name, self.default)
 
-    def load_toucan_config(self):
+    def load_toucan(self, keys):
         self.toucan = Toucan(host=self.get('toucan.api.host'),
                              port=self.get('toucan.api.port'),
                              protocol=self.get('toucan.api.protocol'))
+
+        for key_group in keys:
+            for key in key_group:
+                try:
+                    self[key] = self.toucan.get(key)
+                except ToucanException as exception:
+                    log.warning("Toucan error: %s", exception)

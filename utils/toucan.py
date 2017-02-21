@@ -1,6 +1,5 @@
 import requests
 
-from aucote_cfg import cfg
 from utils.exceptions import ToucanException
 
 
@@ -21,11 +20,14 @@ class Toucan(object):
             mixed
 
         """
-        response = requests.get(url="{prot}://{host}:{port}/config/aucote/{key}"
-                                .format(prot=self.protocol, host=self.host, port=self.port,
-                                        key="/".join(key.split("."))))
+        try:
+            response = requests.get(url="{prot}://{host}:{port}/config/aucote/{key}"
+                                    .format(prot=self.protocol, host=self.host, port=self.port,
+                                            key="/".join(key.split("."))))
 
-        return self.proceed_response(key, response)
+            return self.proceed_response(key, response)
+        except requests.exceptions.ConnectionError:
+            raise ToucanException("Cannot connect to Toucan")
 
     def put(self, key, value):
         """
@@ -39,15 +41,18 @@ class Toucan(object):
             mixed - inserted value if success
 
         """
-        toucan_key = "/".join([""]+key.split("."))
+        toucan_key = "/".join(key.split("."))
         data = {
             "value": value,
         }
-        response = requests.put(url="{prot}://{host}:{port}/config{key}"
-                                .format(prot=self.protocol, host=self.host, port=self.port,
-                                        key=toucan_key), json=data)
+        try:
+            response = requests.put(url="{prot}://{host}:{port}/config/aucote/{key}"
+                                    .format(prot=self.protocol, host=self.host, port=self.port,
+                                            key=toucan_key), json=data)
 
-        return self.proceed_response(key, response)
+            return self.proceed_response(key, response)
+        except requests.exceptions.ConnectionError:
+            raise ToucanException("Cannot connect to Toucan")
 
     def proceed_response(self, key, response):
         """
