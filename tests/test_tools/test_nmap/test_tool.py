@@ -174,7 +174,9 @@ class NmapToolTest(TestCase):
         self.assertFalse(nmap_script.called)
 
     @patch('tools.nmap.tool.NmapScript')
-    def test_disable_script_by_internal_cfg(self, nmap_script):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_disable_script_by_internal_cfg(self, cfg, nmap_script):
+        cfg._cfg = self.cfg
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.nmap_tool.config['disable_scripts'] = {'test_name', 'test_name2'}
         self.nmap_tool()
@@ -204,7 +206,15 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(NmapTool.custom_args_http_useragent(), expected)
 
-    def test_custom_service_args(self):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_custom_service_args(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'disable_scripts': []
+                }
+            }
+        }
         custom_args = MagicMock(return_value="test_arg")
         self.config['services'] = {
             'test_service': {
@@ -220,7 +230,15 @@ class NmapToolTest(TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].args, expected)
 
-    def test_empty_custom_service_args(self):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_empty_custom_service_args(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'disable_scripts': []
+                }
+            }
+        }
         self.nmap_tool.config = self.config
         self.nmap_tool.exploits = [self.exploit]
 

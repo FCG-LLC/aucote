@@ -37,63 +37,8 @@ _DEFAULT = {
             'port': 1234
         }
     },
-    'tools':{
-        'nmap':{
-            'cmd': 'nmap',
-            'enable': True,
-            'period': '1d',
-            'disable_scripts': [],
-            'scripts_dir': './static/nmap/'
-        },
-        'masscan': {
-            'cmd': 'masscan',
-            'args': []
-        },
-        'hydra': {
-            'cmd': 'hydra',
-            'loginfile': 'static/logins.hydra.txt',
-            'passwordfile': 'static/passwords.hydra.txt',
-            'enable': True,
-            'disable_services': ['vnc', 'http', 'https'],
-            'period': '1d'
-        },
-        'skipfish': {
-            'cmd': 'skipfish',
-            'enable': True,
-            'limit': '0:10:00',
-            'threads': 5,
-            'tmp_directory': '/tmp',
-            'period': '1d'
-        },
-        'aucote-http-headers': {
-            'enable': True,
-            'period': ''
-        },
-        'common': {
-            'rate': 80
-        }
-    },
-    'service': {
-        'scans': {
-            'useragent': None,
-            'threads': 10,
-            'ports': '0-65535,U:0-65535',
-            'network_scan_rate': 1000,
-            'port_scan_rate': 1000,
-            'port_period': '5m',
-            'node_period': '1m',
-            'storage': 'storage.sqlite3',
-            'physical': True,
-            'broadcast': True
-        },
-        "api": {
-            'v1': {
-                'host': '0.0.0.0',
-                'port': 1235
-            }
-        }
-    },
-    'pid_file': 'aucote.pid'
+    'pid_file': 'aucote.pid',
+    'default_config': 'aucote_cfg_default.yaml'
 }
 
 _TOUCAN_KEYS = [
@@ -123,6 +68,15 @@ def load(file_name=None):
     except Exception:
         stderr.write("Cannot load configuration file {0}".format(file_name))
         exit()
+
+    default_config_filename = cfg.get('default_config')
+
+    try:
+        cfg.load(default_config_filename, cfg._cfg)
+    except Exception:
+        stderr.write("Cannot load configuration file {0}".format(default_config_filename))
+        exit()
+
 
     log_cfg.config(cfg.get('logging'))
 

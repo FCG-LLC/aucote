@@ -138,6 +138,14 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task.command.call = MagicMock()
         self.scan_task.command.call.return_value = ElementTree.fromstring(self.XML)
 
+        self.cfg = {
+            'tools': {
+                'nmap': {
+                    'scripts_dir': ''
+                }
+            }
+        }
+
     def test_init(self):
         self.assertEqual(self.scan_task.aucote, self.aucote)
         self.assertEqual(self.scan_task.port, self.port)
@@ -209,14 +217,18 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertTrue(expected.issubset(result))
         self.assertTrue('test,test2' in result or 'test2,test' in result)
 
-    def test_no_vulnerabilities(self):
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_no_vulnerabilities(self, cfg):
+        cfg._cfg = self.cfg
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.NO_VULNERABILITIES_XML))
         self.scan_task()
 
         self.assertFalse(self.scan_task.kudu_queue.send_msg.called)
 
     @patch('tools.nmap.tasks.port_scan.Vulnerability')
-    def test_prescript(self, mock_vulnerability):
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_prescript(self, cfg, mock_vulnerability):
+        cfg._cfg = self.cfg
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
         self.scan_task()
 
@@ -226,7 +238,9 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.tasks.port_scan.Vulnerability')
-    def test_hostscript(self, mock_vulnerability):
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_hostscript(self, cfg, mock_vulnerability):
+        cfg._cfg = self.cfg
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.HOSTSCRIPT_XML))
         self.scan_task()
 
@@ -235,11 +249,13 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
         self.assertEqual(result, expected)
 
-    def test_dns_scan(self):
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_dns_scan(self, cfg):
         """
         Test UDP scanning
 
         """
+        cfg._cfg = self.cfg
         self.scan_task._port.number = 53
         self.scan_task()
 
@@ -250,7 +266,9 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
     @patch('time.time', MagicMock(return_value=27.0))
     @patch('tools.nmap.tasks.port_scan.Vulnerability', MagicMock())
-    def test_storage(self):
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_storage(self, cfg):
+        cfg._cfg = self.cfg
         self.scan_task._script_classes = [self.script]
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
         self.scan_task()
@@ -299,7 +317,9 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertTrue(expected.issubset(result))
         self.assertTrue('test,test2' in result or 'test2,test' in result)
 
-    def test_prepare_args_ipv6(self):
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_prepare_args_ipv6(self, cfg):
+        cfg._cfg = self.cfg
         self.scan_task._port = self.port_ipv6
 
         result = self.scan_task.prepare_args()
