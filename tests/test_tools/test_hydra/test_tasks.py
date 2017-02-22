@@ -7,6 +7,7 @@ from fixtures.exploits import Exploit
 from structs import Port, TransportProtocol, Node, Scan
 from tools.hydra.parsers import HydraParser
 from tools.hydra.tasks import HydraScriptTask
+from utils import Config
 
 
 class HydraScriptTaskTest(TestCase):
@@ -36,7 +37,16 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.assertEqual(self.hydra_script_task._port, self.port)
 
     @patch('time.time', MagicMock(return_value=27.0))
-    def test_storage(self):
+    @patch('tools.hydra.tasks.cfg', new_callable=Config)
+    def test_storage(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'hydra': {
+                    'loginfile': None,
+                    'passwordfile': None
+                }
+            }
+        }
         self.hydra_script_task.command.call = MagicMock(return_value=MagicMock())
         self.hydra_script_task.aucote.kudu_queue = MagicMock()
         self.hydra_script_task.store_vulnerability = MagicMock()

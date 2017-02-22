@@ -16,6 +16,20 @@ class MasscanPortsTest(TestCase):
     NODE_IP = '127.0.0.1'
 
     def setUp(self):
+        self.cfg = {
+            'service': {
+                'scans': {
+                    'rate': 1000,
+                    'ports': '9',
+
+                }
+            },
+            'tools': {
+                'masscan': {
+                    'cmd': 'test'
+                }
+            }
+        }
         self.masscanports = MasscanPorts()
         node = Node(ip=ipaddress.ip_address(self.NODE_IP), node_id=None)
         node.scan = Scan()
@@ -29,19 +43,12 @@ class MasscanPortsTest(TestCase):
                     'network_scan_rate': 1000,
                     'ports': 'T:17-45'
                 }
-            },
-            'tools': {
-                'masscan': {
-                    'args': [
-                        'arg1', 'arg2', 'test'
-                    ]
-                }
             }
         }
 
         result = self.masscanports.prepare_args(self.nodes)
         expected = ['--rate', '1000', '--ports', 'T:17-45',
                     # '--exclude-ports', 'U:0-65535',
-                    'arg1', 'arg2', 'test', self.NODE_IP]
+                    self.NODE_IP]
 
         self.assertEqual(result, expected)

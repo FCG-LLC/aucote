@@ -32,7 +32,6 @@ class MasscanPorts(ScanTask):
                 '--ports', str(cfg.get('service.scans.ports')),
                 # '--exclude-ports', 'U:0-65535',
                 ]
-        args.extend(cfg.get('tools.masscan.args').cfg)
 
         args.extend([str(node.ip) for node in nodes])
 

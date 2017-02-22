@@ -8,16 +8,45 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from aucote import main, Aucote
+from utils import Config
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
+from utils.storage import Storage
 
 
-@patch('aucote_cfg.cfg.get', Mock(return_value=":memory:"))
 @patch('aucote_cfg.cfg.load', Mock(return_value=""))
 @patch('utils.log.config', Mock(return_value=""))
 @patch('aucote.os.remove', MagicMock(side_effect=FileNotFoundError()))
 class AucoteTest(AsyncTestCase):
-    def setUp(self):
+    @patch('aucote.cfg', new_callable=Config)
+    def setUp(self, cfg):
         super(AucoteTest, self).setUp()
+        self.cfg = cfg
+        self.cfg._cfg = {
+            'service': {
+                'scans': {
+                    'threads': 30,
+                    'storage': None
+                },
+                'api': {
+                    'v1': {
+                        'host': None,
+                        'port': None
+                    }
+                }
+            },
+            'kuduworker': {
+                'queue': {
+                    'address': None
+                }
+            },
+            'pid_file': None,
+            'fixtures': {
+                'exploits': {
+                    'filename': None
+                }
+            },
+            'config_filename': 'test'
+        }
         self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=MagicMock())
         self.aucote.ioloop = MagicMock()
         self.aucote._storage_thread = MagicMock()
@@ -27,7 +56,9 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.fcntl', MagicMock())
     @patch('aucote.Aucote')
     @patch('aucote.cfg_load', MagicMock())
-    def test_main_scan(self, mock_aucote):
+    @patch('aucote.cfg', new_callable=Config)
+    def test_main_scan(self, cfg, mock_aucote):
+        cfg._cfg = self.cfg._cfg
         args = PropertyMock()
         args.configure_mock(cmd='scan')
 
@@ -70,7 +101,9 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.fcntl', MagicMock())
     @patch('aucote.Aucote')
     @patch('aucote.cfg_load', MagicMock())
-    def test_main_syncdb(self, mock_aucote):
+    @patch('aucote.cfg', new_callable=Config)
+    def test_main_syncdb(self, cfg, mock_aucote):
+        cfg._cfg = self.cfg._cfg
         args = PropertyMock()
         args.configure_mock(cmd='syncdb')
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
@@ -83,7 +116,9 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.ScanAsyncTask')
     @patch('aucote.WebServerThread', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
-    def test_scan(self, mock_scan_tasks, mock_storage_task):
+    @patch('aucote.cfg', new_callable=Config)
+    def test_scan(self, cfg, mock_scan_tasks, mock_storage_task):
+        cfg._cfg = self.cfg._cfg
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
@@ -108,7 +143,9 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.ScanAsyncTask')
     @patch('aucote.WebServerThread', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
-    def test_service(self, mock_scan_tasks, mock_watchdog, mock_storage_task):
+    @patch('aucote.cfg', new_callable=Config)
+    def test_service(self, cfg, mock_scan_tasks, mock_watchdog, mock_storage_task):
+        cfg._cfg = self.cfg._cfg
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
@@ -142,7 +179,9 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.ScanAsyncTask.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
     @patch('aucote.StorageThread', MagicMock())
     @patch('scans.scan_async_task.Executor')
-    def test_scan_with_exception(self, mock_executor):
+    @patch('aucote.cfg', new_callable=Config)
+    def test_scan_with_exception(self, cfg, mock_executor):
+        cfg._cfg = self.cfg._cfg
         self.aucote.run_scan()
         self.assertEqual(mock_executor.call_count, 0)
 
@@ -166,7 +205,9 @@ class AucoteTest(AsyncTestCase):
                 self.assertRaises(SystemExit, main)
 
     @patch('aucote.Aucote.load_tools')
-    def test_init(self, mock_loader):
+    @patch('aucote.cfg', new_callable=Config)
+    def test_init(self, cfg, mock_loader):
+        cfg._cfg = self.cfg._cfg
         exploits = MagicMock()
         kudu_queue = MagicMock()
         cfg = MagicMock()
@@ -182,7 +223,9 @@ class AucoteTest(AsyncTestCase):
         self.aucote.signal_handler(2, None)
         self.aucote.kill.assert_called_once_with()
 
-    def test_load_tools(self):
+    @patch('aucote.cfg', new_callable=Config)
+    def test_load_tools(self, cfg):
+        cfg._cfg = self.cfg._cfg
         config = {
             'apps': {
                 'app1': {

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 from fixtures.exploits import Exploit
 from structs import Port, TransportProtocol, Node, Scan
 from tools.skipfish.tasks import SkipfishScanTask
+from utils import Config
 
 
 class SkipfishScanTaskTest(TestCase):
@@ -36,7 +37,17 @@ class SkipfishScanTaskTest(TestCase):
         self.task.store_scan_end = MagicMock()
 
     @patch('time.time', MagicMock(return_value=27.0))
-    def test_storage(self):
+    @patch('tools.skipfish.tasks.cfg', new_callable=Config)
+    def test_storage(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'skipfish': {
+                    'threads': 30,
+                    'limit': 0,
+                    'tmp_directory': '/tmp'
+                }
+            }
+        }
         self.task.command.call = MagicMock(return_value=MagicMock())
         self.task()
 
