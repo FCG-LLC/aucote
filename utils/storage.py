@@ -20,6 +20,20 @@ class Storage(DbInterface):
                              "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?"
     SAVE_SCAN_DETAIL_END = "UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND " \
                            "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?"
+    SELECT_NODES = "SELECT id, ip, time FROM nodes where time > ?"
+    SELECT_PORTS = "SELECT id, ip, port, protocol, time FROM ports where time > ?"
+    SELECT_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, port_number, " \
+                   "scan_start, scan_end FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? " \
+                   "AND port_protocol = ? AND port_number = ?"
+    SELECT_PORTS_BY_NODE = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ?"
+    SELECT_PORTS_BY_NODES = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ?"
+    CLEAR_SCANS = "DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL OR SCAN_END IS NULL"
+    CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, " \
+                         "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, " \
+                         "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, port_number))"
+    CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int," \
+                         "primary key (id, ip, port, protocol))"
+    CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))"
 
     def __init__(self, filename="storage.sqlite3"):
 
@@ -30,7 +44,6 @@ class Storage(DbInterface):
             filename (str): filename of provided storage
 
         """
-
         self.filename = filename
         self.conn = None
         self._cursor = None
@@ -93,7 +106,7 @@ class Storage(DbInterface):
         """
         if timestamp is None:
             timestamp = time.time() - pasttime
-        return "SELECT * FROM nodes where time > ?", (timestamp,)
+        return self.SELECT_NODES, (timestamp,)
 
     def save_port(self, port):
         """
@@ -141,7 +154,7 @@ class Storage(DbInterface):
         """
         timestamp = time.time() - pasttime
 
-        return "SELECT * FROM ports where time > ?", (timestamp,)
+        return self.SELECT_PORTS, (timestamp,)
 
     def save_scan(self, exploit, port):
         """
@@ -218,8 +231,7 @@ class Storage(DbInterface):
             tuple
 
         """
-        return "SELECT * FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? AND port_protocol = ? " \
-               "AND port_number = ?", (app, port.node.id, str(port.node.ip), port.transport_protocol.iana, port.number)
+        return self.SELECT_SCANS, (app, port.node.id, str(port.node.ip), port.transport_protocol.iana, port.number)
 
     def clear_scan_details(self):
         """
@@ -230,7 +242,7 @@ class Storage(DbInterface):
 
         """
         log.debug('Cleaning scan details')
-        return "DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL OR SCAN_END IS NULL",
+        return self.CLEAR_SCANS,
 
     def create_tables(self):
         """
@@ -240,15 +252,9 @@ class Storage(DbInterface):
             list
 
         """
-        queries = [("CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, "
-                    "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
-                    "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, "
-                    "port_number))",),
-
-                   ("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
-                    "primary key (id, ip, port, protocol))",),
-
-                   ("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))",)]
+        queries = [(self.CREATE_SCANS_TABLE,),
+                   (self.CREATE_PORTS_TABLE,),
+                   (self.CREATE_NODES_TABLE,)]
 
         return queries
 
@@ -265,7 +271,7 @@ class Storage(DbInterface):
 
         """
 
-        return "SELECT * FROM ports where id=? AND ip=? AND time > ?", (node.id, str(node.ip), timestamp,)
+        return self.SELECT_PORTS_BY_NODE, (node.id, str(node.ip), timestamp,)
 
     def get_ports_by_nodes(self, nodes, timestamp):
         """
@@ -287,4 +293,4 @@ class Storage(DbInterface):
 
         where = 'OR'.join([' (id=? AND ip=?) '] * len(nodes))
 
-        return "SELECT * FROM ports where ({where}) AND time > ?".format(where=where), parameters
+        return self.SELECT_PORTS_BY_NODES.format(where=where), parameters

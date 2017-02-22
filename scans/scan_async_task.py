@@ -15,8 +15,6 @@ from croniter import croniter
 from netaddr import IPSet
 from tornado import gen
 from tornado.ioloop import IOLoop
-from tornado.locks import Event
-from tornado_crontab import CronTabCallback
 from threading import Lock
 
 from aucote_cfg import cfg
@@ -40,12 +38,8 @@ class ScanAsyncTask(object):
         self._lock = Lock()
 
         try:
-            self.aucote.async_task_manager.add_task('_scan', CronTabCallback(self._scan, cfg.get('service.scans.cron'),
-                                                                         io_loop=IOLoop().current()))
-
-            self.aucote.async_task_manager.add_task('_run_tools',
-                                                CronTabCallback(self._run_tools, cfg.get('service.scans.tools_cron'),
-                                                      io_loop=IOLoop().current()))
+            self.aucote.async_task_manager.add_crontab_task(self._scan, cfg.get('service.scans.cron'))
+            self.aucote.async_task_manager.add_crontab_task(self._run_tools, cfg.get('service.scans.tools_cron'))
         except KeyError:
             log.error("Please configure service.scans.cron and service.scans.tools_cron")
             exit(1)
@@ -64,7 +58,7 @@ class ScanAsyncTask(object):
         else:
             IOLoop.current().add_callback(partial(self.run_scan, self._get_nodes_for_scanning()))
 
-    @AsyncTaskManager.lock_task
+    @AsyncTaskManager.unique_task
     @gen.coroutine
     def _scan(self):
         """
@@ -79,7 +73,7 @@ class ScanAsyncTask(object):
         log.debug("Found %i nodes for potential scanning", len(nodes))
         yield self.run_scan(nodes, scan_only=True)
 
-    @AsyncTaskManager.lock_task
+    @AsyncTaskManager.unique_task
     @gen.coroutine
     def _run_tools(self):
         """

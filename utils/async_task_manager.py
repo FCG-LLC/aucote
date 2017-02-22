@@ -2,9 +2,12 @@
 This module contains class for managing async tasks.
 
 """
+from functools import wraps
+
 from tornado import gen
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
+from tornado_crontab import CronTabCallback
 
 
 class AsyncTaskManager(object):
@@ -39,20 +42,21 @@ class AsyncTaskManager(object):
         for task in self._cron_tasks.values():
             task.start()
 
-    def add_task(self, name, task):
+    def add_crontab_task(self, task, cron):
         """
-        Add cron task. name is name of function, task is CronTabCallback object
+        Add function to scheduler and execute at cron time
 
         Args:
-            name (str): function/method name
-            task (CronTabCallback):
+            task (function):
+            cron (str): crontab value
 
         Returns:
             None
 
         """
-        self._cron_tasks[name] = task
-        self.run_tasks[name] = False
+
+        self._cron_tasks[task.__name__] = CronTabCallback(task, cron, io_loop=IOLoop.current())
+        self.run_tasks[task.__name__] = False
 
     @gen.coroutine
     def stop(self):
@@ -65,11 +69,11 @@ class AsyncTaskManager(object):
         """
         for task in self._cron_tasks.values():
             task.stop()
-        IOLoop.current().add_callback(self.monitor_ioloop_shutdown)
+        IOLoop.current().add_callback(self.prepare_ioloop_shutdown)
         yield [self._shutdown_condition.wait()]
 
     @classmethod
-    def lock_task(cls, function):
+    def unique_task(cls, function):
         """
         Decorator which allow execution only one instance of function this same time
 
@@ -81,6 +85,7 @@ class AsyncTaskManager(object):
 
         """
         @gen.coroutine
+        @wraps(function)
         def return_function(*args, **kwargs):
             """
             Wrapper on original function
@@ -93,18 +98,18 @@ class AsyncTaskManager(object):
                 None
 
             """
-            if cls.instance().run_tasks[function.__name__]:
+            if cls._instance.run_tasks[function.__name__]:
                 return
 
-            cls.instance().run_tasks[function.__name__] = True
+            cls._instance.run_tasks[function.__name__] = True
 
             yield function(*args, **kwargs)
 
-            cls.instance().run_tasks[function.__name__] = False
+            cls._instance.run_tasks[function.__name__] = False
 
         return return_function
 
-    def monitor_ioloop_shutdown(self):
+    def prepare_ioloop_shutdown(self):
         """
         Check if ioloop can be stopped
 
@@ -113,7 +118,7 @@ class AsyncTaskManager(object):
 
         """
         if any(task.is_running() for task in self._cron_tasks.values()) or any(self.run_tasks.values()):
-            IOLoop.current().add_callback(self.monitor_ioloop_shutdown)
+            IOLoop.current().add_callback(self.prepare_ioloop_shutdown)
             return
 
         self._shutdown_condition.set()

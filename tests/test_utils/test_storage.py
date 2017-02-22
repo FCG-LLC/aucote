@@ -62,7 +62,7 @@ class StorageTest(TestCase):
 
     def test_get_nodes(self):
         result = self.storage.get_nodes(pasttime=700, timestamp=None)
-        expected = 'SELECT * FROM nodes where time > ?', (139300,)
+        expected = 'SELECT id, ip, time FROM nodes where time > ?', (139300,)
         self.assertEqual(result, expected)
 
     @patch('time.time', MagicMock(return_value=13))
@@ -105,7 +105,7 @@ class StorageTest(TestCase):
 
     def test_get_ports(self):
         result = self.storage.get_ports(700)
-        expected = 'SELECT * FROM ports where time > ?', (139300,)
+        expected = 'SELECT id, ip, port, protocol, time FROM ports where time > ?', (139300,)
         self.assertEqual(result, expected)
 
     def test_save_scan(self):
@@ -214,8 +214,9 @@ class StorageTest(TestCase):
 
 
         result = self.storage.get_scan_info(port=port, app='test_app')
-        expected = ('SELECT * FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? AND port_protocol = ? '
-                    'AND port_number = ?', ('test_app', 3, '127.0.0.1', 6, 12))
+        expected = ('SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, port_number, '
+                    'scan_start, scan_end FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? '
+                    'AND port_protocol = ? AND port_number = ?', ('test_app', 3, '127.0.0.1', 6, 12))
 
         self.assertCountEqual(result, expected)
 
@@ -240,7 +241,7 @@ class StorageTest(TestCase):
     def test_get_ports_by_node(self):
         node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
         result = self.storage.get_ports_by_node(node, 1200)
-        expected = "SELECT * FROM ports where id=? AND ip=? AND time > ?", (3, '127.0.0.1', 1200,)
+        expected = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ?", (3, '127.0.0.1', 1200,)
 
         self.assertEqual(result, expected)
 
@@ -252,7 +253,7 @@ class StorageTest(TestCase):
 
         result = self.storage.get_ports_by_nodes(nodes, 1200)
         expected = (
-            "SELECT * FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ?",
+            "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ?",
             [3, '127.0.0.1', 7, '::1', 1200]
         )
 
