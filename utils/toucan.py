@@ -1,6 +1,6 @@
 import requests
 
-from utils.exceptions import ToucanException
+from utils.exceptions import ToucanException, ToucanUnsetException
 
 
 class Toucan(object):
@@ -66,6 +66,9 @@ class Toucan(object):
             mixed - return value if success, else raise exception
 
         """
+        if response.status_code == 404:
+            raise ToucanUnsetException(key)
+
         if response.status_code != 200:
             raise ToucanException(key)
 
@@ -75,3 +78,37 @@ class Toucan(object):
             raise ToucanException(data['message'])
 
         return data['value']
+
+    def push_config(self, config, key='', overwrite=True):
+        """
+        Push dict config to the toucan
+
+        Args:
+            config(dict):
+            key(str): base key
+            overwrite(bool): determine if config should be overwrite or not
+
+        Returns:
+            None
+
+        """
+
+        for subkey, value in config.items():
+            if key:
+                new_key = '.'.join([key, subkey])
+            else:
+                new_key = subkey
+                
+            if isinstance(value, dict):
+                self.push_config(value, new_key, overwrite)
+                continue
+
+            if overwrite:
+                self.put(new_key, value)
+                continue
+
+            try:
+                self.get(new_key)
+                continue
+            except ToucanUnsetException:
+                self.put(new_key, value)

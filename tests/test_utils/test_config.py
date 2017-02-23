@@ -155,10 +155,12 @@ class ConfigTest(TestCase):
     def test_not_list(self):
         self.assertNotIn('dog', self.config['alice.has'])
 
+    @patch('builtins.open', mock_open(read_data=YAML))
     @patch('utils.config.Toucan')
     def test_load_toucan(self, toucan):
         self.config._cfg = {
             'toucan': {
+                'enable': True,
                 'api': {
                     'host': 'localhost',
                     'port': '3000',
@@ -166,16 +168,10 @@ class ConfigTest(TestCase):
                 }
             }
         }
-        keys = [
-            ['key_1', 'key_2', 'key_3', 'key_4']
-        ]
-        toucan.return_value.get.side_effect = ('test_1', 'test_2', ToucanException("test_exception"), 'test_3')
-        self.config.load_toucan(keys=keys)
 
-        self.assertEqual(self.config['key_1'], 'test_1')
-        self.assertEqual(self.config['key_2'], 'test_2')
-        self.assertEqual(self.config['key_4'], 'test_3')
-        self.assertNotIn('key_3', self.config._cfg)
+        self.config.start_toucan('test_file')
+        toucan.return_value.push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=False)
+        self.assertEqual(self.config.toucan, toucan.return_value)
 
     def test_set(self):
         expected = MagicMock()
@@ -197,3 +193,13 @@ class ConfigTest(TestCase):
         result = self.config._cfg.get('test', {}).get('adding', {}).get('key', None)
 
         self.assertEqual(result, expected)
+
+    def test_get_non_exist_key_with_toucan(self):
+        self.config.toucan = MagicMock()
+        expected = 'test_value'
+        self.config.toucan.get.return_value = expected
+
+        result = self.config['non.exisists.key']
+
+        self.assertEqual(result, expected)
+        self.config.toucan.get.assert_called_once_with('non.exisists.key')

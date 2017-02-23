@@ -37,14 +37,17 @@ _DEFAULT = {
             'port': 1234
         }
     },
+    'toucan': {
+        'enable': True,
+        'api': {
+            'host': 'toucan',
+            'port': 3000,
+            'protocol': 'http'
+        }
+    },
     'pid_file': 'aucote.pid',
-    'default_config': 'aucote_cfg_default.yaml'
+    'default_config': 'aucote_cfg_default.yaml',
 }
-
-_TOUCAN_KEYS = [
-    exrex.generate('service\.scans\.(useragent|ports|rate|port_period|node_period|physical|broadcast)'),
-    exrex.generate('tools\.(nmap|aucote-http-headers)\.(enable)'),
-]
 
 #global cfg
 cfg = Config(_DEFAULT)
@@ -71,13 +74,13 @@ def load(file_name=None):
 
     default_config_filename = cfg.get('default_config')
 
-    try:
-        cfg.load(default_config_filename, cfg._cfg)
-    except Exception:
-        stderr.write("Cannot load configuration file {0}".format(default_config_filename))
-        exit()
-
+    if cfg.get('toucan.enable'):
+        cfg.start_toucan(default_config_filename)
+    else:
+        try:
+            cfg.load(default_config_filename, cfg._cfg)
+        except Exception:
+            stderr.write("Cannot load configuration file {0}".format(default_config_filename))
+            exit()
 
     log_cfg.config(cfg.get('logging'))
-
-    cfg.load_toucan(_TOUCAN_KEYS)

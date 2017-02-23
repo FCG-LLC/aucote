@@ -39,6 +39,8 @@ service:
         ports: T:0-65535,U:0-65535 # TCP, UDP: full range
         port_period: 15m
         node_period: 0s
+        physical: False
+        broadcast: False
         # networks: # Change it to proper values and uncomment
         #    - 127.0.0.1/32
         #    - ::1/128
@@ -108,6 +110,7 @@ tools:
         enable: True
         period: 1d
         scripts_dir: ./static/nmap/
+        disable_scripts: []
     masscan:
         cmd: masscan
     hydra:

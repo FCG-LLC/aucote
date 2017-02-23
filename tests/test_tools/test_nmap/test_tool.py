@@ -166,7 +166,7 @@ class NmapToolTest(TestCase):
     @patch('tools.nmap.tool.cfg', new_callable=Config)
     def test_disable_script_by_cfg(self, cfg, nmap_script):
         cfg._cfg = self.cfg
-        cfg._cfg['tools']['nmap']['disable_scripts'] = Config({'test_name', 'test_name2'})
+        cfg._cfg['tools']['nmap']['disable_scripts'] = ['test_name', 'test_name2']
 
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.nmap_tool()

@@ -76,6 +76,13 @@ class FinishThread(Exception):
 
 class ToucanException(Exception):
     """
-    Raises if toucan cannot return configuration
+    Raises if Toucan cannot return configuration
+
+    """
+
+
+class ToucanUnsetException(ToucanException, KeyError):
+    """
+    Returns if configuration key is unset
 
     """

@@ -13,7 +13,10 @@ class AucoteCfgTest(TestCase):
     def test_empty_load(self, cfg):
         cfg._cfg = {
             'logging': '',
-            'default_config': 'test_default'
+            'default_config': 'test_default',
+            'toucan': {
+                'enable': False,
+            }
         }
         cfg.load = MagicMock()
         cfg.load_toucan = MagicMock()
@@ -40,7 +43,27 @@ class AucoteCfgTest(TestCase):
     def test_invalid_default_file_load(self, cfg):
         cfg._cfg = {
             'logging': '',
-            'default_config': 'test_default'
+            'default_config': 'test_default',
+            'toucan': {
+                'enable': False,
+            }
         }
         cfg.load = MagicMock(side_effect=(None, TypeError()))
         self.assertRaises(SystemExit, load, 'test')
+
+    @patch('aucote_cfg.cfg', new_callable=Config)
+    @patch('aucote_cfg.log_cfg', MagicMock())
+    @patch('os.path.join', MagicMock(return_value='test'))
+    def test_toucan_enabled(self, cfg):
+        cfg._cfg = {
+            'logging': '',
+            'default_config': 'test_default',
+            'toucan': {
+                'enable': True,
+            }
+        }
+
+        cfg.start_toucan = MagicMock()
+        cfg.load = MagicMock()
+        load()
+        cfg.start_toucan.assert_called_once_with('test_default')
