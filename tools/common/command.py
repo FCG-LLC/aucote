@@ -68,15 +68,18 @@ class Command(object):
         all_args = [cfg.get('tools.%s.cmd' % self.NAME)]
         all_args.extend(self.COMMON_ARGS)
         all_args.extend(args)
-        log.debug('Executing: %s', ' '.join(all_args))
+        cmd = ' '.join(all_args),
+        log.debug('Executing: %s', cmd)
 
         task = process.Subprocess(all_args, stderr=process.Subprocess.STREAM, stdout=process.Subprocess.STREAM)
-        try:
-            yield task.wait_for_exit()
-            result = yield task.stdout.read_until_close()
-            return self.parser.parse(result.decode('utf-8'))
-        except subprocess.CalledProcessError as exception:
-            stdout_result = yield task.stdout.read_until_close()
-            stderr_result = yield task.stderr.read_until_close()
-            log.warning("Command '%s' Failed:\nSTDOUT:\n%s\nSTDERR:\n%s", " ".join(all_args), stdout_result, stderr_result)
-            raise exception
+
+        return_code, stdout, stderr = yield gen.multi([task.wait_for_exit(raise_error=False),
+                                                       task.stdout.read_until_close(),
+                                                       task.stderr.read_until_close()])
+
+        if return_code != 0:
+            log.warning("Command '%s' failed wit exit code: %s", cmd, return_code)
+            log.debug("Command '%s':\nSTDOUT:\n%s\nSTDERR:\n%s", cmd, stdout, stderr)
+            raise subprocess.CalledProcessError(return_code, cmd)
+
+        return self.parser.parse(stdout.decode('utf-8'))

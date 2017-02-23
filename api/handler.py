@@ -37,13 +37,13 @@ class Handler(RequestHandler):
         Returns:
 
         """
-        max_password_header_length = 80
+        MAX_PASSWORD_HEADER_LENGTH = 80
 
         def wrap_execute(handler_execute):
             def require_auth(handler, *args, **kwargs):
                 auth_header = handler.request.headers.get('Authorization')
 
-                if len(auth_header) < max_password_header_length and auth_header.startswith('Bearer '):
+                if len(auth_header) < MAX_PASSWORD_HEADER_LENGTH and auth_header.startswith('Bearer '):
                     password = auth_header.split('Bearer ')[1]
                     password_hash = hashlib.sha512(password.encode()).hexdigest()
                     correct = cfg.get('service.api.password')

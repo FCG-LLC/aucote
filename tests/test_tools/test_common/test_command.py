@@ -36,18 +36,31 @@ class CommandTest(AsyncTestCase):
     @gen_test
     def test_async_call(self, mock_subprocess):
         future_1 = Future()
+        future_1.set_result(0)
+        mock_subprocess.return_value.wait_for_exit.return_value = future_1
+        future_2 = Future()
+        future_2.set_result(self.SCRIPT_XML)
+        mock_subprocess.return_value.stdout.read_until_close.return_value = future_2
+        future_3 = Future()
+        future_3.set_result("")
+        mock_subprocess.return_value.stderr.read_until_close.return_value = future_3
+
+        result = yield self.command.async_call()
+        self.assertEqual(result, self.SCRIPT_XML.decode("utf-8"))
+
+    @patch('tools.common.command.process.Subprocess')
+    @gen_test
+    def test_async_call_with_exception(self, mock_subprocess):
+        future_1 = Future()
         future_1.set_result(1)
         mock_subprocess.return_value.wait_for_exit.return_value = future_1
         future_2 = Future()
         future_2.set_result(self.SCRIPT_XML)
         mock_subprocess.return_value.stdout.read_until_close.return_value = future_2
-        result = yield self.command.async_call()
-        self.assertEqual(result, self.SCRIPT_XML.decode("utf-8"))
+        future_3 = Future()
+        future_3.set_result("")
+        mock_subprocess.return_value.stderr.read_until_close.return_value = future_3
 
-    @patch('tools.common.command.process.Subprocess.wait_for_exit')
-    @gen_test
-    def test_async_call_with_exception(self, mock_subprocess):
-        mock_subprocess.side_effect = subprocess.CalledProcessError(1, 'test')
         try:
             yield self.command.async_call()
             self.fail()
