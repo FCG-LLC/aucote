@@ -1,23 +1,29 @@
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 
 import requests
 from requests import Response
 
 from utils import Config
-from utils.exceptions import ToucanException
+from utils.exceptions import ToucanException, ToucanUnsetException
 from utils.toucan import Toucan
 
 
 class TestToucan(TestCase):
 
     def setUp(self):
-        self.toucan = Toucan('toucan', '3000', 'http')
+        self.toucan = Toucan('test_host', '3000', 'test_prot')
 
     @patch('utils.toucan.requests.get')
     def test_get_404(self, mock_get):
         mock_get.return_value = Response()
         mock_get.return_value.status_code = 404
+        self.assertRaises(ToucanUnsetException, self.toucan.get, "test.key")
+
+    @patch('utils.toucan.requests.get')
+    def test_get_500(self, mock_get):
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 500
         self.assertRaises(ToucanException, self.toucan.get, "test.key")
 
     @patch('utils.toucan.requests.get')
@@ -69,10 +75,51 @@ class TestToucan(TestCase):
         result = self.toucan.put("test.key", "test_value")
 
         self.assertEqual(result, expected)
-        mock_put.assert_called_once_with(url='http://toucan:3000/config/aucote/test/key', json={'value': 'test_value'})
+        mock_put.assert_called_once_with(url='test_prot://test_host:3000/config/aucote/test/key', json={'value': 'test_value'})
 
     @patch('utils.toucan.requests.put')
     def test_put_with_exception(self, mock_put):
         mock_put.side_effect = requests.exceptions.ConnectionError()
 
         self.assertRaises(ToucanException, self.toucan.put, "test.key", "test_value")
+
+    def test_push_config_exists_without_overwrite(self):
+        config = {
+            'test': {
+                'key': {
+                    'test_key': 'test_value'
+                }
+            }
+        }
+        self.toucan.put = MagicMock()
+        self.toucan.get = MagicMock(side_effect=('exists', ToucanUnsetException))
+
+        self.toucan.push_config(config, overwrite=False)
+        self.assertFalse(self.toucan.put.called)
+
+    def test_push_config_non_exists_without_overwrite(self):
+        config = {
+            'test': {
+                'key': {
+                    'test_key': 'test_value'
+                }
+            }
+        }
+        self.toucan.put = MagicMock()
+        self.toucan.get = MagicMock(side_effect=(ToucanUnsetException,))
+
+        self.toucan.push_config(config, overwrite=False)
+        self.toucan.put.assert_called_once_with('test.key.test_key', 'test_value')
+
+    def test_push_config_with_overwrite(self):
+        config = {
+            'test': {
+                'key': {
+                    'test_key': 'test_value'
+                }
+            }
+        }
+        self.toucan.put = MagicMock()
+
+        self.toucan.push_config(config, overwrite=True)
+        self.toucan.put.assert_called_once_with('test.key.test_key', 'test_value')

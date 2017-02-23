@@ -6,7 +6,6 @@ import logging as log
 
 import yaml
 
-from utils.exceptions import ToucanException
 from utils.toucan import Toucan
 
 
@@ -28,6 +27,8 @@ class Config:
 
     def __getitem__(self, key):
         ''' Works like "get()" '''
+        if isinstance(self._cfg, list):
+            return self._cfg[key]
         return self.get(key)
 
     def __contains__(self, item):
@@ -45,6 +46,8 @@ class Config:
         try:
             return self._get(key)
         except KeyError:
+            if self.toucan:
+                return self.toucan.get(key)
             log.warning("%s not found in configuration file", key)
             raise KeyError(key)
 
@@ -159,14 +162,12 @@ class Config:
         """
         self.load(file_name, self.default)
 
-    def load_toucan(self, keys):
+    def start_toucan(self, default_config):
         self.toucan = Toucan(host=self.get('toucan.api.host'),
                              port=self.get('toucan.api.port'),
                              protocol=self.get('toucan.api.protocol'))
 
-        for key_group in keys:
-            for key in key_group:
-                try:
-                    self[key] = self.toucan.get(key)
-                except ToucanException as exception:
-                    log.warning("Toucan error: %s", exception)
+        with open(default_config, "r") as f:
+            config = yaml.load(f)
+
+        self.toucan.push_config(config, overwrite=False)
