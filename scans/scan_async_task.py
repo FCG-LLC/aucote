@@ -23,6 +23,7 @@ from structs import Node, Scan, PhysicalPort
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from utils.async_task_manager import AsyncTaskManager
+from tools.nmap.tool import NmapTool
 from utils.time import parse_period, parse_time_to_timestamp
 
 
@@ -101,7 +102,9 @@ class ScanAsyncTask(object):
         scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
         scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
 
-        nodes = [node for node in nodes if node.ip.exploded in self._get_networks_list()]
+        nodes = [node for node in nodes if node.ip.exploded in self._get_networks_list()
+                 and node.ip.exploded not in self._get_excluded_networks_list()]
+
         self.current_scan = nodes
 
         if not nodes:
@@ -122,8 +125,14 @@ class ScanAsyncTask(object):
         ports.extend(ports_udp)
 
         log.info("Scanning %i IPv6 nodes for open ports.", len(nodes_ipv6))
+
         ports_ipv6 = yield scanner_ipv6.scan_ports(nodes_ipv6)
         ports.extend(ports_ipv6)
+
+        port_range_allow = NmapTool.parse_nmap_ports(cfg.get('service.scans.ports.include'))
+        port_range_deny = NmapTool.parse_nmap_ports(cfg.get('service.scans.ports.exclude'))
+
+        ports = [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
 
         if cfg.get('service.scans.physical'):
             interfaces = netifaces.interfaces()
@@ -200,10 +209,24 @@ class ScanAsyncTask(object):
 
         """
         try:
-            return IPSet(cfg.get('service.scans.networks').cfg)
+            return IPSet(cfg.get('service.scans.networks.include').cfg)
         except KeyError:
-            log.error("Please set service.scans.networks in configuration file!")
+            log.error("Please set service.scans.networks.include in configuration file!")
             exit()
+
+
+    def _get_excluded_networks_list(self):
+        """
+        List of excluded networks from configuration file
+
+        Returns:
+            IPSet: set of networks
+
+        """
+        try:
+            return IPSet(cfg.get('service.scans.networks.exclude').cfg)
+        except KeyError:
+            return []
 
     @property
     def storage(self):

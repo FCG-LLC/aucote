@@ -36,7 +36,9 @@ service:
         rate: 1000
         period: 0s # deprecated
         cron: "0 22 * * *" # run every day at 22:00 UTC
-        ports: T:0-65535,U:0-65535 # TCP, UDP: full range
+        ports:
+            include: T:0-65535,U:0-65535 # TCP, UDP: full range
+            exclude: "" # TCP, UDP: full range
         port_period: 15m
         node_period: 0s
         physical: False

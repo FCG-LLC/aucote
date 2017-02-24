@@ -9,7 +9,7 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from scans.scan_async_task import ScanAsyncTask
-from structs import Node, PhysicalPort
+from structs import Node, PhysicalPort, Port, TransportProtocol
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -190,18 +190,30 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.PortsScan')
     @patch('scans.scan_async_task.MasscanPorts')
     @patch('scans.scan_async_task.Executor')
-    @patch('scans.scan_async_task.cfg.get', MagicMock(return_value=True))
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    def test_run_scan_as_service(self, mock_executor, mock_masscan, mock_nmap, mock_netiface, mock_ioloop):
+    def test_run_scan_as_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface, mock_ioloop):
+        cfg._cfg = {
+            'service': {
+                'scans': {
+                    'physical': True,
+                    'ports': {
+                        'include': 'T:0-65535,U:0-65535,S:0-65535',
+                        'exclude': ''
+                    },
+                }
+            }
+        }
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
 
         self.thread._get_nodes_for_scanning = MagicMock(return_value=[node_1])
         self.thread._get_networks_list = MagicMock(return_value=IPSet(['127.0.0.2/31']))
         self.thread.aucote = MagicMock()
 
-        ports_masscan = [MagicMock()]
-        ports_nmap = [MagicMock()]
-        ports_nmap_udp = [MagicMock()]
+        ports_masscan = [Port(node=MagicMock(), transport_protocol=TransportProtocol.TCP, number=80)]
+        ports_nmap = [Port(node=MagicMock(), transport_protocol=TransportProtocol.TCP, number=80)]
+        ports_nmap_udp = [Port(node=MagicMock(), transport_protocol=TransportProtocol.UDP, number=80)]
+
         mock_netiface.interfaces.return_value = ['test', 'test2']
         mock_netiface.ifaddresses.side_effect = ([mock_netiface.AF_INET], [''])
 
@@ -233,9 +245,20 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.PortsScan')
     @patch('scans.scan_async_task.MasscanPorts')
     @patch('scans.scan_async_task.Executor')
-    @patch('scans.scan_async_task.cfg.get', MagicMock(return_value=True))
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    def test_run_scan_as_non_service(self, mock_executor, mock_masscan, mock_nmap, mock_netiface, mock_ioloop):
+    def test_run_scan_as_non_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface, mock_ioloop):
+        cfg._cfg = {
+            'service': {
+                'scans': {
+                    'physical': True,
+                    'ports': {
+                        'include': 'T:0-65535,U:0-65535,S:0-65535',
+                        'exclude': ''
+                    }
+                }
+            }
+        }
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
 
         self.thread._get_nodes_for_scanning = MagicMock(return_value=[node_1])
@@ -269,17 +292,32 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.PortsScan')
     @patch('scans.scan_async_task.MasscanPorts')
     @patch('scans.scan_async_task.Executor')
-    @patch('scans.scan_async_task.cfg.get', MagicMock(return_value=True))
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    def test_run_scan_scan_only(self, mock_executor, mock_masscan, mock_nmap, mock_netiface):
+    def test_run_scan_scan_only(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface):
+        cfg._cfg = {
+            'service': {
+                'scans': {
+                    'physical': True,
+                    'ports': {
+                        'include': 'T:0-65535,U:0-65535,S:0-65535',
+                        'exclude': ''
+                    },
+                    'networks': {
+                        'exclude': [],
+                        'include': '0.0.0.0/0'
+                    }
+                }
+            }
+        }
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
 
         self.thread._get_nodes_for_scanning = MagicMock(return_value=[node_1])
-        self.thread._get_networks_list = MagicMock(return_value=IPSet(['127.0.0.2/31']))
+        self.thread._get_networks_list = MagicMock(return_value=IPSet(['0.0.0.0/0']))
         self.thread.aucote = MagicMock()
 
-        ports_masscan = [MagicMock()]
-        ports_nmap = [MagicMock()]
+        ports_masscan = [Port(node=MagicMock(), transport_protocol=TransportProtocol.TCP, number=80)]
+        ports_nmap = [Port(node=MagicMock(), transport_protocol=TransportProtocol.TCP, number=80)]
         mock_netiface.interfaces.return_value = ['test', 'test2']
         mock_netiface.ifaddresses.side_effect = ([mock_netiface.AF_INET], [''])
 

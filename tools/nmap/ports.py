@@ -36,9 +36,12 @@ class PortsScan(ScanTask):
         if scripts_dir:
             args.extend(["--datadir", scripts_dir])
 
-        args.extend(('-p', str(cfg.get('service.scans.ports')),
+        args.extend(('-p', str(cfg.get('service.scans.ports.include')),
                      '--max-rate', str(cfg.get('service.scans.network_scan_rate'))
                      ))
+        exclude_ports = str(cfg.get('service.scans.ports.exclude'))
+        if exclude_ports:
+            args.extend(['--exclude-ports', exclude_ports])
 
         args.extend([str(node.ip) for node in nodes])
         return args

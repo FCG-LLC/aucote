@@ -19,8 +19,11 @@ class MasscanPortsTest(TestCase):
         self.cfg = {
             'service': {
                 'scans': {
-                    'rate': 1000,
-                    'ports': '9',
+                    'network_scan_rate': 1000,
+                    'ports': {
+                        'include': '9',
+                        'exclude': ''
+                    }
 
                 }
             },
@@ -41,7 +44,10 @@ class MasscanPortsTest(TestCase):
             'service': {
                 'scans': {
                     'network_scan_rate': 1000,
-                    'ports': 'T:17-45'
+                    'ports': {
+                        'include': 'T:17-45',
+                        'exclude': ''
+                    }
                 }
             }
         }
@@ -49,4 +55,14 @@ class MasscanPortsTest(TestCase):
         result = self.masscanports.prepare_args(self.nodes)
         expected = ['--rate', '1000', '--ports', 'T:17-45', '--exclude-ports', 'U:0-65535', self.NODE_IP]
 
+        self.assertEqual(result, expected)
+
+    @patch('tools.masscan.ports.cfg', new_callable=Config)
+    def test_scan_ports_excluded(self, cfg):
+        cfg._cfg = self.cfg
+        cfg['service.scans.ports.exclude'] = '45-89'
+
+        result = self.masscanports.prepare_args(nodes=self.nodes)
+        expected = ['--rate', '1000', '--ports', '9', '--exclude-ports', 'U:0-65535',
+                    '--exclude-ports', '45-89', '127.0.0.1']
         self.assertEqual(result, expected)

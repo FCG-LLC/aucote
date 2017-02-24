@@ -278,3 +278,80 @@ class NmapToolTest(TestCase):
         expected = 7331
 
         self.assertEqual(result, expected)
+    def test_parse_nmap_ports_coma_separated_without_protocol(self):
+        ports = "22,80,90"
+
+        expected = {
+            TransportProtocol.TCP: {22, 80, 90},
+            TransportProtocol.UDP: set(),
+            TransportProtocol.SCTP: set()
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
+
+        self.assertEqual(result, expected)
+
+    def test_parse_nmap_ports_coma_separated_with_protocols(self):
+        ports = "T:22,80,U:80,90,S:1,2,18"
+
+        expected = {
+            TransportProtocol.TCP: {22, 80},
+            TransportProtocol.UDP: {80, 90},
+            TransportProtocol.SCTP: {1, 2, 18}
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
+
+        self.assertEqual(result, expected)
+
+    def test_parse_nmap_ports_range_without_protocol(self):
+        ports = "22-30"
+
+        expected = {
+            TransportProtocol.TCP: {22, 23, 24, 25, 26, 27, 28, 29, 30},
+            TransportProtocol.UDP: set(),
+            TransportProtocol.SCTP: set()
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
+
+        self.assertEqual(result, expected)
+
+    def test_parse_nmap_ports_range_with_protocol(self):
+        ports = "T:22-30,U:1-5,S:13-14"
+
+        expected = {
+            TransportProtocol.TCP: {22, 23, 24, 25, 26, 27, 28, 29, 30},
+            TransportProtocol.UDP: {1, 2, 3, 4, 5},
+            TransportProtocol.SCTP: {13, 14}
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
+
+        self.assertEqual(result, expected)
+
+    def test_parse_nmap_ports_everything(self):
+        ports = "T:22,80-82,U:78-80,90,S:1-2,18-20"
+
+        expected = {
+            TransportProtocol.TCP: {22, 80, 81, 82},
+            TransportProtocol.UDP: {78, 79, 80, 90},
+            TransportProtocol.SCTP: {1, 2, 18, 19, 20}
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
+
+        self.assertEqual(result, expected)
+
+    def test_parse_nmap_ports_empty(self):
+        ports = ""
+
+        expected = {
+            TransportProtocol.TCP: set(),
+            TransportProtocol.UDP: set(),
+            TransportProtocol.SCTP: set()
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
+
+        self.assertEqual(result, expected)
