@@ -8,7 +8,7 @@ from collections import defaultdict
 import itertools
 
 from aucote_cfg import cfg
-from structs import RiskLevel
+from structs import RiskLevel, TransportProtocol
 from tools.base import Tool
 from tools.nmap.base import NmapScript
 from tools.nmap.parsers import NmapVulnParser, NmapInfoParser
@@ -182,3 +182,46 @@ class NmapTool(Tool):
             return cfg.get('tools.nmap.rate')
         except KeyError:
             return cfg.get('tools.common.rate')
+
+    @staticmethod
+    def parse_nmap_ports(port_string):
+        """
+        Parses nmap ports argument and returns dictionary of sets
+
+        Args:
+            port_string (str):
+
+        Returns:
+            dict
+
+        """
+
+        return_value = {
+            "T": set(),
+            "U": set(),
+            "S": set()
+        }
+
+        protocol = "T"
+        sections = []
+
+        if port_string:
+            sections = port_string.split(",")
+
+        for section in sections:
+            if ":" in section:
+                protocol = section[0]
+                section = section[2:]
+
+            if "-" in section:
+                range_args = [int(el) for el in section.split("-")]
+                return_value[protocol] |= set(range(range_args[0], range_args[1]+1))
+                continue
+
+            return_value[protocol] |= {int(section)}
+
+        return {
+            TransportProtocol.TCP: return_value["T"],
+            TransportProtocol.UDP: return_value["U"],
+            TransportProtocol.SCTP: return_value["S"]
+        }

@@ -103,9 +103,10 @@ class TransportProtocol(Enum):
         self.db_val = db_val
         self.iana = iana
 
+    ICMP = ('ICMP', 1)
     TCP = ('TCP', 6)
     UDP = ('UDP', 17)
-    ICMP = ('ICMP', 1)
+    SCTP = ('SCTP', 132)
     PHY = ('PHY', 255)
 
     @classmethod
@@ -264,6 +265,9 @@ class Port(object):
         else:
             format_string = "{0}://{1}:{2}"
         return format_string.format(self.service_name, self.node.ip, self.number)
+
+    def in_range(self, parsed_ports):
+        return self.number in parsed_ports[self.transport_protocol]
 
 
 class SpecialPort(Port):

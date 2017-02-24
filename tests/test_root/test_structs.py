@@ -179,6 +179,28 @@ class PortTest(TestCase):
         self.assertEqual(result.vulnerabilities, port.vulnerabilities)
         self.assertEqual(result.when_discovered, port.when_discovered)
 
+    def test_in_range(self):
+        parsed_ports = {
+            TransportProtocol.TCP: {22, 80, 81, 82},
+            TransportProtocol.UDP: {78, 79, 80, 90},
+            TransportProtocol.SCTP: {1, 2, 18, 19, 20}
+        }
+
+        port = Port(node=None, transport_protocol=TransportProtocol.TCP, number=80)
+
+        self.assertTrue(port.in_range(parsed_ports))
+
+    def test_not_in_range(self):
+        parsed_ports = {
+            TransportProtocol.TCP: {22, 80, 81, 82},
+            TransportProtocol.UDP: {78, 79, 80, 90},
+            TransportProtocol.SCTP: {1, 2, 18, 19, 20}
+        }
+
+        port = Port(node=None, transport_protocol=TransportProtocol.SCTP, number=80)
+
+        self.assertFalse(port.in_range(parsed_ports))
+
 
 class ScanTest(TestCase):
     def setUp(self):
