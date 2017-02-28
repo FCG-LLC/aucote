@@ -64,6 +64,9 @@ _DEFAULT = {
         'aucote-http-headers': {
             'enable': True,
             'period': ''
+        },
+        'common': {
+            'rate': 80
         }
     },
     'service': {
@@ -71,7 +74,8 @@ _DEFAULT = {
             'useragent': None,
             'threads': 10,
             'ports': '0-65535,U:0-65535',
-            'rate': 1000,
+            'network_scan_rate': 1000,
+            'port_scan_rate': 1000,
             'port_period': '5m',
             'node_period': '1m',
             'storage': 'storage.sqlite3',

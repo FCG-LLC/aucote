@@ -6,6 +6,8 @@ from xml.etree import ElementTree
 from structs import Port, TransportProtocol, Node, BroadcastPort
 
 from tools.nmap.tasks.port_info import NmapPortInfoTask
+from utils import Config
+
 
 @patch('scans.task_mapper.TaskMapper', MagicMock)
 class NmapPortInfoTaskTest(unittest.TestCase):
@@ -89,32 +91,40 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         result = self.port_info.command.call.call_args[1].get('args', [])
         self.assertEqual(result, self.port_info.prepare_args.return_value)
 
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
-    def test_prepare_tcp_scan(self):
+    @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
+    def test_tcp_scan(self, cfg):
+        cfg._cfg = {
+            'service': {
+                'scans': {
+                    'port_scan_rate': 1337
+                }
+            }
+        }
         result = self.port_info.prepare_args()
+        expected = ['-p', '22', '-sV', '--max-rate', '1337', '--script', 'banner', '127.0.0.1']
 
-        self.assertIn('-p', result)
-        self.assertIn('22', result)
-        self.assertIn('-sV', result)
-        self.assertIn('--script', result)
-        self.assertIn('banner', result)
-        self.assertIn(str(self.port.node.ip), result)
+        self.assertEqual(result, expected)
 
     def test_init(self):
         self.assertEqual(self.port_info.aucote, self.aucote)
 
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
-    def test_udp_scan(self):
-        self.port_info._port.transport_protocol = TransportProtocol.UDP
-        result = self.port_info.prepare_args()
 
-        self.assertIn('-p', result)
-        self.assertIn('22', result)
-        self.assertIn('-sV', result)
-        self.assertIn('--script', result)
-        self.assertIn('banner', result)
-        self.assertIn(str(self.port.node.ip), result)
-        self.assertIn('-sU', result)
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
+    @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
+    def test_udp_scan(self, cfg):
+        self.port_info._port.transport_protocol = TransportProtocol.UDP
+
+        cfg._cfg = {
+            'service': {
+                'scans': {
+                    'port_scan_rate': 1337
+                }
+            }
+        }
+        result = self.port_info.prepare_args()
+        expected = ['-p', '22', '-sV', '--max-rate', '1337', '-sU', '--script', 'banner', '127.0.0.1']
+
+        self.assertEqual(result, expected)
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     def test_parser_with_banner(self):

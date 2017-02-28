@@ -4,6 +4,7 @@ Contains class responsible for exploiting port by using nmap scripts
 """
 import logging as log
 
+from aucote_cfg import cfg
 from structs import Vulnerability, PhysicalPort, BroadcastPort
 from tools.common.command_task import CommandTask
 from tools.nmap.base import NmapBase
@@ -15,7 +16,7 @@ class NmapPortScanTask(CommandTask):
 
     """
 
-    def __init__(self, script_classes, *args, **kwargs):
+    def __init__(self, script_classes, rate, *args, **kwargs):
         """
         Init variables
 
@@ -30,6 +31,7 @@ class NmapPortScanTask(CommandTask):
         exploits = [script.exploit for script in self._script_classes]
         super().__init__(command=NmapBase(), exploits=exploits, *args, **kwargs)
         self.scripts = {script.name: script for script in self._script_classes}
+        self.rate = rate
 
     @property
     def port(self):
@@ -57,8 +59,11 @@ class NmapPortScanTask(CommandTask):
             list
 
         """
+        args = [
+            '--max-rate', str(self.rate)
+        ]
+
         if isinstance(self._port, (PhysicalPort, BroadcastPort)):
-            args = []
             for script in self.scripts.values():
                 args.append('--script')
                 args.append(script.name)
@@ -72,7 +77,8 @@ class NmapPortScanTask(CommandTask):
 
             return args
 
-        args = ['-p', str(self._port.number), '-sV']
+        args.extend(('-p', str(self._port.number), '-sV'))
+
         if self._port.transport_protocol.name == "UDP":
             args.append("-sU")
 

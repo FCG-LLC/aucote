@@ -130,7 +130,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.script.get_result = MagicMock(return_value='test')
         self.script2 = VulnNmapScript(port=self.port, exploit=self.exploit_vuln_non_exist, name='test2')
         self.scan_task = NmapPortScanTask(aucote=self.aucote, port=self.port,
-                                          script_classes=[self.script, self.script2])
+                                          script_classes=[self.script, self.script2], rate=1337)
         self.scan_task.store_scan_end = MagicMock()
 
         self.scan_task.command.call = MagicMock()
@@ -149,15 +149,10 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task()
 
         result = self.scan_task.command.call.call_args[0][0]
+        expected = ['--max-rate', '1337', '-p', '22', '-sV', '--script', 'test2',
+                    '--script', 'test', '--script-args', 'test_args', '127.0.0.1']
 
-        self.assertIn('-sV', result)
-        self.assertIn('--script', result)
-        self.assertIn(self.script.name, result)
-        self.assertIn('--script-args', result)
-        self.assertIn(self.script.args, result)
-        self.assertIn(str(self.port.node.ip), result)
-        self.assertIn('-p', result)
-        self.assertIn('22', result)
+        self.assertCountEqual(result, expected)
 
     def test_udp_scan(self):
         """
@@ -168,16 +163,10 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task()
 
         result = self.scan_task.command.call.call_args[0][0]
+        expected = ['--max-rate', '1337', '-p', '22', '-sV', '-sU', '--script', 'test2',
+                    '--script', 'test', '--script-args', 'test_args', '127.0.0.1']
 
-        self.assertIn('-sV', result)
-        self.assertIn('--script', result)
-        self.assertIn(self.script.name, result)
-        self.assertIn('--script-args', result)
-        self.assertIn(self.script.args, result)
-        self.assertIn(str(self.port.node.ip), result)
-        self.assertIn('-p', result)
-        self.assertIn('22', result)
-        self.assertIn('-sU', result)
+        self.assertCountEqual(result, expected)
 
     def test_no_vulnerabilities(self):
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.NO_VULNERABILITIES_XML))
@@ -238,7 +227,8 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task._port = BroadcastPort()
 
         result = self.scan_task.prepare_args()
-        expected = ['--script', 'test', '--script-args', 'test_args', '--script', 'test2']
+        expected = ['--max-rate', '1337', '--script', 'test', '--script-args', 'test_args',
+                    '--script', 'test2']
 
         self.assertCountEqual(result, expected)
 
@@ -247,7 +237,8 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task._port.interface = 'wlan0'
 
         result = self.scan_task.prepare_args()
-        expected = ['--script', 'test', '--script-args', 'test_args', '--script', 'test2', '-e', 'wlan0']
+        expected = ['--max-rate', '1337', '--script', 'test', '--script-args', 'test_args',
+                    '--script', 'test2', '-e', 'wlan0']
 
         self.assertCountEqual(result, expected)
 

@@ -28,7 +28,7 @@ class MasscanPorts(ScanTask):
             list
 
         """
-        args = ['--rate', str(cfg.get('service.scans.rate')),
+        args = ['--rate', str(cfg.get('service.scans.network_scan_rate')),
                 '--ports', str(cfg.get('service.scans.ports'))]
         args.extend(cfg.get('tools.masscan.args').cfg)
 
