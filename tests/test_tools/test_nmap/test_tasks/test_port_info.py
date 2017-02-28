@@ -72,6 +72,13 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 </nmaprun>'''
 
     def setUp(self):
+        self.cfg = {
+            'service': {
+                'scans': {
+                    'port_scan_rate': 1337
+                }
+            }
+        }
         self.aucote = MagicMock()
 
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
