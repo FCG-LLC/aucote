@@ -74,6 +74,24 @@ class Node:
         """
         return isinstance(self.ip, ipaddress.IPv6Address)
 
+    def __str__(self):
+        """
+        Returns string representation of node
+
+        Returns:
+            str
+        """
+        return "{0}[{1}]".format(self.ip, self.id)
+
+    def __repr__(self):
+        """
+        Returns representation of object
+
+        Returns:
+            str
+        """
+        return "<{id}, {ip}>".format(id=self.id, ip=self.ip)
+
 
 class TransportProtocol(Enum):
     """
@@ -316,7 +334,7 @@ class StorageQuery(object):
         self._query = query
         self._args = args
         self.result = []
-        self.lock = Semaphore(value=0)
+        self.semaphore = Semaphore(value=0)
 
     @property
     def query(self):

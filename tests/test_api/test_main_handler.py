@@ -61,6 +61,8 @@ class UserAPITest(AsyncHTTPTestCase):
                 'scans': {
                     'networks': ['test_cfg1'],
                     'ports': ['test_cfg2'],
+                    'scan_cron': '* */2 * * *',
+                    'tools_cron': '0 22 * * * '
                 }
             }
         }
@@ -78,10 +80,14 @@ class UserAPITest(AsyncHTTPTestCase):
                 '127.0.0.1',
                 '::1'
             ],
-            'scheduler': ['test', 'test'],
             'networks': ['test_cfg1'],
             'ports': ['test_cfg2'],
-            'previous_scan': scan_thread.previous_scan
+            'previous_scan': scan_thread.previous_scan,
+            'previous_tool_scan': scan_thread.previous_tool_scan,
+            'next_scan': scan_thread.next_scan,
+            'next_tool_scan': scan_thread.next_tool_scan,
+            'scan_cron': "* */2 * * *",
+            'tools_cron': "0 22 * * * ",
         }
 
         self.assertCountEqual(result, expected)
@@ -160,8 +166,8 @@ class UserAPITest(AsyncHTTPTestCase):
         expected = {
             'port': str(port),
             'start_time': 15,
-            'creation_time': 78,
-            'name': 'Tool'
+            'name': 'Tool',
+            'creation_time': 78
         }
 
         self.assertDictEqual(result, expected)

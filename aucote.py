@@ -13,13 +13,17 @@ import fcntl
 import signal
 from threading import Lock
 
+from tornado import gen
+from tornado.ioloop import IOLoop
+
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
+from scans.scan_async_task import ScanAsyncTask
 from scans.task_mapper import TaskMapper
-from threads.scan_thread import ScanThread
 from threads.storage_thread import StorageThread
 from threads.watchdog_thread import WatchdogThread
 from threads.web_server_thread import WebServerThread
+from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.threads import ThreadPool
 from utils.kudu_queue import KuduQueue
@@ -106,9 +110,11 @@ class Aucote(object):
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
         self.load_tools(tools_config)
-        self._scan_thread = None
+        self._scan_task = None
         self._watch_thread = None
         self._storage_thread = None
+        self.ioloop = IOLoop.current()
+        self.async_task_manager = AsyncTaskManager.instance()
 
     @property
     def kudu_queue(self):
@@ -147,7 +153,6 @@ class Aucote(object):
         Returns: None
 
         """
-
         try:
             self._storage_thread = StorageThread(filename=cfg.get('service.scans.storage'))
             self._storage_thread.start()
@@ -156,14 +161,15 @@ class Aucote(object):
                 self._watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
                 self._watch_thread.start()
 
-            self._scan_thread = ScanThread(aucote=self, as_service=as_service)
-            self._scan_thread.start()
+            self._scan_task = ScanAsyncTask(aucote=self, as_service=as_service)
+            self._scan_task.run()
 
             self.thread_pool.start()
             web_server = WebServerThread(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
             web_server.start()
 
-            self.scan_thread.join()
+            self.ioloop.start()
+
             self.thread_pool.join()
 
             web_server.stop()
@@ -173,7 +179,7 @@ class Aucote(object):
             self.storage.stop()
             self.storage.join()
 
-            self._scan_thread = None
+            self._scan_task = None
             self._watch_thread = None
             self._storage_thread = None
 
@@ -221,16 +227,16 @@ class Aucote(object):
         self.kill()
 
     @property
-    def scan_thread(self):
+    def scan_task(self):
         """
         Scan thread
 
         Returns:
-            ScanThread
+            ScanAsyncTask
 
         """
         with self._lock:
-            return self._scan_thread
+            return self._scan_task
 
     @property
     def unfinished_tasks(self):
@@ -256,6 +262,7 @@ class Aucote(object):
                 log.info('Loading %s', name)
                 app['loader'](app, self.exploits)
 
+    @gen.coroutine
     def graceful_stop(self):
         """
         Responsible for stopping the threads in graceful way.
@@ -264,8 +271,10 @@ class Aucote(object):
             None
 
         """
-        self._scan_thread.disable_scan()
+        log.debug("Stop gracefuly")
         self._watch_thread.stop()
+        yield self.async_task_manager.stop()
+        self.ioloop.stop()
 
     @classmethod
     def kill(cls):

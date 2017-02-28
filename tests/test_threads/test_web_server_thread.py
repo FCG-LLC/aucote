@@ -15,6 +15,7 @@ class WebServerThreadTest(TestCase):
     @patch('threads.web_server_thread.IOLoop')
     @patch('threads.web_server_thread.HTTPServer')
     def test_start(self, mock_server, mock_ioloop, sock_bind):
+        self.web_server._ioloop = MagicMock()
         self.web_server.run()
 
         sock_bind.assert_called_once_with(self.web_server.port, reuse_port=True, address=self.web_server.host)
@@ -24,9 +25,10 @@ class WebServerThreadTest(TestCase):
     @patch('threads.web_server_thread.IOLoop')
     def test_stop(self, mock_ioloop):
         server = MagicMock()
+        self.web_server._ioloop = MagicMock()
         self.web_server.server = server
         self.web_server.stop()
 
-        mock_ioloop.current.return_value.stop.assert_called_once_with()
+        self.web_server._ioloop.stop.assert_called_once_with()
         server.stop.assert_called_once_with()
         self.assertIsNone(self.web_server.server)

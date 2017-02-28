@@ -2,7 +2,7 @@ import ipaddress
 from queue import Empty
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
-from structs import StorageQuery, TransportProtocol
+from structs import StorageQuery, TransportProtocol, Node, Scan
 from threads.storage_thread import StorageThread
 
 
@@ -55,7 +55,7 @@ class StorageThreadTest(TestCase):
     def test_storage_query_proceed(self):
         self.task._queue.task_done.side_effect = (None, Exception("TEST_FIN"))
         query = StorageQuery("test_query")
-        query.lock = MagicMock()
+        query.semaphore = MagicMock()
         self.task._queue.get.side_effect = (query, StorageQuery(None))
         self.task._storage = MagicMock()
         result = MagicMock()
@@ -63,7 +63,7 @@ class StorageThreadTest(TestCase):
 
         self.assertRaises(Exception, self.task.run)
         self.assertEqual(self.task._storage.cursor.execute.call_count, 2)
-        query.lock.release.assert_called_once_with()
+        query.semaphore.release.assert_called_once_with()
         self.assertEqual(query.result, result.fetchall.return_value)
 
     def test_save_ports(self):
@@ -133,7 +133,7 @@ class StorageThreadTest(TestCase):
 
         result = self.task.get_ports(100)
 
-        self.task.add_query.return_value.lock.acquire.assert_called_once_with()
+        self.task.add_query.return_value.semaphore.acquire.assert_called_once_with()
         self.task.add_query.assert_called_once_with(mock_query.return_value)
         mock_query.assert_called_once_with(*self.task._storage.get_ports.return_value)
         self.task._storage.get_ports.assert_called_once_with(100)
@@ -150,6 +150,118 @@ class StorageThreadTest(TestCase):
         self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
         self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
 
+    @patch('threads.storage_thread.time.time', MagicMock(return_value=300))
+    @patch('threads.storage_thread.StorageQuery')
+    def test_get_ports_by_node_pasttime(self, mock_query):
+        self.task._storage = MagicMock()
+        self.task.add_query = MagicMock()
+        self.task.add_query.return_value = MagicMock(result=(
+            (1, '127.0.0.1', 20, 6),
+            (1, '127.0.0.1', 23, 17),
+        ))
+
+        node = MagicMock()
+        result = self.task.get_ports_by_node(node, 100)
+
+        self.task.add_query.return_value.semaphore.acquire.assert_called_once_with()
+        self.task.add_query.assert_called_once_with(mock_query.return_value)
+        mock_query.assert_called_once_with(*self.task._storage.get_ports.return_value)
+        self.task._storage.get_ports_by_node.assert_called_once_with(node, 200)
+
+        self.assertEqual(result[0].node, node)
+        self.assertEqual(result[1].node, node)
+
+        self.assertEqual(result[0].number, 20)
+        self.assertEqual(result[1].number, 23)
+
+        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
+        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
+
+    @patch('threads.storage_thread.StorageQuery')
+    def test_get_ports_by_nodes(self, mock_query):
+        self.task._storage = MagicMock()
+        self.task.add_query = MagicMock()
+        self.task.add_query.return_value = MagicMock(result=(
+            (1, '127.0.0.1', 20, 6),
+            (2, '::1', 23, 17),
+            (1, '127.0.0.1', 14, 17),
+        ))
+
+        node_1 = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        node_1.name = 'test'
+        node_1.scan = Scan(start=15)
+        node_2 = Node(node_id=2, ip=ipaddress.ip_address('::1'))
+        node_2.scan = Scan(start=15)
+        node_2.name = 'test'
+
+        nodes = [node_1, node_2]
+
+        result = self.task.get_ports_by_nodes(nodes, timestamp=100)
+
+        self.task.add_query.return_value.semaphore.acquire.assert_called_once_with()
+        self.task.add_query.assert_called_once_with(mock_query.return_value)
+        mock_query.assert_called_once_with(*self.task._storage.get_ports.return_value)
+        self.task._storage.get_ports_by_nodes.assert_called_once_with(nodes, 100)
+
+        self.assertEqual(result[0].node, node_1)
+        self.assertEqual(result[0].node.name, node_1.name)
+        self.assertEqual(result[1].node, node_2)
+        self.assertEqual(result[1].node.name, node_2.name)
+        self.assertEqual(result[2].node, node_1)
+
+        self.assertEqual(result[0].number, 20)
+        self.assertEqual(result[1].number, 23)
+        self.assertEqual(result[2].number, 14)
+
+        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
+        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
+        self.assertEqual(result[2].transport_protocol, TransportProtocol.UDP)
+
+        self.assertEqual(result[0].scan.start, node_1.scan.start)
+        self.assertEqual(result[1].scan.start, node_2.scan.start)
+        self.assertEqual(result[2].scan.start, node_1.scan.start)
+
+    @patch('threads.storage_thread.StorageQuery')
+    @patch('threads.storage_thread.time.time', MagicMock(return_value=300))
+    def test_get_ports_by_nodes_from_pasttime(self, mock_query):
+        self.task._storage = MagicMock()
+        self.task.add_query = MagicMock()
+        self.task.add_query.return_value = MagicMock(result=(
+            (1, '127.0.0.1', 20, 6),
+            (2, '::1', 23, 17),
+            (1, '127.0.0.1', 14, 17),
+        ))
+
+        node_1 = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        node_1.scan = Scan(start=15)
+        node_2 = Node(node_id=2, ip=ipaddress.ip_address('::1'))
+        node_2.scan = Scan(start=15)
+
+        nodes = [node_1, node_2]
+
+        result = self.task.get_ports_by_nodes(nodes, pasttime=100)
+
+        self.task.add_query.return_value.semaphore.acquire.assert_called_once_with()
+        self.task.add_query.assert_called_once_with(mock_query.return_value)
+        mock_query.assert_called_once_with(*self.task._storage.get_ports.return_value)
+        self.task._storage.get_ports_by_nodes.assert_called_once_with(nodes, 200)
+
+        self.assertEqual(result[0].node, node_1)
+        self.assertEqual(result[1].node, node_2)
+        self.assertEqual(result[2].node, node_1)
+
+        self.assertEqual(result[0].number, 20)
+        self.assertEqual(result[1].number, 23)
+        self.assertEqual(result[2].number, 14)
+
+        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
+        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
+        self.assertEqual(result[2].transport_protocol, TransportProtocol.UDP)
+
+        self.assertEqual(result[0].scan.start, node_1.scan.start)
+        self.assertEqual(result[1].scan.start, node_2.scan.start)
+        self.assertEqual(result[2].scan.start, node_1.scan.start)
+
     @patch('threads.storage_thread.StorageQuery')
     def test_get_nodes(self, mock_query):
         self.task._storage = MagicMock()
@@ -161,10 +273,10 @@ class StorageThreadTest(TestCase):
 
         result = self.task.get_nodes(100)
 
-        self.task.add_query.return_value.lock.acquire.assert_called_once_with()
+        self.task.add_query.return_value.semaphore.acquire.assert_called_once_with()
         self.task.add_query.assert_called_once_with(mock_query.return_value)
         mock_query.assert_called_once_with(*self.task._storage.get_nodes.return_value)
-        self.task._storage.get_nodes.assert_called_once_with(100)
+        self.task._storage.get_nodes.assert_called_once_with(100, None)
 
         self.assertEqual(result[0].id, 1)
         self.assertEqual(result[1].id, 2)
@@ -186,7 +298,7 @@ class StorageThreadTest(TestCase):
 
         result = self.task.get_scan_info(port, app)
 
-        self.task.add_query.return_value.lock.acquire.assert_called_once_with()
+        self.task.add_query.return_value.semaphore.acquire.assert_called_once_with()
         self.task.add_query.assert_called_once_with(mock_query.return_value)
         mock_query.assert_called_once_with(*self.task._storage.get_scan_info.return_value)
         self.task._storage.get_scan_info.assert_called_once_with(port, app)

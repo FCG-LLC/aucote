@@ -31,32 +31,31 @@ class RiskLevelTest(TestCase):
 
 
 class NodeTest(TestCase):
+    def setUp(self):
+        self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+
     def test_node_comparison_eq(self):
-        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
-        node2 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 
-        node1.name = 'test'
-        node2.name = 'test'
+        self.node.name = 'test'
+        node.name = 'test'
 
-        self.assertEqual(node1, node2)
+        self.assertEqual(self.node, node)
 
     def test_equality_different_types(self):
-        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
-        node2 = MagicMock(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node = MagicMock(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 
-        self.assertNotEqual(node1, node2)
+        self.assertNotEqual(self.node, node)
 
     def test_node_comparison_non_eq(self):
-        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
-        node2 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=2)
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=2)
 
-        self.assertNotEqual(node1, node2)
+        self.assertNotEqual(self.node, node)
 
     def test_node_comparison_none(self):
-        node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 
-        self.assertNotEqual(node1, None)
-        self.assertFalse(node1 == None)
+        self.assertNotEqual(self.node, None)
+        self.assertFalse(self.node == None)
 
     def test_hash(self):
         ip = MagicMock()
@@ -68,14 +67,22 @@ class NodeTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_is_ipv6_on_ipv4(self):
-        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
-
-        self.assertFalse(node.is_ipv6)
+        self.assertFalse(self.node.is_ipv6)
 
     def test_is_ipv6_on_ipv6(self):
         node = Node(ip=ipaddress.ip_address('::1'), node_id=1)
 
         self.assertTrue(node.is_ipv6)
+
+    def test_str(self):
+        expected = "127.0.0.1[1]"
+        result = str(self.node)
+        self.assertEqual(result, expected)
+
+    def test_repr(self):
+        expected = "<1, 127.0.0.1>".format(id(Node))
+        result = repr(self.node)
+        self.assertEqual(result, expected)
 
 
 class PortTest(TestCase):
@@ -221,7 +228,7 @@ class StorageQueryTest(TestCase):
         self.query = StorageQuery(self.test_query, self.args)
 
     def test_init(self):
-        self.assertEqual(self.query.lock._value, 0)
+        self.assertEqual(self.query.semaphore._value, 0)
 
     def test_args(self):
         expected = (self.test_query, self.args)

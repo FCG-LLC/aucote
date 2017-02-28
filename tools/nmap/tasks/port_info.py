@@ -16,7 +16,7 @@ class NmapPortInfoTask(PortTask):
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, scan_only=False, *args, **kwargs):
         """
         Initiazlize variables.
 
@@ -28,6 +28,7 @@ class NmapPortInfoTask(PortTask):
         """
         super().__init__(exploits=[], *args, **kwargs)
         self.command = NmapBase()
+        self.scan_only = scan_only
 
     def prepare_args(self):
         """
@@ -84,4 +85,5 @@ class NmapPortInfoTask(PortTask):
 
         self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
 
-        self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)
+        if not self.scan_only:
+            self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)

@@ -18,7 +18,7 @@ class Executor(Task):
 
     """
 
-    def __init__(self, nodes=None, *args, **kwargs):
+    def __init__(self, nodes=None, scan_only=False, *args, **kwargs):
         """
         Init executor. Sets kudu_queue and nodes
 
@@ -26,6 +26,7 @@ class Executor(Task):
         super(Executor, self).__init__(*args, **kwargs)
         self._ports = []
         self.ports = nodes or []
+        self.scan_only = scan_only
         if cfg.get('service.scans.broadcast'):
             broadcast_port = BroadcastPort()
             broadcast_port.scan = Scan(start=time.time())
@@ -78,7 +79,7 @@ class Executor(Task):
         self.storage.save_ports(ports)
 
         for port in ports:
-            self.add_task(NmapPortInfoTask(aucote=self.aucote, port=port))
+            self.add_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only))
 
     def __call__(self, *args, **kwargs):
         """

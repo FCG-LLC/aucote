@@ -33,14 +33,6 @@ class Task(object):
         """
         return self.aucote.kudu_queue
 
-    # @property
-    # def exploits(self):
-    #     """
-    #     Return executors exploits
-    #
-    #     """
-    #     return self.aucote.exploits
-
     def __call__(self, *args, **kwargs):
         """
         Call executed by executor
@@ -65,6 +57,7 @@ class Task(object):
 
         Returns:
             None
+
         """
         self.aucote.storage.save_scans(exploits=exploits, port=port)
 
@@ -108,6 +101,7 @@ class Task(object):
 
         Returns:
             None
+
         """
         pass
 
@@ -118,9 +112,17 @@ class Task(object):
 
         Returns:
             None
+
         """
         return self.aucote.storage
 
     @property
     def name(self):
+        """
+        task name
+
+        Returns:
+            str
+
+        """
         return self._name or type(self).__name__

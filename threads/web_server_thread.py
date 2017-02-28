@@ -25,6 +25,7 @@ class WebServerThread(Thread):
         self.host = host
         self.aucote = aucote
         self.name = "WebServer"
+        self._ioloop = IOLoop()
 
     def run(self):
         """
@@ -34,11 +35,13 @@ class WebServerThread(Thread):
             None
 
         """
+        self._ioloop.make_current()
         app = self._make_app()
         sockets = bind_sockets(self.port, address=self.host, reuse_port=True)
         self.server = HTTPServer(app)
         self.server.add_sockets(sockets)
-        IOLoop.current().start()
+        self._ioloop.start()
+        self._ioloop.close()
 
     def stop(self):
         """
@@ -48,7 +51,7 @@ class WebServerThread(Thread):
             None
 
         """
-        IOLoop.current().stop()
+        self._ioloop.stop()
         if self.server:
             self.server.stop()
             self.server = None
