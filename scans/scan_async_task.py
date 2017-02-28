@@ -38,10 +38,10 @@ class ScanAsyncTask(object):
         self._lock = Lock()
 
         try:
-            self.aucote.async_task_manager.add_crontab_task(self._scan, cfg.get('service.scans.cron'))
+            self.aucote.async_task_manager.add_crontab_task(self._scan, cfg.get('service.scans.scan_cron'))
             self.aucote.async_task_manager.add_crontab_task(self._run_tools, cfg.get('service.scans.tools_cron'))
         except KeyError:
-            log.error("Please configure service.scans.cron and service.scans.tools_cron")
+            log.error("Please configure service.scans.scan_cron and service.scans.tools_cron")
             exit(1)
 
     def run(self):
@@ -239,7 +239,7 @@ class ScanAsyncTask(object):
 
         """
 
-        return croniter(cfg.get('service.scans.cron'), time.time()).get_prev()
+        return croniter(cfg.get('service.scans.scan_cron'), time.time()).get_prev()
 
     @property
     def previous_tool_scan(self):
@@ -264,7 +264,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg.get('service.scans.cron'), time.time()).get_next()
+        return croniter(cfg.get('service.scans.scan_cron'), time.time()).get_next()
 
     @property
     def next_tool_scan(self):

@@ -45,7 +45,7 @@ kuduworker:
 #     storage: <str> - Path to local storage. Local storage is a SQLite3 database file.
 #     threads: <int> - Number of threads to be running
 #     rate: <int> - Rate in packets per seconds for scanning tool (e.g. masscan)
-#     cron: <cron-like format> - This options defines how often aucote should run scans. This time is in UTC!
+#     scan_cron: <cron-like format> - This options defines how often aucote should run scans. This time is in UTC!
 #                                Examples:
 #                                   "*/5 * * * *" - run every 5 minutes
 #                                   "1 2 3 4 5" - run every 3rd march at 2:01, if it is friday(5)
@@ -76,7 +76,7 @@ service:
         threads: 30
         rate: 1000
         period: 0s # deprecated
-        cron: "0 */2 * * *" # run every 2 hours
+        scan_cron: "0 */2 * * *" # run every 2 hours
         tools_cron: "0 22 * * *" # run every day at 22:00 UTC
         ports: T:0-65535,U:0-65535 # TCP, UDP: full range
         port_period: 15m

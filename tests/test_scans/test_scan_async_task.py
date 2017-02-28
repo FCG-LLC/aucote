@@ -86,7 +86,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         cfg._cfg = {
             'service': {
                 'scans': {
-                    'cron': '* * * * *',
+                    'scan_cron': '* * * * *',
                     'tools_cron': '* * * * *'
                 }
             }
@@ -351,7 +351,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         mock_cfg._cfg = {
             'service': {
                 'scans': {
-                    'cron': '* * * * *',
+                    'scan_cron': '* * * * *',
                     'tools_cron': '* * * * *',
                 }
             }
@@ -385,7 +385,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         mock_cfg._cfg = {
             'service': {
                 'scans': {
-                    'cron': '*/12 * * * *',
+                    'scan_cron': '*/12 * * * *',
                     'tools_cron': '*/12 * * * *'
                 }
             }
@@ -430,7 +430,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         mock_cfg._cfg = {
             'service': {
                 'scans': {
-                    'cron': '*/5 * * * *',
+                    'scan_cron': '*/5 * * * *',
                     'tools_cron': '*/12 * * * *'
                 }
             }

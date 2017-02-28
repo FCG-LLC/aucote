@@ -73,7 +73,7 @@ class MainHandler(Handler):
             'next_scan': scan_task.next_scan,
             'next_tool_scan': scan_task.next_tool_scan,
             'scan_cron': cfg.get('service.scans.scan_cron'),
-            'tool_scan_cron': cfg.get('service.scans.tool_scan_cron')
+            'tools_cron': cfg.get('service.scans.tools_cron')
         }
 
     @classmethod

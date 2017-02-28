@@ -62,7 +62,7 @@ class UserAPITest(AsyncHTTPTestCase):
                     'networks': ['test_cfg1'],
                     'ports': ['test_cfg2'],
                     'scan_cron': '* */2 * * *',
-                    'tool_scan_cron': '0 22 * * * '
+                    'tools_cron': '0 22 * * * '
                 }
             }
         }
@@ -87,7 +87,7 @@ class UserAPITest(AsyncHTTPTestCase):
             'next_scan': scan_thread.next_scan,
             'next_tool_scan': scan_thread.next_tool_scan,
             'scan_cron': "* */2 * * *",
-            'tool_scan_cron': "0 22 * * * ",
+            'tools_cron': "0 22 * * * ",
         }
 
         self.assertCountEqual(result, expected)
