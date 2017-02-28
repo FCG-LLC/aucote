@@ -101,7 +101,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
             }
         }
         result = self.port_info.prepare_args()
-        expected = ['-p', '22', '-sV', '--min-rate', '1337', '--max-rate', '1337', '--script', 'banner', '127.0.0.1']
+        expected = ['-p', '22', '-sV', '--max-rate', '1337', '--script', 'banner', '127.0.0.1']
 
         self.assertEqual(result, expected)
 
@@ -122,8 +122,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
             }
         }
         result = self.port_info.prepare_args()
-        expected = ['-p', '22', '-sV', '--min-rate', '1337', '--max-rate', '1337', '-sU', '--script', 'banner',
-                    '127.0.0.1']
+        expected = ['-p', '22', '-sV', '--max-rate', '1337', '-sU', '--script', 'banner', '127.0.0.1']
 
         self.assertEqual(result, expected)
 

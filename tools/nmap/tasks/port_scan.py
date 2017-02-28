@@ -60,7 +60,6 @@ class NmapPortScanTask(CommandTask):
 
         """
         args = [
-            '--min-rate', str(self.rate),
             '--max-rate', str(self.rate)
         ]
 

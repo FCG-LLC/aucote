@@ -21,7 +21,7 @@ class PortScanTest(TestCase):
         mock_config._cfg = {
             'service': {
                 'scans': {
-                    'network_scan_rate': 1000,
+                    'network_scan_rate': '1000',
                     'ports': 'T:17-45'
                 }
             },
@@ -35,7 +35,6 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-sV', '--script', 'banner', '-6', '-p', 'T:17-45', '--min-rate', '1000', '--max-rate', '1000',
-                    '192.168.1.5']
+        expected = ['-sV', '--script', 'banner', '-6', '-p', 'T:17-45', '--max-rate', '1000', '192.168.1.5']
 
         self.assertEqual(result, expected)

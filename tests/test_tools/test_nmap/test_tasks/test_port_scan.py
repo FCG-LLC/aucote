@@ -149,7 +149,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task()
 
         result = self.scan_task.command.call.call_args[0][0]
-        expected = ['--min-rate', '1337', '--max-rate', '1337', '-p', '22', '-sV', '--script', 'test2',
+        expected = ['--max-rate', '1337', '-p', '22', '-sV', '--script', 'test2',
                     '--script', 'test', '--script-args', 'test_args', '127.0.0.1']
 
         self.assertCountEqual(result, expected)
@@ -163,7 +163,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task()
 
         result = self.scan_task.command.call.call_args[0][0]
-        expected = ['--min-rate', '1337', '--max-rate', '1337', '-p', '22', '-sV', '-sU', '--script', 'test2',
+        expected = ['--max-rate', '1337', '-p', '22', '-sV', '-sU', '--script', 'test2',
                     '--script', 'test', '--script-args', 'test_args', '127.0.0.1']
 
         self.assertCountEqual(result, expected)
@@ -227,7 +227,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task._port = BroadcastPort()
 
         result = self.scan_task.prepare_args()
-        expected = ['--min-rate', '1337', '--max-rate', '1337', '--script', 'test', '--script-args', 'test_args',
+        expected = ['--max-rate', '1337', '--script', 'test', '--script-args', 'test_args',
                     '--script', 'test2']
 
         self.assertCountEqual(result, expected)
@@ -237,7 +237,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.scan_task._port.interface = 'wlan0'
 
         result = self.scan_task.prepare_args()
-        expected = ['--min-rate', '1337', '--max-rate', '1337', '--script', 'test', '--script-args', 'test_args',
+        expected = ['--max-rate', '1337', '--script', 'test', '--script-args', 'test_args',
                     '--script', 'test2', '-e', 'wlan0']
 
         self.assertCountEqual(result, expected)
