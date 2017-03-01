@@ -208,6 +208,7 @@ class ConfigTest(TestCase):
     @patch('utils.config.time.time', MagicMock(return_value=20))
     def test_get_non_exist_key_with_toucan(self):
         self.config.toucan = MagicMock()
+        self.config.toucan.is_special.return_value = False
         self.cache_time = 1
         expected = 'test_value'
         self.config.toucan.get.return_value = expected
@@ -246,23 +247,19 @@ class ConfigTest(TestCase):
         result = self.config['alice.has.a']
         self.assertEqual(result, expected)
 
-    @patch('utils.config.time.time', MagicMock(return_value=20))
-    def test_get_toucan_multikey_endpoint(self):
+    @patch('utils.config.time.time', MagicMock(return_value=50))
+    def test_get_special_config_with_toucan(self):
         self.config.toucan = MagicMock()
-        self.config.TOUCAN_SPECIAL_ENDPOINTS = {
-            'alice.has.a': 'other_endpoint'
-        }
-        self.config._immutable = set()
+        self.config.toucan.is_special.return_value = True
+        self.config.toucan.get.return_value = [('alice.has.a', 'cat'), ('test.key', 'test_value')]
         self.config.timestamps = {
             'alice.has.a': 15,
         }
-        self.cache_time = 1
-        expected = 'test_value'
-        self.config.toucan.get.return_value = {'alice.has.a': expected}
+        self.config.cache_time = 10
+        expected = 'cat'
+
         result = self.config['alice.has.a']
-
-        saved_value = self.config._cfg['alice']['has']['a']
-
         self.assertEqual(result, expected)
-        self.assertEqual(saved_value, result)
-        self.config.toucan.get.assert_called_once_with('other_endpoint')
+        self.assertEqual(self.config['test.key'], 'test_value')
+        self.assertEqual(self.config.timestamps['alice.has.a'], 50)
+        self.assertEqual(self.config.timestamps['test.key'], 50)

@@ -18,15 +18,6 @@ class Config:
     Except for loading data, this class is read-only and therefore may be used from multiple threads.
     '''
 
-    TOUCAN_SPECIAL_ENDPOINTS = {  # ToDo: remove after add support for multiple keys putting to Toucan
-        'service.scans.ports.exclude': 'portdetection',
-        'service.scans.ports.include': 'portdetection',
-        'service.scans.networks.include': 'portdetection',
-        'service.scans.networks.exclude': 'portdetection',
-        'service.scans.network_scan_rate': 'portdetection',
-        'service.scans.scan_cron': 'portdetection',
-    }
-
     def __init__(self, cfg=None):
         self._lock = Lock()
         self.timestamps = {}
@@ -35,7 +26,7 @@ class Config:
         self.push_config(cfg or {}, immutable=True)
         self.default = self._cfg.copy()
         self.toucan = None
-        self.cache_time = 0
+        self.cache_time = 60*5
 
     def __len__(self):
         return len(self._cfg)
@@ -53,9 +44,16 @@ class Config:
 
     def get(self, key):
         """
-        Gets data from multilevel dictionary using keys with dots.
-        i.e. key="logging.file"
-        Raises KeyError if there is no configured value and no default value for the given key.
+        Get configuration value basing on key.
+
+        First, try to return immutable config (e.g. pid or logging).
+        Later returns cached config and if non-exists or config is too old update it from Toucan if enable.
+
+        Args:
+            key (str):
+
+        Returns:
+            mixed
 
         """
         try:
@@ -64,10 +62,9 @@ class Config:
             elif self.toucan:
                 if key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
                     return_value = self._get(key)
-                elif key in self.TOUCAN_SPECIAL_ENDPOINTS:
-                    return_value = self.toucan.get(self.TOUCAN_SPECIAL_ENDPOINTS[key])
-
-                    for subkey, value in return_value.items():
+                elif self.toucan.is_special(key):
+                    return_value = self.toucan.get(key, False)
+                    for subkey, value in return_value:
                         self[subkey] = value
                     return_value = self._get(key)
                 else:
@@ -84,6 +81,17 @@ class Config:
             raise KeyError(key)
 
     def set(self, key, value):
+        """
+        Set config
+
+        Args:
+            key(str):
+            value(mixed):
+
+        Returns:
+            None
+
+        """
         with self._lock:
             self.timestamps[key] = time.time()
             keys = key.split('.')
@@ -195,6 +203,16 @@ class Config:
         self.load(file_name, self.default)
 
     def start_toucan(self, default_config):
+        """
+        Initialize Toucan
+
+        Args:
+            default_config:
+
+        Returns:
+            None
+
+        """
         self.toucan = Toucan(host=self['toucan.api.host'],
                              port=self['toucan.api.port'],
                              protocol=self['toucan.api.protocol'])
@@ -204,14 +222,14 @@ class Config:
 
         self.toucan.push_config(config, overwrite=False)
 
-    def push_config(self, config, key='', overwrite=True, immutable=True):
+    def push_config(self, config, key='', immutable=True):
         """
-        Push dict config to the toucan
+        Merge config(dict) with current config. Resfresh timestamps and set immutable if needed
 
         Args:
             config(dict):
             key(str): base key
-            overwrite(bool): determine if config should be overwrite or not
+            immutable(bool): determine if config should be immutable for Toucan
 
         Returns:
             None
@@ -228,7 +246,7 @@ class Config:
                 new_key = subkey
 
             if isinstance(value, dict):
-                self.push_config(value, new_key, overwrite)
+                self.push_config(value, new_key, immutable)
                 continue
 
             self[new_key] = value
