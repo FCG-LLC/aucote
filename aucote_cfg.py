@@ -72,7 +72,9 @@ def load(file_name=None):
         stderr.write("Cannot load configuration file {0}".format(file_name))
         exit()
 
-    default_config_filename = cfg.get('default_config')
+    log_cfg.config(cfg['logging'])
+
+    default_config_filename = cfg['default_config']
 
     if cfg.get('toucan.enable'):
         cfg.start_toucan(default_config_filename)
@@ -82,5 +84,3 @@ def load(file_name=None):
         except Exception:
             stderr.write("Cannot load configuration file {0}".format(default_config_filename))
             exit()
-
-    log_cfg.config(cfg.get('logging'))

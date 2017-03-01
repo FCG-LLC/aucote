@@ -74,10 +74,23 @@ class Toucan(object):
 
         data = response.json()
 
-        if data['status'] != "OK":
-            raise ToucanException(data['message'])
+        if isinstance(data, dict):
+            if data['status'] != "OK":
+                raise ToucanException(data['message'])
 
-        return data['value']
+            return data['value']
+        elif isinstance(data, list):
+            return_value = []
+            for row in data:
+                key = row['key']
+                value = row['value']
+                if key.startswith("/aucote/"):
+                    key = key.split("/aucote/")[1].replace("/", ".")
+
+                return_value.append((key, value))
+            return return_value
+        else:
+            raise ToucanException(key)
 
     def push_config(self, config, key='', overwrite=True):
         """

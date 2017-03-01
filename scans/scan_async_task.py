@@ -102,8 +102,11 @@ class ScanAsyncTask(object):
         scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
         scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
 
-        nodes = [node for node in nodes if node.ip.exploded in self._get_networks_list()
-                 and node.ip.exploded not in self._get_excluded_networks_list()]
+        include_networks = self._get_networks_list()
+        exclude_networks = self._get_excluded_networks_list()
+
+        nodes = [node for node in nodes if node.ip.exploded in include_networks
+                 and node.ip.exploded not in exclude_networks]
 
         self.current_scan = nodes
 

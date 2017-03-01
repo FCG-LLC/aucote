@@ -27,7 +27,6 @@ class ConfigTest(TestCase):
         a: dog'''
 
     def setUp(self):
-        self.config = Config(cfg = self.CONFIG)
 
         self.CONFIG = {
             'alice': {
@@ -40,6 +39,7 @@ class ConfigTest(TestCase):
             },
             'config_filename': 'test',
         }
+        self.config = Config(cfg=self.CONFIG)
 
     def test_len(self):
         self.assertEqual(len(self.config), 2)
@@ -105,7 +105,7 @@ class ConfigTest(TestCase):
 
     @patch('builtins.open', mock_open(read_data=YAML))
     def test_load_yaml_without_defaults(self):
-        expected = {'alice': {'has': {'a': 'dog'}}, 'config_filename': 'test'}
+        expected = {'alice': {'has': {'not': ['cat'], 'a': 'dog'}}, 'config_filename': 'test'}
 
         self.config.load('test')
 
@@ -144,7 +144,18 @@ class ConfigTest(TestCase):
         self.config._cfg['alice'] = None
         filename = 'test_filename'
         self.config.reload(filename)
-        self.config.load.assert_called_once_with(filename, self.CONFIG)
+        cfg =  {
+            'alice': {
+                'has': {
+                    'a': 'cat',
+                    'not': [
+                        'cat'
+                    ]
+                },
+            },
+            'config_filename': 'test',
+        }
+        self.config.load.assert_called_once_with(filename, cfg)
 
     def test_contains(self):
         self.assertIn('cat', self.config['alice.has.not'])
@@ -194,8 +205,10 @@ class ConfigTest(TestCase):
 
         self.assertEqual(result, expected)
 
+    @patch('utils.config.time.time', MagicMock(return_value=20))
     def test_get_non_exist_key_with_toucan(self):
         self.config.toucan = MagicMock()
+        self.cache_time = 1
         expected = 'test_value'
         self.config.toucan.get.return_value = expected
 
@@ -203,3 +216,32 @@ class ConfigTest(TestCase):
 
         self.assertEqual(result, expected)
         self.config.toucan.get.assert_called_once_with('non.exisists.key')
+
+    @patch('utils.config.time.time', MagicMock(return_value=20))
+    def test_get_cached_config_with_toucan(self):
+        self.config.toucan = MagicMock()
+        self.config.timestamps = {
+            'alice.has.a': 15,
+        }
+        self.config._immutable = {}
+        self.config.cache_time = 10
+        expected = 'cat'
+        self.assertFalse(self.config.toucan.get.called)
+
+        result = self.config['alice.has.a']
+        self.assertEqual(result, expected)
+
+    @patch('utils.config.time.time')
+    def test_get_strict_config_with_toucan(self, mock_time):
+        self.config.toucan = MagicMock()
+        self.config.timestamps = {
+            'alice.has.a': 15,
+        }
+        self.config._immutable = {'alice.has.a'}
+        self.config.cache_time = 10
+        expected = 'cat'
+        self.assertFalse(self.config.toucan.get.called)
+        self.assertFalse(mock_time.called)
+
+        result = self.config['alice.has.a']
+        self.assertEqual(result, expected)

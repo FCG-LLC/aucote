@@ -60,6 +60,31 @@ class TestToucan(TestCase):
 
         self.assertEqual(result, expected)
 
+    @patch('utils.toucan.requests.get')
+    def test_get_multiple_data(self, mock_get):
+        expected = [('test.key', 'test_value')]
+        json_data = [{
+            'status': 'OK',
+            'key': '/aucote/test/key',
+            'value': 'test_value'
+        }]
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json = MagicMock(return_value=json_data)
+
+        result = self.toucan.get("test.key")
+
+        self.assertEqual(result, expected)
+
+    @patch('utils.toucan.requests.get')
+    def test_get_non_dict_nor_list(self, mock_get):
+        json_data = 5
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json = MagicMock(return_value=json_data)
+
+        self.assertRaises(ToucanException, self.toucan.get, 'test.key')
+
     @patch('utils.toucan.requests.put')
     def test_put_data(self, mock_put):
         expected = 'test_value'
