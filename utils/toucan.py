@@ -1,15 +1,32 @@
+"""
+Toucan is centralized node manager. Aucote use it for obtain user configuration.
+
+"""
 import requests
 
 from utils.exceptions import ToucanException, ToucanUnsetException
 
 
 class Toucan(object):
+    """
+    This class integrates Toucan with Aucote
+
+    """
+    SPECIAL_ENDPOINTS = {  # ToDo: remove after add support for multiple keys putting to Toucan
+        'service/scans/ports/exclude': 'portdetection',
+        'service/scans/ports/include': 'portdetection',
+        'service/scans/networks/include': 'portdetection',
+        'service/scans/networks/exclude': 'portdetection',
+        'service/scans/network_scan_rate': 'portdetection',
+        'service/scans/scan_cron': 'portdetection',
+    }
+
     def __init__(self, host, port, protocol):
         self.host = host
         self.port = port
         self.protocol = protocol
 
-    def get(self, key):
+    def get(self, key, strict=True):
         """
         Get config from toucan
 
@@ -20,12 +37,35 @@ class Toucan(object):
             mixed
 
         """
+        special = False
+        toucan_key = "/".join(key.split("."))
+        request_key = toucan_key
+        if toucan_key in self.SPECIAL_ENDPOINTS:
+            request_key = self.SPECIAL_ENDPOINTS[toucan_key]
+            special = True
+
         try:
             response = requests.get(url="{prot}://{host}:{port}/config/aucote/{key}"
                                     .format(prot=self.protocol, host=self.host, port=self.port,
-                                            key="/".join(key.split("."))))
+                                            key=request_key))
 
-            return self.proceed_response(key, response)
+            result = self.proceed_response(key, response)
+            if special:
+                if strict:
+                    try:
+                        return result["/aucote/{0}".format(toucan_key)]
+                    except KeyError:
+                        raise ToucanUnsetException
+
+                return_value = []
+                for subkey, value in result.items():
+                    if subkey.startswith("/aucote/"):
+                        subkey = subkey.split("/aucote/")[1].replace("/", ".")
+
+                    return_value.append((subkey, value))
+                return return_value
+
+            return result
         except requests.exceptions.ConnectionError:
             raise ToucanException("Cannot connect to Toucan")
 
@@ -42,9 +82,20 @@ class Toucan(object):
 
         """
         toucan_key = "/".join(key.split("."))
+
+        if toucan_key in self.SPECIAL_ENDPOINTS:  # ToDo: remove after Toucan multiple keys support
+            try:
+                data = self.get(self.SPECIAL_ENDPOINTS[toucan_key])
+            except ToucanUnsetException:
+                data = {}
+            data["/aucote/{0}".format(toucan_key)] = value
+            toucan_key = self.SPECIAL_ENDPOINTS[toucan_key]
+            value = data
+
         data = {
             "value": value,
         }
+
         try:
             response = requests.put(url="{prot}://{host}:{port}/config/aucote/{key}"
                                     .format(prot=self.protocol, host=self.host, port=self.port,
@@ -121,7 +172,20 @@ class Toucan(object):
                 continue
 
             try:
-                self.get(new_key)
+                self.get(new_key, strict=True)
                 continue
             except ToucanUnsetException:
                 self.put(new_key, value)
+
+    def is_special(self, key):
+        """
+        Check if key is special
+
+        Args:
+            key:
+
+        Returns:
+            None
+
+        """
+        return "/".join(key.split(".")) in self.SPECIAL_ENDPOINTS or key.endswith(".*")

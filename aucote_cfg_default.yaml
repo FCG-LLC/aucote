@@ -120,6 +120,11 @@ tools:
         period: 1d
         scripts_dir: ./static/nmap/
         disable_scripts: []
+        periods:
+            example: 0s
+        networks: []
+        script_networks:
+            example: []
     masscan:
         cmd: masscan
     hydra:
@@ -133,6 +138,9 @@ tools:
             - http
             - https
         period: 7d
+        networks: []
+        script_networks:
+            example: []
     skipfish:
         cmd: skipfish
         enable: False
@@ -142,5 +150,8 @@ tools:
         period: 7d
     aucote-http-headers:
         enable: True
+        networks: []
+        script_networks:
+            example: []
     common:
         rate: 1000

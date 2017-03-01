@@ -41,7 +41,7 @@ class TaskMapper:
             log.info("Found %i exploits", len(exploits))
 
             try:  # TODO: Move it to Tucan once it is ready.
-                periods = cfg.get('tools.{0}.periods'.format(app)).cfg
+                periods = cfg.get('tools.{0}.periods.*'.format(app)).cfg
             except KeyError:
                 periods = {}
                 log.info("Cannot find periods configuration for %s. Using default.", app)
@@ -57,7 +57,7 @@ class TaskMapper:
 
             if not isinstance(port, SpecialPort):
                 try:  # TODO: Move it to Tucan once it is ready.
-                    script_networks = cfg.get('tools.{0}.script_networks'.format(app)).cfg
+                    script_networks = cfg.get('tools.{0}.script_networks.*'.format(app)).cfg
                 except KeyError:
                     script_networks = {}
 

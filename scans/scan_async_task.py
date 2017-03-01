@@ -9,21 +9,21 @@ from urllib.error import URLError
 import urllib.request as http
 import logging as log
 import time
+from threading import Lock
 import netifaces
 
 from croniter import croniter
 from netaddr import IPSet
 from tornado import gen
 from tornado.ioloop import IOLoop
-from threading import Lock
 
 from aucote_cfg import cfg
 from scans.executor import Executor
 from structs import Node, Scan, PhysicalPort
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
-from utils.async_task_manager import AsyncTaskManager
 from tools.nmap.tool import NmapTool
+from utils.async_task_manager import AsyncTaskManager
 from utils.time import parse_period, parse_time_to_timestamp
 
 

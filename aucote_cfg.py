@@ -4,9 +4,6 @@ This module provides default configuration and the global instance for the utils
 import os.path as path
 from sys import stderr
 import utils.log as log_cfg
-
-import exrex
-
 from utils import Config
 
 #default values
