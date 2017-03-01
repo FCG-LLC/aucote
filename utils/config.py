@@ -11,13 +11,22 @@ import yaml
 
 from utils.toucan import Toucan
 
-
 class Config:
     '''
     Creates a configuration using data from YAML file.
     Has ability to provide default values (including dynamic ones)
     Except for loading data, this class is read-only and therefore may be used from multiple threads.
     '''
+
+    TOUCAN_SPECIAL_ENDPOINTS = {  # ToDo: remove after add support for multiple keys putting to Toucan
+        'service.scans.ports.exclude': 'portdetection',
+        'service.scans.ports.include': 'portdetection',
+        'service.scans.networks.include': 'portdetection',
+        'service.scans.networks.exclude': 'portdetection',
+        'service.scans.network_scan_rate': 'portdetection',
+        'service.scans.scan_cron': 'portdetection',
+    }
+
     def __init__(self, cfg=None):
         self._lock = Lock()
         self.timestamps = {}
@@ -54,6 +63,12 @@ class Config:
                 return_value = self._get(key)
             elif self.toucan:
                 if key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
+                    return_value = self._get(key)
+                elif key in self.TOUCAN_SPECIAL_ENDPOINTS:
+                    return_value = self.toucan.get(self.TOUCAN_SPECIAL_ENDPOINTS[key])
+
+                    for subkey, value in return_value.items():
+                        self[subkey] = value
                     return_value = self._get(key)
                 else:
                     return_value = self.toucan.get(key)

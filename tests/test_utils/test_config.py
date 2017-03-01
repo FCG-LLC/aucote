@@ -245,3 +245,24 @@ class ConfigTest(TestCase):
 
         result = self.config['alice.has.a']
         self.assertEqual(result, expected)
+
+    @patch('utils.config.time.time', MagicMock(return_value=20))
+    def test_get_toucan_multikey_endpoint(self):
+        self.config.toucan = MagicMock()
+        self.config.TOUCAN_SPECIAL_ENDPOINTS = {
+            'alice.has.a': 'other_endpoint'
+        }
+        self.config._immutable = set()
+        self.config.timestamps = {
+            'alice.has.a': 15,
+        }
+        self.cache_time = 1
+        expected = 'test_value'
+        self.config.toucan.get.return_value = {'alice.has.a': expected}
+        result = self.config['alice.has.a']
+
+        saved_value = self.config._cfg['alice']['has']['a']
+
+        self.assertEqual(result, expected)
+        self.assertEqual(saved_value, result)
+        self.config.toucan.get.assert_called_once_with('other_endpoint')
