@@ -1,9 +1,17 @@
+"""
+Toucan is centralized node manager. Aucote use it for obtain user configuration.
+
+"""
 import requests
 
 from utils.exceptions import ToucanException, ToucanUnsetException
 
 
 class Toucan(object):
+    """
+    This class integrates Toucan with Aucote
+
+    """
     SPECIAL_ENDPOINTS = {  # ToDo: remove after add support for multiple keys putting to Toucan
         'service/scans/ports/exclude': 'portdetection',
         'service/scans/ports/include': 'portdetection',

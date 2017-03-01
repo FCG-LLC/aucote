@@ -2,14 +2,13 @@
 Configuration related module
 
 """
-import logging as log
-
 import time
 from threading import Lock
 
 import yaml
 
 from utils.toucan import Toucan
+
 
 class Config:
     '''
@@ -63,8 +62,8 @@ class Config:
                 if key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
                     return_value = self._get(key)
                 elif self.toucan.is_special(key):
-                    return_value = self.toucan.get(key, False)
-                    for subkey, value in return_value:
+                    result = self.toucan.get(key, False)
+                    for subkey, value in result:
                         self[subkey] = value
                     return_value = self._get(key)
                 else:
@@ -217,14 +216,14 @@ class Config:
                              port=self['toucan.api.port'],
                              protocol=self['toucan.api.protocol'])
 
-        with open(default_config, "r") as f:
-            config = yaml.load(f)
+        with open(default_config, "r") as file:
+            config = yaml.load(file)
 
         self.toucan.push_config(config, overwrite=False)
 
     def push_config(self, config, key='', immutable=True):
         """
-        Merge config(dict) with current config. Resfresh timestamps and set immutable if needed
+        Merge config(dict) with current config. Refresh timestamps and set immutable if needed
 
         Args:
             config(dict):
