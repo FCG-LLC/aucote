@@ -58,7 +58,7 @@ class PortScanTest(TestCase):
         cfg._cfg = self.cfg._cfg
 
         result = self.scanner.prepare_args(nodes=self.nodes)
-        expected = ['-sV', '--script', 'banner', '-6', '-p', '55', '--max-rate', '1030',
+        expected = ['-sV', '-Pn', '--script', 'banner', '-6', '-p', '55', '--max-rate', '1030',
                     '192.168.1.5']
         self.assertEqual(result, expected)
 
@@ -68,7 +68,7 @@ class PortScanTest(TestCase):
         self.cfg['service.scans.ports.exclude'] = '45-89'
 
         result = self.scanner.prepare_args(nodes=self.nodes)
-        expected = ['-sV', '--script', 'banner', '-6', '-p', '55', '--max-rate', '1030',
+        expected = ['-sV', '-Pn', '--script', 'banner', '-6', '-p', '55', '--max-rate', '1030',
                     '--exclude-ports', '45-89', '192.168.1.5']
         self.assertEqual(result, expected)
 
@@ -97,7 +97,7 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-sV', '--script', 'banner', '-Pn', '-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
+        expected = ['-sV', '-Pn', '--script', 'banner', '-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
                     '192.168.1.5']
 
         self.assertEqual(result, expected)
@@ -129,7 +129,7 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-sV', '--script', 'banner', '-Pn', '-sS', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
+        expected = ['-sV', '-Pn', '--script', 'banner', '-sS', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
                     '192.168.1.5']
 
         self.assertEqual(result, expected)
@@ -161,7 +161,7 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-sV', '--script', 'banner', '-Pn', '-sU', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
+        expected = ['-sV', '-Pn', '--script', 'banner', '-sU', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
                     '192.168.1.5']
 
         self.assertEqual(result, expected)

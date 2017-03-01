@@ -65,17 +65,17 @@ def main():
         log.error("There is another Aucote instance running already")
         sys.exit(1)
 
-    exploit_filename = cfg.get('fixtures.exploits.filename')
+    exploit_filename = cfg['fixtures.exploits.filename']
     try:
         exploits = Exploits.read(file_name=exploit_filename)
     except NmapUnsupported:
         log.exception("Cofiguration seems to be invalid. Check ports and services or contact with collective-sense")
         exit(1)
 
-    with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
+    with KuduQueue(cfg['kuduworker.queue.address']) as kudu_queue:
 
         try:
-            os.remove(cfg.get('service.scans.storage'))
+            os.remove(cfg['service.scans.storage'])
         except FileNotFoundError:
             pass
 

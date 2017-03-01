@@ -4,6 +4,9 @@ Configuration related module
 """
 import logging as log
 
+import time
+from threading import Lock
+
 import yaml
 
 from utils.toucan import Toucan
@@ -16,11 +19,14 @@ class Config:
     Except for loading data, this class is read-only and therefore may be used from multiple threads.
     '''
     def __init__(self, cfg=None):
-        if not cfg:
-            cfg = {}
-        self._cfg = cfg
+        self._lock = Lock()
+        self.timestamps = {}
+        self._cfg = {}
+        self._immutable = set()
+        self.push_config(cfg or {}, immutable=True)
         self.default = self._cfg.copy()
         self.toucan = None
+        self.cache_time = 0
 
     def __len__(self):
         return len(self._cfg)
@@ -44,22 +50,35 @@ class Config:
 
         """
         try:
-            return self._get(key)
+            if key in self._immutable:
+                return_value = self._get(key)
+            elif self.toucan:
+                if key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
+                    return_value = self._get(key)
+                else:
+                    return_value = self.toucan.get(key)
+                    self[key] = return_value
+            else:
+                return_value = self._get(key)
+
+            if isinstance(return_value, dict) or isinstance(return_value, list):
+                return Config(return_value)
+            else:
+                return return_value
         except KeyError:
-            if self.toucan:
-                return self.toucan.get(key)
-            log.warning("%s not found in configuration file", key)
             raise KeyError(key)
 
     def set(self, key, value):
-        keys = key.split('.')
-        current = self._cfg
+        with self._lock:
+            self.timestamps[key] = time.time()
+            keys = key.split('.')
+            current = self._cfg
 
-        for subkey in keys[:-1]:
-            current.setdefault(subkey, {})
-            current = current.get(subkey)
+            for subkey in keys[:-1]:
+                current.setdefault(subkey, {})
+                current = current.get(subkey)
 
-        current[keys[-1]] = value
+            current[keys[-1]] = value
 
     def __setitem__(self, key, value):
         self.set(key, value)
@@ -73,18 +92,16 @@ class Config:
         '''
         keys = key.split('.')
 
-        curr = self._cfg
-        for subkey in keys:
-            if isinstance(curr, dict):
-                curr = curr[subkey]
-            elif isinstance(curr, list):
-                curr = curr[int(subkey)]
-            else:
-                raise KeyError(subkey)
+        with self._lock:
+            curr = self._cfg
+            for subkey in keys:
+                if isinstance(curr, dict):
+                    curr = curr[subkey]
+                elif isinstance(curr, list):
+                    curr = curr[int(subkey)]
+                else:
+                    raise KeyError(subkey)
 
-        if isinstance(curr, dict) or isinstance(curr, list):
-            return Config(curr)
-        else:
             return curr
 
     @property
@@ -94,7 +111,7 @@ class Config:
         '''
         return self._cfg
 
-    def load(self, file_name, defaults=None):
+    def load(self, file_name, defaults=None, immutable=True):
         """
         Loads configuration from provided file name.
 
@@ -108,8 +125,8 @@ class Config:
 
         defaults = self._simplify_defaults(defaults)
         cfg = yaml.load(open(file_name, 'r'))
-        self._cfg = self._recursive_merge(cfg, defaults)
-        self._cfg['config_filename'] = file_name
+        self.push_config(self._recursive_merge(cfg, defaults), immutable=immutable)
+        self['config_filename'] = file_name
 
     def _recursive_merge(self, data, defaults):
         """
@@ -163,11 +180,43 @@ class Config:
         self.load(file_name, self.default)
 
     def start_toucan(self, default_config):
-        self.toucan = Toucan(host=self.get('toucan.api.host'),
-                             port=self.get('toucan.api.port'),
-                             protocol=self.get('toucan.api.protocol'))
+        self.toucan = Toucan(host=self['toucan.api.host'],
+                             port=self['toucan.api.port'],
+                             protocol=self['toucan.api.protocol'])
 
         with open(default_config, "r") as f:
             config = yaml.load(f)
 
         self.toucan.push_config(config, overwrite=False)
+
+    def push_config(self, config, key='', overwrite=True, immutable=True):
+        """
+        Push dict config to the toucan
+
+        Args:
+            config(dict):
+            key(str): base key
+            overwrite(bool): determine if config should be overwrite or not
+
+        Returns:
+            None
+
+        """
+        if not isinstance(config, dict):
+            self._cfg = config
+            return
+
+        for subkey, value in config.items():
+            if key:
+                new_key = '.'.join([key, subkey])
+            else:
+                new_key = subkey
+
+            if isinstance(value, dict):
+                self.push_config(value, new_key, overwrite)
+                continue
+
+            self[new_key] = value
+
+            if immutable:
+                self._immutable.update({new_key})

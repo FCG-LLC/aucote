@@ -20,7 +20,7 @@ class PortsScan(ScanTask):
         super(PortsScan, self).__init__(NmapBase())
 
     def prepare_args(self, nodes):
-        args = ['-sV', '--script', 'banner', '-Pn']
+        args = ['-sV', '-Pn', '--script', 'banner']
 
         if self.ipv6:
             args.append('-6')
