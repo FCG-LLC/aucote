@@ -273,6 +273,13 @@ class ScanAsyncTask(object):
 
     @property
     def previous_tool_scan(self):
+        """
+        Previous tool scan timestamp
+
+        Returns:
+            float
+
+        """
         return croniter(cfg.get('service.scans.tools_cron'), time.time()).get_prev()
 
     def get_ports_for_script_scan(self):

@@ -40,7 +40,10 @@ _DEFAULT = {
             'host': 'toucan',
             'port': 3000,
             'protocol': 'http'
-        }
+        },
+        'min_retry_time': 5,
+        'max_retry_time': 60*5,
+        'max_retry_count': 20
     },
     'pid_file': 'aucote.pid',
     'default_config': 'aucote_cfg_default.yaml',

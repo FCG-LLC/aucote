@@ -4,12 +4,11 @@ Configuration related module
 """
 import time
 from threading import Lock
+import logging as log
 
 import yaml
-
 from utils.exceptions import ToucanException
 from utils.toucan import Toucan
-import logging as log
 
 
 class Config:
@@ -219,6 +218,10 @@ class Config:
             None
 
         """
+        Toucan.MIN_RETRY_TIME = self['toucan.min_retry_time']
+        Toucan.MAX_RETRY_TIME = self['toucan.max_retry_time']
+        Toucan.MAX_RETRY_COUNT = self['toucan.max_retry_count']
+
         self.toucan = Toucan(host=self['toucan.api.host'],
                              port=self['toucan.api.port'],
                              protocol=self['toucan.api.protocol'])

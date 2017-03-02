@@ -3,7 +3,7 @@ Thread responsible for local storage
 
 """
 import ipaddress
-from threading import Thread, Lock
+from threading import Thread
 import logging as log
 from queue import Queue, Empty
 

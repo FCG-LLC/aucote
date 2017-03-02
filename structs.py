@@ -267,6 +267,16 @@ class Port(object):
         return format_string.format(self.service_name, self.node.ip, self.number)
 
     def in_range(self, parsed_ports):
+        """
+        Check if port is in range of parsed_ports
+
+        Args:
+            parsed_ports (dict):
+
+        Returns:
+            bool
+
+        """
         return self.number in parsed_ports[self.transport_protocol]
 
 
@@ -311,7 +321,6 @@ class Vulnerability(object):
     Vulnerability object
 
     """
-
     def __init__(self, exploit=None, port=None, output=None):
         """
         Init values
@@ -329,7 +338,6 @@ class Vulnerability(object):
 
 
 class StorageQuery(object):
-
     """
     Represents query to database which expects results
 
