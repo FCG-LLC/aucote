@@ -278,6 +278,9 @@ class TestToucan(TestCase):
 
         self.assertTrue(self.toucan.is_special('test.endpoint'))
 
+    def test_special_asterisk(self):
+        self.assertTrue(self.toucan.is_special('test.endpoint.*'))
+
     def test_non_special(self):
         self.toucan.SPECIAL_ENDPOINTS = {
             'test/endpoint': 'other_endpoint'

@@ -7,7 +7,9 @@ from threading import Lock
 
 import yaml
 
+from utils.exceptions import ToucanException
 from utils.toucan import Toucan
+import logging as log
 
 
 class Config:
@@ -78,6 +80,9 @@ class Config:
                 return return_value
         except KeyError:
             raise KeyError(key)
+        except ToucanException:
+            log.exception("Error while obtaining configuration: %s", key)
+            raise KeyError(key)
 
     def set(self, key, value):
         """
@@ -113,6 +118,8 @@ class Config:
 
         '''
         keys = key.split('.')
+        if keys[-1] == "*":
+            del keys[-1]
 
         with self._lock:
             curr = self._cfg

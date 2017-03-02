@@ -188,4 +188,4 @@ class Toucan(object):
             None
 
         """
-        return "/".join(key.split(".")) in self.SPECIAL_ENDPOINTS
+        return "/".join(key.split(".")) in self.SPECIAL_ENDPOINTS or key.endswith(".*")

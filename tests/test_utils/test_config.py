@@ -263,3 +263,16 @@ class ConfigTest(TestCase):
         self.assertEqual(self.config['test.key'], 'test_value')
         self.assertEqual(self.config.timestamps['alice.has.a'], 50)
         self.assertEqual(self.config.timestamps['test.key'], 50)
+
+    def test_multtiple_key(self):
+        result = self.config._get('alice.*')
+        expected = {
+            'has': {
+                'a': 'cat',
+                'not': [
+                    'cat'
+                ]
+            }
+        }
+
+        self.assertEqual(result, expected)
