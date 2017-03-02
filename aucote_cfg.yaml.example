@@ -48,3 +48,24 @@ topdis:
     api:
         host: topdis
         port: 1234
+
+# Toucan is centralized node manager. It provides configuration for Aucote
+# toucan:
+#   enable: <bool> - Enable or disable support for Toucan
+#   min_retry_time: <int> - minimum time which aucote waits before retrying connection to Toucan after unsuccessful try
+#   max_retry_time: <int> - maximum time: after failed connection to Toucan waiting time is double up to maximum
+#   max_retry_count: <int> - maximum number of retries
+#   api: - Api configuration
+#     host: <str> - Host which Toucan is listen on
+#     port: <int> - Port number which Toucan is listen on
+#     protocol: (http|https) - Toucan protocol
+
+toucan:
+    enable: True
+    min_retry_time: 5
+    max_retry_time: 300
+    max_retry_count: 20
+    api:
+        host: localhost
+        port: 3000
+        protocol: http

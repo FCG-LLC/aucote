@@ -2,9 +2,54 @@
 Toucan is centralized node manager. Aucote use it for obtain user configuration.
 
 """
+import logging as log
+import time
 import requests
 
-from utils.exceptions import ToucanException, ToucanUnsetException
+
+from utils.exceptions import ToucanException, ToucanUnsetException, ToucanConnectionException
+
+
+def retry_if_fail(function):
+    """
+    Retry function execution in case of connection fail
+
+    Args:
+        function:
+
+    Returns:
+        function
+
+    """
+    def function_wrapper(*args, **kwargs):
+        """
+        Try to execute function. In case of fail double waiting time.
+        Waiting time cannot exceed Toucan.MAX_RETRY_COUNT.
+        Raise exception after Toucan.MAX_RETRY_COUNT failed tries
+
+        Args:
+            *args:
+            **kwargs:
+
+        Returns:
+            mixed
+
+        """
+        wait_time = Toucan.MIN_RETRY_TIME
+        try_counter = 0
+        while try_counter < Toucan.MAX_RETRY_COUNT:
+            try:
+                return function(*args, **kwargs)
+            except ToucanConnectionException:
+                log.warning("Cannot connect to Toucan: waiting %s s", wait_time)
+                time.sleep(wait_time)
+                wait_time *= 2
+                if wait_time > Toucan.MAX_RETRY_TIME:
+                    wait_time = Toucan.MAX_RETRY_TIME
+                try_counter += 1
+        raise ToucanConnectionException
+
+    return function_wrapper
 
 
 class Toucan(object):
@@ -21,11 +66,16 @@ class Toucan(object):
         'service/scans/scan_cron': 'portdetection',
     }
 
+    MIN_RETRY_TIME = 5
+    MAX_RETRY_TIME = 300
+    MAX_RETRY_COUNT = 20
+
     def __init__(self, host, port, protocol):
         self.host = host
         self.port = port
         self.protocol = protocol
 
+    @retry_if_fail
     def get(self, key, strict=True):
         """
         Get config from toucan
@@ -67,8 +117,9 @@ class Toucan(object):
 
             return result
         except requests.exceptions.ConnectionError:
-            raise ToucanException("Cannot connect to Toucan")
+            raise ToucanConnectionException("Cannot connect to Toucan")
 
+    @retry_if_fail
     def put(self, key, value):
         """
         Put config into toucan
@@ -103,7 +154,7 @@ class Toucan(object):
 
             return self.proceed_response(key, response)
         except requests.exceptions.ConnectionError:
-            raise ToucanException("Cannot connect to Toucan")
+            raise ToucanConnectionException("Cannot connect to Toucan")
 
     def proceed_response(self, key, response):
         """
@@ -162,7 +213,7 @@ class Toucan(object):
                 new_key = '.'.join([key, subkey])
             else:
                 new_key = subkey
-                
+
             if isinstance(value, dict):
                 self.push_config(value, new_key, overwrite)
                 continue

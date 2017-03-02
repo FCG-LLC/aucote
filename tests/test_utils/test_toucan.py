@@ -5,7 +5,7 @@ import requests
 from requests import Response
 
 from utils import Config
-from utils.exceptions import ToucanException, ToucanUnsetException
+from utils.exceptions import ToucanException, ToucanUnsetException, ToucanConnectionException
 from utils.toucan import Toucan
 
 
@@ -39,10 +39,23 @@ class TestToucan(TestCase):
         self.assertRaises(ToucanException, self.toucan.get, "test.key")
 
     @patch('utils.toucan.requests.get')
+    @patch('utils.toucan.Toucan.MIN_RETRY_TIME', 0)
     def test_get_with_exception(self, mock_get):
-        mock_get.side_effect = requests.exceptions.ConnectionError()
+        mock_get.side_effect = (requests.exceptions.ConnectionError, Exception)
 
-        self.assertRaises(ToucanException, self.toucan.get, "test.key")
+        self.assertRaises(Exception, self.toucan.get, "test.key")
+        self.assertEqual(mock_get.call_count, 2)
+
+    @patch('utils.toucan.Toucan.MIN_RETRY_TIME', 1)
+    @patch('utils.toucan.Toucan.MAX_RETRY_TIME', 4)
+    @patch('utils.toucan.Toucan.MAX_RETRY_COUNT', 5)
+    @patch('utils.toucan.time.sleep')
+    @patch('utils.toucan.requests.get')
+    def test_try_if_fail_decorator_time_exceeded(self, mock_get, mock_sleep):
+        mock_get.side_effect = requests.exceptions.ConnectionError
+
+        self.assertRaises(ToucanConnectionException, self.toucan.get, "test.key")
+        mock_sleep.assert_has_calls([call(1), call(2), call(4), call(4), call(4)], True)
 
     @patch('utils.toucan.requests.get')
     def test_get_data(self, mock_get):
@@ -103,10 +116,12 @@ class TestToucan(TestCase):
         mock_put.assert_called_once_with(url='test_prot://test_host:3000/config/aucote/test/key', json={'value': 'test_value'})
 
     @patch('utils.toucan.requests.put')
+    @patch('utils.toucan.Toucan.MIN_RETRY_TIME', 0)
     def test_put_with_exception(self, mock_put):
-        mock_put.side_effect = requests.exceptions.ConnectionError()
+        mock_put.side_effect = (requests.exceptions.ConnectionError(), Exception)
 
-        self.assertRaises(ToucanException, self.toucan.put, "test.key", "test_value")
+        self.assertRaises(Exception, self.toucan.put, "test.key", "test_value")
+        self.assertEqual(mock_put.call_count, 2)
 
     def test_push_config_exists_without_overwrite(self):
         config = {

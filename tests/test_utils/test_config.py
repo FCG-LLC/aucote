@@ -124,6 +124,11 @@ class ConfigTest(TestCase):
         self.assertDictEqual(self.config.get('alice.has')._cfg, self.CONFIG['alice']['has'])
         self.assertRaises(KeyError, self.config.get, 'alice.has.a.cat.named.kitty')
 
+    def test_get_toucan_exception(self):
+        self.config.toucan = MagicMock()
+        self.config.toucan.get = MagicMock(side_effect=ToucanException)
+        self.assertRaises(KeyError, self.config.get, 'alice.has.a.cat.named.kitty')
+
     def test_get_non_exist(self):
         self.assertRaises(KeyError, self.config.get, 'this.not.exist')
 
@@ -176,13 +181,19 @@ class ConfigTest(TestCase):
                     'host': 'localhost',
                     'port': '3000',
                     'protocol': 'http'
-                }
+                },
+                'min_retry_time': 15,
+                'max_retry_time': 25,
+                'max_retry_count': 35
             }
         }
 
         self.config.start_toucan('test_file')
         toucan.return_value.push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=False)
         self.assertEqual(self.config.toucan, toucan.return_value)
+        self.assertEqual(toucan.MIN_RETRY_TIME, 15)
+        self.assertEqual(toucan.MAX_RETRY_COUNT, 35)
+        self.assertEqual(toucan.MAX_RETRY_TIME, 25)
 
     def test_set(self):
         expected = MagicMock()

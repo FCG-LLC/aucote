@@ -41,7 +41,28 @@ class Handler(RequestHandler):
         BEARER_START = 'Bearer '
 
         def wrap_execute(handler_execute):
+            """
+            Authorize request
+
+            Args:
+                handler_execute:
+
+            Returns:
+
+            """
             def require_auth(handler, *args, **kwargs):
+                """
+                Authorize request
+
+                Args:
+                    handler:
+                    *args:
+                    **kwargs:
+
+                Returns:
+                    bool
+
+                """
                 auth_header = handler.request.headers.get('Authorization')
 
                 if auth_header is not None and len(auth_header) < MAX_PASSWORD_HEADER_LENGTH \
