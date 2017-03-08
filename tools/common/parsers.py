@@ -44,9 +44,10 @@ class XMLParser(object):
             ElementTree.Element|None
 
         """
+        if not output:
+            raise NonXMLOutputException()
+
         try:
-            if not output:
-                raise NonXMLOutputException()
             return ElementTree.fromstring(output)
         except ElementTree.ParseError:
             raise NonXMLOutputException()
