@@ -39,7 +39,8 @@ _DEFAULT = {
             'cmd': 'nmap',
             'enable': True,
             'period': '1d',
-            'disable_scripts': []
+            'disable_scripts': [],
+            'scripts_dir': './static/nmap/'
         },
         'masscan': {
             'cmd': 'masscan',
