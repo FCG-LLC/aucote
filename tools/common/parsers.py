@@ -5,6 +5,7 @@ Provides set of common parsers
 from xml.etree import ElementTree
 
 from utils.exceptions import NonXMLOutputException
+import logging as log
 
 
 class Parser(object):
@@ -45,6 +46,7 @@ class XMLParser(object):
 
         """
         if not output:
+            log.warning("No output data for parsing")
             raise NonXMLOutputException()
 
         try:
