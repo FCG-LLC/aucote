@@ -3,14 +3,15 @@ Custom exceptions used by aucote project
 
 """
 
-class NonXMLOutputException(BaseException):
+
+class NonXMLOutputException(Exception):
     """
     Raise if output should be xml but it isn't
 
     """
 
 
-class HydraPortMismatchException(BaseException):
+class HydraPortMismatchException(Exception):
     """
     Raise if port number from output is different than expected
 
@@ -22,6 +23,7 @@ class NmapUnsupported(NameError):
     abstract class for exception raised if protocols, ports or services are unsupported by nmap
 
     """
+
 
 class ServiceUnsupportedByNmapException(NmapUnsupported):
     """
@@ -51,7 +53,7 @@ class PortRangeUnsupported(NmapUnsupported):
     """
 
 
-class TopdisConnectionException(BaseException):
+class TopdisConnectionException(Exception):
     """
     Raises if topdis connection error occurred
 

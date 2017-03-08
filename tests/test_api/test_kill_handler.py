@@ -43,3 +43,8 @@ class UserAPITest(AsyncHTTPTestCase):
         result = self.fetch('/', method='POST', headers={'Authorization': 'Bearer testt'}, body='')
         self.assertFalse(self.aucote.kill.called)
         self.assertEqual(result.code, 401)
+
+    def test_no_header(self):
+        result = self.fetch('/', method='POST', headers={}, body='')
+        self.assertFalse(self.aucote.kill.called)
+        self.assertEqual(result.code, 401)

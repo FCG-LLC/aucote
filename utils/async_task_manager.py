@@ -8,6 +8,7 @@ from tornado import gen
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
 from tornado_crontab import CronTabCallback
+import logging as log
 
 
 class AsyncTaskManager(object):
@@ -102,8 +103,10 @@ class AsyncTaskManager(object):
                 return
 
             cls._instance.run_tasks[function.__name__] = True
-
-            yield function(*args, **kwargs)
+            try:
+                yield function(*args, **kwargs)
+            except Exception:
+                log.exception("Exception while running %s", function.__name__)
 
             cls._instance.run_tasks[function.__name__] = False
 
