@@ -107,3 +107,14 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.assertIn('test_name', self.task_manager.run_tasks.keys())
         self.assertIsInstance(self.task_manager._cron_tasks.get('test_name'), CronTabCallback)
         self.assertFalse(self.task_manager.run_tasks.get('test_name'))
+
+    @gen_test
+    def test_decorator_with_exception(self):
+        @AsyncTaskManager.unique_task
+        @gen.coroutine
+        def task_1():
+            self.task_1()
+            raise Exception
+
+        yield task_1()
+        self.task_1.assert_called_once_with()
