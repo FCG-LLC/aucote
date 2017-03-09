@@ -40,16 +40,18 @@ class Command(object):
         all_args = [cfg.get('tools.%s.cmd' % self.NAME)]
         all_args.extend(self.COMMON_ARGS)
         all_args.extend(args)
+        cmd = ' '.join(all_args),
         log.debug('Executing: %s', ' '.join(all_args))
-        with tempfile.TemporaryFile() as temp_file:
-            temp_file.truncate()
-            try:
-                return self.parser.parse(subprocess.check_output(all_args, stderr=temp_file).decode('utf-8'))
-            except subprocess.CalledProcessError as exception:
-                temp_file.seek(0)
-                log.warning("Command '%s' Failed:\n\n%s", " ".join(all_args),
-                            "".join([line.decode() for line in temp_file.readlines()]))
-                raise exception
+
+        process = subprocess.run(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return_code, stdout, stderr = process.returncode, process.stdout, process.stderr
+
+        if return_code != 0:
+            log.warning("Command '%s' failed wit exit code: %s", cmd, return_code)
+            log.debug("Command '%s':\nSTDOUT:\n%s\nSTDERR:\n%s", cmd, stdout, stderr)
+            raise subprocess.CalledProcessError(return_code, cmd)
+
+        return self.parser.parse(stdout.decode('utf-8'), stderr.decode('utf-8'))
 
     @gen.coroutine
     def async_call(self, args=None):
