@@ -2,7 +2,6 @@
 Provides classes for executing and fetching output from system commands.
 
 """
-import tempfile
 import logging as log
 import subprocess
 
@@ -43,8 +42,8 @@ class Command(object):
         cmd = ' '.join(all_args),
         log.debug('Executing: %s', ' '.join(all_args))
 
-        process = subprocess.run(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return_code, stdout, stderr = process.returncode, process.stdout, process.stderr
+        proc = subprocess.run(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return_code, stdout, stderr = proc.returncode, proc.stdout, proc.stderr
 
         if return_code != 0:
             log.warning("Command '%s' failed wit exit code: %s", cmd, return_code)

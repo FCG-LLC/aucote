@@ -3,9 +3,9 @@ Provides set of common parsers
 
 """
 from xml.etree import ElementTree
+import logging as log
 
 from utils.exceptions import NonXMLOutputException
-import logging as log
 
 
 class Parser(object):
@@ -20,6 +20,7 @@ class Parser(object):
 
         Args:
             stdout (str):
+            stderr (str):
 
         Returns:
             str
@@ -34,22 +35,23 @@ class XMLParser(Parser):
 
     """
     @classmethod
-    def parse(cls, output, stderr=None):
+    def parse(cls, stdout, stderr=None):
         """
         Treats output as XML and return ElementTree object
 
         Args:
-            output (str):
+            stdout (str):
+            stderr (str):
 
         Returns:
             ElementTree.Element|None
 
         """
-        if not output:
+        if not stdout:
             log.warning("No output data for parsing")
             raise NonXMLOutputException()
 
         try:
-            return ElementTree.fromstring(output)
+            return ElementTree.fromstring(stdout)
         except ElementTree.ParseError:
             raise NonXMLOutputException()

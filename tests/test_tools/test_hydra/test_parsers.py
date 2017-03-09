@@ -24,7 +24,7 @@ Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 15:46:32
     OUTPUT_DATA_LINE = r"[DATA] attacking service ssh on port 29"
 
     def test_parse(self):
-        result = HydraParser.parse(output=self.OUTPUT)
+        result = HydraParser.parse(stdout=self.OUTPUT)
         self.assertEqual(result.success, 1)
         self.assertEqual(result.fail, 0)
         self.assertEqual(len(result), 1)
