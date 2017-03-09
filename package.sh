@@ -11,7 +11,7 @@ PACKAGE_TARGET_PATH=${PACKAGE_PATH}/opt/${PACKAGE_NAME}
 PACKAGE_BIN_PATH=${PACKAGE_PATH}/bin/
 PACKAGE_START_SCRIPTS=start_scripts/*
 PYTHON_VERSION=python3
-DEPENDENCIES="python3 (>= 3.4), nanomsg, libpq5, libyaml-dev, nmap, hydra (>= 8.3), skipfish"
+DEPENDENCIES="python3 (>= 3.5), nanomsg, libpq5, libyaml-dev, nmap, hydra (>= 8.3), skipfish"
 
 [[ -z $VERSION ]] && { echo "Usage: package [version]"; exit 1; }
 
