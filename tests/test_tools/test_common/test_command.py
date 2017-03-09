@@ -42,7 +42,7 @@ class CommandTest(AsyncTestCase):
         future_2.set_result(self.SCRIPT_XML)
         mock_subprocess.return_value.stdout.read_until_close.return_value = future_2
         future_3 = Future()
-        future_3.set_result("")
+        future_3.set_result(b'')
         mock_subprocess.return_value.stderr.read_until_close.return_value = future_3
 
         result = yield self.command.async_call()

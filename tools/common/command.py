@@ -82,4 +82,4 @@ class Command(object):
             log.debug("Command '%s':\nSTDOUT:\n%s\nSTDERR:\n%s", cmd, stdout, stderr)
             raise subprocess.CalledProcessError(return_code, cmd)
 
-        return self.parser.parse(stdout.decode('utf-8'))
+        return self.parser.parse(stdout.decode('utf-8'), stderr.decode('utf-8'))

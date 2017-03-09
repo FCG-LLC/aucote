@@ -33,7 +33,7 @@ class HydraParser(Parser):
     regex_all = re.compile(ALL_PATTERN)
 
     @classmethod
-    def parse(cls, output):
+    def parse(cls, output, stderr=None):
         """
         Parses output and return collection of Hydra Results
 
