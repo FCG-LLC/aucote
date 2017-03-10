@@ -18,7 +18,7 @@ class PortsScan(ScanTask):
 
     @classmethod
     def prepare_args(cls, nodes):
-        args = ['-sV', '--script', 'banner', '-6']
+        args = ['-sV', '-sS', '-sU', '--script', 'banner', '-6']
 
         scripts_dir = cfg['tools.nmap.scripts_dir']
 

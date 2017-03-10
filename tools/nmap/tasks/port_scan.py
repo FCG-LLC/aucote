@@ -60,7 +60,9 @@ class NmapPortScanTask(CommandTask):
 
         """
         args = [
-            '--max-rate', str(self.rate)
+            '--max-rate', str(self.rate),
+            '-sS',
+            '-sU'
         ]
 
         scripts_dir = cfg['tools.nmap.scripts_dir']
@@ -86,9 +88,6 @@ class NmapPortScanTask(CommandTask):
             return args
 
         args.extend(('-p', str(self._port.number), '-sV'))
-
-        if self._port.transport_protocol.name == "UDP":
-            args.append("-sU")
 
         if self._port.is_ipv6:
             args.append("-6")

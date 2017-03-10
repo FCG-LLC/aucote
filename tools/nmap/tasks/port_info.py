@@ -42,6 +42,8 @@ class NmapPortInfoTask(PortTask):
         args = [
             '-p', str(self._port.number),
             '-sV',
+            '-sU',
+            '-sS',
             '--max-rate', str(cfg.get('service.scans.port_scan_rate'))
         ]
 
