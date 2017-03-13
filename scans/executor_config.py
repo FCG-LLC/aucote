@@ -46,6 +46,13 @@ EXECUTOR_CONFIG = {
                 },
                 'broadcast-wpad-discovery': {
                     'singular': True
+                },
+                'ipmi-brute': {
+                    'args': 'userdb=static/nmap/usernames.lst,passdb=static/nmap/passwords.lst',
+                    'singular': True
+                },
+                'ipmi-dumphashes': {
+                    'args': 'userdb=static/nmap/usernames.lst,passdb=static/nmap/passwords.lst,dumphashes=1,brute.emptypass=1'
                 }
             },
             'services': {
