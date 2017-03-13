@@ -1,11 +1,12 @@
 import ipaddress
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 
 from fixtures.exploits import Exploit
 from structs import RiskLevel, Port, TransportProtocol, Node, Scan
-from tools.nmap.base import InfoNmapScript
+from tools.nmap.base import NmapScript
 from tools.nmap.tool import NmapTool
+from tools.nmap.parsers import NmapParser
 from utils import Config
 from utils.exceptions import ImproperConfigurationException
 from utils.storage import Storage
@@ -59,18 +60,19 @@ class NmapToolTest(TestCase):
         self.aucote = MagicMock(storage=Storage(":memory:"))
         self.nmap_tool = NmapTool(aucote=self.aucote, exploits=self.exploits, port=self.port, config=self.config)
 
-    @patch('tools.nmap.tool.VulnNmapScript')
-    @patch('tools.nmap.tool.InfoNmapScript')
+    @patch('tools.nmap.tool.NmapVulnParser')
+    @patch('tools.nmap.tool.NmapParser')
+    @patch('tools.nmap.tool.NmapScript')
     @patch('tools.nmap.tool.NmapPortScanTask')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_call(self, cfg, port_scan_mock, info_scan_script, vuln_scan_script):
+    def test_call(self, cfg, port_scan_mock, nmap_script, info_scan_script, vuln_scan_script):
         cfg._cfg = self.cfg
 
         self.nmap_tool()
-        info_scan_script.assert_called_once_with(exploit=self.exploit, port=self.port, name='test_name',
-                                                 args='test_args')
-        vuln_scan_script.assert_called_once_with(exploit=self.exploit2, port=self.port, name='test_name',
-                                                 args='test_args')
+        nmap_script.has_calls((
+            call(exploit=self.exploit, port=self.port, parser=info_scan_script(), name='test_name',args='test_args'),
+            call(exploit=self.exploit2, port=self.port, parser=vuln_scan_script(), name='test_name', args='test_args')
+        ))
 
         result = port_scan_mock.call_count
         expected = 1
@@ -100,15 +102,16 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(result, expected)
 
-    @patch('tools.nmap.tool.VulnNmapScript')
+    @patch('tools.nmap.tool.NmapVulnParser')
+    @patch('tools.nmap.tool.NmapScript')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_configurable_args(self, cfg, vuln_scan_script):
+    def test_configurable_args(self, cfg, nmap_script, vuln_parser):
         cfg._cfg = self.cfg
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.config['scripts']['test_name2']['args'].return_value = 'dynamic_conf_test'
         self.nmap_tool()
-        vuln_scan_script.assert_called_once_with(exploit=self.exploit_conf_args, port=self.port, name='test_name2',
-                                                 args='dynamic_conf_test')
+        nmap_script.assert_called_once_with(exploit=self.exploit_conf_args, port=self.port, parser=vuln_parser(),
+                                                 name='test_name2', args='dynamic_conf_test')
 
     @patch('tools.nmap.tool.NmapPortScanTask')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
@@ -126,8 +129,8 @@ class NmapToolTest(TestCase):
         self.config['scripts']['test_name']['args'] = ['test', 'test2']
         self.nmap_tool._get_tasks = MagicMock()
         self.nmap_tool._get_tasks.return_value = [
-            InfoNmapScript(exploit=self.exploit, port=self.port, name='test_name', args='test'),
-            InfoNmapScript(exploit=self.exploit, port=self.port, name='test_name', args='test2')
+            NmapScript(exploit=self.exploit, parser=NmapParser, port=self.port, name='test_name', args='test'),
+            NmapScript(exploit=self.exploit, parser=NmapParser, port=self.port, name='test_name', args='test2')
         ]
 
         self.nmap_tool()
@@ -149,38 +152,34 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(NmapTool.custom_args_dns_check_zone(), expected)
 
-    @patch('tools.nmap.tool.VulnNmapScript')
+    @patch('tools.nmap.tool.NmapScript')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_improper_configure_args(self, cfg, vuln_scan_script):
+    def test_improper_configure_args(self, cfg, nmap_script):
         cfg._cfg = self.cfg
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.config['scripts']['test_name2']['args'].side_effect = ImproperConfigurationException('test.test2')
         self.nmap_tool()
 
-        self.assertFalse(vuln_scan_script.called)
+        self.assertFalse(nmap_script.called)
 
-    @patch('tools.nmap.tool.VulnNmapScript')
-    @patch('tools.nmap.tool.InfoNmapScript')
+    @patch('tools.nmap.tool.NmapScript')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_disable_script_by_cfg(self, cfg, info_scan_script, vuln_scan_script):
+    def test_disable_script_by_cfg(self, cfg, nmap_script):
         cfg._cfg = self.cfg
         cfg._cfg['tools']['nmap']['disable_scripts'] = Config({'test_name', 'test_name2'})
 
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.nmap_tool()
 
-        self.assertFalse(vuln_scan_script.called)
-        self.assertFalse(info_scan_script.called)
+        self.assertFalse(nmap_script.called)
 
-    @patch('tools.nmap.tool.VulnNmapScript')
-    @patch('tools.nmap.tool.InfoNmapScript')
-    def test_disable_script_by_internal_cfg(self, info_scan_script, vuln_scan_script):
+    @patch('tools.nmap.tool.NmapScript')
+    def test_disable_script_by_internal_cfg(self, nmap_script):
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.nmap_tool.config['disable_scripts'] = {'test_name', 'test_name2'}
         self.nmap_tool()
 
-        self.assertFalse(vuln_scan_script.called)
-        self.assertFalse(info_scan_script.called)
+        self.assertFalse(nmap_script.called)
 
     @patch('tools.base.cfg', new_callable=Config)
     def test_custom_args_dns_srv_enum(self, cfg):

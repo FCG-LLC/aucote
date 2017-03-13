@@ -4,6 +4,7 @@ Provides configuration for tools. Configuration is implicit and shouldn't be mod
 from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
 from tools.hydra.tool import HydraTool
+from tools.nmap.parsers import NmapBrutParser
 from tools.nmap.tool import NmapTool
 from tools.skipfish.tool import SkipfishTool
 
@@ -49,10 +50,12 @@ EXECUTOR_CONFIG = {
                 },
                 'ipmi-brute': {
                     'args': 'userdb=static/nmap/usernames.lst,passdb=static/nmap/passwords.lst',
-                    'singular': True
+                    'singular': True,
+                    'parser': NmapBrutParser
                 },
                 'ipmi-dumphashes': {
-                    'args': 'userdb=static/nmap/usernames.lst,passdb=static/nmap/passwords.lst,dumphashes=1,brute.emptypass=1'
+                    'args': 'userdb=static/nmap/usernames.lst,passdb=static/nmap/passwords.lst,dumphashes=1,brute.emptypass=1',
+                    'parser': NmapBrutParser
                 }
             },
             'services': {

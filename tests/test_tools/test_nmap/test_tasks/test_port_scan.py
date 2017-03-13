@@ -6,11 +6,12 @@ from xml.etree import ElementTree
 from aucote_cfg import cfg
 from fixtures.exploits import Exploit
 from fixtures.exploits import Exploits
-from structs import Port, TransportProtocol, Node, Vulnerability, Scan, PhysicalPort, BroadcastPort
-from tools.nmap.base import InfoNmapScript, VulnNmapScript
+from structs import Port, TransportProtocol, Node, Scan, PhysicalPort, BroadcastPort
 
 from tools.nmap.tasks.port_scan import NmapPortScanTask
 from utils import Config
+from tools.nmap.parsers import NmapParser, NmapVulnParser
+from tools.nmap.base import NmapScript
 
 
 @patch('database.serializer.Serializer.serialize_port_vuln', MagicMock(return_value='test'))
@@ -128,9 +129,9 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
         self.port_ipv6 = Port(number=22, node=self.node_ipv6, transport_protocol=TransportProtocol.TCP)
 
-        self.script = InfoNmapScript(port=self.port, exploit=self.exploit, name='test', args='test_args')
+        self.script = NmapScript(port=self.port, parser=NmapParser(), exploit=self.exploit, name='test', args='test_args')
         self.script.get_result = MagicMock(return_value='test')
-        self.script2 = VulnNmapScript(port=self.port, exploit=self.exploit_vuln_non_exist, name='test2')
+        self.script2 = NmapScript(port=self.port, parser=NmapVulnParser(), exploit=self.exploit_vuln_non_exist, name='test2')
         self.scan_task = NmapPortScanTask(aucote=self.aucote, port=self.port,
                                           script_classes=[self.script, self.script2], rate=1337)
         self.scan_task.store_scan_end = MagicMock()

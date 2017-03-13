@@ -2,9 +2,9 @@
 This module contains base nmap classes
 
 """
-import logging as log
 from tools.common.command import Command
 from tools.common.parsers import XMLParser
+from tools.nmap.parsers import NmapParser, NmapVulnParser
 
 
 class NmapBase(Command):
@@ -22,7 +22,7 @@ class NmapScript(object):
     Represents nmap script
 
     """
-    def __init__(self, port, exploit, name=None, args=None):
+    def __init__(self, port, exploit, parser, name=None, args=None):
         """
         Init variables
 
@@ -37,6 +37,7 @@ class NmapScript(object):
         self.port = port
         self.name = name
         self.args = args
+        self.parser = parser
 
     def get_result(self, script):
         """
@@ -48,57 +49,4 @@ class NmapScript(object):
         Returns:
 
         """
-        raise NotImplementedError
-
-
-class VulnNmapScript(NmapScript):
-    """
-    Represents Vulnerability script
-
-    """
-    @classmethod
-    def get_result(cls, script):
-        """
-        Gets result of script execution. Looks for VULNERABLE string in script output
-
-        Args:
-            script (ElementTree.Element):
-
-        Returns:
-            str|None
-
-        """
-        table = script.find('table')
-        if table is None:
-            return None  # no data, probably no response from server, so no problem detected
-        state = table.find("./elem[@key='state']").text
-        if state not in ('VULNERABLE', 'LIKELY VULNERABLE'):
-            return None  # TODO: add likelihood to vulnerability
-        return script.get('output').strip()
-
-
-class InfoNmapScript(NmapScript):
-    """
-    Represents non Vulnerability script
-
-    """
-    @classmethod
-    def get_result(cls, script):
-        """
-        Returns script output. Doesn't look for any keyword
-
-        Args:
-            script (ElementTree.Element):
-
-        Returns:
-            str|None
-
-        """
-        if script is None:
-            return None
-
-        output = script.get('output').strip()
-        if output.startswith("ERROR: "):
-            log.warning(output)
-            return None
-        return output
+        return self.parser.parse(script)

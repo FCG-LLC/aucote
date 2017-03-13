@@ -38,7 +38,7 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-sV', '--script', 'banner', '-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
+        expected = ['-sV', '-sS', '-sU', '--script', 'banner', '-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
                     '192.168.1.5']
 
         self.assertEqual(result, expected)
