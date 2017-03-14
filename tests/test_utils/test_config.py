@@ -262,7 +262,7 @@ class ConfigTest(TestCase):
     def test_get_special_config_with_toucan(self):
         self.config.toucan = MagicMock()
         self.config.toucan.is_special.return_value = True
-        self.config.toucan.get.return_value = [('alice.has.a', 'cat'), ('test.key', 'test_value')]
+        self.config.toucan.get.return_value = {'alice.has.a': 'cat', 'test.key': 'test_value'}
         self.config.timestamps = {
             'alice.has.a': 15,
         }
