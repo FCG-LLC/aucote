@@ -62,7 +62,7 @@ class NmapVulnParser(NmapParser):
         if table is None:
             return None
         state = table.find("./elem[@key='state']").text
-        if state not in ('VULNERABLE', 'LIKELY VULNERABLE'):
+        if state not in ('VULNERABLE', 'LIKELY VULNERABLE', 'VULNERABLE (Exploitable)', 'VULNERABLE (DoS)'):
             return None  # TODO: add likelihood to vulnerability
         return script.get('output').strip()
 

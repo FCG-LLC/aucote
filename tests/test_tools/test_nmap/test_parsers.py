@@ -72,6 +72,33 @@ class NmapVulnParserTest(TestCase):
 </table>
 </script>"""
 
+    VULN_OUTPUT_LIKELY_VULNERABLE = """<script id="ipmi-cipher-zero" output="test_output"><table key="NMAP-1">
+<elem key="title">IPMI 2.0 RAKP Cipher Zero Authentication Bypass</elem>
+<elem key="state">LIKELY VULNERABLE</elem>
+<table key="description">
+<elem>&#xa;The issue is due to the vendor shipping their devices with the&#xa;cipher suite &apos;0&apos; (aka &apos;cipher zero&apos;) enabled. This allows a&#xa;remote attacker to authenticate to the IPMI interface using&#xa;an arbitrary password. The only information required is a valid&#xa;account, but most vendors ship with a default &apos;admin&apos; account.&#xa;This would allow an attacker to have full control over the IPMI&#xa;functionality&#xa;    </elem>
+</table>
+</table>
+</script>"""
+
+    VULN_OUTPUT_VULNERABLE_DOS = """<script id="ipmi-cipher-zero" output="test_output"><table key="NMAP-1">
+<elem key="title">IPMI 2.0 RAKP Cipher Zero Authentication Bypass</elem>
+<elem key="state">VULNERABLE (DoS)</elem>
+<table key="description">
+<elem>&#xa;The issue is due to the vendor shipping their devices with the&#xa;cipher suite &apos;0&apos; (aka &apos;cipher zero&apos;) enabled. This allows a&#xa;remote attacker to authenticate to the IPMI interface using&#xa;an arbitrary password. The only information required is a valid&#xa;account, but most vendors ship with a default &apos;admin&apos; account.&#xa;This would allow an attacker to have full control over the IPMI&#xa;functionality&#xa;    </elem>
+</table>
+</table>
+</script>"""
+
+    VULN_OUTPUT_VULNERABLE_EXPLOITABLE = """<script id="ipmi-cipher-zero" output="test_output"><table key="NMAP-1">
+<elem key="title">IPMI 2.0 RAKP Cipher Zero Authentication Bypass</elem>
+<elem key="state">VULNERABLE (Exploitable)</elem>
+<table key="description">
+<elem>&#xa;The issue is due to the vendor shipping their devices with the&#xa;cipher suite &apos;0&apos; (aka &apos;cipher zero&apos;) enabled. This allows a&#xa;remote attacker to authenticate to the IPMI interface using&#xa;an arbitrary password. The only information required is a valid&#xa;account, but most vendors ship with a default &apos;admin&apos; account.&#xa;This would allow an attacker to have full control over the IPMI&#xa;functionality&#xa;    </elem>
+</table>
+</table>
+</script>"""
+
     NON_VULN_OUTPUT = """<script id="ipmi-cipher-zero" output="test_output"><table key="NMAP-1">
 <elem key="title">IPMI 2.0 RAKP Cipher Zero Authentication Bypass</elem>
 <elem key="state">NON VULNERABLE</elem>
@@ -89,6 +116,24 @@ class NmapVulnParserTest(TestCase):
 
     def test_vulnerable(self):
         script = ElementTree.fromstring(self.VULN_OUTPUT)
+        result = self.parser.parse(script)
+        expected = 'test_output'
+        self.assertEqual(result, expected)
+
+    def test_likely_vulnerable(self):
+        script = ElementTree.fromstring(self.VULN_OUTPUT_LIKELY_VULNERABLE)
+        result = self.parser.parse(script)
+        expected = 'test_output'
+        self.assertEqual(result, expected)
+
+    def test_vulnerable_dos(self):
+        script = ElementTree.fromstring(self.VULN_OUTPUT_VULNERABLE_DOS)
+        result = self.parser.parse(script)
+        expected = 'test_output'
+        self.assertEqual(result, expected)
+
+    def test_vulnerable_exploitable(self):
+        script = ElementTree.fromstring(self.VULN_OUTPUT_VULNERABLE_EXPLOITABLE)
         result = self.parser.parse(script)
         expected = 'test_output'
         self.assertEqual(result, expected)

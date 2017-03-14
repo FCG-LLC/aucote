@@ -56,6 +56,9 @@ EXECUTOR_CONFIG = {
                 'ipmi-dumphashes': {
                     'args': 'userdb=static/nmap/usernames.lst,passdb=static/nmap/passwords.lst,dumphashes=1,brute.emptypass=1',
                     'parser': NmapBrutParser
+                },
+                'supermicro-ipmi-conf': {
+                    'args': 'supermicro-ipmi-conf.out=/dev/null'
                 }
             },
             'services': {
@@ -63,7 +66,9 @@ EXECUTOR_CONFIG = {
                     'args': NmapTool.custom_args_http_useragent
                 }
             },
-            'disable_scripts': set()
+            'disable_scripts': {
+                'ipmi-brute'
+            }
         },
         'hydra': {
             'class': HydraTool,
