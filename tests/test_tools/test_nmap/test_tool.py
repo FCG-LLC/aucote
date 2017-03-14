@@ -279,7 +279,7 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(result, expected)
     def test_parse_nmap_ports_coma_separated_without_protocol(self):
-        ports = "22,80,90"
+        ports = ["22", "80", "90"]
 
         expected = {
             TransportProtocol.TCP: {22, 80, 90},
@@ -292,7 +292,7 @@ class NmapToolTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_parse_nmap_ports_coma_separated_with_protocols(self):
-        ports = "T:22,80,U:80,90,S:1,2,18"
+        ports = ["T:22", "80", "U:80", "90", "S:1", "2", "18"]
 
         expected = {
             TransportProtocol.TCP: {22, 80},
@@ -305,7 +305,7 @@ class NmapToolTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_parse_nmap_ports_range_without_protocol(self):
-        ports = "22-30"
+        ports = ["22-30"]
 
         expected = {
             TransportProtocol.TCP: {22, 23, 24, 25, 26, 27, 28, 29, 30},
@@ -318,7 +318,7 @@ class NmapToolTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_parse_nmap_ports_range_with_protocol(self):
-        ports = "T:22-30,U:1-5,S:13-14"
+        ports = ["T:22-30", "U:1-5", "S:13-14"]
 
         expected = {
             TransportProtocol.TCP: {22, 23, 24, 25, 26, 27, 28, 29, 30},
@@ -331,7 +331,7 @@ class NmapToolTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_parse_nmap_ports_everything(self):
-        ports = "T:22,80-82,U:78-80,90,S:1-2,18-20"
+        ports = ["T:22", "80-82", "U:78-80", "90", "S:1-2", "18-20"]
 
         expected = {
             TransportProtocol.TCP: {22, 80, 81, 82},
@@ -344,7 +344,7 @@ class NmapToolTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_parse_nmap_ports_empty(self):
-        ports = ""
+        ports = []
 
         expected = {
             TransportProtocol.TCP: set(),

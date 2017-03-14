@@ -184,7 +184,7 @@ class NmapTool(Tool):
             return cfg.get('tools.common.rate')
 
     @staticmethod
-    def parse_nmap_ports(port_string):
+    def parse_nmap_ports(sections):
         """
         Parses nmap ports argument and returns dictionary of sets
 
@@ -202,13 +202,15 @@ class NmapTool(Tool):
             "S": set()
         }
 
-        protocol = "T"
-        sections = []
+        if isinstance(sections, str):
+            sections = sections.split(",")
 
-        if port_string:
-            sections = port_string.split(",")
+        protocol = "T"
 
         for section in sections:
+            if not section:
+                continue
+
             if ":" in section:
                 protocol = section[0]
                 section = section[2:]

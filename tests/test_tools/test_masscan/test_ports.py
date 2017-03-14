@@ -17,14 +17,11 @@ class MasscanPortsTest(TestCase):
 
     def setUp(self):
         self.cfg = {
-            'service': {
-                'scans': {
-                    'network_scan_rate': 1000,
-                    'ports': {
-                        'include': '9',
-                        'exclude': ''
-                    }
-
+            'portdetection': {
+                'network_scan_rate': 1000,
+                'ports': {
+                    'include': ['9'],
+                    'exclude': []
                 }
             },
             'tools': {
@@ -41,13 +38,11 @@ class MasscanPortsTest(TestCase):
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     def test_arguments(self, mock_config):
         mock_config._cfg = {
-            'service': {
-                'scans': {
-                    'network_scan_rate': 1000,
-                    'ports': {
-                        'include': 'T:17-45',
-                        'exclude': ''
-                    }
+            'portdetection': {
+                'network_scan_rate': 1000,
+                'ports': {
+                    'include': ['T:17-45'],
+                    'exclude': []
                 }
             }
         }
@@ -60,7 +55,7 @@ class MasscanPortsTest(TestCase):
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     def test_scan_ports_excluded(self, cfg):
         cfg._cfg = self.cfg
-        cfg['service.scans.ports.exclude'] = '45-89'
+        cfg['portdetection.ports.exclude'] = ['45-89']
 
         result = self.masscanports.prepare_args(nodes=self.nodes)
         expected = ['--rate', '1000', '--ports', '9', '--exclude-ports', 'U:0-65535',
