@@ -64,7 +64,7 @@ class Config:
                     return_value = self._get(key)
                 elif self.toucan.is_special(key):
                     result = self.toucan.get(key, False)
-                    for subkey, value in result:
+                    for subkey, value in result.items():
                         self[subkey] = value
                     return_value = self._get(key)
                 else:
