@@ -21,6 +21,14 @@ class TestToucan(TestCase):
         self.assertRaises(ToucanUnsetException, self.toucan.get, "test.key")
 
     @patch('utils.toucan.requests.get')
+    @patch('utils.toucan.Toucan.MIN_RETRY_TIME', 0)
+    def test_get_502(self, mock_get):
+        mock_get.return_value = Response()
+        mock_get.return_value.json = MagicMock(return_value={"message": "test_error"})
+        mock_get.return_value.status_code = 502
+        self.assertRaises(ToucanConnectionException, self.toucan.get, "test.key")
+
+    @patch('utils.toucan.requests.get')
     def test_get_500(self, mock_get):
         mock_get.return_value = Response()
         mock_get.return_value.status_code = 500
@@ -228,8 +236,4 @@ class TestToucan(TestCase):
         self.assertTrue(self.toucan.is_special('test.endpoint.*'))
 
     def test_non_special(self):
-        self.toucan.SPECIAL_ENDPOINTS = {
-            'test/endpoint': 'other_endpoint'
-        }
-
         self.assertFalse(self.toucan.is_special('test.other.endpoint'))

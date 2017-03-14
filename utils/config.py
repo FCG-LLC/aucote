@@ -23,7 +23,7 @@ class Config:
         self.timestamps = {}
         self._cfg = {}
         self._immutable = set()
-        self.push_config(cfg or {}, immutable=True)
+        self.push_config(cfg, immutable=True)
         self.default = self._cfg.copy()
         self.toucan = None
         self.cache_time = 60*5
@@ -231,7 +231,7 @@ class Config:
 
         self.toucan.push_config(config, overwrite=False)
 
-    def push_config(self, config, key='', immutable=True):
+    def push_config(self, config=None, key='', immutable=True):
         """
         Merge config(dict) with current config. Refresh timestamps and set immutable if needed
 
@@ -244,6 +244,9 @@ class Config:
             None
 
         """
+        if config is None:
+            config = {}
+
         if not isinstance(config, dict):
             self._cfg = config
             return

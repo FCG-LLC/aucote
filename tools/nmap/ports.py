@@ -5,7 +5,7 @@ This module contains class responsible for scanning ports by using nmap
 from tools.common.scan_task import ScanTask
 from aucote_cfg import cfg
 from .base import NmapBase
-
+from utils.config import Config
 
 class PortsScan(ScanTask):
     """
@@ -36,9 +36,20 @@ class PortsScan(ScanTask):
         if scripts_dir:
             args.extend(["--datadir", scripts_dir])
 
-        args.extend(('-p', str(cfg.get('service.scans.ports.include')),
-                     '--max-rate', str(cfg.get('service.scans.network_scan_rate'))))
-        exclude_ports = str(cfg.get('service.scans.ports.exclude'))
+        include_ports = cfg['portdetection.ports.include']
+        if isinstance(include_ports, (Config, list)):
+            include_ports = ",".join(include_ports)
+
+        if include_ports:
+            args.extend(['-p', include_ports])
+
+        args.extend(('--max-rate', str(cfg['portdetection.network_scan_rate'])))
+
+        exclude_ports = cfg['portdetection.ports.exclude']
+
+        if isinstance(exclude_ports, (Config, list)):
+            exclude_ports = ",".join(exclude_ports)
+
         if exclude_ports:
             args.extend(['--exclude-ports', exclude_ports])
 

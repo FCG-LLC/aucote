@@ -30,14 +30,12 @@ class PortScanTest(TestCase):
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     def setUp(self, cfg):
         cfg._cfg = {
-            'service': {
-                'scans': {
-                    'ports': {
-                        'include': '55',
-                        'exclude': ''
-                    },
-                    'network_scan_rate': 1030
-                }
+            'portdetection': {
+                'ports': {
+                    'include': ['55'],
+                    'exclude': []
+                },
+                'network_scan_rate': 1030
             },
             'tools': {
                 'nmap': {
@@ -65,7 +63,7 @@ class PortScanTest(TestCase):
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     def test_scan_ports_excluded(self, cfg):
         cfg._cfg = self.cfg._cfg
-        self.cfg['service.scans.ports.exclude'] = '45-89'
+        self.cfg['portdetection.ports.exclude'] = ['45-89']
 
         result = self.scanner.prepare_args(nodes=self.nodes)
         expected = ['-sV', '-Pn', '--script', 'banner', '-6', '-p', '55', '--max-rate', '1030',
@@ -75,13 +73,11 @@ class PortScanTest(TestCase):
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     def test_arguments(self, mock_config):
         mock_config._cfg = {
-            'service': {
-                'scans': {
-                    'network_scan_rate': '1000',
-                    'ports': {
-                        'include': 'T:17-45',
-                        'exclude': ''
-                    }
+            'portdetection': {
+                'network_scan_rate': '1000',
+                'ports': {
+                    'include': ['T:17-45'],
+                    'exclude': []
                 }
             },
             'tools': {
@@ -107,13 +103,11 @@ class PortScanTest(TestCase):
         self.scanner.tcp = True
         self.scanner.ipv6 = False
         mock_config._cfg = {
-            'service': {
-                'scans': {
-                    'network_scan_rate': '1000',
-                    'ports': {
-                        'include': 'T:17-45',
-                        'exclude': ''
-                    }
+            'portdetection': {
+                'network_scan_rate': '1000',
+                'ports': {
+                    'include': 'T:17-45',
+                    'exclude': ''
                 }
             },
             'tools': {
@@ -139,13 +133,11 @@ class PortScanTest(TestCase):
         self.scanner.udp = True
         self.scanner.ipv6 = False
         mock_config._cfg = {
-            'service': {
-                'scans': {
-                    'network_scan_rate': '1000',
-                    'ports': {
-                        'include': 'T:17-45',
-                        'exclude': ''
-                    }
+            'portdetection': {
+                'network_scan_rate': '1000',
+                'ports': {
+                    'include': 'T:17-45',
+                    'exclude': ''
                 }
             },
             'tools': {
@@ -163,5 +155,32 @@ class PortScanTest(TestCase):
         result = self.scanner.prepare_args(self.nodes)
         expected = ['-sV', '-Pn', '--script', 'banner', '-sU', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
                     '192.168.1.5']
+
+        self.assertEqual(result, expected)
+
+    @patch('tools.nmap.ports.cfg', new_callable=Config)
+    def test_string_ports(self, mock_config):
+        mock_config._cfg = {
+            'portdetection': {
+                'network_scan_rate': '1000',
+                'ports': {
+                    'include': 'T:17-45',
+                    'exclude': ''
+                }
+            },
+            'tools': {
+                'masscan': {
+                    'args': [
+                        'arg1', 'arg2', 'test'
+                    ]
+                },
+                'nmap': {
+                    'scripts_dir': 'test'
+                }
+            },
+        }
+
+        result = self.scanner.prepare_args(self.nodes)
+        expected = ['-sV', '-Pn', '--script', 'banner', '-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000', '192.168.1.5']
 
         self.assertEqual(result, expected)

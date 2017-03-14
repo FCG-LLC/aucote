@@ -33,33 +33,34 @@ service:
         useragent: "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
         storage: "tmp/storage.sqlite3"
         threads: 30
-        port_scan_rate: 1000
-        network_scan_rate: 1000
         period: 0s # deprecated
         cron: "0 22 * * *" # run every day at 22:00 UTC
-        scan_cron: "0 */2 * * *" # run every day at 22:00 UTC
-        tools_cron: "0 22 * * *" # run every day at 22:00 UTC
-        ports:
-            include: T:0-65535,U:0-65535 # TCP, UDP: full range
-            exclude: "" # TCP, UDP: full range
         port_period: 15m
-        node_period: 0s
         physical: False
         broadcast: False
-        networks: # Change it to proper values and uncomment
-            include:
-                - 127.0.0.1/32
-                - ::1/128
-                - 0.0.0.0/24
-            exclude:
-                - 127.0.0.1/32
-                - ::1/128
-                - 0.0.0.0/24
     api:
         v1:
             host: 0.0.0.0
             port: 1235
         # password: ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff # password: test
+
+portdetection:
+    scan_cron: "0 */2 * * *" # run every day at 22:00 UTC
+    tools_cron: "0 22 * * *" # run every day at 22:00 UTC
+    scan_interval: 0s
+    networks: # Change it to proper values and uncomment
+        include:
+            - 127.0.0.1/32
+            - ::1/128
+        exclude:
+            - 127.0.0.1/32
+            - ::1/128
+    ports:
+        include:
+            - 0-65535 # TCP, UDP: full range
+        exclude: []
+    port_scan_rate: 100
+    network_scan_rate: 1000
 
 
 # In this section there is configuration related to the tools used by the aucote
