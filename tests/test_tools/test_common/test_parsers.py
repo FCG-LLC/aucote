@@ -23,6 +23,3 @@ class ParserXMLTest(TestCase):
 
     def test_parse_non_xml(self):
         self.assertRaises(NonXMLOutputException, XMLParser.parse, self.NON_XML)
-
-    def test_parse_non_output(self):
-        self.assertRaises(NonXMLOutputException, XMLParser.parse, None)

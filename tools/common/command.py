@@ -40,7 +40,7 @@ class Command(object):
         all_args.extend(self.COMMON_ARGS)
         all_args.extend(args)
         cmd = ' '.join(all_args),
-        log.debug('Executing: %s', ' '.join(all_args))
+        log.debug('Executing: %s', cmd)
 
         proc = subprocess.run(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return_code, stdout, stderr = proc.returncode, proc.stdout, proc.stderr

@@ -3,7 +3,6 @@ Provides set of common parsers
 
 """
 from xml.etree import ElementTree
-import logging as log
 
 from utils.exceptions import NonXMLOutputException
 
@@ -47,10 +46,6 @@ class XMLParser(Parser):
             ElementTree.Element|None
 
         """
-        if not stdout:
-            log.warning("No output data for parsing")
-            raise NonXMLOutputException()
-
         try:
             return ElementTree.fromstring(stdout)
         except ElementTree.ParseError:
