@@ -72,13 +72,6 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 </nmaprun>'''
 
     def setUp(self):
-        self.cfg = {
-            'service': {
-                'scans': {
-                    'port_scan_rate': 1337
-                }
-            }
-        }
         self.aucote = MagicMock()
 
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
@@ -91,10 +84,8 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
 
         self.cfg = {
-            'service': {
-                'scans': {
-                    'port_scan_rate': 1337
-                }
+            'portdetection': {
+                'port_scan_rate': 1337
             },
             'tools': {
                 'nmap': {
@@ -114,10 +105,8 @@ class NmapPortInfoTaskTest(unittest.TestCase):
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     def test_tcp_scan(self, cfg):
         cfg._cfg = {
-            'service': {
-                'scans': {
-                    'port_scan_rate': 1337
-                }
+            'portdetection': {
+                'port_scan_rate': 1337
             },
             'tools': {
                 'nmap': {
@@ -141,10 +130,8 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port_info._port.transport_protocol = TransportProtocol.UDP
 
         cfg._cfg = {
-            'service': {
-                'scans': {
-                    'port_scan_rate': 1337
-                }
+            'portdetection': {
+                'port_scan_rate': 1337
             },
             'tools': {
                 'nmap': {

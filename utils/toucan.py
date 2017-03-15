@@ -40,8 +40,9 @@ def retry_if_fail(function):
         while try_counter < Toucan.MAX_RETRY_COUNT:
             try:
                 return function(*args, **kwargs)
-            except ToucanConnectionException:
-                log.warning("Cannot connect to Toucan: waiting %s s", wait_time)
+            except ToucanConnectionException as exception:
+                log.warning("Cannot connect to Toucan: %s", str(exception))
+                log.warning("Retry in %s s", wait_time)
                 time.sleep(wait_time)
                 wait_time *= 2
                 if wait_time > Toucan.MAX_RETRY_TIME:
@@ -57,9 +58,6 @@ class Toucan(object):
     This class integrates Toucan with Aucote
 
     """
-    SPECIAL_ENDPOINTS = {  # ToDo: remove after add support for multiple keys putting to Toucan
-    }
-
     MIN_RETRY_TIME = 5
     MAX_RETRY_TIME = 300
     MAX_RETRY_COUNT = 20
@@ -149,6 +147,10 @@ class Toucan(object):
         if response.status_code in {404, 204}:
             raise ToucanUnsetException(key)
 
+        if response.status_code == 502:
+            data = response.json()
+            raise ToucanConnectionException(data['message'])
+
         if response.status_code != 200:
             raise ToucanException(key)
 
@@ -185,7 +187,6 @@ class Toucan(object):
             None
 
         """
-
         parsed_config = self.prepare_config(config, prefix)
 
         for key, value in parsed_config.items():

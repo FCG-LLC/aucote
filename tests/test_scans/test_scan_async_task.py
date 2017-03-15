@@ -240,13 +240,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
         self.assertFalse(mock_ioloop.current.return_value.current.called)
 
+    @patch('scans.scan_async_task.IOLoop')
     @patch('scans.scan_async_task.netifaces')
     @patch('scans.scan_async_task.PortsScan')
     @patch('scans.scan_async_task.MasscanPorts')
     @patch('scans.scan_async_task.Executor')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    def test_run_scan_as_non_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface):
+    def test_run_scan_as_non_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface, mock_loop):
         cfg._cfg = {
             'service': {
                 'scans': {
@@ -283,6 +284,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=[port_masscan, port_nmap, port_nmap],
                                               scan_only=False)
+        mock_loop.current.return_value.stop.assert_called_once_with()
 
     @patch('scans.scan_async_task.netifaces')
     @patch('scans.scan_async_task.PortsScan')
@@ -340,12 +342,23 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
     @gen_test
-    def test_run_without_nodes(self):
+    def test_run_scan_without_nodes(self):
         self.thread._get_nodes_for_scanning = MagicMock(return_value=[])
         self.thread._get_networks_list = MagicMock()
         self.thread._get_networks_list.return_value = ['0.0.0.0/0']
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
         self.assertFalse(self.thread.storage.save_nodes.called)
+
+    @patch('scans.scan_async_task.IOLoop')
+    @gen_test
+    def test_run_scan_as_non_service_without_nodes(self, mock_loop):
+        self.thread.as_service = False
+        self.thread._get_nodes_for_scanning = MagicMock(return_value=[])
+        self.thread._get_networks_list = MagicMock()
+        self.thread._get_networks_list.return_value = ['0.0.0.0/0']
+        yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
+        self.assertFalse(self.thread.storage.save_nodes.called)
+        mock_loop.current.return_value.stop.assert_called_once_with()
 
     @patch('scans.scan_async_task.cfg.get', MagicMock(return_value=MagicMock(cfg=['127.0.0.1/24', '128.0.0.1/13'])))
     def test_get_networks_list(self):
@@ -382,21 +395,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
         yield self.thread._scan()
         self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None)
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True)
-
-    @patch('scans.scan_async_task.IOLoop')
-    @gen_test
-    def test_non_service_scan(self, mock_loop):
-        self.thread.as_service = False
-        nodes = MagicMock()
-        self.thread._get_nodes_for_scanning = MagicMock(return_value=nodes)
-
-        self.thread.run_scan = MagicMock()
-        future_run_scan = Future()
-        future_run_scan.set_result(MagicMock())
-        self.thread.run_scan.return_value = future_run_scan
-
-        yield self.thread._scan()
-        mock_loop.current.return_value.stop.assert_called_once_with()
 
     def test_current_scan_getter(self):
         expected = [MagicMock(), MagicMock()]

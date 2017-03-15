@@ -73,8 +73,6 @@ class ScanAsyncTask(object):
         nodes = self._get_nodes_for_scanning(timestamp=None)
         log.debug("Found %i nodes for potential scanning", len(nodes))
         yield self.run_scan(nodes, scan_only=True)
-        if not self.as_service:
-            IOLoop.current().stop()
 
     @AsyncTaskManager.unique_task
     @gen.coroutine
@@ -114,6 +112,8 @@ class ScanAsyncTask(object):
 
         if not nodes:
             log.warning("List of nodes is empty")
+            if not self.as_service:
+                IOLoop.current().stop()
             return
 
         self.storage.save_nodes(nodes)
@@ -154,6 +154,9 @@ class ScanAsyncTask(object):
 
         self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports, scan_only=scan_only))
         self.current_scan = []
+
+        if not self.as_service:
+            IOLoop.current().stop()
 
     @classmethod
     def _get_topdis_nodes(cls):
