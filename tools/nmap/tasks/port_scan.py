@@ -85,7 +85,7 @@ class NmapPortScanTask(CommandTask):
 
             return args
 
-        args.extend(('-p', str(self._port.number)))
+        args.extend(('-p', str(self._port.number), '-sV'))
 
         if self._port.transport_protocol.name == "UDP":
             args.append("-sU")

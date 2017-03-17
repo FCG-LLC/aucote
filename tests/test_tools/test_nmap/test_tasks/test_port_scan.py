@@ -166,6 +166,27 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertTrue('test,test2' in result or 'test2,test' in result)
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_tcp_scan_service_detection(self, cfg):
+        """
+        Test TCP scanning
+
+        """
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'scripts_dir': ''
+                }
+            }
+        }
+        self.scan_task()
+
+        result = set(self.scan_task.prepare_args())
+        expected = {'-sV'}
+
+        self.assertTrue(expected.issubset(result))
+        self.assertTrue('test,test2' in result or 'test2,test' in result)
+
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     def test_udp_scan(self, cfg):
         """
         Test UDP scanning
