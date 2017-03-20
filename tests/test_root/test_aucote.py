@@ -3,6 +3,7 @@ Test main aucote file
 """
 from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
 
+import sys
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
@@ -222,3 +223,6 @@ class AucoteTest(AsyncTestCase):
 
     def test_scan_task_property(self):
         self.assertEqual(self.aucote.scan_task, self.aucote._scan_task)
+
+    def test_python_version(self):
+        self.assertGreaterEqual(sys.version_info, (3,5))

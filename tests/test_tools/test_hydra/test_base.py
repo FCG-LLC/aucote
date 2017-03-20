@@ -31,11 +31,13 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:20:21'''
         self.executor = MagicMock()
         self.hydra = HydraBase()
 
-    @patch('subprocess.check_output', MagicMock(return_value=OUTPUT_SUCCESSFUL))
-    def test_success(self):
+    @patch('tools.common.command.subprocess.run')
+    def test_success(self, mock_run):
         """
         Test with successful output
         """
+
+        mock_run.return_value = MagicMock(returncode=0, stdout=self.OUTPUT_SUCCESSFUL, stderr=b'')
         result = self.hydra.call()
 
         self.assertIsInstance(result, HydraResults)

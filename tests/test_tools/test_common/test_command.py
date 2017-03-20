@@ -23,13 +23,15 @@ class CommandTest(AsyncTestCase):
         self.command = Command()
         self.command.COMMON_ARGS = []
 
-    @patch('subprocess.check_output', MagicMock(return_value=SCRIPT_XML))
-    def test_stdout(self):
+    @patch('tools.common.command.subprocess.run')
+    def test_stdout(self, mock_run):
+        mock_run.return_value = MagicMock(stdout=self.SCRIPT_XML, stderr=b'', returncode=0)
         result = self.command.call()
         self.assertEqual(result, self.SCRIPT_XML.decode("utf-8"))
 
-    @patch('subprocess.check_output', MagicMock(side_effect=subprocess.CalledProcessError(returncode=1, cmd='masscan')))
-    def test_stderr(self):
+    @patch('tools.common.command.subprocess.run')
+    def test_stderr(self, mock_run):
+        mock_run.return_value = MagicMock(stdout=self.SCRIPT_XML, stderr=b'', returncode=1)
         self.assertRaises(subprocess.CalledProcessError, self.command.call)
 
     @patch('tools.common.command.process.Subprocess')
@@ -42,7 +44,7 @@ class CommandTest(AsyncTestCase):
         future_2.set_result(self.SCRIPT_XML)
         mock_subprocess.return_value.stdout.read_until_close.return_value = future_2
         future_3 = Future()
-        future_3.set_result("")
+        future_3.set_result(b'')
         mock_subprocess.return_value.stderr.read_until_close.return_value = future_3
 
         result = yield self.command.async_call()

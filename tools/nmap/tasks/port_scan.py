@@ -63,14 +63,22 @@ class NmapPortScanTask(CommandTask):
             '--max-rate', str(self.rate)
         ]
 
-        if isinstance(self._port, (PhysicalPort, BroadcastPort)):
-            for script in self.scripts.values():
-                args.append('--script')
-                args.append(script.name)
-                if script.args:
-                    args.append('--script-args')
-                    args.append(script.args)
+        scripts_dir = cfg['tools.nmap.scripts_dir']
 
+        if scripts_dir:
+            args.extend(["--datadir", scripts_dir])
+
+        scripts = self.scripts.values()
+
+        script_names = ",".join([script.name for script in scripts if script.name])
+        script_args = ",".join({script.args for script in scripts if script.args})
+
+        args.extend(["--script", script_names])
+
+        if script_args:
+            args.extend(["--script-args", script_args])
+
+        if isinstance(self._port, (PhysicalPort, BroadcastPort)):
             if isinstance(self._port, PhysicalPort):
                 args.append('-e')
                 args.append(self._port.interface)
@@ -87,13 +95,6 @@ class NmapPortScanTask(CommandTask):
 
         if self._port.number == 53:
             args.extend(["--dns-servers", str(self._port.node.ip)])
-
-        for script in self.scripts.values():
-            args.append('--script')
-            args.append(script.name)
-            if script.args is not None:
-                args.append('--script-args')
-                args.append(script.args)
 
         args.append(str(self._port.node.ip))
 

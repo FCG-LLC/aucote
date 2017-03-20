@@ -5,7 +5,6 @@ Provides set of common parsers
 from xml.etree import ElementTree
 
 from utils.exceptions import NonXMLOutputException
-import logging as log
 
 
 class Parser(object):
@@ -14,42 +13,40 @@ class Parser(object):
 
     """
     @classmethod
-    def parse(cls, output):
+    def parse(cls, stdout, stderr=None):
         """
         Return output
 
         Args:
-            output (str):
+            stdout (str):
+            stderr (str):
 
         Returns:
             str
 
         """
-        return output
+        return stdout
 
 
-class XMLParser(object):
+class XMLParser(Parser):
     """
     Parser for XML output
 
     """
     @classmethod
-    def parse(cls, output):
+    def parse(cls, stdout, stderr=None):
         """
         Treats output as XML and return ElementTree object
 
         Args:
-            output (str):
+            stdout (str):
+            stderr (str):
 
         Returns:
             ElementTree.Element|None
 
         """
-        if not output:
-            log.warning("No output data for parsing")
-            raise NonXMLOutputException()
-
         try:
-            return ElementTree.fromstring(output)
+            return ElementTree.fromstring(stdout)
         except ElementTree.ParseError:
             raise NonXMLOutputException()

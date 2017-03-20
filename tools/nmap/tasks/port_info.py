@@ -51,6 +51,11 @@ class NmapPortInfoTask(PortTask):
         if self._port.is_ipv6:
             args.append("-6")
 
+        scripts_dir = cfg['tools.nmap.scripts_dir']
+
+        if scripts_dir:
+            args.extend(["--datadir", scripts_dir])
+
         args.extend(('--script', 'banner'))
         args.append(str(self._port.node.ip))
 

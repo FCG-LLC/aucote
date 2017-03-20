@@ -68,9 +68,9 @@ class SkipfishResultsParser(Parser):
         with open(sep.join((self.dir, 'samples.js')), 'r') as report:
             return self._parse_issues(report.read())
 
-    def parse(self, output=None):
+    def parse(self, stdout=None, stderr=None):
         """
-        Parses skipfish report. output variable is not used
+        Parses skipfish report. stdout and stderr variables are not used
 
         """
 
@@ -112,20 +112,20 @@ class SkipfishOutputParser(Parser):
     Provides functions for parsing skipfish stdout
 
     """
-
     @classmethod
-    def parse(cls, output):
+    def parse(cls, stdout, stderr=None):
         """
         Prepares skipfish's report parser
 
         Args:
-            output (str): skipfish's stdout
+            stdout (str): skipfish's stdout
+            stderr (str): skipfish's stderr
 
         Returns:
             SkipfishIssues object
 
         """
-        parser = SkipfishResultsParser(directory=cls._get_log_dir(output=output,
+        parser = SkipfishResultsParser(directory=cls._get_log_dir(output=stdout,
                                                                   directory=cfg.get('tools.skipfish.tmp_directory')))
         return parser.parse()
 

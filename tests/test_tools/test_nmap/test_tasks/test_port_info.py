@@ -98,10 +98,15 @@ class NmapPortInfoTaskTest(unittest.TestCase):
                 'scans': {
                     'port_scan_rate': 1337
                 }
+            },
+            'tools': {
+                'nmap': {
+                    'scripts_dir': 'test'
+                }
             }
         }
         result = self.port_info.prepare_args()
-        expected = ['-p', '22', '-sV', '--max-rate', '1337', '--script', 'banner', '127.0.0.1']
+        expected = ['-p', '22', '-sV', '--max-rate', '1337', '--datadir', 'test', '--script', 'banner', '127.0.0.1']
 
         self.assertEqual(result, expected)
 
@@ -118,6 +123,11 @@ class NmapPortInfoTaskTest(unittest.TestCase):
             'service': {
                 'scans': {
                     'port_scan_rate': 1337
+                }
+            },
+            'tools': {
+                'nmap': {
+                    'scripts_dir': ''
                 }
             }
         }

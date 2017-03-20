@@ -33,19 +33,20 @@ class HydraParser(Parser):
     regex_all = re.compile(ALL_PATTERN)
 
     @classmethod
-    def parse(cls, output):
+    def parse(cls, stdout, stderr=None):
         """
         Parses output and return collection of Hydra Results
 
         Args:
-            output(str):
+            stdout(str):
+            stderr(str):
 
         Returns:
             HydraResults
 
         """
         results = HydraResults()
-        for line in output.split("\n"):
+        for line in stdout.split("\n"):
             match = cls.regex_all.match(line)
 
             if match.group('success_match'):

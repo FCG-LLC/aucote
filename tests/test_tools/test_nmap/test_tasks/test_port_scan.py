@@ -3,12 +3,14 @@ import unittest
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
+from aucote_cfg import cfg
 from fixtures.exploits import Exploit
 from fixtures.exploits import Exploits
 from structs import Port, TransportProtocol, Node, Vulnerability, Scan, PhysicalPort, BroadcastPort
 from tools.nmap.base import InfoNmapScript, VulnNmapScript
 
 from tools.nmap.tasks.port_scan import NmapPortScanTask
+from utils import Config
 
 
 @patch('database.serializer.Serializer.serialize_port_vuln', MagicMock(return_value='test'))
@@ -141,32 +143,71 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertEqual(self.scan_task.port, self.port)
         self.assertEqual(self.scan_task.script_classes, [self.script, self.script2])
 
-    def test_tcp_scan(self):
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_tcp_scan(self, cfg):
         """
         Test TCP scanning
 
         """
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'scripts_dir': ''
+                }
+            }
+        }
         self.scan_task()
 
-        result = self.scan_task.command.call.call_args[0][0]
-        expected = ['--max-rate', '1337', '-p', '22', '-sV', '--script', 'test2',
-                    '--script', 'test', '--script-args', 'test_args', '127.0.0.1']
+        result = set(self.scan_task.prepare_args())
+        expected = {'--max-rate', '1337', '-p', '22', '--script', '--script-args', 'test_args',
+                    '127.0.0.1'}
 
-        self.assertCountEqual(result, expected)
+        self.assertTrue(expected.issubset(result))
+        self.assertTrue('test,test2' in result or 'test2,test' in result)
 
-    def test_udp_scan(self):
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_tcp_scan_service_detection(self, cfg):
+        """
+        Test TCP scanning
+
+        """
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'scripts_dir': ''
+                }
+            }
+        }
+        self.scan_task()
+
+        result = set(self.scan_task.prepare_args())
+        expected = {'-sV'}
+
+        self.assertTrue(expected.issubset(result))
+        self.assertTrue('test,test2' in result or 'test2,test' in result)
+
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_udp_scan(self, cfg):
         """
         Test UDP scanning
 
         """
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'scripts_dir': ''
+                }
+            }
+        }
         self.scan_task._port.transport_protocol = TransportProtocol.UDP
         self.scan_task()
 
-        result = self.scan_task.command.call.call_args[0][0]
-        expected = ['--max-rate', '1337', '-p', '22', '-sV', '-sU', '--script', 'test2',
-                    '--script', 'test', '--script-args', 'test_args', '127.0.0.1']
+        result = set(self.scan_task.prepare_args())
+        expected = {'--max-rate', '1337', '-p', '22', '-sU', '--script', '--script-args', 'test_args',
+                    '127.0.0.1'}
 
-        self.assertCountEqual(result, expected)
+        self.assertTrue(expected.issubset(result))
+        self.assertTrue('test,test2' in result or 'test2,test' in result)
 
     def test_no_vulnerabilities(self):
         self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.NO_VULNERABILITIES_XML))
@@ -223,24 +264,40 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertDictEqual(result, expected)
         self.assertEqual(self.port.scan.end, 27.0)
 
-    def test_prepare_args_broadcast(self):
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_prepare_args_broadcast(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'scripts_dir': ''
+                }
+            }
+        }
         self.scan_task._port = BroadcastPort()
 
-        result = self.scan_task.prepare_args()
-        expected = ['--max-rate', '1337', '--script', 'test', '--script-args', 'test_args',
-                    '--script', 'test2']
+        result = set(self.scan_task.prepare_args())
+        expected = {'--max-rate', '1337', '--script', '--script-args', 'test_args'}
 
-        self.assertCountEqual(result, expected)
+        self.assertTrue(expected.issubset(result))
+        self.assertTrue('test,test2' in result or 'test2,test' in result)
 
-    def test_prepare_args_physical(self):
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_prepare_args_physical(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'scripts_dir': ''
+                }
+            }
+        }
         self.scan_task._port = PhysicalPort()
         self.scan_task._port.interface = 'wlan0'
 
-        result = self.scan_task.prepare_args()
-        expected = ['--max-rate', '1337', '--script', 'test', '--script-args', 'test_args',
-                    '--script', 'test2', '-e', 'wlan0']
+        result = set(self.scan_task.prepare_args())
+        expected = {'--max-rate', '1337', '--script', '--script-args', 'test_args', '-e', 'wlan0'}
 
-        self.assertCountEqual(result, expected)
+        self.assertTrue(expected.issubset(result))
+        self.assertTrue('test,test2' in result or 'test2,test' in result)
 
     def test_prepare_args_ipv6(self):
         self.scan_task._port = self.port_ipv6
@@ -249,3 +306,54 @@ class NmapPortScanTaskTest(unittest.TestCase):
         expected = '-6'
 
         self.assertIn(expected, result)
+
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_prepare_args_scripts_dir(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'scripts_dir': './test_dir/'
+                }
+            }
+        }
+        self.scan_task._port = PhysicalPort()
+        self.scan_task._port.interface = 'wlan0'
+
+        result = set(self.scan_task.prepare_args())
+        expected = {'--max-rate', '1337', '--datadir', './test_dir/', '--script', '--script-args',
+                    'test_args', '-e', 'wlan0'}
+
+        self.assertTrue(expected.issubset(result))
+        self.assertTrue('test,test2' in result or 'test2,test' in result)
+
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_prepare_args_scripts_args(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'scripts_dir': './test_dir/'
+                }
+            }
+        }
+        self.script2.args = 'other_args'
+        self.scan_task._port = PhysicalPort()
+        self.scan_task._port.interface = 'wlan0'
+
+        result = set(self.scan_task.prepare_args())
+
+        self.assertTrue('test_args,other_args' in result or 'other_args,test_args' in result)
+
+    @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
+    def test_prepare_no_args(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'scripts_dir': './test_dir/'
+                }
+            }
+        }
+        self.script.args = ''
+
+        result = set(self.scan_task.prepare_args())
+
+        self.assertNotIn('--script-args', result)
