@@ -362,11 +362,51 @@ class TaskMapperTest(unittest.TestCase):
         ]
 
         self.task_mapper.store_scan_details = MagicMock()
-
         expected = [self.exploits['test'][0], self.exploits['test'][1]]
-
         self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
-
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
 
+        self.assertEqual(result, expected)
+
+    @patch('scans.task_mapper.time.time', MagicMock(return_value=10))
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
+    @patch('scans.task_mapper.cfg', new_callable=Config)
+    def test_scan_after_service_change(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'test': {
+                    'enable': True,
+                    'networks': [
+                        '0.0.0.0/0'
+                    ],
+                    'period': '0s'
+                },
+                'test2': {
+                    'enable': False,
+                }
+            }
+        }
+        exploit = Exploit(exploit_id=3, name='test_3')
+        self.executor.storage.get_scan_info.return_value = [
+            {
+                "exploit": exploit,
+                "port": self.UDP,
+                "scan_start": 17.0,
+                "scan_end": 26.0,
+                "exploit_name": "test_3"
+            },
+            {
+                "exploit": self.exploits['test'][1],
+                "port": self.UDP,
+                "scan_start": 12.0,
+                "scan_end": 17.0,
+                "exploit_name": "test_2"
+            }
+        ]
+
+        self.EXECUTOR_CONFIG['apps']['test']['class'] = MagicMock()
+
+        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
+        expected = [self.exploits['test'][0]]
         self.assertEqual(result, expected)

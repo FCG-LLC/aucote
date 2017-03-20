@@ -52,7 +52,7 @@ class TaskMapper:
                 period = parse_period(periods.get(scan['exploit_name'], None) or
                                       cfg.get('tools.{0}.period'.format(app)))
 
-                if scan['scan_end'] + period > time.time():
+                if scan['scan_end'] + period > time.time() and scan['exploit'] in exploits:
                     exploits.remove(scan['exploit'])
 
             if not isinstance(port, SpecialPort):
