@@ -11,7 +11,7 @@ from aucote_cfg import cfg
 from structs import RiskLevel
 from tools.base import Tool
 from tools.nmap.base import NmapScript
-from tools.nmap.parsers import NmapVulnParser, NmapParser
+from tools.nmap.parsers import NmapVulnParser, NmapInfoParser
 from tools.nmap.tasks.port_scan import NmapPortScanTask
 from utils.exceptions import ImproperConfigurationException
 
@@ -93,7 +93,7 @@ class NmapTool(Tool):
                 parser = self.config.get('scripts', {}).get(exploit.name, {}).get('parser')
 
                 if not parser and exploit.risk_level == RiskLevel.NONE:
-                    parser = NmapParser
+                    parser = NmapInfoParser
                 elif not parser:
                     parser = NmapVulnParser
 
