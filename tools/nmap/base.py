@@ -4,7 +4,6 @@ This module contains base nmap classes
 """
 from tools.common.command import Command
 from tools.common.parsers import XMLParser
-from tools.nmap.parsers import NmapParser, NmapVulnParser
 
 
 class NmapBase(Command):

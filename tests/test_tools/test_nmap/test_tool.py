@@ -61,7 +61,7 @@ class NmapToolTest(TestCase):
         self.nmap_tool = NmapTool(aucote=self.aucote, exploits=self.exploits, port=self.port, config=self.config)
 
     @patch('tools.nmap.tool.NmapVulnParser')
-    @patch('tools.nmap.tool.NmapParser')
+    @patch('tools.nmap.tool.NmapInfoParser')
     @patch('tools.nmap.tool.NmapScript')
     @patch('tools.nmap.tool.NmapPortScanTask')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
