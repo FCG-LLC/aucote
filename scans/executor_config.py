@@ -59,6 +59,9 @@ EXECUTOR_CONFIG = {
                 },
                 'supermicro-ipmi-conf': {
                     'args': 'supermicro-ipmi-conf.out=/dev/null'
+                },
+                'http-phpself-xss': {
+                    'args': 'http-phpself-xss.uri=/index.php'
                 }
             },
             'services': {
