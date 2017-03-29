@@ -5,7 +5,7 @@ import logging as log
 
 from aucote_cfg import cfg
 from database.serializer import Serializer
-from structs import BroadcastPort
+from structs import BroadcastPort, TransportProtocol
 from structs import PhysicalPort
 from tools.common.port_task import PortTask
 from tools.nmap.base import NmapBase
@@ -45,8 +45,11 @@ class NmapPortInfoTask(PortTask):
             '--max-rate', str(cfg.get('service.scans.port_scan_rate'))
         ]
 
-        if self._port.transport_protocol.name == "UDP":
-            args.append("-sU")
+        if self._port.transport_protocol == TransportProtocol.TCP:
+            args.append('-sS')
+
+        elif self._port.transport_protocol == TransportProtocol.UDP:
+            args.append('-sU')
 
         if self._port.is_ipv6:
             args.append("-6")

@@ -10,7 +10,8 @@ import itertools
 from aucote_cfg import cfg
 from structs import RiskLevel
 from tools.base import Tool
-from tools.nmap.base import InfoNmapScript, VulnNmapScript
+from tools.nmap.base import NmapScript
+from tools.nmap.parsers import NmapVulnParser, NmapInfoParser
 from tools.nmap.tasks.port_scan import NmapPortScanTask
 from utils.exceptions import ImproperConfigurationException
 
@@ -89,10 +90,14 @@ class NmapTool(Tool):
             for arg in args:
                 arg = "{0},{1}".format(arg or "", service_args).strip(",")
 
-                if exploit.risk_level == RiskLevel.NONE:
-                    task = InfoNmapScript(exploit=exploit, port=self.port, name=name, args=arg)
-                else:
-                    task = VulnNmapScript(exploit=exploit, port=self.port, name=name, args=arg)
+                parser = self.config.get('scripts', {}).get(exploit.name, {}).get('parser')
+
+                if not parser and exploit.risk_level == RiskLevel.NONE:
+                    parser = NmapInfoParser
+                elif not parser:
+                    parser = NmapVulnParser
+
+                task = NmapScript(exploit=exploit, port=self.port, parser=parser(), name=name, args=arg)
 
                 if singular:
                     self.aucote.add_task(NmapPortScanTask(aucote=self.aucote, port=self.port,

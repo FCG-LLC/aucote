@@ -71,7 +71,10 @@ Entry { filename = "http-webdav-scan.nse", categories = { "default", "discovery"
 Entry { filename = "iax2-version.nse", categories = { "version", } }
 Entry { filename = "ike-version.nse", categories = { "default", "discovery", "safe", "version", } }
 Entry { filename = "imap-capabilities.nse", categories = { "default", "safe", } }
-Entry { filename = "ipmi-version.nse", categories = { "discovery", "safe", } }
+Entry { filename = "ipmi-brute.nse", categories = { "brute", "intrusive", } }
+Entry { filename = "ipmi-cipher-zero.nse", categories = { "safe", "vuln", } }
+Entry { filename = "ipmi-dumphashes.nse", categories = { "brute", "intrusive", } }
+Entry { filename = "ipmi-version.nse", categories = { "discovery", "safe", "version", } }
 Entry { filename = "irc-unrealircd-backdoor.nse", categories = { "exploit", "intrusive", "malware", "vuln", } }
 Entry { filename = "iscsi-info.nse", categories = { "default", "discovery", "safe", } }
 Entry { filename = "isns-info.nse", categories = { "discovery", "safe", } }

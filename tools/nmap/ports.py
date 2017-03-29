@@ -13,12 +13,23 @@ class PortsScan(ScanTask):
 
     """
 
-    def __init__(self):
+    def __init__(self, ipv6, udp, tcp):
+        self.ipv6 = ipv6
+        self.udp = udp
+        self.tcp = tcp
         super(PortsScan, self).__init__(NmapBase())
 
-    @classmethod
-    def prepare_args(cls, nodes):
-        args = ['-sV', '--script', 'banner', '-6']
+    def prepare_args(self, nodes):
+        args = ['-sV', '--script', 'banner']
+
+        if self.ipv6:
+            args.append('-6')
+
+        if self.tcp:
+            args.append('-sS')
+
+        if self.udp:
+            args.append('-sU')
 
         scripts_dir = cfg['tools.nmap.scripts_dir']
 

@@ -5,7 +5,7 @@ Contains class responsible for exploiting port by using nmap scripts
 import logging as log
 
 from aucote_cfg import cfg
-from structs import Vulnerability, PhysicalPort, BroadcastPort
+from structs import Vulnerability, PhysicalPort, BroadcastPort, TransportProtocol
 from tools.common.command_task import CommandTask
 from tools.nmap.base import NmapBase
 
@@ -60,8 +60,14 @@ class NmapPortScanTask(CommandTask):
 
         """
         args = [
-            '--max-rate', str(self.rate)
+            '--max-rate', str(self.rate),
         ]
+
+        if self._port.transport_protocol == TransportProtocol.TCP:
+            args.append('-sS')
+
+        elif self._port.transport_protocol == TransportProtocol.UDP:
+            args.append('-sU')
 
         scripts_dir = cfg['tools.nmap.scripts_dir']
 
@@ -86,9 +92,6 @@ class NmapPortScanTask(CommandTask):
             return args
 
         args.extend(('-p', str(self._port.number), '-sV'))
-
-        if self._port.transport_protocol.name == "UDP":
-            args.append("-sU")
 
         if self._port.is_ipv6:
             args.append("-6")

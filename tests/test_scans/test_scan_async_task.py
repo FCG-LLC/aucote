@@ -201,6 +201,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         ports_masscan = [MagicMock()]
         ports_nmap = [MagicMock()]
+        ports_nmap_udp = [MagicMock()]
         mock_netiface.interfaces.return_value = ['test', 'test2']
         mock_netiface.ifaddresses.side_effect = ([mock_netiface.AF_INET], [''])
 
@@ -210,12 +211,16 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         future_nmap = Future()
         future_nmap.set_result(ports_nmap)
-        mock_nmap.return_value.scan_ports.return_value = future_nmap
+
+        future_nmap_udp = Future()
+        future_nmap_udp.set_result(ports_nmap_udp)
+
+        mock_nmap.return_value.scan_ports.side_effect = (future_nmap, future_nmap_udp)
 
         port = PhysicalPort()
         port.interface = 'test'
 
-        ports = [ports_masscan[0], ports_nmap[0], port]
+        ports = [ports_masscan[0], ports_nmap[0], ports_nmap_udp[0], port]
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
 
@@ -240,6 +245,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         ports_masscan = [MagicMock()]
         ports_nmap = [MagicMock()]
+        ports_nmap_udp = [MagicMock()]
         mock_netiface.interfaces.return_value = ['test', 'test2']
         mock_netiface.ifaddresses.side_effect = ([mock_netiface.AF_INET], [''])
 
@@ -249,7 +255,11 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         future_nmap = Future()
         future_nmap.set_result(ports_nmap)
-        mock_nmap.return_value.scan_ports.return_value = future_nmap
+
+        future_nmap_udp = Future()
+        future_nmap_udp.set_result(ports_nmap_udp)
+
+        mock_nmap.return_value.scan_ports.side_effect = (future_nmap, future_nmap_udp)
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
 
@@ -284,7 +294,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         port = PhysicalPort()
         port.interface = 'test'
 
-        ports = [ports_masscan[0], ports_nmap[0], port]
+        ports = [ports_masscan[0], ports_nmap[0], ports_nmap[0], port]
 
         scan_only = MagicMock()
 

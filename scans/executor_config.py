@@ -4,6 +4,7 @@ Provides configuration for tools. Configuration is implicit and shouldn't be mod
 from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
 from tools.hydra.tool import HydraTool
+from tools.nmap.parsers import NmapBrutParser
 from tools.nmap.tool import NmapTool
 from tools.skipfish.tool import SkipfishTool
 
@@ -46,6 +47,18 @@ EXECUTOR_CONFIG = {
                 },
                 'broadcast-wpad-discovery': {
                     'singular': True
+                },
+                'ipmi-brute': {
+                    'args': 'userdb=static/nmap/usernames.lst,passdb=static/nmap/passwords.lst',
+                    'singular': True,
+                    'parser': NmapBrutParser
+                },
+                'ipmi-dumphashes': {
+                    'args': 'userdb=static/nmap/usernames.lst,passdb=static/nmap/passwords.lst,dumphashes=1,brute.emptypass=1',
+                    'parser': NmapBrutParser
+                },
+                'supermicro-ipmi-conf': {
+                    'args': 'supermicro-ipmi-conf.out=/dev/null'
                 }
             },
             'services': {
@@ -53,7 +66,9 @@ EXECUTOR_CONFIG = {
                     'args': NmapTool.custom_args_http_useragent
                 }
             },
-            'disable_scripts': set()
+            'disable_scripts': {
+                'ipmi-brute'
+            }
         },
         'hydra': {
             'class': HydraTool,
