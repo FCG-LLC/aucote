@@ -21,9 +21,7 @@ class NmapParser(object):
         Returns:
 
         """
-        if script is None:
-            return None
-        return self._parse(script)
+        return self._parse(script) if script is not None else None
 
     def _parse(self, script):
         """
@@ -54,14 +52,11 @@ class NmapInfoParser(NmapParser):
 
 class NmapVulnParser(NmapParser):
     """
-    Returns output only for vurnelable results.
+    Returns output only for vulnerable results.
 
     """
     def _parse(self, script):
-        table = script.find('table')
-        if table is None:
-            return None
-        state = table.find("./elem[@key='state']").text
+        state = script.find("./table/elem[@key='state']").text
         if state not in ('VULNERABLE', 'LIKELY VULNERABLE', 'VULNERABLE (Exploitable)', 'VULNERABLE (DoS)'):
             return None  # TODO: add likelihood to vulnerability
         return script.get('output').strip()

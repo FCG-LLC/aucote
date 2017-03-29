@@ -3,14 +3,13 @@ import unittest
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
-from aucote_cfg import cfg
 from fixtures.exploits import Exploit
 from fixtures.exploits import Exploits
 from structs import Port, TransportProtocol, Node, Scan, PhysicalPort, BroadcastPort
 
 from tools.nmap.tasks.port_scan import NmapPortScanTask
 from utils import Config
-from tools.nmap.parsers import NmapParser, NmapVulnParser
+from tools.nmap.parsers import NmapParser, NmapInfoParser
 from tools.nmap.base import NmapScript
 
 
@@ -35,7 +34,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
 <ports>
 <port protocol="udp" portid="123"><state state="open" reason="udp-response" reason_ttl="253"/>
 <script id="test" output="VUNERABLE: SSH-1.99-Cisco-1.25"/>
-<script id="test2" output="VUNERABLE: SSH-1.99-Cisco-1.25"/>
+<script id="test2" output="ERROR: VUNERABLE: SSH-1.99-Cisco-1.25"/>
 <script id="test3" output="VUNERABLE: SSH-1.99-Cisco-1.25"/>
 </port>
 </ports>
@@ -131,7 +130,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
         self.script = NmapScript(port=self.port, parser=NmapParser(), exploit=self.exploit, name='test', args='test_args')
         self.script.get_result = MagicMock(return_value='test')
-        self.script2 = NmapScript(port=self.port, parser=NmapVulnParser(), exploit=self.exploit_vuln_non_exist, name='test2')
+        self.script2 = NmapScript(port=self.port, parser=NmapInfoParser(), exploit=self.exploit_vuln_non_exist, name='test2')
         self.scan_task = NmapPortScanTask(aucote=self.aucote, port=self.port,
                                           script_classes=[self.script, self.script2], rate=1337)
         self.scan_task.store_scan_end = MagicMock()
