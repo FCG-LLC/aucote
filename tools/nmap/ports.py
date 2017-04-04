@@ -20,7 +20,7 @@ class PortsScan(ScanTask):
         super(PortsScan, self).__init__(NmapBase())
 
     def prepare_args(self, nodes):
-        args = ['-sV', '--script', 'banner']
+        args = []
 
         if self.ipv6:
             args.append('-6')
@@ -29,7 +29,7 @@ class PortsScan(ScanTask):
             args.append('-sS')
 
         if self.udp:
-            args.append('-sU')
+            args.extend(('-sU', '--max-retries', '2', '--min-parallelism', '100'))
 
         scripts_dir = cfg['tools.nmap.scripts_dir']
 

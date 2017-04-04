@@ -56,8 +56,7 @@ class PortScanTest(TestCase):
         cfg._cfg = self.cfg._cfg
 
         result = self.scanner.prepare_args(nodes=self.nodes)
-        expected = ['-sV', '--script', 'banner', '-6', '-p', '55', '--max-rate', '1030',
-                    '192.168.1.5']
+        expected = ['-6', '-p', '55', '--max-rate', '1030', '192.168.1.5']
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)
@@ -66,8 +65,7 @@ class PortScanTest(TestCase):
         self.cfg['portdetection.ports.exclude'] = ['45-89']
 
         result = self.scanner.prepare_args(nodes=self.nodes)
-        expected = ['-sV', '--script', 'banner', '-6', '-p', '55', '--max-rate', '1030',
-                    '--exclude-ports', '45-89', '192.168.1.5']
+        expected = ['-6', '-p', '55', '--max-rate', '1030', '--exclude-ports', '45-89', '192.168.1.5']
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)
@@ -93,8 +91,7 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-sV', '--script', 'banner', '-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
-                    '192.168.1.5']
+        expected = ['-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000', '192.168.1.5']
 
         self.assertEqual(result, expected)
 
@@ -123,8 +120,7 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-sV', '--script', 'banner', '-sS', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
-                    '192.168.1.5']
+        expected = ['-sS', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000', '192.168.1.5']
 
         self.assertEqual(result, expected)
 
@@ -153,7 +149,7 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-sV', '--script', 'banner', '-sU', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
+        expected = ['-sU', '--max-retries', '2', '--min-parallelism', '100', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
                     '192.168.1.5']
 
         self.assertEqual(result, expected)
@@ -181,6 +177,6 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-sV', '--script', 'banner', '-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000', '192.168.1.5']
+        expected = ['-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000', '192.168.1.5']
 
         self.assertEqual(result, expected)
