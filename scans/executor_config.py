@@ -4,7 +4,7 @@ Provides configuration for tools. Configuration is implicit and shouldn't be mod
 from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
 from tools.hydra.tool import HydraTool
-from tools.nmap.parsers import NmapBrutParser
+from tools.nmap.parsers import NmapBrutParser, NmapInfoParser
 from tools.nmap.tool import NmapTool
 from tools.skipfish.tool import SkipfishTool
 
@@ -59,6 +59,9 @@ EXECUTOR_CONFIG = {
                 },
                 'supermicro-ipmi-conf': {
                     'args': 'supermicro-ipmi-conf.out=/dev/null'
+                },
+                'http-trace': {
+                    'parser': NmapInfoParser
                 }
             },
             'services': {
