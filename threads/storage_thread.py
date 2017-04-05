@@ -26,6 +26,8 @@ class StorageThread(Thread):
         self.filename = filename
         self._queue = Queue()
         self._storage = Storage(self.filename)
+        self.create_tables()
+        self.clear_scan_details()
         self.finish = False
 
     def run(self):
@@ -41,8 +43,6 @@ class StorageThread(Thread):
 
         """
         self._storage.connect()
-        self.create_tables()
-        self.clear_scan_details()
 
         while not self.finish:
             try:

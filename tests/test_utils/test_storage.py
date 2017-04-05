@@ -258,3 +258,9 @@ class StorageTest(TestCase):
         )
 
         self.assertEqual(result, expected)
+
+    def test_clear_scan_details(self):
+        result = self.storage.clear_scan_details()
+        expected = "DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL OR SCAN_END IS NULL",
+
+        self.assertEqual(result, expected)

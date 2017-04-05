@@ -8,13 +8,16 @@ from threads.storage_thread import StorageThread
 
 class StorageThreadTest(TestCase):
     @patch('threads.storage_thread.Queue')
-    def setUp(self, mock_queue):
+    @patch('threads.storage_thread.Storage')
+    def setUp(self, mock_storage, mock_queue):
         self.mock_queue = mock_queue
+        self.mock_storage = mock_storage
         self.filename = ":memory:"
         self.task = StorageThread(filename=self.filename)
 
-    @patch('threads.storage_thread.Queue')
-    def test_init(self, mock_queue):
+    def test_init(self):
+        self.task._storage.create_tables.assert_called_once_with()
+        self.task._storage.clear_scan_details.assert_called_once_with()
         self.assertEqual(self.task.filename, self.filename)
         self.assertEqual(self.task._queue, self.mock_queue())
 
@@ -32,7 +35,6 @@ class StorageThreadTest(TestCase):
         self.task._storage = MagicMock()
 
         self.assertRaises(Exception, self.task.run)
-        self.assertTrue(self.task._storage.clear_scan_details.called)
         self.assertEqual(self.task._storage.cursor.execute.call_count, 4)
         self.assertEqual(self.task._storage.conn.commit.call_count, 3)
         self.assertEqual(self.task._queue.get.call_count, 5)
