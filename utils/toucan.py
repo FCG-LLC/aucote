@@ -107,7 +107,7 @@ class Toucan(object):
         """
         toucan_key = self._get_slash_separated_key(key, strip_slashes=True)
 
-        if not self.is_special(key):
+        if key is not "*":
             data = {
                 "value": values,
             }
@@ -276,6 +276,6 @@ class Toucan(object):
         Returns:
 
         """
-        return_value = "/{prefix}/".format(prefix=self.PREFIX) if add_prefix and not self.is_special(key) else ""
+        return_value = "/{prefix}/".format(prefix=self.PREFIX) if add_prefix and key is not "*" else ""
         return_value = "{prefix}{key}".format(prefix=return_value, key=key.replace(".", "/"))
         return return_value.strip("/") if strip_slashes else return_value
