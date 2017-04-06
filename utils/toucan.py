@@ -6,7 +6,6 @@ import logging as log
 import time
 import requests
 
-
 from utils.exceptions import ToucanException, ToucanUnsetException, ToucanConnectionException
 
 
@@ -61,6 +60,7 @@ class Toucan(object):
     MIN_RETRY_TIME = 5
     MAX_RETRY_TIME = 300
     MAX_RETRY_COUNT = 20
+    PREFIX = "aucote"
 
     def __init__(self, host, port, protocol):
         self.host = host
@@ -83,9 +83,9 @@ class Toucan(object):
         request_key = toucan_key
 
         try:
-            response = requests.get(url="{prot}://{host}:{port}/config/aucote/{key}"
+            response = requests.get(url="{prot}://{host}:{port}/config/{prefix}/{key}"
                                     .format(prot=self.protocol, host=self.host, port=self.port,
-                                            key=request_key))
+                                            key=request_key, prefix=self.PREFIX))
 
             result = self.proceed_response(key, response)
 
@@ -94,13 +94,13 @@ class Toucan(object):
             raise ToucanConnectionException("Cannot connect to Toucan")
 
     @retry_if_fail
-    def put(self, key, value):
+    def put(self, key, values):
         """
         Put config into toucan
 
         Args:
             key (str):
-            value (str):
+            values (object):
 
         Returns:
             mixed - inserted value if success
@@ -110,15 +110,22 @@ class Toucan(object):
 
         if not self.is_special(key):
             data = {
-                "value": value,
+                "value": values,
             }
+        elif isinstance(values, dict):
+            data = []
+            for multikey, multivalue in values.items():
+                data.append({
+                    'key': "/{prefix}/{key}".format(prefix=self.PREFIX, key="/".join(multikey.split("."))),
+                    'value': multivalue
+                })
         else:
-            data = value
+            raise ToucanException("Wrong value for special endpoint ({0})".format(key))
 
         try:
-            response = requests.put(url="{prot}://{host}:{port}/config/aucote/{key}"
+            response = requests.put(url="{prot}://{host}:{port}/config/{prefix}/{key}"
                                     .format(prot=self.protocol, host=self.host, port=self.port,
-                                            key=toucan_key), json=data)
+                                            key=toucan_key, prefix=self.PREFIX), json=data)
 
             return self.proceed_response(key, response)
         except requests.exceptions.ConnectionError:
@@ -158,8 +165,8 @@ class Toucan(object):
             return_value = {}
             for row in data:
                 key = row['key']
-                if key.startswith("/aucote/"):
-                    key = key.split("/aucote/")[1].replace("/", ".")
+                if key.startswith("/{prefix}/".format(prefix=self.PREFIX)):
+                    key = key.split("/{prefix}/".format(prefix=self.PREFIX))[1].replace("/", ".")
 
                 if row['status'] != "OK":
                     log.warning("Error while obtaining %s from toucan", key)
@@ -236,4 +243,4 @@ class Toucan(object):
             None
 
         """
-        return key.endswith(".*")
+        return key.endswith("*")
