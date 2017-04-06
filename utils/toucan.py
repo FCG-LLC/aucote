@@ -73,19 +73,18 @@ class Toucan(object):
         Get config from toucan
 
         Args:
-            key (str):
+            key (str): Key in dot separated format
 
         Returns:
             mixed
 
         """
-        toucan_key = "/".join(key.split("."))
-        request_key = toucan_key
+        toucan_key = self._get_slash_separated_key(key, strip_slashes=True)
 
         try:
-            response = requests.get(url="{prot}://{host}:{port}/config/{prefix}/{key}"
+            response = requests.get(url="{prot}://{host}:{port}/config/{key}"
                                     .format(prot=self.protocol, host=self.host, port=self.port,
-                                            key=request_key, prefix=self.PREFIX))
+                                            key=toucan_key, prefix=self.PREFIX))
 
             result = self.proceed_response(key, response)
 
@@ -99,14 +98,14 @@ class Toucan(object):
         Put config into toucan
 
         Args:
-            key (str):
+            key (str): Key in dot separated format
             values (object):
 
         Returns:
             mixed - inserted value if success
 
         """
-        toucan_key = "/".join(key.split("."))
+        toucan_key = self._get_slash_separated_key(key, strip_slashes=True)
 
         if not self.is_special(key):
             data = {
@@ -116,16 +115,16 @@ class Toucan(object):
             data = []
             for multikey, multivalue in values.items():
                 data.append({
-                    'key': "/{prefix}/{key}".format(prefix=self.PREFIX, key="/".join(multikey.split("."))),
+                    'key': self._get_slash_separated_key(multikey),
                     'value': multivalue
                 })
         else:
             raise ToucanException("Wrong value for special endpoint ({0})".format(key))
 
         try:
-            response = requests.put(url="{prot}://{host}:{port}/config/{prefix}/{key}"
+            response = requests.put(url="{prot}://{host}:{port}/config/{key}"
                                     .format(prot=self.protocol, host=self.host, port=self.port,
-                                            key=toucan_key, prefix=self.PREFIX), json=data)
+                                            key=toucan_key), json=data)
 
             return self.proceed_response(key, response)
         except requests.exceptions.ConnectionError:
@@ -136,7 +135,7 @@ class Toucan(object):
         Proceed toucan response
 
         Args:
-            key:
+            key: Key in dot separated format
             response:
 
         Returns:
@@ -164,9 +163,7 @@ class Toucan(object):
         elif isinstance(data, list):
             return_value = {}
             for row in data:
-                key = row['key']
-                if key.startswith("/{prefix}/".format(prefix=self.PREFIX)):
-                    key = key.split("/{prefix}/".format(prefix=self.PREFIX))[1].replace("/", ".")
+                key = self._get_dot_separated_key(row['key'])
 
                 if row['status'] != "OK":
                     log.warning("Error while obtaining %s from toucan", key)
@@ -192,14 +189,13 @@ class Toucan(object):
 
         """
         parsed_config = self.prepare_config(config, prefix)
+        if overwrite:
+            self.put("*", parsed_config)
+            return
 
         for key, value in parsed_config.items():
-            if overwrite:
-                self.put(key, value)
-                continue
-
             try:
-                self.get(key, strict=True)
+                self.get(key)
                 continue
             except ToucanUnsetException:
                 self.put(key, value)
@@ -244,3 +240,37 @@ class Toucan(object):
 
         """
         return key.endswith("*")
+
+    def _get_dot_separated_key(self, key, strip_prefix=True):
+        """
+        Convert Toucan key to Aucote key and strip prefix if required
+
+        Args:
+            key (str): Key in dot separated format
+            strip_prefix (bool):
+
+        Returns:
+            str
+
+        """
+        return_value = key
+        if strip_prefix and return_value.startswith("/{prefix}/".format(prefix=self.PREFIX)):
+            return_value = return_value[len(self.PREFIX)+2:]
+
+        return return_value.replace("/", ".")
+
+    def _get_slash_separated_key(self, key, add_prefix=True, strip_slashes=False):
+        """
+        Convert Aucote key to Toucan key and add prefix if required
+
+        Args:
+            key (str): Key in slash separated format
+            add_prefix (bool):
+            strip_first_slash (bool): Should be first slash stripped
+
+        Returns:
+
+        """
+        return_value = "/{prefix}/".format(prefix=self.PREFIX) if add_prefix and not self.is_special(key) else ""
+        return_value = "{prefix}{key}".format(prefix=return_value, key=key.replace(".", "/"))
+        return return_value.strip("/") if strip_slashes else return_value
