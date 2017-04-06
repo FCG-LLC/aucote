@@ -127,7 +127,8 @@ class TestToucan(TestCase):
         result = self.toucan.put("test.key", "test_value")
 
         self.assertEqual(result, expected)
-        mock_put.assert_called_once_with(url='test_prot://test_host:3000/config/aucote/test/key', json={'value': 'test_value'})
+        mock_put.assert_called_once_with(url='test_prot://test_host:3000/config/aucote/test/key',
+                                         json={'value': 'test_value'})
 
     @patch('utils.toucan.requests.put')
     @patch('utils.toucan.Toucan.MIN_RETRY_TIME', 0)
@@ -173,10 +174,14 @@ class TestToucan(TestCase):
                 }
             }
         }
+
+        put_json = {
+            'test.key.test_key': 'test_value'
+        }
         self.toucan.put = MagicMock()
 
         self.toucan.push_config(config, overwrite=True)
-        self.toucan.put.assert_called_once_with('test.key.test_key', 'test_value')
+        self.toucan.put.assert_called_once_with("*", put_json)
 
     def test_prepare_config(self):
         config = {
@@ -198,7 +203,6 @@ class TestToucan(TestCase):
 
     @patch('utils.toucan.requests.put')
     def test_put_special_key_data(self, mock_put):
-        self.toucan.is_special = MagicMock(return_value=True)
         expected = {'test.key': 'test_value'}
         put_data = {
             'test.key': 'test_value'
@@ -219,10 +223,10 @@ class TestToucan(TestCase):
         mock_put.return_value.status_code = 200
         mock_put.return_value.json = MagicMock(return_value=json_data)
 
-        result = self.toucan.put("test.keys", put_data)
+        result = self.toucan.put("*", put_data)
 
         self.assertEqual(result, expected)
-        mock_put.assert_called_once_with(url='test_prot://test_host:3000/config/aucote/test/keys',
+        mock_put.assert_called_once_with(url='test_prot://test_host:3000/config/*',
                                          json=expected_put_data)
 
     def test_put_special_keys_with_exception(self):
