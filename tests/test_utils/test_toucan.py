@@ -199,10 +199,19 @@ class TestToucan(TestCase):
     @patch('utils.toucan.requests.put')
     def test_put_special_key_data(self, mock_put):
         self.toucan.is_special = MagicMock(return_value=True)
-        expected = {'/test/key': 'test_value'}
+        expected = {'test.key': 'test_value'}
+        put_data = {
+            'test.key': 'test_value'
+        }
+
         json_data = [{
             'status': 'OK',
-            'key': '/test/key',
+            'key': '/aucote/test/key',
+            'value': 'test_value'
+        }]
+
+        expected_put_data = [{
+            'key': '/aucote/test/key',
             'value': 'test_value'
         }]
 
@@ -210,11 +219,15 @@ class TestToucan(TestCase):
         mock_put.return_value.status_code = 200
         mock_put.return_value.json = MagicMock(return_value=json_data)
 
-        result = self.toucan.put("test.keys", json_data)
+        result = self.toucan.put("test.keys", put_data)
 
         self.assertEqual(result, expected)
         mock_put.assert_called_once_with(url='test_prot://test_host:3000/config/aucote/test/keys',
-                                         json=json_data)
+                                         json=expected_put_data)
+
+    def test_put_special_keys_with_exception(self):
+        self.toucan.is_special = MagicMock(return_value=True)
+        self.assertRaises(ToucanException, self.toucan.put, "*", 'data')
 
     def test_special_asterisk(self):
         self.assertTrue(self.toucan.is_special('test.endpoint.*'))
