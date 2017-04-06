@@ -5,6 +5,7 @@ Provides class for scanning ports
 from tools.common.scan_task import ScanTask
 from tools.masscan.base import MasscanBase
 from aucote_cfg import cfg
+from utils.config import Config
 
 
 class MasscanPorts(ScanTask):
@@ -28,10 +29,24 @@ class MasscanPorts(ScanTask):
             list
 
         """
-        args = ['--rate', str(cfg.get('service.scans.network_scan_rate')),
-                '--ports', str(cfg.get('service.scans.ports')),
+        args = ['--rate', str(cfg['portdetection.network_scan_rate']),
                 '--exclude-ports', 'U:0-65535']
-        args.extend(cfg.get('tools.masscan.args').cfg)
+
+        include_ports = cfg['portdetection.ports.include']
+
+        if isinstance(include_ports, (Config, list)):
+            include_ports = ",".join(include_ports)
+
+        if include_ports:
+            args.extend(['--ports', include_ports])
+
+        exclude_ports = cfg['portdetection.ports.exclude']
+
+        if isinstance(exclude_ports, (Config, list)):
+            exclude_ports = ",".join(exclude_ports)
+
+        if exclude_ports:
+            args.extend(['--exclude-ports', exclude_ports])
 
         args.extend([str(node.ip) for node in nodes])
 

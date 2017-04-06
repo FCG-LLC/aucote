@@ -28,6 +28,13 @@ class AsyncTaskManager(object):
 
     @classmethod
     def instance(cls):
+        """
+        Return instance of AsyncTaskManager
+
+        Returns:
+            AsyncTaskManager
+
+        """
         if cls._instance is None:
             cls._instance = AsyncTaskManager()
         return cls._instance
@@ -125,7 +132,7 @@ class AsyncTaskManager(object):
             return
 
         self._shutdown_condition.set()
-    
+
     def clear(self):
         """
         Clear list of tasks

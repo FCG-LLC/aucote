@@ -30,7 +30,7 @@ class Executor(Task):
         if cfg.get('service.scans.broadcast'):
             broadcast_port = BroadcastPort()
             broadcast_port.scan = Scan(start=time.time())
-            self.ports.append(broadcast_port)
+            self._ports.append(broadcast_port)
 
     @property
     def storage(self):

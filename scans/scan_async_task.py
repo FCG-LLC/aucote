@@ -9,19 +9,20 @@ from urllib.error import URLError
 import urllib.request as http
 import logging as log
 import time
+from threading import Lock
 import netifaces
 
 from croniter import croniter
 from netaddr import IPSet
 from tornado import gen
 from tornado.ioloop import IOLoop
-from threading import Lock
 
 from aucote_cfg import cfg
 from scans.executor import Executor
 from structs import Node, Scan, PhysicalPort
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
+from tools.nmap.tool import NmapTool
 from utils.async_task_manager import AsyncTaskManager
 from utils.time import parse_period, parse_time_to_timestamp
 
@@ -38,10 +39,10 @@ class ScanAsyncTask(object):
         self._lock = Lock()
 
         try:
-            self.aucote.async_task_manager.add_crontab_task(self._scan, cfg.get('service.scans.scan_cron'))
-            self.aucote.async_task_manager.add_crontab_task(self._run_tools, cfg.get('service.scans.tools_cron'))
+            self.aucote.async_task_manager.add_crontab_task(self._scan, cfg.get('portdetection.scan_cron'))
+            self.aucote.async_task_manager.add_crontab_task(self._run_tools, cfg.get('portdetection.tools_cron'))
         except KeyError:
-            log.error("Please configure service.scans.scan_cron and service.scans.tools_cron")
+            log.error("Please configure portdetection.scan_cron and portdetection.tools_cron")
             exit(1)
 
     def run(self):
@@ -101,11 +102,18 @@ class ScanAsyncTask(object):
         scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
         scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
 
-        nodes = [node for node in nodes if node.ip.exploded in self._get_networks_list()]
+        include_networks = self._get_networks_list()
+        exclude_networks = self._get_excluded_networks_list()
+
+        nodes = [node for node in nodes if node.ip.exploded in include_networks
+                 and node.ip.exploded not in exclude_networks]
+
         self.current_scan = nodes
 
         if not nodes:
             log.warning("List of nodes is empty")
+            if not self.as_service:
+                IOLoop.current().stop()
             return
 
         self.storage.save_nodes(nodes)
@@ -122,8 +130,14 @@ class ScanAsyncTask(object):
         ports.extend(ports_udp)
 
         log.info("Scanning %i IPv6 nodes for open ports.", len(nodes_ipv6))
+
         ports_ipv6 = yield scanner_ipv6.scan_ports(nodes_ipv6)
         ports.extend(ports_ipv6)
+
+        port_range_allow = NmapTool.parse_nmap_ports(cfg.get('portdetection.ports.include'))
+        port_range_deny = NmapTool.parse_nmap_ports(cfg.get('portdetection.ports.exclude'))
+
+        ports = [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
 
         if cfg.get('service.scans.physical'):
             interfaces = netifaces.interfaces()
@@ -186,7 +200,7 @@ class ScanAsyncTask(object):
         """
         topdis_nodes = self._get_topdis_nodes()
 
-        storage_nodes = self.storage.get_nodes(parse_period(cfg.get('service.scans.node_period')), timestamp=timestamp)
+        storage_nodes = self.storage.get_nodes(parse_period(cfg.get('portdetection.scan_interval')), timestamp=timestamp)
 
         return list(set(topdis_nodes) - set(storage_nodes))
 
@@ -200,10 +214,24 @@ class ScanAsyncTask(object):
 
         """
         try:
-            return IPSet(cfg.get('service.scans.networks').cfg)
+            return IPSet(cfg.get('portdetection.networks.include').cfg)
         except KeyError:
-            log.error("Please set service.scans.networks in configuration file!")
+            log.error("Please set portdetection.networks.include in configuration file!")
             exit()
+
+
+    def _get_excluded_networks_list(self):
+        """
+        List of excluded networks from configuration file
+
+        Returns:
+            IPSet: set of networks
+
+        """
+        try:
+            return IPSet(cfg.get('portdetection.networks.exclude').cfg)
+        except KeyError:
+            return []
 
     @property
     def storage(self):
@@ -243,11 +271,18 @@ class ScanAsyncTask(object):
 
         """
 
-        return croniter(cfg.get('service.scans.scan_cron'), time.time()).get_prev()
+        return croniter(cfg.get('portdetection.scan_cron'), time.time()).get_prev()
 
     @property
     def previous_tool_scan(self):
-        return croniter(cfg.get('service.scans.tools_cron'), time.time()).get_prev()
+        """
+        Previous tool scan timestamp
+
+        Returns:
+            float
+
+        """
+        return croniter(cfg.get('portdetection.tools_cron'), time.time()).get_prev()
 
     def get_ports_for_script_scan(self):
         """
@@ -268,7 +303,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg.get('service.scans.scan_cron'), time.time()).get_next()
+        return croniter(cfg.get('portdetection.scan_cron'), time.time()).get_next()
 
     @property
     def next_tool_scan(self):
@@ -279,4 +314,4 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg.get('service.scans.tools_cron'), time.time()).get_next()
+        return croniter(cfg.get('portdetection.tools_cron'), time.time()).get_next()

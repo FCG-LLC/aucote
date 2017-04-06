@@ -2,10 +2,13 @@
 Configuration related module
 
 """
+import time
+from threading import Lock
 import logging as log
 
 import yaml
-
+from utils.exceptions import ToucanException
+from utils.toucan import Toucan
 
 
 class Config:
@@ -14,17 +17,24 @@ class Config:
     Has ability to provide default values (including dynamic ones)
     Except for loading data, this class is read-only and therefore may be used from multiple threads.
     '''
+
     def __init__(self, cfg=None):
-        if not cfg:
-            cfg = {}
-        self._cfg = cfg
+        self._lock = Lock()
+        self.timestamps = {}
+        self._cfg = {}
+        self._immutable = set()
+        self.push_config(cfg, immutable=True)
         self.default = self._cfg.copy()
+        self.toucan = None
+        self.cache_time = 60*5
 
     def __len__(self):
         return len(self._cfg)
 
     def __getitem__(self, key):
         ''' Works like "get()" '''
+        if isinstance(self._cfg, list):
+            return self._cfg[key]
         return self.get(key)
 
     def __contains__(self, item):
@@ -34,16 +44,74 @@ class Config:
 
     def get(self, key):
         """
-        Gets data from multilevel dictionary using keys with dots.
-        i.e. key="logging.file"
-        Raises KeyError if there is no configured value and no default value for the given key.
+        Get configuration value basing on key.
+
+        First, try to return immutable config (e.g. pid or logging).
+        Later returns cached config and if non-exists or config is too old update it from Toucan if enable.
+
+        Args:
+            key (str):
+
+        Returns:
+            mixed
 
         """
         try:
-            return self._get(key)
+            if key in self._immutable:
+                return_value = self._get(key)
+
+            elif self.toucan:
+                if key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
+                    return_value = self._get(key)
+
+                elif self.toucan.is_special(key):
+                    result = self.toucan.get(key)
+
+                    for subkey, value in result.items():
+                        self[subkey] = value
+                    return_value = self._get(key)
+
+                else:
+                    return_value = self.toucan.get(key)
+                    self[key] = return_value
+            else:
+                return_value = self._get(key)
+
+            if isinstance(return_value, dict) or isinstance(return_value, list):
+                return Config(return_value)
+            else:
+                return return_value
         except KeyError:
-            log.warning("%s not found in configuration file", key)
             raise KeyError(key)
+        except ToucanException:
+            log.exception("Error while obtaining configuration: %s", key)
+            raise KeyError(key)
+
+    def set(self, key, value):
+        """
+        Set config
+
+        Args:
+            key(str):
+            value(mixed):
+
+        Returns:
+            None
+
+        """
+        with self._lock:
+            self.timestamps[key] = time.time()
+            keys = key.split('.')
+            current = self._cfg
+
+            for subkey in keys[:-1]:
+                current.setdefault(subkey, {})
+                current = current.get(subkey)
+
+            current[keys[-1]] = value
+
+    def __setitem__(self, key, value):
+        self.set(key, value)
 
     def _get(self, key):
         '''
@@ -53,19 +121,19 @@ class Config:
 
         '''
         keys = key.split('.')
+        if keys[-1] == "*":
+            del keys[-1]
 
-        curr = self._cfg
-        for k in keys:
-            if isinstance(curr, dict):
-                curr = curr[k]
-            elif isinstance(curr, list):
-                curr = curr[int(k)]
-            else:
-                raise KeyError(k)
+        with self._lock:
+            curr = self._cfg
+            for subkey in keys:
+                if isinstance(curr, dict):
+                    curr = curr[subkey]
+                elif isinstance(curr, list):
+                    curr = curr[int(subkey)]
+                else:
+                    raise KeyError(subkey)
 
-        if isinstance(curr, dict) or isinstance(curr, list):
-            return Config(curr)
-        else:
             return curr
 
     @property
@@ -75,7 +143,7 @@ class Config:
         '''
         return self._cfg
 
-    def load(self, file_name, defaults=None):
+    def load(self, file_name, defaults=None, immutable=True):
         """
         Loads configuration from provided file name.
 
@@ -89,8 +157,8 @@ class Config:
 
         defaults = self._simplify_defaults(defaults)
         cfg = yaml.load(open(file_name, 'r'))
-        self._cfg = self._recursive_merge(cfg, defaults)
-        self._cfg['config_filename'] = file_name
+        self.push_config(self._recursive_merge(cfg, defaults), immutable=immutable)
+        self['config_filename'] = file_name
 
     def _recursive_merge(self, data, defaults):
         """
@@ -142,3 +210,62 @@ class Config:
 
         """
         self.load(file_name, self.default)
+
+    def start_toucan(self, default_config):
+        """
+        Initialize Toucan
+
+        Args:
+            default_config:
+
+        Returns:
+            None
+
+        """
+        Toucan.MIN_RETRY_TIME = self['toucan.min_retry_time']
+        Toucan.MAX_RETRY_TIME = self['toucan.max_retry_time']
+        Toucan.MAX_RETRY_COUNT = self['toucan.max_retry_count']
+
+        self.toucan = Toucan(host=self['toucan.api.host'],
+                             port=self['toucan.api.port'],
+                             protocol=self['toucan.api.protocol'])
+
+        with open(default_config, "r") as file:
+            config = yaml.load(file)
+
+        self.toucan.push_config(config, overwrite=False)
+
+    def push_config(self, config=None, key='', immutable=True):
+        """
+        Merge config(dict) with current config. Refresh timestamps and set immutable if needed
+
+        Args:
+            config(dict):
+            key(str): base key
+            immutable(bool): determine if config should be immutable for Toucan
+
+        Returns:
+            None
+
+        """
+        if config is None:
+            config = {}
+
+        if not isinstance(config, dict):
+            self._cfg = config
+            return
+
+        for subkey, value in config.items():
+            if key:
+                new_key = '.'.join([key, subkey])
+            else:
+                new_key = subkey
+
+            if isinstance(value, dict):
+                self.push_config(value, new_key, immutable)
+                continue
+
+            self[new_key] = value
+
+            if immutable:
+                self._immutable.update({new_key})
