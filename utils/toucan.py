@@ -193,12 +193,17 @@ class Toucan(object):
             self.put("*", parsed_config)
             return
 
-        for key, value in parsed_config.items():
-            try:
-                self.get(key)
-                continue
-            except ToucanUnsetException:
-                self.put(key, value)
+        try:
+            all_keys = self.get("{prefix}.*".format(prefix=self.PREFIX))
+        except ToucanUnsetException:
+            all_keys = {}
+
+        for key in all_keys:
+            if key in parsed_config.keys():
+                del parsed_config[key]
+
+        if parsed_config:
+            self.put("*", parsed_config)
 
     def prepare_config(self, config, prefix=''):
         """

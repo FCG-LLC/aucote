@@ -147,7 +147,7 @@ class TestToucan(TestCase):
             }
         }
         self.toucan.put = MagicMock()
-        self.toucan.get = MagicMock(side_effect=('exists', ToucanUnsetException))
+        self.toucan.get = MagicMock(return_value={'test.key.test_key': 'test_value'})
 
         self.toucan.push_config(config, overwrite=False)
         self.assertFalse(self.toucan.put.called)
@@ -161,10 +161,10 @@ class TestToucan(TestCase):
             }
         }
         self.toucan.put = MagicMock()
-        self.toucan.get = MagicMock(side_effect=(ToucanUnsetException,))
+        self.toucan.get = MagicMock(return_value={})
 
         self.toucan.push_config(config, overwrite=False)
-        self.toucan.put.assert_called_once_with('test.key.test_key', 'test_value')
+        self.toucan.put.assert_called_once_with("*", {'test.key.test_key': 'test_value'})
 
     def test_push_config_with_overwrite(self):
         config = {
