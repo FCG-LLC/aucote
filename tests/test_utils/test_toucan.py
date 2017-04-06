@@ -84,11 +84,17 @@ class TestToucan(TestCase):
     @patch('utils.toucan.requests.get')
     def test_get_multiple_data(self, mock_get):
         expected = {'test.key': 'test_value'}
-        json_data = [{
-            'status': 'OK',
-            'key': '/aucote/test/key',
-            'value': 'test_value'
-        }]
+        json_data = [
+            {
+                'status': 'ERROR',
+                'key': '/aucote/test/key_invalid'
+            },
+            {
+                'status': 'OK',
+                'key': '/aucote/test/key',
+                'value': 'test_value'
+            }
+        ]
         mock_get.return_value = Response()
         mock_get.return_value.status_code = 200
         mock_get.return_value.json = MagicMock(return_value=json_data)
@@ -209,28 +215,6 @@ class TestToucan(TestCase):
         self.assertEqual(result, expected)
         mock_put.assert_called_once_with(url='test_prot://test_host:3000/config/aucote/test/keys',
                                          json=json_data)
-
-    @patch('utils.toucan.requests.get')
-    def test_get_special_key_data_non_strict(self, mock_get):
-        self.toucan.is_special = MagicMock(return_value=True)
-        expected = {'test.key': 'some_value', 'other.key': 'other_value'}
-        json_data = {
-            'status': 'OK',
-            'key': '/test/key',
-            'value': {
-                '/aucote/test/key': 'some_value',
-                '/aucote/other/key': 'other_value'
-            }
-        }
-
-        mock_get.return_value = Response()
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json = MagicMock(return_value=json_data)
-
-        result = self.toucan.get("test.key", strict=False)
-
-        self.assertCountEqual(result, expected)
-        mock_get.assert_called_once_with(url='test_prot://test_host:3000/config/aucote/test/key')
 
     def test_special_asterisk(self):
         self.assertTrue(self.toucan.is_special('test.endpoint.*'))

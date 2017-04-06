@@ -68,7 +68,7 @@ class Toucan(object):
         self.protocol = protocol
 
     @retry_if_fail
-    def get(self, key, strict=True):
+    def get(self, key):
         """
         Get config from toucan
 
@@ -88,14 +88,6 @@ class Toucan(object):
                                             key=request_key))
 
             result = self.proceed_response(key, response)
-            if self.is_special(key):
-                return_value = {}
-                for subkey, value in result.items():
-                    if subkey.startswith("/aucote/"):
-                        subkey = subkey.split("/aucote/")[1].replace("/", ".")
-
-                    return_value[subkey] = value
-                return return_value
 
             return result
         except requests.exceptions.ConnectionError:
@@ -161,14 +153,19 @@ class Toucan(object):
                 raise ToucanException(data['message'])
 
             return data['value']
+
         elif isinstance(data, list):
             return_value = {}
             for row in data:
                 key = row['key']
-                value = row['value']
                 if key.startswith("/aucote/"):
                     key = key.split("/aucote/")[1].replace("/", ".")
 
+                if row['status'] != "OK":
+                    log.warning("Error while obtaining %s from toucan", key)
+                    continue
+
+                value = row['value']
                 return_value[key] = value
             return return_value
         else:
