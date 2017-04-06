@@ -59,14 +59,18 @@ class Config:
         try:
             if key in self._immutable:
                 return_value = self._get(key)
+
             elif self.toucan:
                 if key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
                     return_value = self._get(key)
+
                 elif self.toucan.is_special(key):
-                    result = self.toucan.get(key, False)
+                    result = self.toucan.get(key)
+
                     for subkey, value in result.items():
                         self[subkey] = value
                     return_value = self._get(key)
+
                 else:
                     return_value = self.toucan.get(key)
                     self[key] = return_value
