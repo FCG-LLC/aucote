@@ -309,9 +309,11 @@ class ScanAsyncTaskTest(AsyncTestCase):
                 'networks': {
                     'exclude': [],
                     'include': '0.0.0.0/0'
-                }
+                },
+                'scan_disable': False
             }
         }
+        self.cfg = cfg
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
 
         self.thread._get_nodes_for_scanning = MagicMock(return_value=[node_1])
@@ -386,8 +388,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         self.assertEqual(result[0].scan.start, expected)
 
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    def test_periodical_scan(self):
+    def test_periodical_scan(self, cfg):
+        cfg._cfg = {'portdetection': {'scan_disable': False}}
         nodes = MagicMock()
         self.thread._get_nodes_for_scanning = MagicMock(return_value=nodes)
         self.thread.run_scan = MagicMock()
@@ -399,6 +403,15 @@ class ScanAsyncTaskTest(AsyncTestCase):
         yield self.thread._scan()
         self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None)
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    def test_disable_periodical_scan(self, cfg):
+        cfg._cfg = {'portdetection': {'scan_disable': True}}
+        self.thread._get_nodes_for_scanning = MagicMock()
+
+        yield self.thread._scan()
+        self.assertFalse(self.thread._get_nodes_for_scanning.called)
 
     def test_current_scan_getter(self):
         expected = [MagicMock(), MagicMock()]

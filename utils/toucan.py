@@ -105,7 +105,7 @@ class Toucan(object):
             mixed - inserted value if success
 
         """
-        toucan_key = self._get_slash_separated_key(key, strip_slashes=True)
+        toucan_key = self._get_slash_separated_key(key, strip_slashes=True) if key is not "*" else key
 
         if key is not "*":
             data = {
@@ -175,7 +175,7 @@ class Toucan(object):
         else:
             raise ToucanException(key)
 
-    def push_config(self, config, prefix='', overwrite=True):
+    def push_config(self, config, prefix='', overwrite=False):
         """
         Push dict config to the toucan
 
@@ -194,7 +194,7 @@ class Toucan(object):
             return
 
         try:
-            all_keys = self.get("{prefix}.*".format(prefix=self.PREFIX))
+            all_keys = self.get("*".format(prefix=self.PREFIX))
         except ToucanUnsetException:
             all_keys = {}
 
@@ -276,6 +276,6 @@ class Toucan(object):
         Returns:
 
         """
-        return_value = "/{prefix}/".format(prefix=self.PREFIX) if add_prefix and key is not "*" else ""
+        return_value = "/{prefix}/".format(prefix=self.PREFIX) if add_prefix else ""
         return_value = "{prefix}{key}".format(prefix=return_value, key=key.replace(".", "/"))
         return return_value.strip("/") if strip_slashes else return_value

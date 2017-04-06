@@ -166,6 +166,20 @@ class TestToucan(TestCase):
         self.toucan.push_config(config, overwrite=False)
         self.toucan.put.assert_called_once_with("*", {'test.key.test_key': 'test_value'})
 
+    def test_push_config_non_exists_exception_without_overwrite(self):
+        config = {
+            'test': {
+                'key': {
+                    'test_key': 'test_value'
+                }
+            }
+        }
+        self.toucan.put = MagicMock()
+        self.toucan.get = MagicMock(side_effect=ToucanUnsetException)
+
+        self.toucan.push_config(config, overwrite=False)
+        self.toucan.put.assert_called_once_with("*", {'test.key.test_key': 'test_value'})
+
     def test_push_config_with_overwrite(self):
         config = {
             'test': {
