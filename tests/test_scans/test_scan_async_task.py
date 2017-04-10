@@ -523,3 +523,40 @@ class ScanAsyncTaskTest(AsyncTestCase):
         result = self.thread.next_tool_scan
 
         self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
+    @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_update_scan_status_to_in_progress(self, cfg):
+        cfg.toucan = MagicMock()
+        self.thread.scan_start = 17
+        self.thread.update_scan_status(self.thread.STATUS_IN_PROGRESS)
+
+        expected = {
+            'previous_scan': 57,
+            'next_scan': 75,
+            'scan_start': 17,
+            'scan_duration': None,
+            'status': "IN PROGRESS"
+        }
+
+        cfg.toucan.put.assert_called_once_with('portdetection.status', expected)
+
+    @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
+    @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
+    @patch('scans.scan_async_task.time.time', MagicMock(return_value=300))
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_update_scan_status_to_idle(self, cfg):
+        cfg.toucan = MagicMock()
+        self.thread.scan_start = 17
+        self.thread.update_scan_status(self.thread.STATUS_IDLE)
+
+        expected = {
+            'previous_scan': 57,
+            'next_scan': 75,
+            'scan_start': 17,
+            'scan_duration': 283,
+            'status': "IDLE"
+        }
+
+        cfg.toucan.put.assert_called_once_with('portdetection.status', expected)

@@ -32,11 +32,15 @@ class ScanAsyncTask(object):
     Class responsible for scanning
 
     """
+    STATUS_IDLE = "IDLE"
+    STATUS_IN_PROGRESS = "IN PROGRESS"
+
     def __init__(self, aucote, as_service=True):
         self.as_service = as_service
         self._current_scan = []
         self.aucote = aucote
         self._lock = Lock()
+        self.scan_start = None
 
         try:
             self.aucote.async_task_manager.add_crontab_task(self._scan, cfg.get('portdetection.scan_cron'))
@@ -100,6 +104,9 @@ class ScanAsyncTask(object):
             None
 
         """
+        self.scan_start = time.time()
+        self.update_scan_status(self.STATUS_IN_PROGRESS)
+
         scanner_ipv4 = MasscanPorts()
         # scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
         scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
@@ -122,6 +129,7 @@ class ScanAsyncTask(object):
 
         nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
         nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
+
 
         log.info('Scanning %i nodes (IPv4: %s, IPv6: %s)', len(nodes), len(nodes_ipv4), len(nodes_ipv6))
 
@@ -156,6 +164,8 @@ class ScanAsyncTask(object):
 
         self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports, scan_only=scan_only))
         self.current_scan = []
+
+        self.update_scan_status(self.STATUS_IDLE)
 
         if not self.as_service:
             IOLoop.current().stop()
@@ -317,3 +327,30 @@ class ScanAsyncTask(object):
 
         """
         return croniter(cfg.get('portdetection.tools_cron'), time.time()).get_next()
+
+    def update_scan_status(self, status):
+        """
+        Update scan status base on status value
+
+        Args:
+            status (str):
+
+        Returns:
+            None
+
+        """
+        if not cfg.toucan:
+            return
+
+        data = {
+            'previous_scan': self.previous_scan,
+            'next_scan': self.next_scan,
+            'scan_start': self.scan_start,
+            'scan_duration': None,
+            'status': status
+        }
+
+        if status is self.STATUS_IDLE:
+            data['scan_duration'] = time.time() - self.scan_start
+
+        cfg.toucan.put('portdetection.status', data)
