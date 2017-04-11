@@ -213,6 +213,8 @@ class Port(object):
         self.number = number
         self.transport_protocol = transport_protocol
         self.service = Service()
+        self.os = Service()
+        self.app = Service()
         self.banner = None
         self.scan = None
         self.interface = None
