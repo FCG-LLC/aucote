@@ -29,7 +29,7 @@ class PortsScan(ScanTask):
             args.append('-sS')
 
         if self.udp:
-            args.extend(('-sU', '--max-retries', '2', '--min-parallelism', '100'))
+            args.extend(('-sU', '--max-retries', '2'))
 
         scripts_dir = cfg['tools.nmap.scripts_dir']
 

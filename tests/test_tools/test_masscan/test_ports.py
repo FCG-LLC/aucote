@@ -53,6 +53,7 @@ class MasscanPortsTest(TestCase):
                     '--ports', 'T:17-45', self.NODE_IP]
 
         self.assertEqual(result, expected)
+
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     def test_string_ports(self, mock_config):
         mock_config._cfg = {

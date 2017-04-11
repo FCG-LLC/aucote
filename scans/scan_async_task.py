@@ -121,15 +121,13 @@ class ScanAsyncTask(object):
 
         if not nodes:
             log.warning("List of nodes is empty")
-            if not self.as_service:
-                IOLoop.current().stop()
+            self._clean_scan()
             return
 
         self.storage.save_nodes(nodes)
 
         nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
         nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
-
 
         log.info('Scanning %i nodes (IPv4: %s, IPv6: %s)', len(nodes), len(nodes_ipv4), len(nodes_ipv6))
 
@@ -165,6 +163,16 @@ class ScanAsyncTask(object):
         self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports, scan_only=scan_only))
         self.current_scan = []
 
+        self._clean_scan()
+
+    def _clean_scan(self):
+        """
+        Clean scan and update scan status
+
+        Returns:
+            None
+
+        """
         self.update_scan_status(self.STATUS_IDLE)
 
         if not self.as_service:

@@ -149,8 +149,7 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '-sU', '--max-retries', '2', '--min-parallelism', '100', '--datadir', 'test', '-p',
-                    'T:17-45', '--max-rate', '1000',
+        expected = ['-Pn', '-sU', '--max-retries', '2', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
                     '192.168.1.5']
 
         self.assertEqual(result, expected)
