@@ -84,7 +84,7 @@ class Toucan(object):
         try:
             response = requests.get(url="{prot}://{host}:{port}/config/{key}"
                                     .format(prot=self.protocol, host=self.host, port=self.port,
-                                            key=toucan_key, prefix=self.PREFIX))
+                                            key=toucan_key))
 
             result = self.proceed_response(key, response)
 

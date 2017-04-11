@@ -135,7 +135,7 @@ class Storage(DbInterface):
 
         """
         return self.SAVE_PORT_QUERY, (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
-                                     time.time())
+                                      time.time())
 
     def save_ports(self, ports):
         """
@@ -149,7 +149,7 @@ class Storage(DbInterface):
 
         """
         queries = [(self.SAVE_PORT_QUERY, (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
-                                          time.time())) for port in ports]
+                                           time.time())) for port in ports]
 
         return queries
 
@@ -189,17 +189,17 @@ class Storage(DbInterface):
         queries = []
 
         queries.append((self.SAVE_SCAN_DETAIL, (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
-                                               port.transport_protocol.iana, port.number)))
+                                                port.transport_protocol.iana, port.number)))
 
         if port.scan.start:
             queries.append((self.SAVE_SCAN_DETAIL_START, (port.scan.start, exploit.id, exploit.app, exploit.name,
-                                                         port.node.id, str(port.node.ip), port.transport_protocol.iana,
-                                                         port.number)))
+                                                          port.node.id, str(port.node.ip), port.transport_protocol.iana,
+                                                          port.number)))
 
         if port.scan.end:
             queries.append((self.SAVE_SCAN_DETAIL_END, (port.scan.end, exploit.id, exploit.app, exploit.name,
-                                                       port.node.id, str(port.node.ip), port.transport_protocol.iana,
-                                                       port.number)))
+                                                        port.node.id, str(port.node.ip), port.transport_protocol.iana,
+                                                        port.number)))
         return queries
 
     def save_scans(self, exploits, port):
@@ -218,17 +218,17 @@ class Storage(DbInterface):
 
         for exploit in exploits:
             queries.append((self.SAVE_SCAN_DETAIL, (exploit.id, exploit.app, exploit.name, port.node.id,
-                                                   str(port.node.ip), port.transport_protocol.iana, port.number)))
+                                                    str(port.node.ip), port.transport_protocol.iana, port.number)))
 
             if port.scan.start:
                 queries.append((self.SAVE_SCAN_DETAIL_START, (port.scan.start, exploit.id, exploit.app, exploit.name,
-                                                             port.node.id, str(port.node.ip),
-                                                             port.transport_protocol.iana, port.number)))
+                                                              port.node.id, str(port.node.ip),
+                                                              port.transport_protocol.iana, port.number)))
 
             if port.scan.end:
                 queries.append((self.SAVE_SCAN_DETAIL_END, (port.scan.end, exploit.id, exploit.app, exploit.name,
-                                                           port.node.id, str(port.node.ip),
-                                                           port.transport_protocol.iana, port.number)))
+                                                            port.node.id, str(port.node.ip),
+                                                            port.transport_protocol.iana, port.number)))
 
         return queries
 

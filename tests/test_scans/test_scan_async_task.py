@@ -310,7 +310,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
                     'exclude': [],
                     'include': '0.0.0.0/0'
                 },
-                'scan_disable': False
+                'scan_enable': True
             }
         }
         self.cfg = cfg
@@ -391,7 +391,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
     def test_periodical_scan(self, cfg):
-        cfg._cfg = {'portdetection': {'scan_disable': False}}
+        cfg._cfg = {'portdetection': {'scan_enable': True}}
         nodes = MagicMock()
         self.thread._get_nodes_for_scanning = MagicMock(return_value=nodes)
         self.thread.run_scan = MagicMock()
@@ -407,7 +407,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
     def test_disable_periodical_scan(self, cfg):
-        cfg._cfg = {'portdetection': {'scan_disable': True}}
+        cfg._cfg = {'portdetection': {'scan_enable': False}}
         self.thread._get_nodes_for_scanning = MagicMock()
 
         yield self.thread._scan()

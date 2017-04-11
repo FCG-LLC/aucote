@@ -3,12 +3,12 @@ This module contains class for managing async tasks.
 
 """
 from functools import wraps
+import logging as log
 
 from tornado import gen
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
 from tornado_crontab import CronTabCallback
-import logging as log
 
 
 class AsyncTaskManager(object):

@@ -4,8 +4,8 @@ This module contains class responsible for scanning ports by using nmap
 """
 from tools.common.scan_task import ScanTask
 from aucote_cfg import cfg
-from .base import NmapBase
 from utils.config import Config
+from .base import NmapBase
 
 class PortsScan(ScanTask):
     """

@@ -73,7 +73,7 @@ class ScanAsyncTask(object):
             None
 
         """
-        if cfg['portdetection.scan_disable']:
+        if not cfg['portdetection.scan_enable']:
             return
         log.info("Starting port scan")
         nodes = self._get_nodes_for_scanning(timestamp=None)
