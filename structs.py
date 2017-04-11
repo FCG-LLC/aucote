@@ -184,6 +184,16 @@ class RiskLevel(Enum):
         raise ValueError('Unsupported risk level name: %s' % name)
 
 
+class Service(object):
+    """
+    Represents service/application/operating system. Contains basic information: name, version
+
+    """
+    def __init__(self):
+        self.name = None
+        self.version = None
+
+
 class Port(object):
     """
     Port object
@@ -202,11 +212,40 @@ class Port(object):
         self.node = node
         self.number = number
         self.transport_protocol = transport_protocol
-        self.service_name = None
-        self.service_version = None
+        self.service = Service()
         self.banner = None
         self.scan = None
         self.interface = None
+
+    @property
+    def service_name(self):
+        """
+        Name of service listening on port
+
+        Returns:
+            str
+
+        """
+        return self.service.name
+
+    @property
+    def service_version(self):
+        """
+        Version of service listening on port
+
+        Returns:
+            str
+
+        """
+        return self.service.version
+
+    @service_name.setter
+    def service_name(self, value):
+        self.service.name = value
+
+    @service_version.setter
+    def service_version(self, value):
+        self.service.version = value
 
     def __eq__(self, other):
         return isinstance(other, Port) and self.transport_protocol == other.transport_protocol \
