@@ -40,6 +40,8 @@ class MasscanPortsTest(TestCase):
         }
 
         result = self.masscanports.prepare_args(self.nodes)
-        expected = ['--rate', '1000', '--ports', 'T:17-45', '--exclude-ports', 'U:0-65535', 'arg1', 'arg2', 'test', self.NODE_IP]
+        expected = ['--rate', '1000', '--ports', 'T:17-45',
+                    # '--exclude-ports', 'U:0-65535',
+                    'arg1', 'arg2', 'test', self.NODE_IP]
 
         self.assertEqual(result, expected)
