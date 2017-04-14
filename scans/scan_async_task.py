@@ -98,7 +98,7 @@ class ScanAsyncTask(object):
 
         """
         scanner_ipv4 = MasscanPorts()
-        scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
+        # scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
         scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
 
         nodes = [node for node in nodes if node.ip.exploded in self._get_networks_list()]
@@ -118,8 +118,8 @@ class ScanAsyncTask(object):
         log.info("Scanning %i IPv4 nodes for open ports.", len(nodes_ipv4))
         ports = yield scanner_ipv4.scan_ports(nodes_ipv4)
 
-        ports_udp = yield scanner_ipv4_udp.scan_ports(nodes_ipv4)
-        ports.extend(ports_udp)
+        # ports_udp = yield scanner_ipv4_udp.scan_ports(nodes_ipv4)
+        # ports.extend(ports_udp)
 
         log.info("Scanning %i IPv6 nodes for open ports.", len(nodes_ipv6))
         ports_ipv6 = yield scanner_ipv6.scan_ports(nodes_ipv6)

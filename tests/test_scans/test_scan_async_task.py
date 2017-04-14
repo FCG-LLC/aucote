@@ -220,7 +220,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
         port = PhysicalPort()
         port.interface = 'test'
 
-        ports = [ports_masscan[0], ports_nmap[0], ports_nmap_udp[0], port]
+        ports = [ports_masscan[0], ports_nmap[0],
+                 # ports_nmap_udp[0],
+                 port]
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
 
@@ -294,7 +296,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
         port = PhysicalPort()
         port.interface = 'test'
 
-        ports = [ports_masscan[0], ports_nmap[0], ports_nmap[0], port]
+        ports = [ports_masscan[0], ports_nmap[0],
+                 # ports_nmap[0],
+                 port]
 
         scan_only = MagicMock()
 
