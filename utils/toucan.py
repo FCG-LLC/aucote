@@ -88,6 +88,12 @@ class Toucan(object):
 
             result = self.proceed_response(key, response)
 
+            if isinstance(result, dict) and key.rstrip(".*") in result.keys():
+                del result[key.rstrip(".*")]
+
+                if not len(result):
+                    result[key.rstrip(".*")] = {}
+
             return result
         except requests.exceptions.ConnectionError:
             raise ToucanConnectionException("Cannot connect to Toucan")
@@ -225,7 +231,7 @@ class Toucan(object):
             else:
                 new_key = subkey
 
-            if isinstance(value, dict):
+            if isinstance(value, dict) and value != {}:
                 return_value.update(self.prepare_config(value, new_key))
                 continue
 

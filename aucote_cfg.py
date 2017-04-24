@@ -20,14 +20,6 @@ _DEFAULT = {
             'filename': 'fixtures/exploits/exploits.csv'
         }
     },
-    'database': {
-        'migration':{
-            'path': lambda: path.join(path.dirname(__file__), 'migrations'),
-        },
-        'credentials':{
-            'port': 5432
-        }
-    },
     'topdis':{
         'api': {
             'host': 'localhost',

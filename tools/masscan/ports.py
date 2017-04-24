@@ -31,7 +31,7 @@ class MasscanPorts(ScanTask):
         """
         args = ['--rate', str(cfg['portdetection.network_scan_rate']),
                 # '--exclude-ports', 'U:0-65535'
-                ]
+               ]
 
         include_ports = cfg['portdetection.ports.include']
 

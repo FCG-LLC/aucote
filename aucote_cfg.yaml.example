@@ -1,8 +1,10 @@
 # This is an example configuration file, which provides information about configurable options of aucote.
 #
 # pid_file: <str> - defines pid file path
+# default_config: <str> - Path to the default configuration (default is aucote_cfg_default.yaml)
 
 pid_file: tmp/aucote.pid
+default_config: aucote_cfg_default.yaml
 
 # logging: Aucote logs a most of events in configuration files
 #   file: <str> - This is path to the aucote log file

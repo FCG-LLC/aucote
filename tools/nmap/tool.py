@@ -80,8 +80,7 @@ class NmapTool(Tool):
                 try:
                     args = args()
                 except ImproperConfigurationException as exception:
-                    log.warning("%s is not configured: Please configure %s in %s", name, exception,
-                                cfg.get('config_filename'))
+                    log.warning("Please set up %s in configuration", name)
                     continue
 
             if not isinstance(args, (list, set)):

@@ -60,9 +60,15 @@ class TaskMapperTest(unittest.TestCase):
             'tools': {
                 'test': {
                     'enable': True,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
                 },
                 'test2': {
                     'enable': True,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
                 }
             }
         }
@@ -87,10 +93,16 @@ class TaskMapperTest(unittest.TestCase):
             'tools': {
                 'test': {
                     'enable': False,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
                 },
                 'test2': {
                     'enable': True,
-                    'period': '0s'
+                    'period': '0s',
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
                 }
             }
         }
@@ -108,6 +120,8 @@ class TaskMapperTest(unittest.TestCase):
             'tools': {
                 'test': {
                     'enable': True,
+                    'script_networks': {},
+                    'networks': [],
                     'periods': {
                         'test_1': '1d',
                         'test_2': '2d'
@@ -115,6 +129,9 @@ class TaskMapperTest(unittest.TestCase):
                 },
                 'test2': {
                     'enable': False,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
                 }
             }
         }
@@ -151,6 +168,8 @@ class TaskMapperTest(unittest.TestCase):
             'tools': {
                 'test': {
                     'enable': True,
+                    'script_networks': {},
+                    'networks': [],
                     'periods': {
                         'test_1': '1d',
                         'test_2': '1s'
@@ -158,6 +177,9 @@ class TaskMapperTest(unittest.TestCase):
                 },
                 'test2': {
                     'enable': False,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
                 }
             }
         }
@@ -209,27 +231,6 @@ class TaskMapperTest(unittest.TestCase):
         self.assertDictEqual(result, expected)
         self.assertEqual(result['port'].scan.start, self.UDP.scan.start)
 
-    @patch('scans.task_mapper.cfg', new_callable=Config)
-    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    def test_assign_tasks_config_exception(self, cfg):
-        cfg._cfg = {
-            'tools': {
-                'test': {
-                    'enable': True,
-                },
-                'test2': {
-                    'enable': False,
-                }
-            }
-        }
-        self.executor.storage.get_scan_info = MagicMock(return_value=[])
-        self.task_mapper.assign_tasks(port=self.UDP, storage=self.executor.storage)
-
-        result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
-        expected = self.exploits['test']
-
-        self.assertEqual(result, expected)
-
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)
     def test_copying_port(self, cfg):
@@ -237,10 +238,16 @@ class TaskMapperTest(unittest.TestCase):
             'tools': {
                 'test': {
                     'enable': True,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
                     'period': '0s'
                 },
                 'test2': {
                     'enable': True,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
                     'period': '0s'
                 }
             }
@@ -281,6 +288,9 @@ class TaskMapperTest(unittest.TestCase):
                 },
                 'test2': {
                     'enable': False,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
                 }
             }
         }
@@ -330,6 +340,7 @@ class TaskMapperTest(unittest.TestCase):
             'tools': {
                 'test': {
                     'enable': True,
+                    'script_networks': {},
                     'periods': {
                         'test_1': '1s',
                         'test_2': '1s'
@@ -340,6 +351,9 @@ class TaskMapperTest(unittest.TestCase):
                 },
                 'test2': {
                     'enable': False,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
                 }
             }
         }
@@ -376,6 +390,8 @@ class TaskMapperTest(unittest.TestCase):
             'tools': {
                 'test': {
                     'enable': True,
+                    'periods': {},
+                    'script_networks': {},
                     'networks': [
                         '0.0.0.0/0'
                     ],
@@ -383,6 +399,9 @@ class TaskMapperTest(unittest.TestCase):
                 },
                 'test2': {
                     'enable': False,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
                 }
             }
         }

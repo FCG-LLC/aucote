@@ -82,6 +82,28 @@ class TestToucan(TestCase):
         self.assertEqual(result, expected)
 
     @patch('utils.toucan.requests.get')
+    def test_get_empty_multiple_data(self, mock_get):
+        expected = {'test': {}}
+        json_data = [
+            {
+                'status': 'ERROR',
+                'key': '/aucote/test/key_invalid'
+            },
+            {
+                'status': 'OK',
+                'key': '/aucote/test',
+                'value': 'test_value'
+            }
+        ]
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json = MagicMock(return_value=json_data)
+
+        result = self.toucan.get("test.*")
+
+        self.assertEqual(result, expected)
+
+    @patch('utils.toucan.requests.get')
     def test_get_multiple_data(self, mock_get):
         expected = {'test.key': 'test_value'}
         json_data = [
@@ -99,7 +121,39 @@ class TestToucan(TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json = MagicMock(return_value=json_data)
 
-        result = self.toucan.get("test.key")
+        result = self.toucan.get("test.*")
+
+        self.assertEqual(result, expected)
+
+    @patch('utils.toucan.requests.get')
+    def test_get_multiple_data_without_multivalue_key(self, mock_get):
+        expected = {'test.key': 'test_value', 'test.key2': 'test_value_2'}
+        json_data = [
+            {
+                'status': 'ERROR',
+                'key': '/aucote/test/key_invalid'
+            },
+            {
+                'status': 'OK',
+                'key': '/aucote/test/key',
+                'value': 'test_value'
+            },
+            {
+                'status': 'OK',
+                'key': '/aucote/test/key2',
+                'value': 'test_value_2'
+            },
+            {
+                'status': 'OK',
+                'key': '/aucote/test',
+                'value': 'test_value_asterisk'
+            }
+        ]
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json = MagicMock(return_value=json_data)
+
+        result = self.toucan.get("test.*")
 
         self.assertEqual(result, expected)
 
