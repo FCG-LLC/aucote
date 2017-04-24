@@ -180,7 +180,6 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertEqual(result.protocol, 'ntp')
         self.assertEqual(result.service.version, '1.2.3')
 
-
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     def test_parser_with_banner_and_without_service(self, cfg):
