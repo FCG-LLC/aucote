@@ -215,6 +215,7 @@ class Port(object):
         self.service = Service()
         self.os = Service()
         self.app = Service()
+        self.protocol = None
         self.banner = None
         self.scan = None
         self.interface = None

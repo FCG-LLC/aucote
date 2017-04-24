@@ -66,7 +66,7 @@ class NmapTool(Tool):
             if name in disabled_scripts:
                 continue
 
-            service_args = self.config.get('services', {}).get(self.port.service_name, {}).get('args', None)
+            service_args = self.config.get('services', {}).get(self.port.protocol, {}).get('args', None)
 
             if callable(service_args):
                 service_args = service_args()

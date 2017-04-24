@@ -88,10 +88,10 @@ class NmapPortInfoTask(PortTask):
         if service is None:
             log.warning('No service for %s:%i', self._port.node.ip, self._port.number)
         else:
-            self._port.service_name = service.get('name')
-            if self._port.service_name == 'http':
+            self._port.protocol = service.get('name')
+            if self._port.protocol == 'http':
                 if service.get('tunnel') == 'ssl':
-                    self._port.service_name = 'https'
+                    self._port.protocol = 'https'
 
             self._port.service_version = "{0} {1}".format(service.get('product') or "",
                                                           service.get('version') or "").strip()

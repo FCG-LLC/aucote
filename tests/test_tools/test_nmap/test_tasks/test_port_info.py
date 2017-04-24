@@ -152,7 +152,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 
         result = self.port_info._port
 
-        self.assertEqual(result.service_name, 'ntp')
+        self.assertEqual(result.protocol, 'ntp')
         self.assertEqual(result.service_version, '1.2.3')
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
@@ -164,7 +164,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 
         result = self.port_info._port
 
-        self.assertEqual(result.service_name, None)
+        self.assertEqual(result.protocol, None)
         self.assertEqual(result.service_version, None)
         self.assertEqual(result.banner, r"SSH-1.99-Cisco-1.25")
 
@@ -205,7 +205,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
         self.port_info()
 
-        result = mock_serializer.call_args[0][0].service_name
+        result = mock_serializer.call_args[0][0].protocol
         expected = 'https'
 
         self.assertEqual(result, expected)

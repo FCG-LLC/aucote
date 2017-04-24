@@ -28,11 +28,11 @@ class HydraToolTest(TestCase):
         self.node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
 
         self.port = Port(number=12, transport_protocol=TransportProtocol.TCP, node=self.node)
-        self.port.service_name = 'test'
+        self.port.protocol = 'test'
         self.port.scan = Scan(start=14)
 
         self.port_no_login = Port(number=12, transport_protocol=TransportProtocol.TCP, node=self.node)
-        self.port_no_login.service_name = 'vnc'
+        self.port_no_login.protocol = 'vnc'
         self.port_no_login.scan = Scan(start=14)
 
         self.aucote = MagicMock()
