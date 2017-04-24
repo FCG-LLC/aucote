@@ -193,6 +193,9 @@ class Service(object):
         self.name = None
         self.version = None
 
+    def __str__(self):
+        return "{name} {version}".format(name=self.name or '', version=self.version or '').strip()
+
 
 class Port(object):
     """
