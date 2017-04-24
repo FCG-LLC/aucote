@@ -153,7 +153,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         result = self.port_info._port
 
         self.assertEqual(result.protocol, 'ntp')
-        self.assertEqual(result.service_version, '1.2.3')
+        self.assertEqual(result.service.version, '1.2.3')
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
@@ -165,7 +165,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         result = self.port_info._port
 
         self.assertEqual(result.protocol, None)
-        self.assertEqual(result.service_version, None)
+        self.assertEqual(result.service.version, None)
         self.assertEqual(result.banner, r"SSH-1.99-Cisco-1.25")
 
     def test_call_broadcast(self):

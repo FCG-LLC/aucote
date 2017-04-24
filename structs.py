@@ -189,9 +189,9 @@ class Service(object):
     Represents service/application/operating system. Contains basic information: name, version
 
     """
-    def __init__(self):
-        self.name = None
-        self.version = None
+    def __init__(self, name=None, version=None):
+        self.name = name
+        self.version = version
 
     def __str__(self):
         return "{name} {version}".format(name=self.name or '', version=self.version or '').strip()
@@ -223,36 +223,6 @@ class Port(object):
         self.scan = None
         self.interface = None
 
-    @property
-    def service_name(self):
-        """
-        Name of service listening on port
-
-        Returns:
-            str
-
-        """
-        return self.service.name
-
-    @property
-    def service_version(self):
-        """
-        Version of service listening on port
-
-        Returns:
-            str
-
-        """
-        return self.service.version
-
-    @service_name.setter
-    def service_name(self, value):
-        self.service.name = value
-
-    @service_version.setter
-    def service_version(self, value):
-        self.service.version = value
-
     def __eq__(self, other):
         return isinstance(other, Port) and self.transport_protocol == other.transport_protocol \
                and self.number == other.number and self.node == other.node
@@ -278,8 +248,7 @@ class Port(object):
         return_value = type(self)(node=self.node, number=self.number, transport_protocol=self.transport_protocol)
         return_value.vulnerabilities = self.vulnerabilities
         return_value.when_discovered = self.when_discovered
-        return_value.service_name = self.service_name
-        return_value.service_version = self.service_version
+        return_value.service = Service(name=self.service.name, version=self.service.version)
         return_value.banner = self.banner
         return_value.scan = self.scan
         return_value.interface = self.interface
@@ -309,7 +278,7 @@ class Port(object):
             format_string = "{0}://[{1}]:{2}"
         else:
             format_string = "{0}://{1}:{2}"
-        return format_string.format(self.service_name, self.node.ip, self.number)
+        return format_string.format(self.protocol, self.node.ip, self.number)
 
     def in_range(self, parsed_ports):
         """
