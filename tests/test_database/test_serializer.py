@@ -18,7 +18,7 @@ class SerializerTest(TestCase):
         node = Node(ip = ipaddress.ip_address('127.0.0.1'), node_id=1)
 
         port = Port(node=node, number=22, transport_protocol=TransportProtocol.TCP)
-        port.service_name = 'ssh'
+        port.protocol = 'ssh'
 
         port.scan = Scan()
         port.scan._start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
