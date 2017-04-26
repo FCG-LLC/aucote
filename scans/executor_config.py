@@ -3,6 +3,7 @@ Provides configuration for tools. Configuration is implicit and shouldn't be mod
 """
 from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
+from tools.cve_search.tool import CVESearchTool
 from tools.hydra.tool import HydraTool
 from tools.nmap.parsers import NmapBrutParser, NmapInfoParser
 from tools.nmap.tool import NmapTool
@@ -152,6 +153,9 @@ EXECUTOR_CONFIG = {
                 'x-xss-protection':
                     HeaderDefinition(pattern=r'^1$', obligatory=True)
             }
+        },
+        'cve-search': {
+            'class': CVESearchTool,
         }
     }
 }
