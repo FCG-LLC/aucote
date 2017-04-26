@@ -42,6 +42,7 @@ class NmapPortInfoTask(PortTask):
         args = [
             '-p', str(self._port.number),
             '-sV', '-Pn',
+            '--version-all',
             '--max-rate', str(cfg['portdetection.port_scan_rate'])
         ]
 
