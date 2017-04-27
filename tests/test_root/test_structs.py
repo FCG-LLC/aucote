@@ -269,13 +269,29 @@ class ServiceTest(TestCase):
     def setUp(self):
         self.name = 'test_name'
         self.version = 'test_version'
-        self.cpe = 'cpe:/a:apache:http_server:2.4.23'
+        self.vendor = 'apache'
+        self.product = 'http_server'
+        self.cpe = 'cpe:/a:{vendor}:{product}:2.4.23'.format(vendor=self.vendor, product=self.product)
         self.service = Service(self.name, self.version)
+        self.service.cpe = self.cpe
 
     def test_init(self):
         self.assertEqual(self.name, self.service.name)
         self.assertEqual(self.version, self.service.version)
 
     def test_cpe_setter_and_getter(self):
-        self.service.cpe = self.cpe
         self.assertEqual(self.service.cpe, CPE(self.cpe))
+
+    def test_vendor(self):
+        self.assertEqual(self.service.cpe_vendor, self.vendor)
+
+    def test_product(self):
+        self.assertEqual(self.service.cpe_product, self.product)
+
+    def test_vendor_without_cpe(self):
+        self.service._cpe = None
+        self.assertIsNone(self.service.cpe_vendor)
+
+    def test_product_without_cpe(self):
+        self.service._cpe = None
+        self.assertIsNone(self.service.cpe_product)

@@ -212,6 +212,30 @@ class Service(object):
         if value:
             self._cpe = CPE(value)
 
+    @property
+    def cpe_vendor(self):
+        """
+        Get vendor name based on CPE
+
+        Returns:
+            str|None
+
+        """
+        if isinstance(self._cpe, CPE):
+            return " ".join(self._cpe.get_vendor())
+
+    @property
+    def cpe_product(self):
+        """
+        Get product name based on CPE
+
+        Returns:
+            str|None
+
+        """
+        if isinstance(self._cpe, CPE):
+            return " ".join(self._cpe.get_product())
+
     def __str__(self):
         return "{name} {version}".format(name=self.name or '', version=self.version or '').strip()
 
