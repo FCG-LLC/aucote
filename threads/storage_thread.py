@@ -26,8 +26,6 @@ class StorageThread(Thread):
         self.filename = filename
         self._queue = Queue()
         self._storage = Storage(self.filename)
-        self.create_tables()
-        self.clear_scan_details()
         self.finish = False
 
     def run(self):
@@ -43,6 +41,7 @@ class StorageThread(Thread):
 
         """
         self._storage.connect()
+        self._storage.init_schema()
 
         while not self.finish:
             try:
@@ -50,23 +49,7 @@ class StorageThread(Thread):
             except Empty:
                 continue
 
-            if isinstance(query, list):
-                log.debug("executing %i queries", len(query))
-                for row in query:
-                    self._storage.cursor.execute(*row)
-            elif isinstance(query, StorageQuery):
-                try:
-                    query.result = self._storage.cursor.execute(*query.query).fetchall()
-                except Exception:
-                    log.exception("Exception while executing query: %s", query.query[0])
-                finally:
-                    query.semaphore.release()
-                    self._queue.task_done()
-                continue
-            else:
-                log.debug("executing query: %s", query[0])
-                self._storage.cursor.execute(*query)
-            self._storage.conn.commit()
+            self._storage.execute(query)
             self._queue.task_done()
         self._storage.close()
         log.debug("Exit")

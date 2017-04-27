@@ -8,16 +8,17 @@ from threads.storage_thread import StorageThread
 
 class StorageThreadTest(TestCase):
     @patch('threads.storage_thread.Queue')
-    @patch('threads.storage_thread.Storage')
-    def setUp(self, mock_storage, mock_queue):
+    def setUp(self, mock_queue):
         self.mock_queue = mock_queue
-        self.mock_storage = mock_storage
         self.filename = ":memory:"
         self.task = StorageThread(filename=self.filename)
+        self.task._storage._cursor = MagicMock()
+        self.task._storage.conn = MagicMock()
+        self.task._storage.connect = MagicMock()
+        self.task._storage.close = MagicMock()
+        self.task._storage.init_schema = MagicMock()
 
     def test_init(self):
-        self.task._storage.create_tables.assert_called_once_with()
-        self.task._storage.clear_scan_details.assert_called_once_with()
         self.assertEqual(self.task.filename, self.filename)
         self.assertEqual(self.task._queue, self.mock_queue())
 
@@ -32,9 +33,10 @@ class StorageThreadTest(TestCase):
     def test_call(self):
         self.task._queue.task_done.side_effect = (None, None, Exception("TEST_FIN"))
         self.task._queue.get.side_effect = ((1,), Empty(), Empty(), (2,), [(3, ), (4, )])
-        self.task._storage = MagicMock()
 
         self.assertRaises(Exception, self.task.run)
+        self.task._storage.connect.assert_called_once_with()
+        self.task._storage.init_schema.assert_called_once_with()
         self.assertEqual(self.task._storage.cursor.execute.call_count, 4)
         self.assertEqual(self.task._storage.conn.commit.call_count, 3)
         self.assertEqual(self.task._queue.get.call_count, 5)
@@ -59,9 +61,8 @@ class StorageThreadTest(TestCase):
         query = StorageQuery("test_query")
         query.semaphore = MagicMock()
         self.task._queue.get.side_effect = (query, StorageQuery(None))
-        self.task._storage = MagicMock()
         result = MagicMock()
-        self.task._storage.cursor.execute.side_effect = (result, Exception("TEST_EXCEPTION"))
+        self.task._storage.cursor.execute.side_effect = (result, Exception("TEST_EXECUTE"))
 
         self.assertRaises(Exception, self.task.run)
         self.assertEqual(self.task._storage.cursor.execute.call_count, 2)
