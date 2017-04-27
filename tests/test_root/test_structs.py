@@ -2,7 +2,9 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, StorageQuery
+from cpe import CPE
+
+from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, StorageQuery, Service
 from structs import TransportProtocol
 
 
@@ -224,6 +226,7 @@ class SpecialPortTest(TestCase):
     def test_copy_broadcast(self):
         self.assertIsInstance(self.broadcast.copy(), BroadcastPort)
 
+
 class PhysicalPortTest(TestCase):
     def setUp(self):
         self.port = PhysicalPort()
@@ -242,6 +245,7 @@ class BroadcastPortTest(TestCase):
         expected = "broadcast"
         self.assertEqual(str(self.port), expected)
 
+
 class StorageQueryTest(TestCase):
     def setUp(self):
         self.test_query = "test_query"
@@ -259,3 +263,19 @@ class StorageQueryTest(TestCase):
     def test_only_query(self):
         expected = (self.test_query,)
         self.assertEqual(self.only_query.query, expected)
+
+
+class ServiceTest(TestCase):
+    def setUp(self):
+        self.name = 'test_name'
+        self.version = 'test_version'
+        self.cpe = 'cpe:/a:apache:http_server:2.4.23'
+        self.service = Service(self.name, self.version)
+
+    def test_init(self):
+        self.assertEqual(self.name, self.service.name)
+        self.assertEqual(self.version, self.service.version)
+
+    def test_cpe_setter_and_getter(self):
+        self.service.cpe = self.cpe
+        self.assertEqual(self.service.cpe, CPE(self.cpe))

@@ -97,6 +97,10 @@ class NmapPortInfoTask(PortTask):
             self._port.service.name = service.get('product')
             self._port.service.version = service.get('version')
 
+            cpe = service.find("cpe")
+            if cpe is not None:
+                self._port.service.cpe = cpe.text
+
         self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
 
         if not self.scan_only:

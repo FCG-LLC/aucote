@@ -7,6 +7,8 @@ from enum import Enum
 import time
 from threading import Semaphore
 
+from cpe import CPE
+
 
 class Scan(object):
     """
@@ -192,9 +194,38 @@ class Service(object):
     def __init__(self, name=None, version=None):
         self.name = name
         self.version = version
+        self._cpe = None
+
+    @property
+    def cpe(self):
+        """
+        CPE representation of service
+
+        Returns:
+            CPE
+
+        """
+        return self._cpe
+
+    @cpe.setter
+    def cpe(self, value):
+        if value:
+            self._cpe = CPE(value)
 
     def __str__(self):
         return "{name} {version}".format(name=self.name or '', version=self.version or '').strip()
+
+    def copy(self):
+        """
+        Make copy of service
+
+        Returns:
+            Service
+
+        """
+        return_value = Service(name=self.name, version=self.version)
+        return_value._cpe = self._cpe
+        return return_value
 
 
 class Port(object):
@@ -248,7 +279,7 @@ class Port(object):
         return_value = type(self)(node=self.node, number=self.number, transport_protocol=self.transport_protocol)
         return_value.vulnerabilities = self.vulnerabilities
         return_value.when_discovered = self.when_discovered
-        return_value.service = Service(name=self.service.name, version=self.service.version)
+        return_value.service = self.service.copy()
         return_value.banner = self.banner
         return_value.scan = self.scan
         return_value.interface = self.interface
