@@ -136,7 +136,7 @@ class NmapToolTest(TestCase):
         self.nmap_tool()
         self.assertEqual(port_scan_mock.call_count, 2)
 
-    @patch('tools.base.cfg', new_callable=Config)
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
     def test_custom_args_dns_zone_transfer(self, cfg):
         cfg._cfg = self.cfg
         cfg._cfg['tools']['nmap']['domains'] = ['test.host', 'test.host2']
@@ -144,7 +144,7 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(NmapTool.custom_args_dns_zone_transfer(), expected)
 
-    @patch('tools.base.cfg', new_callable=Config)
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
     def test_custom_args_dns_check_zone(self, cfg):
         cfg._cfg = self.cfg
         cfg._cfg['tools']['nmap']['domains'] = ['test.host', 'test.host2']
@@ -183,7 +183,7 @@ class NmapToolTest(TestCase):
 
         self.assertFalse(nmap_script.called)
 
-    @patch('tools.base.cfg', new_callable=Config)
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
     def test_custom_args_dns_srv_enum(self, cfg):
         cfg._cfg = self.cfg
         cfg._cfg['tools']['nmap']['domains'] = ['test.host', 'test.host2']
@@ -191,7 +191,7 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(NmapTool.custom_args_dns_srv_enum(), expected)
 
-    @patch('tools.base.cfg', new_callable=Config)
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
     def test_custom_args_http_domino_enum_passwords(self, cfg):
         cfg._cfg = self.cfg
         cfg._cfg['tools']['nmap']['domino-http'] = {"username": "test_usernm", "password": "test_passwd"}

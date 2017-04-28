@@ -366,8 +366,18 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertFalse(self.thread.storage.save_nodes.called)
         mock_loop.current.return_value.stop.assert_called_once_with()
 
-    @patch('scans.scan_async_task.cfg.get', MagicMock(return_value=MagicMock(cfg=['127.0.0.1/24', '128.0.0.1/13'])))
-    def test_get_networks_list(self):
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_get_networks_list(self, cfg):
+        cfg._cfg = {
+            'portdetection': {
+                'networks': {
+                    'include': [
+                        '127.0.0.1/24',
+                        '128.0.0.1/13'
+                    ]
+                }
+            }
+        }
         result = self.thread._get_networks_list()
         expected = IPSet(['127.0.0.1/24', '128.0.0.1/13'])
 

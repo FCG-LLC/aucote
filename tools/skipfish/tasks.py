@@ -35,7 +35,7 @@ class SkipfishScanTask(CommandTask):
             list
 
         """
-        args = ['-m', str(cfg.get('tools.skipfish.threads')), '-k', cfg.get('tools.skipfish.limit')]
-        args.extend(['-o', '{0}/skipfish_{1}'.format(cfg.get('tools.skipfish.tmp_directory'), time.time()),
+        args = ['-m', str(cfg['tools.skipfish.threads']), '-k', cfg['tools.skipfish.limit']]
+        args.extend(['-o', '{0}/skipfish_{1}'.format(cfg['tools.skipfish.tmp_directory'], time.time()),
                      "{0}://{1}:{2}/".format(self._port.service_name, self._port.node.ip, self._port.number)])
         return args

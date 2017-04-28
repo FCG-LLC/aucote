@@ -49,26 +49,6 @@ class Tool(Task):
         """
         raise NotImplementedError
 
-    @classmethod
-    def get_config(cls, key):
-        """
-        Get configuration in suitable format (dict, list)
-
-        Args:
-            key (str): configuration key
-
-        Returns:
-            Configuration variable
-
-        Raises:
-            ImproperConfigurationException
-
-        """
-        try:
-            return cfg.get(key).cfg
-        except KeyError:
-            raise ImproperConfigurationException(key)
-
     @property
     def port(self):
         """

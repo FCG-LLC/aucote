@@ -69,7 +69,7 @@ class Handler(RequestHandler):
                         and auth_header.startswith(BEARER_START):
                     password = auth_header[len(BEARER_START):]
                     password_hash = hashlib.sha512(password.encode()).hexdigest()
-                    correct = cfg.get('service.api.password')
+                    correct = cfg['service.api.password']
 
                     if password_hash == correct:
                         return True

@@ -66,14 +66,14 @@ class MainHandler(Handler):
         """
         return {
             'nodes': [str(node.ip) for node in scan_task.current_scan],
-            'networks': cfg.get('service.scans.networks').cfg,
-            'ports': cfg.get('service.scans.ports'),
+            'networks': list(cfg['service.scans.networks']),
+            'ports': cfg['service.scans.ports'],
             'previous_scan': scan_task.previous_scan,
             'previous_tool_scan': scan_task.previous_tool_scan,
             'next_scan': scan_task.next_scan,
             'next_tool_scan': scan_task.next_tool_scan,
-            'scan_cron': cfg.get('service.scans.scan_cron'),
-            'tools_cron': cfg.get('service.scans.tools_cron')
+            'scan_cron': cfg['service.scans.scan_cron'],
+            'tools_cron': cfg['service.scans.tools_cron']
         }
 
     @classmethod

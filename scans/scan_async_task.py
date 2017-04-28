@@ -40,8 +40,8 @@ class ScanAsyncTask(object):
         self.scan_start = None
 
         try:
-            self.aucote.async_task_manager.add_crontab_task(self._scan, cfg.get('portdetection.scan_cron'))
-            self.aucote.async_task_manager.add_crontab_task(self._run_tools, cfg.get('portdetection.tools_cron'))
+            self.aucote.async_task_manager.add_crontab_task(self._scan, cfg['portdetection.scan_cron'])
+            self.aucote.async_task_manager.add_crontab_task(self._run_tools, cfg['portdetection.tools_cron'])
         except KeyError:
             log.error("Please configure portdetection.scan_cron and portdetection.tools_cron")
             exit(1)
@@ -139,12 +139,12 @@ class ScanAsyncTask(object):
         ports_ipv6 = yield scanner_ipv6.scan_ports(nodes_ipv6)
         ports.extend(ports_ipv6)
 
-        port_range_allow = NmapTool.parse_nmap_ports(cfg.get('portdetection.ports.include'))
-        port_range_deny = NmapTool.parse_nmap_ports(cfg.get('portdetection.ports.exclude'))
+        port_range_allow = NmapTool.parse_nmap_ports(cfg['portdetection.ports.include'])
+        port_range_deny = NmapTool.parse_nmap_ports(cfg['portdetection.ports.exclude'])
 
         ports = [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
 
-        if cfg.get('service.scans.physical'):
+        if cfg['service.scans.physical']:
             interfaces = netifaces.interfaces()
 
             for interface in interfaces:
@@ -181,11 +181,11 @@ class ScanAsyncTask(object):
         Get nodes from todis application
 
         """
-        url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
+        url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg['topdis.api.host'], cfg['topdis.api.port'])
         try:
             resource = http.urlopen(url)
         except URLError:
-            log.exception('Cannot connect to topdis: %s:%s', cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
+            log.exception('Cannot connect to topdis: %s:%s', cfg['topdis.api.host'], cfg['topdis.api.port'])
             return []
 
         charset = resource.headers.get_content_charset() or 'utf-8'
@@ -217,7 +217,7 @@ class ScanAsyncTask(object):
         """
         topdis_nodes = self._get_topdis_nodes()
 
-        storage_nodes = self.storage.get_nodes(parse_period(cfg.get('portdetection.scan_interval')), timestamp=timestamp)
+        storage_nodes = self.storage.get_nodes(parse_period(cfg['portdetection.scan_interval']), timestamp=timestamp)
 
         return list(set(topdis_nodes) - set(storage_nodes))
 
@@ -231,13 +231,13 @@ class ScanAsyncTask(object):
 
         """
         try:
-            return IPSet(cfg.get('portdetection.networks.include').cfg)
+            return IPSet(cfg['portdetection.networks.include'])
         except KeyError:
             log.error("Please set portdetection.networks.include in configuration file!")
             exit()
 
-
-    def _get_excluded_networks_list(self):
+    @classmethod
+    def _get_excluded_networks_list(cls):
         """
         List of excluded networks from configuration file
 
@@ -246,7 +246,7 @@ class ScanAsyncTask(object):
 
         """
         try:
-            return IPSet(cfg.get('portdetection.networks.exclude').cfg)
+            return IPSet(cfg['portdetection.networks.exclude'])
         except KeyError:
             return []
 
@@ -288,7 +288,7 @@ class ScanAsyncTask(object):
 
         """
 
-        return croniter(cfg.get('portdetection.scan_cron'), time.time()).get_prev()
+        return croniter(cfg['portdetection.scan_cron'], time.time()).get_prev()
 
     @property
     def previous_tool_scan(self):
@@ -299,7 +299,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg.get('portdetection.tools_cron'), time.time()).get_prev()
+        return croniter(cfg['portdetection.tools_cron'], time.time()).get_prev()
 
     def get_ports_for_script_scan(self):
         """
@@ -320,7 +320,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg.get('portdetection.scan_cron'), time.time()).get_next()
+        return croniter(cfg['portdetection.scan_cron'], time.time()).get_next()
 
     @property
     def next_tool_scan(self):
@@ -331,7 +331,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg.get('portdetection.tools_cron'), time.time()).get_next()
+        return croniter(cfg['portdetection.tools_cron'], time.time()).get_next()
 
     def update_scan_status(self, status):
         """

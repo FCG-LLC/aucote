@@ -252,10 +252,10 @@ class ConfigTest(TestCase):
         self.config._immutable = {'alice.has.a'}
         self.config.cache_time = 10
         expected = 'cat'
-        self.assertFalse(self.config.toucan.get.called)
-        self.assertFalse(mock_time.called)
-
         result = self.config['alice.has.a']
+
+        self.assertFalse(self.config.toucan.get.called)
+
         self.assertEqual(result, expected)
 
     @patch('utils.config.time.time', MagicMock(return_value=50))

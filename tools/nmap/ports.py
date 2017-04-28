@@ -37,7 +37,7 @@ class PortsScan(ScanTask):
             args.extend(["--datadir", scripts_dir])
 
         include_ports = cfg['portdetection.ports.include']
-        if isinstance(include_ports, (Config, list)):
+        if isinstance(include_ports, Config):
             include_ports = ",".join(include_ports)
 
         if include_ports:
@@ -47,7 +47,7 @@ class PortsScan(ScanTask):
 
         exclude_ports = cfg['portdetection.ports.exclude']
 
-        if isinstance(exclude_ports, (Config, list)):
+        if isinstance(exclude_ports, Config):
             exclude_ports = ",".join(exclude_ports)
 
         if exclude_ports:

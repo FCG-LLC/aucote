@@ -58,7 +58,7 @@ class NmapTool(Tool):
         tasks = []
 
         disabled_scripts = self.config.get('disable_scripts', set()).copy()
-        disabled_scripts.update(set(cfg.get('tools.nmap.disable_scripts') or []))
+        disabled_scripts.update(set(cfg['tools.nmap.disable_scripts'] or []))
 
         for exploit in self.exploits:
             name = exploit.name
@@ -115,7 +115,7 @@ class NmapTool(Tool):
             list
 
         """
-        domains = cls.get_config('tools.nmap.domains')
+        domains = cfg['tools.nmap.domains']
         return ['dns-zone-transfer.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
@@ -127,7 +127,7 @@ class NmapTool(Tool):
             list
 
         """
-        domains = cls.get_config('tools.nmap.domains')
+        domains = cfg['tools.nmap.domains']
         return ['dns-srv-enum.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
@@ -139,7 +139,7 @@ class NmapTool(Tool):
             list
 
         """
-        domains = cls.get_config('tools.nmap.domains')
+        domains = cfg['tools.nmap.domains']
         return ['dns-check-zone.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
@@ -151,9 +151,10 @@ class NmapTool(Tool):
             str
 
         """
-        config = cls.get_config('tools.nmap.domino-http')
-        return "domino-enum-passwords.username='{0}',domino-enum-passwords.password={1}".format(
-            config.get('username', None), config.get('password', None))
+        username = cfg['tools.nmap.domino-http.username']
+        password = cfg['tools.nmap.domino-http.password']
+
+        return "domino-enum-passwords.username='{0}',domino-enum-passwords.password={1}".format(username, password)
 
     @classmethod
     def custom_args_http_useragent(cls):
@@ -164,7 +165,7 @@ class NmapTool(Tool):
             str
 
         """
-        config = cfg.get('service.scans.useragent')
+        config = cfg['service.scans.useragent']
         if config:
             return "http.useragent='{0}'".format(config)
 
@@ -178,9 +179,9 @@ class NmapTool(Tool):
 
         """
         try:
-            return cfg.get('tools.nmap.rate')
+            return cfg['tools.nmap.rate']
         except KeyError:
-            return cfg.get('tools.common.rate')
+            return cfg['tools.common.rate']
 
     @staticmethod
     def parse_nmap_ports(sections):

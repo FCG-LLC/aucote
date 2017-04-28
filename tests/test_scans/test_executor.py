@@ -88,7 +88,7 @@ class ExecutorTest(TestCase):
         self.assertNotEqual(id(result), id(expected))
 
     @patch('scans.executor.NmapPortInfoTask')
-    @patch('scans.executor.cfg')
+    @patch('scans.executor.cfg', new_callable=Config)
     def test_scan_only(self, mock_cfg, mock_port_info):
         mock_cfg.get = MagicMock(return_value="0s")
         self.executor.scan_only = MagicMock()

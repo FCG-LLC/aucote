@@ -35,7 +35,7 @@ class TaskMapper:
         scripts = self._aucote.exploits.find_all_matching(port)
 
         for app, exploits in scripts.items():
-            if not cfg.get('tools.{0}.enable'.format(app)):
+            if not cfg['tools.{0}.enable'.format(app)]:
                 continue
 
             log.info("Found %i exploits", len(exploits))

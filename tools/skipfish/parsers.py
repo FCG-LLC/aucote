@@ -126,7 +126,7 @@ class SkipfishOutputParser(Parser):
 
         """
         parser = SkipfishResultsParser(directory=cls._get_log_dir(output=stdout,
-                                                                  directory=cfg.get('tools.skipfish.tmp_directory')))
+                                                                  directory=cfg['tools.skipfish.tmp_directory']))
         return parser.parse()
 
     @classmethod
