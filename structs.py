@@ -360,3 +360,13 @@ class StorageQuery(object):
         if self._args:
             return self._query, self._args
         return self._query,
+
+
+class ScanStatus(Enum):
+    """
+    Scan status
+
+    """
+    IDLE = "IDLE"
+    IN_PROGRESS = "IN PROGRESS"
+

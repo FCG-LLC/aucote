@@ -9,7 +9,7 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from scans.scan_async_task import ScanAsyncTask
-from structs import Node, PhysicalPort, Port, TransportProtocol
+from structs import Node, PhysicalPort, Port, TransportProtocol, ScanStatus
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -530,7 +530,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_update_scan_status_to_in_progress(self, cfg):
         cfg.toucan = MagicMock()
         self.thread.scan_start = 17
-        self.thread.update_scan_status(self.thread.STATUS_IN_PROGRESS)
+        self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
 
         expected = {
             'previous_scan': 57,
@@ -549,7 +549,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_update_scan_status_to_idle(self, cfg):
         cfg.toucan = MagicMock()
         self.thread.scan_start = 17
-        self.thread.update_scan_status(self.thread.STATUS_IDLE)
+        self.thread.update_scan_status(ScanStatus.IDLE)
 
         expected = {
             'previous_scan': 57,

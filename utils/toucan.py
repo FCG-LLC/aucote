@@ -1,5 +1,5 @@
 """
-Toucan is centralized node manager. Aucote use it for obtain user configuration.
+Toucan is centralized node manager. Aucote uses it to obtain user configuration.
 
 """
 import logging as log
@@ -32,6 +32,9 @@ def retry_if_fail(function):
 
         Returns:
             mixed
+
+        Raises:
+            ToucanConnectionException
 
         """
         wait_time = Toucan.MIN_RETRY_TIME
@@ -78,6 +81,9 @@ class Toucan(object):
         Returns:
             mixed
 
+        Raises:
+            ToucanConnectionException
+
         """
         toucan_key = self._get_slash_separated_key(key, strip_slashes=True)
 
@@ -109,6 +115,9 @@ class Toucan(object):
 
         Returns:
             mixed - inserted value if success
+
+        Raises:
+            ToucanException|ToucanConnectionException
 
         """
         toucan_key = self._get_slash_separated_key(key, strip_slashes=True) if key is not "*" else key
@@ -145,7 +154,10 @@ class Toucan(object):
             response:
 
         Returns:
-            mixed - return value if success, else raise exception
+            mixed - return value if success
+
+        Raises:
+            ToucanUnsetException|ToucanConnectionException|ToucanException
 
         """
         if response.status_code in {404, 204}:

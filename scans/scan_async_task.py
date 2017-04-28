@@ -19,7 +19,7 @@ from tornado.ioloop import IOLoop
 
 from aucote_cfg import cfg
 from scans.executor import Executor
-from structs import Node, Scan, PhysicalPort
+from structs import Node, Scan, PhysicalPort, ScanStatus
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
@@ -32,9 +32,6 @@ class ScanAsyncTask(object):
     Class responsible for scanning
 
     """
-    STATUS_IDLE = "IDLE"
-    STATUS_IN_PROGRESS = "IN PROGRESS"
-
     def __init__(self, aucote, as_service=True):
         self.as_service = as_service
         self._current_scan = []
@@ -105,7 +102,7 @@ class ScanAsyncTask(object):
 
         """
         self.scan_start = time.time()
-        self.update_scan_status(self.STATUS_IN_PROGRESS)
+        self.update_scan_status(ScanStatus.IN_PROGRESS)
 
         scanner_ipv4 = MasscanPorts()
         # scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
@@ -173,7 +170,7 @@ class ScanAsyncTask(object):
             None
 
         """
-        self.update_scan_status(self.STATUS_IDLE)
+        self.update_scan_status(ScanStatus.IDLE)
 
         if not self.as_service:
             IOLoop.current().stop()
@@ -341,7 +338,7 @@ class ScanAsyncTask(object):
         Update scan status base on status value
 
         Args:
-            status (str):
+            status (ScanStatus):
 
         Returns:
             None
@@ -355,10 +352,10 @@ class ScanAsyncTask(object):
             'next_scan': self.next_scan,
             'scan_start': self.scan_start,
             'scan_duration': None,
-            'status': status
+            'status': status.value
         }
 
-        if status is self.STATUS_IDLE:
+        if status is ScanStatus.IDLE:
             data['scan_duration'] = time.time() - self.scan_start
 
         cfg.toucan.put('portdetection.status', data)

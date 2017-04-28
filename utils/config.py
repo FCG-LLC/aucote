@@ -268,4 +268,4 @@ class Config:
             self[new_key] = value
 
             if immutable:
-                self._immutable.update({new_key})
+                self._immutable.add(new_key)
