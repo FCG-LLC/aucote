@@ -1,11 +1,14 @@
 from unittest import TestCase
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock, call, mock_open
 
-from aucote_cfg import load, _DEFAULT
+from aucote_cfg import load, _DEFAULT, start_toucan
 from utils import Config
 
 
 class AucoteCfgTest(TestCase):
+    YAML = '''alice:
+    has:
+        a: dog'''
 
     @patch('aucote_cfg.cfg', new_callable=Config)
     @patch('aucote_cfg.log_cfg', MagicMock())
@@ -53,8 +56,9 @@ class AucoteCfgTest(TestCase):
 
     @patch('aucote_cfg.cfg', new_callable=Config)
     @patch('aucote_cfg.log_cfg', MagicMock())
+    @patch('aucote_cfg.start_toucan')
     @patch('os.path.join', MagicMock(return_value='test'))
-    def test_toucan_enabled(self, cfg):
+    def test_toucan_enabled(self, start_toucan, cfg):
         cfg._cfg = {
             'logging': '',
             'default_config': 'test_default',
@@ -63,7 +67,31 @@ class AucoteCfgTest(TestCase):
             }
         }
 
-        cfg.start_toucan = MagicMock()
         cfg.load = MagicMock()
         load()
-        cfg.start_toucan.assert_called_once_with('test_default')
+        start_toucan.assert_called_once_with('test_default')
+
+    @patch('builtins.open', mock_open(read_data=YAML))
+    @patch('aucote_cfg.Toucan')
+    @patch('aucote_cfg.cfg', new_callable=Config)
+    def test_load_toucan(self, cfg, toucan):
+        cfg._cfg = {
+            'toucan': {
+                'enable': True,
+                'api': {
+                    'host': 'localhost',
+                    'port': '3000',
+                    'protocol': 'http'
+                },
+                'min_retry_time': 15,
+                'max_retry_time': 25,
+                'max_retry_count': 35
+            }
+        }
+
+        start_toucan('test_file')
+        toucan.return_value.push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=False)
+        self.assertEqual(cfg.toucan, toucan.return_value)
+        self.assertEqual(toucan.min_retry_time, 15)
+        self.assertEqual(toucan.max_retry_count, 35)
+        self.assertEqual(toucan.max_retry_time, 25)

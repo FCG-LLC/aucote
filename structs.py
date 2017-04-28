@@ -369,4 +369,3 @@ class ScanStatus(Enum):
     """
     IDLE = "IDLE"
     IN_PROGRESS = "IN PROGRESS"
-

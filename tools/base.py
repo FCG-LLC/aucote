@@ -2,8 +2,6 @@
 Defines abstract Tool class
 
 """
-from aucote_cfg import cfg
-from utils.exceptions import ImproperConfigurationException
 from utils.task import Task
 
 

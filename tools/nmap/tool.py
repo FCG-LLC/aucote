@@ -79,7 +79,7 @@ class NmapTool(Tool):
             if callable(args):
                 try:
                     args = args()
-                except ImproperConfigurationException as exception:
+                except ImproperConfigurationException:
                     log.warning("Please set up %s in configuration", name)
                     continue
 

@@ -8,7 +8,6 @@ import logging as log
 
 import yaml
 from utils.exceptions import ToucanException
-from utils.toucan import Toucan
 
 
 class Config:
@@ -213,30 +212,6 @@ class Config:
 
         """
         self.load(file_name, self.default)
-
-    def start_toucan(self, default_config):
-        """
-        Initialize Toucan
-
-        Args:
-            default_config:
-
-        Returns:
-            None
-
-        """
-        Toucan.min_retry_time = self['toucan.min_retry_time']
-        Toucan.max_retry_time = self['toucan.max_retry_time']
-        Toucan.max_retry_count = self['toucan.max_retry_count']
-
-        self.toucan = Toucan(host=self['toucan.api.host'],
-                             port=self['toucan.api.port'],
-                             protocol=self['toucan.api.protocol'])
-
-        with open(default_config, "r") as file:
-            config = yaml.load(file)
-
-        self.toucan.push_config(config, overwrite=False)
 
     def push_config(self, config=None, key='', immutable=True):
         """

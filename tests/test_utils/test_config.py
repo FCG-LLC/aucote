@@ -171,30 +171,6 @@ class ConfigTest(TestCase):
     def test_not_list(self):
         self.assertNotIn('dog', self.config['alice.has'])
 
-    @patch('builtins.open', mock_open(read_data=YAML))
-    @patch('utils.config.Toucan')
-    def test_load_toucan(self, toucan):
-        self.config._cfg = {
-            'toucan': {
-                'enable': True,
-                'api': {
-                    'host': 'localhost',
-                    'port': '3000',
-                    'protocol': 'http'
-                },
-                'min_retry_time': 15,
-                'max_retry_time': 25,
-                'max_retry_count': 35
-            }
-        }
-
-        self.config.start_toucan('test_file')
-        toucan.return_value.push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=False)
-        self.assertEqual(self.config.toucan, toucan.return_value)
-        self.assertEqual(toucan.min_retry_time, 15)
-        self.assertEqual(toucan.max_retry_count, 35)
-        self.assertEqual(toucan.max_retry_time, 25)
-
     def test_set(self):
         expected = MagicMock()
         self.config['test.adding.key'] = expected
