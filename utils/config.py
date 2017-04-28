@@ -56,36 +56,37 @@ class Config:
             mixed
 
         """
-        try:
-            if key in self._immutable:
-                return_value = self._get(key)
-
-            elif self.toucan:
-                if key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
+        with self._lock:
+            try:
+                if key in self._immutable:
                     return_value = self._get(key)
 
-                elif self.toucan.is_special(key):
-                    result = self.toucan.get(key)
+                elif self.toucan:
+                    if key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
+                        return_value = self._get(key)
 
-                    for subkey, value in result.items():
-                        self[subkey] = value
-                    return_value = self._get(key)
+                    elif self.toucan.is_special(key):
+                        result = self.toucan.get(key)
 
+                        for subkey, value in result.items():
+                            self._set(subkey, value)
+                        return_value = self._get(key)
+
+                    else:
+                        return_value = self.toucan.get(key)
+                        self._set(key, return_value)
                 else:
-                    return_value = self.toucan.get(key)
-                    self[key] = return_value
-            else:
-                return_value = self._get(key)
+                    return_value = self._get(key)
 
-            if isinstance(return_value, dict) or isinstance(return_value, list):
-                return Config(return_value)
-            else:
-                return return_value
-        except KeyError:
-            raise KeyError(key)
-        except ToucanException:
-            log.exception("Error while obtaining configuration: %s", key)
-            raise KeyError(key)
+                if isinstance(return_value, dict) or isinstance(return_value, list):
+                    return Config(return_value)
+                else:
+                    return return_value
+            except KeyError:
+                raise KeyError(key)
+            except ToucanException:
+                log.exception("Error while obtaining configuration: %s", key)
+                raise KeyError(key)
 
     def set(self, key, value):
         """
@@ -100,15 +101,18 @@ class Config:
 
         """
         with self._lock:
-            self.timestamps[key] = time.time()
-            keys = key.split('.')
-            current = self._cfg
+            self._set(key, value)
 
-            for subkey in keys[:-1]:
-                current.setdefault(subkey, {})
-                current = current.get(subkey)
+    def _set(self, key, value):
+        self.timestamps[key] = time.time()
+        keys = key.split('.')
+        current = self._cfg
 
-            current[keys[-1]] = value
+        for subkey in keys[:-1]:
+            current.setdefault(subkey, {})
+            current = current.get(subkey)
+
+        current[keys[-1]] = value
 
     def __setitem__(self, key, value):
         self.set(key, value)
@@ -124,17 +128,16 @@ class Config:
         if keys[-1] == "*":
             del keys[-1]
 
-        with self._lock:
-            curr = self._cfg
-            for subkey in keys:
-                if isinstance(curr, dict):
-                    curr = curr[subkey]
-                elif isinstance(curr, list):
-                    curr = curr[int(subkey)]
-                else:
-                    raise KeyError(subkey)
+        curr = self._cfg
+        for subkey in keys:
+            if isinstance(curr, dict):
+                curr = curr[subkey]
+            elif isinstance(curr, list):
+                curr = curr[int(subkey)]
+            else:
+                raise KeyError(subkey)
 
-            return curr
+        return curr
 
     @property
     def cfg(self):
@@ -222,9 +225,9 @@ class Config:
             None
 
         """
-        Toucan.MIN_RETRY_TIME = self['toucan.min_retry_time']
-        Toucan.MAX_RETRY_TIME = self['toucan.max_retry_time']
-        Toucan.MAX_RETRY_COUNT = self['toucan.max_retry_count']
+        Toucan.min_retry_time = self['toucan.min_retry_time']
+        Toucan.max_retry_time = self['toucan.max_retry_time']
+        Toucan.max_retry_count = self['toucan.max_retry_count']
 
         self.toucan = Toucan(host=self['toucan.api.host'],
                              port=self['toucan.api.port'],

@@ -21,7 +21,7 @@ class TestToucan(TestCase):
         self.assertRaises(ToucanUnsetException, self.toucan.get, "test.key")
 
     @patch('utils.toucan.requests.get')
-    @patch('utils.toucan.Toucan.MIN_RETRY_TIME', 0)
+    @patch('utils.toucan.Toucan.min_retry_time', 0)
     def test_get_502(self, mock_get):
         mock_get.return_value = Response()
         mock_get.return_value.json = MagicMock(return_value={"message": "test_error"})
@@ -47,16 +47,16 @@ class TestToucan(TestCase):
         self.assertRaises(ToucanException, self.toucan.get, "test.key")
 
     @patch('utils.toucan.requests.get')
-    @patch('utils.toucan.Toucan.MIN_RETRY_TIME', 0)
+    @patch('utils.toucan.Toucan.min_retry_time', 0)
     def test_get_with_exception(self, mock_get):
         mock_get.side_effect = (requests.exceptions.ConnectionError, Exception)
 
         self.assertRaises(Exception, self.toucan.get, "test.key")
         self.assertEqual(mock_get.call_count, 2)
 
-    @patch('utils.toucan.Toucan.MIN_RETRY_TIME', 1)
-    @patch('utils.toucan.Toucan.MAX_RETRY_TIME', 4)
-    @patch('utils.toucan.Toucan.MAX_RETRY_COUNT', 5)
+    @patch('utils.toucan.Toucan.min_retry_time', 1)
+    @patch('utils.toucan.Toucan.max_retry_time', 4)
+    @patch('utils.toucan.Toucan.max_retry_count', 5)
     @patch('utils.toucan.time.sleep')
     @patch('utils.toucan.requests.get')
     def test_try_if_fail_decorator_time_exceeded(self, mock_get, mock_sleep):
@@ -185,7 +185,7 @@ class TestToucan(TestCase):
                                          json={'value': 'test_value'})
 
     @patch('utils.toucan.requests.put')
-    @patch('utils.toucan.Toucan.MIN_RETRY_TIME', 0)
+    @patch('utils.toucan.Toucan.min_retry_time', 0)
     def test_put_with_exception(self, mock_put):
         mock_put.side_effect = (requests.exceptions.ConnectionError(), Exception)
 

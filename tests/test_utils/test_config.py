@@ -191,9 +191,9 @@ class ConfigTest(TestCase):
         self.config.start_toucan('test_file')
         toucan.return_value.push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=False)
         self.assertEqual(self.config.toucan, toucan.return_value)
-        self.assertEqual(toucan.MIN_RETRY_TIME, 15)
-        self.assertEqual(toucan.MAX_RETRY_COUNT, 35)
-        self.assertEqual(toucan.MAX_RETRY_TIME, 25)
+        self.assertEqual(toucan.min_retry_time, 15)
+        self.assertEqual(toucan.max_retry_count, 35)
+        self.assertEqual(toucan.max_retry_time, 25)
 
     def test_set(self):
         expected = MagicMock()

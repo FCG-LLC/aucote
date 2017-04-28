@@ -23,8 +23,8 @@ def retry_if_fail(function):
     def function_wrapper(*args, **kwargs):
         """
         Try to execute function. In case of fail double waiting time.
-        Waiting time cannot exceed Toucan.MAX_RETRY_COUNT.
-        Raise exception after Toucan.MAX_RETRY_COUNT failed tries
+        Waiting time cannot exceed Toucan.max_retry_count.
+        Raise exception after Toucan.max_retry_count failed tries
 
         Args:
             *args:
@@ -37,9 +37,9 @@ def retry_if_fail(function):
             ToucanConnectionException
 
         """
-        wait_time = Toucan.MIN_RETRY_TIME
+        wait_time = Toucan.min_retry_time
         try_counter = 0
-        while try_counter < Toucan.MAX_RETRY_COUNT:
+        while try_counter < Toucan.max_retry_count:
             try:
                 return function(*args, **kwargs)
             except ToucanConnectionException as exception:
@@ -47,8 +47,8 @@ def retry_if_fail(function):
                 log.warning("Retry in %s s", wait_time)
                 time.sleep(wait_time)
                 wait_time *= 2
-                if wait_time > Toucan.MAX_RETRY_TIME:
-                    wait_time = Toucan.MAX_RETRY_TIME
+                if wait_time > Toucan.max_retry_time:
+                    wait_time = Toucan.max_retry_time
                 try_counter += 1
         raise ToucanConnectionException
 
@@ -60,9 +60,9 @@ class Toucan(object):
     This class integrates Toucan with Aucote
 
     """
-    MIN_RETRY_TIME = 5
-    MAX_RETRY_TIME = 300
-    MAX_RETRY_COUNT = 20
+    min_retry_time = 5
+    max_retry_time = 300
+    max_retry_count = 20
     PREFIX = "aucote"
 
     def __init__(self, host, port, protocol):
