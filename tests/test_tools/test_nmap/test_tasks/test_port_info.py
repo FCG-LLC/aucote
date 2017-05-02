@@ -107,7 +107,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         }
         self.port_info._port.transport_protocol = TransportProtocol.TCP
         result = self.port_info.prepare_args()
-        expected = ['-p', '22', '-sV', '--max-rate', '1337', '-sS', '--datadir', 'test', '--script', 'banner', '127.0.0.1']
+        expected = ['-p', '22', '-sV', '-Pn', '--max-rate', '1337', '-sS', '--datadir', 'test', '--script', 'banner', '127.0.0.1']
 
         self.assertEqual(result, expected)
 
@@ -133,7 +133,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
             }
         }
         result = self.port_info.prepare_args()
-        expected = ['-p', '22', '-sV', '--max-rate', '1337', '-sU', '--script', 'banner', '127.0.0.1']
+        expected = ['-p', '22', '-sV', '-Pn', '--max-rate', '1337', '-sU', '--script', 'banner', '127.0.0.1']
 
         self.assertEqual(result, expected)
 

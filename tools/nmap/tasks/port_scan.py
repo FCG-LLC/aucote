@@ -60,7 +60,7 @@ class NmapPortScanTask(CommandTask):
 
         """
         args = [
-            '--max-rate', str(self.rate),
+            '--max-rate', str(self.rate), '-Pn'
         ]
 
         if self._port.transport_protocol == TransportProtocol.TCP:
