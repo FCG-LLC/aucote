@@ -4,6 +4,8 @@ This file contains class for storage temporary information like last date of sca
 import sqlite3
 import time
 import logging as log
+
+from structs import StorageQuery
 from utils.database_interface import DbInterface
 
 
@@ -47,6 +49,17 @@ class Storage(DbInterface):
         self.filename = filename
         self.conn = None
         self._cursor = None
+
+    def init_schema(self):
+        """
+        Initialize database schema
+
+        Returns:
+            None
+
+        """
+        self.execute(self.create_tables())
+        self.execute(self.clear_scan_details())
 
     def connect(self):
         self.conn = sqlite3.connect(self.filename, check_same_thread=True)
@@ -294,3 +307,32 @@ class Storage(DbInterface):
         where = 'OR'.join([' (id=? AND ip=?) '] * len(nodes))
 
         return self.SELECT_PORTS_BY_NODES.format(where=where), parameters
+
+    def execute(self, query):
+        """
+        Execute query or queries. In case of SELECT returns value to the given object and release sempahore
+
+        Args:
+            query (StorageQuery|list|tuple):
+
+        Returns:
+            None
+
+        """
+        if isinstance(query, list):
+            log.debug("executing %i queries", len(query))
+            for row in query:
+                self.cursor.execute(*row)
+        elif isinstance(query, StorageQuery):
+            try:
+                query.result = self.cursor.execute(*query.query).fetchall()
+            except Exception:
+                log.exception("Exception while executing query: %s", query.query[0])
+            finally:
+                query.semaphore.release()
+                return
+        else:
+            log.debug("executing query: %s", query[0])
+            self.cursor.execute(*query)
+
+        self.conn.commit()

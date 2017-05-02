@@ -5,7 +5,7 @@ from unittest import TestCase
 from sqlite3 import Connection, DatabaseError, time
 
 from sqlite3 import connect
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 
 from fixtures.exploits import Exploit
 from structs import Node, Port, TransportProtocol, Scan
@@ -258,3 +258,20 @@ class StorageTest(TestCase):
         )
 
         self.assertEqual(result, expected)
+
+    def test_clear_scan_details(self):
+        result = self.storage.clear_scan_details()
+        expected = "DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL OR SCAN_END IS NULL",
+
+        self.assertEqual(result, expected)
+
+    def test_init_schema(self):
+        self.storage.execute = MagicMock()
+        self.storage.clear_scan_details = MagicMock()
+        self.storage.create_tables = MagicMock()
+
+        self.storage.init_schema()
+        self.storage.execute.assert_has_calls((call(self.storage.create_tables.return_value),
+                                               call(self.storage.clear_scan_details.return_value)), any_order=False)
+        self.storage.clear_scan_details.assert_called_once_with()
+        self.storage.create_tables.assert_called_once_with()
