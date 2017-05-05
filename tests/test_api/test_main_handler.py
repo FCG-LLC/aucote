@@ -57,13 +57,17 @@ class UserAPITest(AsyncHTTPTestCase):
     @patch('api.main_handler.MainHandler.scheduler_task_status')
     def test_scanning_info(self, task_status, mock_cfg):
         mock_cfg._cfg = {
-            'service': {
-                'scans': {
-                    'networks': ['test_cfg1'],
-                    'ports': ['test_cfg2'],
-                    'scan_cron': '* */2 * * *',
-                    'tools_cron': '0 22 * * * '
-                }
+            'portdetection': {
+                'networks': {
+                    'include': ['test_cfg1.in'],
+                    'exclude': ['test_cfg1.ex'],
+                },
+                'ports': {
+                    'include': ['test_cfg2.in'],
+                    'exclude': ['test_cfg2.ex'],
+                },
+                'scan_cron': '* */2 * * *',
+                'tools_cron': '0 22 * * * '
             }
         }
         scan_thread = MagicMock()
@@ -80,8 +84,14 @@ class UserAPITest(AsyncHTTPTestCase):
                 '127.0.0.1',
                 '::1'
             ],
-            'networks': ['test_cfg1'],
-            'ports': ['test_cfg2'],
+            'networks': {
+                'include': ['test_cfg1.in'],
+                'exclude': ['test_cfg1.ex'],
+            },
+            'ports': {
+                'include': ['test_cfg2.in'],
+                'exclude': ['test_cfg2.ex'],
+            },
             'previous_scan': scan_thread.previous_scan,
             'previous_tool_scan': scan_thread.previous_tool_scan,
             'next_scan': scan_thread.next_scan,
