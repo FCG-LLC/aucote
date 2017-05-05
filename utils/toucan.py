@@ -65,10 +65,8 @@ class Toucan(object):
     max_retry_count = 20
     PREFIX = "aucote"
 
-    def __init__(self, host, port, protocol):
-        self.host = host
-        self.port = port
-        self.protocol = protocol
+    def __init__(self, api):
+        self.api = api.rstrip("/")
 
     @retry_if_fail
     def get(self, key):
@@ -88,9 +86,8 @@ class Toucan(object):
         toucan_key = self._get_slash_separated_key(key, strip_slashes=True)
 
         try:
-            response = requests.get(url="{prot}://{host}:{port}/config/{key}"
-                                    .format(prot=self.protocol, host=self.host, port=self.port,
-                                            key=toucan_key))
+            response = requests.get(url="{api}/config/{key}"
+                                    .format(api=self.api, key=toucan_key))
 
             result = self.proceed_response(key, response)
 
@@ -137,9 +134,8 @@ class Toucan(object):
             raise ToucanException("Wrong value for special endpoint ({0})".format(key))
 
         try:
-            response = requests.put(url="{prot}://{host}:{port}/config/{key}"
-                                    .format(prot=self.protocol, host=self.host, port=self.port,
-                                            key=toucan_key), json=data)
+            response = requests.put(url="{api}/config/{key}"
+                                    .format(api=self.api, key=toucan_key), json=data)
 
             return self.proceed_response(key, response)
         except requests.exceptions.ConnectionError:

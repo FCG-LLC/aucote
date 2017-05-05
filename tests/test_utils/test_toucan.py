@@ -12,7 +12,7 @@ from utils.toucan import Toucan
 class TestToucan(TestCase):
 
     def setUp(self):
-        self.toucan = Toucan('test_host', '3000', 'test_prot')
+        self.toucan = Toucan('test_prot://test_host:3000/')
 
     @patch('utils.toucan.requests.get')
     def test_get_404(self, mock_get):

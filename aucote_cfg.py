@@ -33,11 +33,7 @@ _DEFAULT = {
     },
     'toucan': {
         'enable': True,
-        'api': {
-            'host': 'toucan',
-            'port': 3000,
-            'protocol': 'http'
-        },
+        'api': 'http://toucan:3000',
         'min_retry_time': 5,
         'max_retry_time': 60 * 5,
         'max_retry_count': 20
@@ -65,9 +61,7 @@ def start_toucan(default_config):
     Toucan.max_retry_time = cfg['toucan.max_retry_time']
     Toucan.max_retry_count = cfg['toucan.max_retry_count']
 
-    cfg.toucan = Toucan(host=cfg['toucan.api.host'],
-                        port=cfg['toucan.api.port'],
-                        protocol=cfg['toucan.api.protocol'])
+    cfg.toucan = Toucan(api=cfg['toucan.api'])
 
     with open(default_config, "r") as file:
         config = yaml.load(file)
