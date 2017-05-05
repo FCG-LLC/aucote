@@ -1,0 +1,69 @@
+# This is an example configuration file, which provides information about configurable options of aucote.
+#
+# pid_file: <str> - defines pid file path
+
+pid_file: tmp/aucote_test.pid
+
+# logging: Aucote logs a most of events in configuration files
+#   file: <str> - This is path to the aucote log file
+#   level: (debug|info|warning|error|critical) - This is the level of logging (default: info)
+#   max_file_size: <int> - Maximum log file's size. After reach the limit, new file is created and old is archived.
+#   max_files: <int> - Maximum amount of log files (with archived).
+#   format: <str> - Format of log line. There are some variables which could be used:
+#                   levelname - levelname of log line
+#                   asctime - time of log line
+#                   threadName - name of thred, which generate log line
+#                   message - log message
+
+logging:
+    file: logs/aucote.log
+    level: debug
+    max_file_size: 10485760
+    max_files: 5
+    format: "%(levelname)s %(asctime)s %(threadName)s: %(message)s"
+
+# fixtures:
+#   exploits:
+#     filename: <str> - Path to the exploits database
+
+fixtures:
+    exploits:
+        filename: fixtures/exploits/exploits.csv
+
+# kuduworker: Configuration of kudu.
+#   queue:
+#     address: <str> - URL to the kudu worker
+
+kuduworker:
+    queue:
+        address: ipc:///tmp/scar-pipeline.ipc
+
+# This section contains configuration related to topdis service
+# topdis:
+#   api:
+#     host: <str|ipaddress> - host of api
+#     port: <int> - port of api
+
+topdis:
+    api:
+        host: topdis
+        port: 1234
+
+# Toucan is centralized node manager. It provides configuration for Aucote
+# toucan:
+#   enable: <bool> - Enable or disable support for Toucan
+#   min_retry_time: <int> - minimum time which aucote waits before retrying connection to Toucan after unsuccessful try
+#   max_retry_time: <int> - maximum time: after failed connection to Toucan waiting time is double up to maximum
+#   max_retry_count: <int> - maximum number of retries
+#   api: - Api configuration
+#     host: <str> - Host which Toucan is listen on
+#     port: <int> - Port number which Toucan is listen on
+#     protocol: (http|https) - Toucan protocol
+#   socket: <str> - Socket which Toucan is listen on
+
+toucan:
+    enable: True
+    min_retry_time: 5
+    max_retry_time: 300
+    max_retry_count: 20
+    api: http://toucan:3000
