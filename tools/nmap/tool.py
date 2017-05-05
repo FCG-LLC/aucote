@@ -205,6 +205,9 @@ class NmapTool(Tool):
         if isinstance(sections, str):
             sections = sections.split(",")
 
+        if isinstance(sections, list):
+            sections = [element for section in sections for element in section.split(",")]
+
         protocol = "T"
 
         for section in sections:
