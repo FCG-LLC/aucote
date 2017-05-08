@@ -55,6 +55,7 @@ class Node:
         self.ip = ip
         self.id = node_id
         self.scan = None
+        self.os = Service()
 
     def __eq__(self, other):
         return isinstance(other, Node) and self.ip == other.ip and self.id == other.id
@@ -271,7 +272,6 @@ class Port(object):
         self.number = number
         self.transport_protocol = transport_protocol
         self.service = Service()
-        self.os = Service()
         self.app = Service()
         self.protocol = None
         self.banner = None
@@ -304,7 +304,6 @@ class Port(object):
         return_value.vulnerabilities = self.vulnerabilities
         return_value.when_discovered = self.when_discovered
         return_value.service = self.service.copy()
-        return_value.os = self.os.copy()
         return_value.app = self.app.copy()
         return_value.banner = self.banner
         return_value.protocol = self.protocol
