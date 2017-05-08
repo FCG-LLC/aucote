@@ -304,7 +304,10 @@ class Port(object):
         return_value.vulnerabilities = self.vulnerabilities
         return_value.when_discovered = self.when_discovered
         return_value.service = self.service.copy()
+        return_value.os = self.os.copy()
+        return_value.app = self.app.copy()
         return_value.banner = self.banner
+        return_value.protocol = self.protocol
         return_value.scan = self.scan
         return_value.interface = self.interface
         return return_value
