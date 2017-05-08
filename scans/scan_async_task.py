@@ -12,6 +12,7 @@ import time
 from threading import Lock
 import netifaces
 
+import requests
 from croniter import croniter
 from netaddr import IPSet
 from tornado import gen
@@ -88,9 +89,10 @@ class ScanAsyncTask(object):
 
         """
         log.info("Starting security scan")
-        ports = self.get_ports_for_script_scan()
+        nodes = self._get_topdis_nodes()
+        ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports))
+        self.aucote.add_task(Executor(aucote=self.aucote, ports=ports))
 
     @gen.coroutine
     def run_scan(self, nodes, scan_only=False):
@@ -157,7 +159,7 @@ class ScanAsyncTask(object):
                 port.scan = Scan(start=time.time())
                 ports.append(port)
 
-        self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports, scan_only=scan_only))
+        self.aucote.add_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
         self.current_scan = []
 
         self._clean_scan()
@@ -301,7 +303,7 @@ class ScanAsyncTask(object):
         """
         return croniter(cfg['portdetection.tools_cron'], time.time()).get_prev()
 
-    def get_ports_for_script_scan(self):
+    def get_ports_for_script_scan(self, nodes):
         """
         Get ports for scanning. Topdis node data combined with stored open ports data.
 
@@ -309,7 +311,7 @@ class ScanAsyncTask(object):
             list
 
         """
-        return self.storage.get_ports_by_nodes(self._get_topdis_nodes(), timestamp=self.previous_tool_scan)
+        return self.storage.get_ports_by_nodes(nodes=nodes, timestamp=self.previous_tool_scan)
 
     @property
     def next_scan(self):

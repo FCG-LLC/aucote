@@ -238,7 +238,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=ports, scan_only=False)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=False)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
         self.assertFalse(mock_ioloop.current.return_value.current.called)
 
@@ -344,7 +344,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning(), scan_only=scan_only)
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=ports, scan_only=scan_only)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=scan_only)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
     @gen_test
@@ -479,7 +479,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.ScanAsyncTask.previous_tool_scan', new_callable=PropertyMock)
     def test_get_ports_for_script_scan(self, mock_previous):
         nodes = [MagicMock(), MagicMock(), MagicMock()]
-        self.thread._get_topdis_nodes = MagicMock(return_value=nodes)
         mock_previous.return_value = 100
         ports = [
             MagicMock(),
@@ -488,20 +487,23 @@ class ScanAsyncTaskTest(AsyncTestCase):
         ]
         self.thread.storage.get_ports_by_nodes.return_value = ports
 
-        result = self.thread.get_ports_for_script_scan()
+        result = self.thread.get_ports_for_script_scan(nodes)
 
         self.assertEqual(result, ports)
-        self.thread.storage.get_ports_by_nodes.assert_has_calls([call(nodes, timestamp=100)])
+        self.thread.storage.get_ports_by_nodes.assert_has_calls([call(nodes=nodes, timestamp=100)])
 
     @patch('scans.scan_async_task.Executor')
     @gen_test
     def test_run_scripts(self, mock_executor):
         ports = MagicMock()
+        nodes = [MagicMock(), MagicMock(), MagicMock()]
 
         self.thread.get_ports_for_script_scan = MagicMock(return_value=ports)
+        self.thread._get_topdis_nodes = MagicMock(return_value=nodes)
+
         yield self.thread._run_tools()
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=ports)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports)
         self.thread.aucote.add_task.assert_called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)

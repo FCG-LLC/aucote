@@ -18,14 +18,15 @@ class Executor(Task):
 
     """
 
-    def __init__(self, nodes=None, scan_only=False, *args, **kwargs):
+    def __init__(self, ports=None, scan_only=False, nodes=None, *args, **kwargs):
         """
         Init executor. Sets kudu_queue and nodes
 
         """
         super(Executor, self).__init__(*args, **kwargs)
         self._ports = []
-        self.ports = nodes or []
+        self.ports = ports or []
+        self.nodes = nodes or []
         self.scan_only = scan_only
         if cfg['service.scans.broadcast']:
             broadcast_port = BroadcastPort()
