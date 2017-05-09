@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from cpe import CPE
 
-from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, StorageQuery, Service
+from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, StorageQuery, Service, CPEType
 from structs import TransportProtocol
 
 
@@ -271,7 +271,10 @@ class ServiceTest(TestCase):
         self.version = 'test_version'
         self.vendor = 'apache'
         self.product = 'http_server'
-        self.cpe = 'cpe:/a:{vendor}:{product}:2.4.23'.format(vendor=self.vendor, product=self.product)
+        self.version = '2.4\(23\)'
+        self.cpe = 'cpe:2.3:a:{vendor}:{product}:{version}:*:*:*:*:*:*:*'.format(vendor=self.vendor,
+                                                                                 product=self.product,
+                                                                                 version=self.version)
         self.service = Service(self.name, self.version)
         self.service.cpe = self.cpe
 
@@ -295,3 +298,36 @@ class ServiceTest(TestCase):
     def test_product_without_cpe(self):
         self.service._cpe = None
         self.assertIsNone(self.service.cpe_product)
+    
+    def test_escape_cpe(self):
+        data = r""""!";#$%&'()+,/:<=>@test123[]^`{}~-"""
+        expected = r"""\"\!\"\;\#\$\%\&\'\(\)\+\,\/\:\<\=\>\@test123\[\]\^\`\{\}\~\-"""
+
+        result = self.service._escape_cpe(data)
+
+        self.assertEqual(result, expected)
+
+    def test_escape_cpe_with_space(self):
+        data = "12 13"
+        self.assertRaises(ValueError, self.service._escape_cpe, data)
+
+    def test_unescape_cpe(self):
+        data = r"""\"\!\"\;\#\$\%\&\'\(\)\+\,\/\:\<\=\>\@test123\[\]\^\`\{\}\~\-"""
+        expected = r""""!";#$%&'()+,/:<=>@test123[]^`{}~-"""
+
+        result = self.service._unescape_cpe(data)
+
+        self.assertEqual(result, expected)
+
+    def test_version(self):
+        self.assertEqual(self.service.cpe_version, '2.4(23)')
+
+    def test_build_cpe(self):
+        vendor = 'Collective-Sense'
+        product = 'aucote'
+        version = '0.0.1(test)'
+
+        result = self.service.build_cpe(product=product, vendor=vendor, version=version, type=CPEType.APPLICATION)
+        expected = "cpe:2.3:a:collective\-sense:aucote:0.0.1\(test\):*:*:*:*:*:*:*"
+
+        self.assertEqual(result, expected)

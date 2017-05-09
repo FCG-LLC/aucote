@@ -3,13 +3,16 @@ from unittest.mock import patch, MagicMock, PropertyMock, call
 from urllib.error import URLError
 
 import time
+
+from cpe import CPE
 from croniter import croniter
 from netaddr import IPSet
+from requests import Response
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from scans.scan_async_task import ScanAsyncTask
-from structs import Node, PhysicalPort, Port, TransportProtocol, ScanStatus
+from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -75,6 +78,94 @@ class ScanAsyncTaskTest(AsyncTestCase):
         "version": "2c"
       }
     }
+  ]
+}"""
+
+    NODE_DETAILS = rb"""{
+      "meta": {
+        "apiVersion": "1.0.0",
+        "requestTime": "2017-05-08T12:50:20.139895+00:00",
+        "url": "http://dev03.cs.int:1234/api/v1/node?id=24"
+      },
+      "nodes": [
+        {
+          "description": "Cisco IOS Software, C181X Software (C181X-ADVIPSERVICESK9-M), Version 12.4(11)XW, RELEASE SOFTWARE (fc1)\r\nSynched to technology version 12.4(12.12)T\r\nTechnical Support: http://www.cisco.com/techsupport\r\nCopyright (c) 1986-2007 by Cisco Systems, Inc.\r\nComp",
+          "deviceType": "L3 Switch",
+          "deviceTypeDiscoveryType": "DIRECT",
+          "displayName": "fishconnectVPN.fcg.com",
+          "hardware": {
+            "model": "CISCO1811W-AG-B/K9",
+            "sysObjId": "1.3.6.1.4.1.9.1.641",
+            "vendor": "ciscoSystems"
+          },
+          "id": 24,
+          "isCloud": false,
+          "isHost": false,
+          "managementIp": "10.80.80.2",
+          "name": "fishconnectVPN.fcg.com",
+          "serialNumber": "FHK113515FT",
+          "snmp": {
+            "communityString": "public",
+            "port": 161,
+            "version": "2c"
+          },
+          "software": {
+            "os": "IOS",
+            "osDiscoveryType": "DIRECT",
+            "osVersion": "12.4(11)XW, RELEASE SOFTWARE (fc1)"
+          },
+          "stateId": 6597,
+          "supportsNat": false
+        }
+      ]
+    }"""
+
+    NODE_DETAILS_FOR_CPE = rb"""{
+      "meta": {
+        "apiVersion": "1.0.0",
+        "requestTime": "2017-05-08T12:50:20.139895+00:00",
+        "url": "http://dev03.cs.int:1234/api/v1/node?id=24"
+      },
+      "nodes": [
+        {
+          "description": "Cisco IOS Software, C181X Software (C181X-ADVIPSERVICESK9-M), Version 12.4(11)XW, RELEASE SOFTWARE (fc1)\r\nSynched to technology version 12.4(12.12)T\r\nTechnical Support: http://www.cisco.com/techsupport\r\nCopyright (c) 1986-2007 by Cisco Systems, Inc.\r\nComp",
+          "deviceType": "L3 Switch",
+          "deviceTypeDiscoveryType": "DIRECT",
+          "displayName": "fishconnectVPN.fcg.com",
+          "hardware": {
+            "model": "CISCO1811W-AG-B/K9",
+            "sysObjId": "1.3.6.1.4.1.9.1.641",
+            "vendor": "ciscoSystems"
+          },
+          "id": 24,
+          "isCloud": false,
+          "isHost": false,
+          "managementIp": "10.80.80.2",
+          "name": "fishconnectVPN.fcg.com",
+          "serialNumber": "FHK113515FT",
+          "snmp": {
+            "communityString": "public",
+            "port": 161,
+            "version": "2c"
+          },
+          "software": {
+            "os": "IOS",
+            "osDiscoveryType": "DIRECT",
+            "osVersion": "12.4(11)XW"
+          },
+          "stateId": 6597,
+          "supportsNat": false
+        }
+      ]
+    }"""
+
+    EMPTY_NODE_DETAILS = rb"""{
+  "meta": {
+    "apiVersion": "1.0.0",
+    "requestTime": "2017-05-08T12:50:20.139895+00:00",
+    "url": "http://dev03.cs.int:1234/api/v1/node?id=24"
+  },
+  "nodes": [
   ]
 }"""
 
@@ -284,7 +375,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         mock_nmap.return_value.scan_ports.return_value = future_nmap
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=[port_masscan, port_nmap],
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=[port_masscan, port_nmap],
                                               scan_only=False)
         mock_loop.current.return_value.stop.assert_called_once_with()
 
@@ -572,3 +663,100 @@ class ScanAsyncTaskTest(AsyncTestCase):
         }
 
         cfg.toucan.put.assert_called_once_with('portdetection.status', expected)
+
+    @patch('scans.scan_async_task.requests.get')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_get_os_for_nodes(self, cfg, mock_get):
+        cfg._cfg = {
+            'topdis': {
+                'api': {
+                    'port': 80,
+                    'host': 'topdis'
+                }
+            }
+        }
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value._content = self.NODE_DETAILS
+
+        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        node.scan = Scan(start=12)
+
+        self.thread._get_os_for_nodes([node])
+
+        self.assertEqual(node.os.name, 'IOS')
+        self.assertEqual(node.os.version, '12.4(11)XW, RELEASE SOFTWARE (fc1)')
+
+    @patch('scans.scan_async_task.requests.get')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_get_os_for_nodes_http_error(self, cfg, mock_get):
+        cfg._cfg = {
+            'topdis': {
+                'api': {
+                    'port': 80,
+                    'host': 'topdis'
+                }
+            }
+        }
+
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 404
+        mock_get.return_value._content = self.NODE_DETAILS
+
+        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        node.scan = Scan(start=12)
+
+        self.thread._get_os_for_nodes([node])
+
+        self.assertIsNone(node.os.name)
+        self.assertIsNone(node.os.version)
+
+    @patch('scans.scan_async_task.requests.get')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_get_os_for_nodes_empty(self, cfg, mock_get):
+        cfg._cfg = {
+            'topdis': {
+                'api': {
+                    'port': 80,
+                    'host': 'topdis'
+                }
+            }
+        }
+
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value._content = self.EMPTY_NODE_DETAILS
+
+        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        node.scan = Scan(start=12)
+
+        self.thread._get_os_for_nodes([node])
+
+        self.assertIsNone(node.os.name)
+        self.assertIsNone(node.os.version)
+
+    @patch('scans.scan_async_task.Service.build_cpe')
+    @patch('scans.scan_async_task.requests.get')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_get_os_nodes_with_cpe(self, cfg, mock_get, mock_cpe):
+        cfg._cfg = {
+            'topdis': {
+                'api': {
+                    'port': 80,
+                    'host': 'topdis'
+                }
+            }
+        }
+
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value._content = self.NODE_DETAILS_FOR_CPE
+
+        mock_cpe.return_value = 'cpe:2.3:o:*:*:*:*:*:*:*:*:*:*'
+
+        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        node.scan = Scan(start=12)
+
+        self.thread._get_os_for_nodes([node])
+
+        self.assertEqual(node.os.cpe, CPE(mock_cpe.return_value))

@@ -3,6 +3,7 @@ This file provides structures for project.
 
 """
 import ipaddress
+import re
 from enum import Enum
 import time
 from threading import Semaphore
@@ -192,6 +193,10 @@ class Service(object):
     Represents service/application/operating system. Contains basic information: name, version
 
     """
+    _CPE_SPECIAL = "\!|\"|\;|\#|\$|\%|\&|\'|\(|\)|\+|\,|\/|\:|\<|\=|\>|\@|\[|\]|\^|\`|\{|\||\}|\~|\-"
+    _ESCAPE_CPE = re.compile(_CPE_SPECIAL)
+    _UNESCAPE_CPE = re.compile(r"(\\({0}))".format(_CPE_SPECIAL))
+
     def __init__(self, name=None, version=None):
         self.name = name
         self.version = version
@@ -223,7 +228,7 @@ class Service(object):
 
         """
         if isinstance(self._cpe, CPE):
-            return " ".join(self._cpe.get_vendor())
+            return self._unescape_cpe(" ".join(self._cpe.get_vendor()))
 
     @property
     def cpe_product(self):
@@ -235,7 +240,19 @@ class Service(object):
 
         """
         if isinstance(self._cpe, CPE):
-            return " ".join(self._cpe.get_product())
+            return self._unescape_cpe(" ".join(self._cpe.get_product()))
+
+    @property
+    def cpe_version(self):
+        """
+        Get product name based on CPE
+
+        Returns:
+            str|None
+
+        """
+        if isinstance(self._cpe, CPE):
+            return self._unescape_cpe(" ".join(self._cpe.get_version()))
 
     def __str__(self):
         return "{name} {version}".format(name=self.name or '', version=self.version or '').strip()
@@ -251,6 +268,57 @@ class Service(object):
         return_value = Service(name=self.name, version=self.version)
         return_value._cpe = self._cpe
         return return_value
+
+    @classmethod
+    def _escape_cpe(cls, text):
+        """
+        Special characters should be escaped before building CPE string
+
+        Args:
+            text (str):
+
+        Returns:
+            str
+
+        """
+        text = text.lower()
+
+        def _replace(txt):
+            return r"\{0}".format(txt.group())
+
+        if " " in text:
+            raise ValueError("{0}: Space is not allowed in CPE string".format(text))
+
+        return cls._ESCAPE_CPE.sub(_replace, text)
+
+    @classmethod
+    def _unescape_cpe(cls, text):
+        text = text.lower()
+
+        def _replace(txt):
+            return txt.group()[1]
+
+        return cls._UNESCAPE_CPE.sub(_replace, text)
+
+    @classmethod
+    def build_cpe(cls, type, vendor='*', product='*', version='*'):
+        if vendor:
+            vendor = cls._escape_cpe(vendor)
+
+        if product:
+            product = cls._escape_cpe(product)
+
+        if version:
+            version = cls._escape_cpe(version)
+
+        return "cpe:2.3:{part}:{vendor}:{product}:{version}:*:*:*:*:*:*:*".format(part=str(type.value), vendor=vendor,
+                                                                                  product=product, version=version)
+
+
+class CPEType(Enum):
+    APPLICATION = "a"
+    HARDWARE = "h"
+    OS = "o"
 
 
 class Port(object):
@@ -440,3 +508,10 @@ class ScanStatus(Enum):
     """
     IDLE = "IDLE"
     IN_PROGRESS = "IN PROGRESS"
+
+
+class TopisOSDiscoveryType(Enum):
+    FINGERPRINT = "OSFINGERPRINT"
+    DIRECT = "DIRECT"
+    FROMDESCR = "FROMDESCR"
+    DEVTYPEDATA = "DEVTYPEDATA"
