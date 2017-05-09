@@ -90,7 +90,6 @@ class ScanAsyncTask(object):
         """
         log.info("Starting security scan")
         nodes = self._get_topdis_nodes()
-        self._get_os_for_nodes(nodes=nodes)
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
         self.aucote.add_task(Executor(aucote=self.aucote, ports=ports))
@@ -208,7 +207,9 @@ class ScanAsyncTask(object):
         return nodes
 
     @classmethod
-    def _get_os_for_nodes(cls, nodes):
+    def _get_topdis_oses(cls, nodes):
+        if not cfg.get('topdis.fetch_os'):
+            return
 
         for node in nodes:
             try:

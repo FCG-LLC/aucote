@@ -29,7 +29,8 @@ _DEFAULT = {
         'api': {
             'host': 'localhost',
             'port': 1234
-        }
+        },
+        'fetch_os': False
     },
     'toucan': {
         'enable': True,
