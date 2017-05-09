@@ -259,6 +259,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
     def test_cpe(self, mock_serializer):
         self.port_info.scan_only = True
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_CPE))
+        self.port_info.prepare_args = MagicMock()
         self.port_info()
 
         result = mock_serializer.call_args[0][0].service.cpe

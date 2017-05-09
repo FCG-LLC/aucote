@@ -20,7 +20,7 @@ from tornado.ioloop import IOLoop
 
 from aucote_cfg import cfg
 from scans.executor import Executor
-from structs import Node, Scan, PhysicalPort, ScanStatus
+from structs import Node, Scan, PhysicalPort, ScanStatus, TopisOSDiscoveryType, Service, CPEType
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
@@ -90,6 +90,7 @@ class ScanAsyncTask(object):
         """
         log.info("Starting security scan")
         nodes = self._get_topdis_nodes()
+        self._get_os_for_nodes(nodes=nodes)
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
         self.aucote.add_task(Executor(aucote=self.aucote, ports=ports))
@@ -205,6 +206,38 @@ class ScanAsyncTask(object):
 
         log.debug('Got %i nodes from topdis: %s', len(nodes), nodes)
         return nodes
+
+    @classmethod
+    def _get_os_for_nodes(cls, nodes):
+
+        for node in nodes:
+            try:
+                url = 'http://{host}:{port}/api/v1/node?id={node}&when={when}'.format(host=cfg.get('topdis.api.host'),
+                                                                                      port=cfg.get('topdis.api.port'),
+                                                                                      node=node.id,
+                                                                                      when=node.scan.start)
+                result = requests.get(url)
+            except requests.exceptions.ConnectionError:
+                log.exception('Cannot connect to topdis: %s:%s', cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
+                continue
+
+            if result.status_code != 200:
+                log.warning("Topdis returns %s for %s", result.status_code, result.url)
+                continue
+
+            data = result.json()
+            if len(data['nodes']) == 0:
+                log.warning("Cannot get OS from Todis for node: %s", node.id)
+                continue
+
+            software = data['nodes'][0]['software']
+
+            if software['osDiscoveryType'] in (TopisOSDiscoveryType.DIRECT.value,):
+                node.os.name, node.os.version = software['os'], software['osVersion']
+                if " " in software['osVersion']:
+                    log.warning("Currently doesn't support space in OS Version for cpe")
+                    continue
+                node.os.cpe = Service.build_cpe(product=software['os'], version=software['osVersion'], type=CPEType.OS)
 
     def _get_nodes_for_scanning(self, timestamp=None):
         """
