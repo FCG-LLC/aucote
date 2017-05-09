@@ -716,8 +716,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
                     'host': 'topdis'
                 },
                 'fetch_os': True
+                }
             }
-        }
 
         mock_get.return_value = Response()
         mock_get.return_value.status_code = 404
@@ -763,8 +763,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
                     'host': 'topdis'
                 },
                 'fetch_os': True
+                }
             }
-        }
 
         mock_get.return_value = Response()
         mock_get.return_value.status_code = 200
@@ -813,8 +813,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
                     'host': 'topdis'
                 },
                 'fetch_os': True
+                }
             }
-        }
 
         mock_get.return_value = Response()
         mock_get.return_value.status_code = 200
