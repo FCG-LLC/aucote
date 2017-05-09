@@ -4,6 +4,7 @@ from urllib.error import URLError
 
 import time
 
+import requests
 from cpe import CPE
 from croniter import croniter
 from netaddr import IPSet
@@ -230,20 +231,28 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertRaises(Exception, ScanAsyncTask._get_topdis_nodes)
 
     @patch('scans.scan_async_task.ScanAsyncTask._get_topdis_nodes')
-    @patch('scans.scan_async_task.cfg.get', MagicMock(return_value='5s'))
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.parse_period', MagicMock(return_value=5))
-    def test_get_nodes_for_scanning(self, mock_get_nodes):
+    def test_get_nodes_for_scanning(self, cfg, mock_get_nodes):
+        cfg._cfg = {
+            'portdetection': {
+                'scan_interval': '5s',
+                'networks': {
+                    'include': ['127.0.0.2/31']
+                }
+            }
+        }
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
         node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
 
-        nodes = [node_1, node_2,]
+        nodes = [node_1, node_2, node_3]
         mock_get_nodes.return_value=nodes
 
-        self.thread.storage.get_nodes = MagicMock(return_value=[node_2, node_3])
+        self.thread.storage.get_nodes = MagicMock(return_value=[node_2])
 
         result = self.thread._get_nodes_for_scanning()
-        expected = [node_1]
+        expected = [node_3]
 
         self.assertListEqual(result, expected)
 
@@ -287,6 +296,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
                 'scans': {
                     'physical': True,
                 }
+            },
+            'topdis': {
+                'fetch_os': False
             },
             'portdetection': {
                 'ports': {
@@ -347,6 +359,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
                     'physical': False,
                 }
             },
+            'topdis': {
+                'fetch_os': False
+            },
             'portdetection': {
                 'ports': {
                     'include': ['T:0-65535', 'U:0-65535', 'S:0-65535'],
@@ -391,6 +406,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
                 'scans': {
                     'physical': True,
                 }
+            },
+            'topdis': {
+                'fetch_os': False
             },
             'portdetection': {
                 'ports': {
@@ -715,6 +733,28 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
     @patch('scans.scan_async_task.requests.get')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_get_os_for_nodes_connection_error(self, cfg, mock_get):
+        cfg._cfg = {
+            'topdis': {
+                'api': {
+                    'port': 80,
+                    'host': 'topdis'
+                },
+                'fetch_os': True
+            }
+        }
+
+        mock_get.side_effect = requests.exceptions.ConnectionError
+        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        node.scan = Scan(start=12)
+
+        self.thread._get_topdis_oses([node])
+
+        self.assertIsNone(node.os.name)
+        self.assertIsNone(node.os.version)
+
+    @patch('scans.scan_async_task.requests.get')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_get_os_for_nodes_empty(self, cfg, mock_get):
         cfg._cfg = {
             'topdis': {
@@ -737,6 +777,30 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         self.assertIsNone(node.os.name)
         self.assertIsNone(node.os.version)
+
+    @patch('scans.scan_async_task.requests.get')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_get_os_for_nodes_request(self, cfg, mock_get):
+        cfg._cfg = {
+            'topdis': {
+                'api': {
+                    'port': 80,
+                    'host': 'topdis'
+                },
+                'fetch_os': True
+            }
+        }
+
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value._content = self.EMPTY_NODE_DETAILS
+
+        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        node.scan = Scan(start=12)
+
+        self.thread._get_topdis_oses([node])
+
+        mock_get.assert_called_once_with('http://topdis:80/api/v1/node?id=1&when=1970-01-01T01:00:12+00:00')
 
     @patch('scans.scan_async_task.Service.build_cpe')
     @patch('scans.scan_async_task.requests.get')
