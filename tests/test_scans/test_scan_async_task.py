@@ -672,7 +672,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
                 'api': {
                     'port': 80,
                     'host': 'topdis'
-                }
+                },
+                'fetch_os': True
             }
         }
         mock_get.return_value = Response()
@@ -682,7 +683,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         node.scan = Scan(start=12)
 
-        self.thread._get_os_for_nodes([node])
+        self.thread._get_topdis_oses([node])
 
         self.assertEqual(node.os.name, 'IOS')
         self.assertEqual(node.os.version, '12.4(11)XW, RELEASE SOFTWARE (fc1)')
@@ -695,7 +696,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
                 'api': {
                     'port': 80,
                     'host': 'topdis'
-                }
+                },
+                'fetch_os': True
             }
         }
 
@@ -706,7 +708,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         node.scan = Scan(start=12)
 
-        self.thread._get_os_for_nodes([node])
+        self.thread._get_topdis_oses([node])
 
         self.assertIsNone(node.os.name)
         self.assertIsNone(node.os.version)
@@ -719,7 +721,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
                 'api': {
                     'port': 80,
                     'host': 'topdis'
-                }
+                },
+                'fetch_os': True
             }
         }
 
@@ -730,7 +733,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         node.scan = Scan(start=12)
 
-        self.thread._get_os_for_nodes([node])
+        self.thread._get_topdis_oses([node])
 
         self.assertIsNone(node.os.name)
         self.assertIsNone(node.os.version)
@@ -744,7 +747,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
                 'api': {
                     'port': 80,
                     'host': 'topdis'
-                }
+                },
+                'fetch_os': True
             }
         }
 
@@ -757,6 +761,26 @@ class ScanAsyncTaskTest(AsyncTestCase):
         node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         node.scan = Scan(start=12)
 
-        self.thread._get_os_for_nodes([node])
+        self.thread._get_topdis_oses([node])
 
         self.assertEqual(node.os.cpe, CPE(mock_cpe.return_value))
+
+    @patch('scans.scan_async_task.requests.get')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_get_os_nodes_topdis_disable(self, cfg, mock_get):
+        cfg._cfg = {
+            'topdis': {
+                'api': {
+                    'port': 80,
+                    'host': 'topdis'
+                },
+                'fetch_os': False
+            }
+        }
+
+        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        node.scan = Scan(start=12)
+
+        self.thread._get_topdis_oses([node])
+
+        self.assertFalse(mock_get.called)
