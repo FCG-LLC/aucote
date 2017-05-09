@@ -645,6 +645,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         self.assertEqual(result, expected)
 
+
     @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
     @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
     @patch('scans.scan_async_task.cfg', new_callable=Config)
@@ -681,6 +682,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         }
 
         cfg.toucan.put.assert_called_once_with('portdetection.status', expected)
+
 
     @patch('scans.scan_async_task.requests.get')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
@@ -774,7 +776,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
         node.scan = Scan(start=12)
 
         self.thread._get_topdis_oses([node])
-
         self.assertIsNone(node.os.name)
         self.assertIsNone(node.os.version)
 
