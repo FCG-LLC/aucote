@@ -765,8 +765,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
                     'host': 'topdis'
                 },
                 'fetch_os': True
-                }
             }
+        }
+
 
         mock_get.return_value = Response()
         mock_get.return_value.status_code = 200
@@ -776,6 +777,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         node.scan = Scan(start=12)
 
         self.thread._get_topdis_oses([node])
+
         self.assertIsNone(node.os.name)
         self.assertIsNone(node.os.version)
 
