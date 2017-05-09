@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import pytz
 
-from utils.time import parse_period, parse_time, parse_time_to_timestamp
+from utils.time import parse_period, parse_time, parse_time_to_timestamp, time_str, parse_timestamp_to_time
 
 
 class TimeTest(TestCase):
@@ -25,4 +25,15 @@ class TimeTest(TestCase):
         when = '2016-05-04T15:32:18' # ISO extended without datetime, should default to UTC.
         result = parse_time(when)
         expected = datetime.datetime(2016, 5, 4, 15, 32, 18, tzinfo=pytz.utc)
+        self.assertEqual(result, expected)
+
+    def test_time_str(self):
+        when = datetime.datetime(2016, 5, 4, 15, 32, 18)
+        result = time_str(when)
+        expected = '2016-05-04T15:32:18+00:00'
+        self.assertEqual(result, expected)
+
+    def test_parse_timestamp_to_time(self):
+        result = parse_timestamp_to_time(12)
+        expected = '1970-01-01T01:00:12+00:00'
         self.assertEqual(result, expected)

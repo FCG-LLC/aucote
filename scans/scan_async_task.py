@@ -12,6 +12,7 @@ import time
 from threading import Lock
 import netifaces
 
+import datetime
 import requests
 from croniter import croniter
 from netaddr import IPSet
@@ -25,7 +26,7 @@ from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
 from utils.async_task_manager import AsyncTaskManager
-from utils.time import parse_period, parse_time_to_timestamp
+from utils.time import parse_period, parse_time_to_timestamp, parse_timestamp_to_time
 
 
 class ScanAsyncTask(object):
@@ -110,13 +111,9 @@ class ScanAsyncTask(object):
         # scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
         scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
 
-        include_networks = self._get_networks_list()
-        exclude_networks = self._get_excluded_networks_list()
-
-        nodes = [node for node in nodes if node.ip.exploded in include_networks
-                 and node.ip.exploded not in exclude_networks]
-
         self.current_scan = nodes
+        if not scan_only:
+            self._get_topdis_oses(nodes=nodes)
 
         if not nodes:
             log.warning("List of nodes is empty")
@@ -213,10 +210,11 @@ class ScanAsyncTask(object):
 
         for node in nodes:
             try:
+                when = parse_timestamp_to_time(node.scan.start)
                 url = 'http://{host}:{port}/api/v1/node?id={node}&when={when}'.format(host=cfg.get('topdis.api.host'),
                                                                                       port=cfg.get('topdis.api.port'),
                                                                                       node=node.id,
-                                                                                      when=node.scan.start)
+                                                                                      when=when)
                 result = requests.get(url)
             except requests.exceptions.ConnectionError:
                 log.exception('Cannot connect to topdis: %s:%s', cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
@@ -242,7 +240,9 @@ class ScanAsyncTask(object):
 
     def _get_nodes_for_scanning(self, timestamp=None):
         """
-        Get nodes for scan since timestamp. If timestamp is None, it is equal: current timestamp - node scan period
+        Get nodes for scan since timestamp.
+            - If timestamp is None, it is equal: current timestamp - node scan period
+            - Restrict nodes to allowed networks
 
         Args:
             timestamp (float):
@@ -255,7 +255,13 @@ class ScanAsyncTask(object):
 
         storage_nodes = self.storage.get_nodes(parse_period(cfg['portdetection.scan_interval']), timestamp=timestamp)
 
-        return list(set(topdis_nodes) - set(storage_nodes))
+        nodes = list(set(topdis_nodes) - set(storage_nodes))
+
+        include_networks = self._get_networks_list()
+        exclude_networks = self._get_excluded_networks_list()
+
+        return [node for node in nodes if node.ip.exploded in include_networks
+                 and node.ip.exploded not in exclude_networks]
 
     @classmethod
     def _get_networks_list(cls):
