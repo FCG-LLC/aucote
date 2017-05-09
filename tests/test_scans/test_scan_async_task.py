@@ -751,7 +751,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
         node.scan = Scan(start=12)
 
         self.thread._get_topdis_oses([node])
-
         self.assertIsNone(node.os.name)
         self.assertIsNone(node.os.version)
 
