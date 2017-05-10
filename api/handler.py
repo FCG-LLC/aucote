@@ -41,14 +41,35 @@ class Handler(RequestHandler):
         BEARER_START = 'Bearer '
 
         def wrap_execute(handler_execute):
+            """
+            Authorize request
+
+            Args:
+                handler_execute:
+
+            Returns:
+
+            """
             def require_auth(handler, *args, **kwargs):
+                """
+                Authorize request
+
+                Args:
+                    handler:
+                    *args:
+                    **kwargs:
+
+                Returns:
+                    bool
+
+                """
                 auth_header = handler.request.headers.get('Authorization')
 
                 if auth_header is not None and len(auth_header) < MAX_PASSWORD_HEADER_LENGTH \
                         and auth_header.startswith(BEARER_START):
                     password = auth_header[len(BEARER_START):]
                     password_hash = hashlib.sha512(password.encode()).hexdigest()
-                    correct = cfg.get('service.api.password')
+                    correct = cfg['service.api.password']
 
                     if password_hash == correct:
                         return True

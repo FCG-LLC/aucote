@@ -35,16 +35,11 @@ class TaskMapper:
         scripts = self._aucote.exploits.find_all_matching(port)
 
         for app, exploits in scripts.items():
-            if not cfg.get('tools.{0}.enable'.format(app)):
+            if not cfg['tools.{0}.enable'.format(app)]:
                 continue
 
             log.info("Found %i exploits", len(exploits))
-
-            try:  # TODO: Move it to Tucan once it is ready.
-                periods = cfg.get('tools.{0}.periods'.format(app)).cfg
-            except KeyError:
-                periods = {}
-                log.info("Cannot find periods configuration for %s. Using default.", app)
+            periods = cfg.get('tools.{0}.periods.*'.format(app)).cfg
 
             scans = storage.get_scan_info(port=port, app=app)
 
@@ -56,15 +51,8 @@ class TaskMapper:
                     exploits.remove(scan['exploit'])
 
             if not isinstance(port, SpecialPort):
-                try:  # TODO: Move it to Tucan once it is ready.
-                    script_networks = cfg.get('tools.{0}.script_networks'.format(app)).cfg
-                except KeyError:
-                    script_networks = {}
-
-                try:  # TODO: Move it to Tucan once it is ready.
-                    app_networks = cfg.get('tools.{0}.networks'.format(app)).cfg
-                except KeyError:
-                    app_networks = None
+                script_networks = cfg.get('tools.{0}.script_networks.*'.format(app)).cfg
+                app_networks = cfg.get('tools.{0}.networks'.format(app)).cfg or None
 
                 for exploit in reversed(exploits):
                     networks = script_networks.get(exploit.name, None)

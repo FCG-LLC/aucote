@@ -54,7 +54,8 @@ EXECUTOR_CONFIG = {
                     'parser': NmapBrutParser
                 },
                 'ipmi-dumphashes': {
-                    'args': 'userdb=static/nmap/usernames.lst,passdb=static/nmap/passwords.lst,dumphashes=1,brute.emptypass=1',
+                    'args': 'userdb=static/nmap/usernames.lst,passdb=static/nmap/passwords.lst,'
+                            'dumphashes=1,brute.emptypass=1',
                     'parser': NmapBrutParser
                 },
                 'supermicro-ipmi-conf': {

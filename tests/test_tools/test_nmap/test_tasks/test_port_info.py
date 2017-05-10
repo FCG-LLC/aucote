@@ -83,6 +83,17 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port_info = NmapPortInfoTask(aucote=self.aucote, port=self.port)
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
 
+        self.cfg = {
+            'portdetection': {
+                'port_scan_rate': 1337
+            },
+            'tools': {
+                'nmap': {
+                    'scripts_dir': 'test'
+                }
+            }
+        }
+
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     def test_prepare_args(self):
         self.port_info.prepare_args = MagicMock()
@@ -94,10 +105,8 @@ class NmapPortInfoTaskTest(unittest.TestCase):
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     def test_tcp_scan(self, cfg):
         cfg._cfg = {
-            'service': {
-                'scans': {
-                    'port_scan_rate': 1337
-                }
+            'portdetection': {
+                'port_scan_rate': 1337
             },
             'tools': {
                 'nmap': {
@@ -121,10 +130,8 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port_info._port.transport_protocol = TransportProtocol.UDP
 
         cfg._cfg = {
-            'service': {
-                'scans': {
-                    'port_scan_rate': 1337
-                }
+            'portdetection': {
+                'port_scan_rate': 1337
             },
             'tools': {
                 'nmap': {
@@ -138,7 +145,9 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
-    def test_parser_with_banner(self):
+    @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
+    def test_parser_with_banner(self, cfg):
+        cfg._cfg = self.cfg
         self.port_info()
 
         result = self.port_info._port
@@ -147,7 +156,9 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertEqual(result.service_version, '1.2.3')
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
-    def test_parser_with_banner_and_without_service(self):
+    @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
+    def test_parser_with_banner_and_without_service(self, cfg):
+        cfg._cfg = self.cfg
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_BANNER))
         self.port_info()
 
@@ -167,7 +178,9 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
-    def test_add_port_scan_info(self, mock_serializer):
+    @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
+    def test_add_port_scan_info(self, cfg, mock_serializer):
+        cfg._cfg = self.cfg
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_BANNER))
         self.port_info()
 
@@ -175,7 +188,9 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 
         self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)
 
-    def test_prepare_args_ipv6(self):
+    @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
+    def test_prepare_args_ipv6(self, cfg):
+        cfg._cfg = self.cfg
         self.port_info._port = self.port_ipv6
 
         result = self.port_info.prepare_args()
@@ -184,7 +199,9 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertIn(expected, result)
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
-    def test_http_with_tunnel(self, mock_serializer):
+    @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
+    def test_http_with_tunnel(self, cfg, mock_serializer):
+        cfg._cfg = self.cfg
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
         self.port_info()
 
@@ -194,7 +211,9 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
-    def test_scan_only_true(self, mock_serializer):
+    @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
+    def test_scan_only_true(self, cfg, mock_serializer):
+        cfg._cfg = self.cfg
         self.port_info.scan_only = True
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
         self.port_info()
@@ -202,7 +221,9 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertFalse(self.aucote.task_mapper.assign_tasks.called)
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
-    def test_scan_only_false(self, mock_serializer):
+    @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
+    def test_scan_only_false(self, cfg, mock_serializer):
+        cfg._cfg = self.cfg
         self.port_info.scan_only = False
         self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
         self.port_info()

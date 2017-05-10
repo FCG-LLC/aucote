@@ -1,7 +1,8 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch, mock_open, call
 
 from utils import Config
+from utils.exceptions import ToucanException
 
 
 class ConfigTest(TestCase):
@@ -26,7 +27,6 @@ class ConfigTest(TestCase):
         a: dog'''
 
     def setUp(self):
-        self.config = Config(cfg = self.CONFIG)
 
         self.CONFIG = {
             'alice': {
@@ -39,6 +39,7 @@ class ConfigTest(TestCase):
             },
             'config_filename': 'test',
         }
+        self.config = Config(cfg=self.CONFIG)
 
     def test_len(self):
         self.assertEqual(len(self.config), 2)
@@ -104,7 +105,7 @@ class ConfigTest(TestCase):
 
     @patch('builtins.open', mock_open(read_data=YAML))
     def test_load_yaml_without_defaults(self):
-        expected = {'alice': {'has': {'a': 'dog'}}, 'config_filename': 'test'}
+        expected = {'alice': {'has': {'not': ['cat'], 'a': 'dog'}}, 'config_filename': 'test'}
 
         self.config.load('test')
 
@@ -121,6 +122,11 @@ class ConfigTest(TestCase):
         self.assertEqual(self.config.get('alice.has.a'), 'cat')
         self.assertEqual(self.config.get('alice.has.not.0'), 'cat')
         self.assertDictEqual(self.config.get('alice.has')._cfg, self.CONFIG['alice']['has'])
+        self.assertRaises(KeyError, self.config.get, 'alice.has.a.cat.named.kitty')
+
+    def test_get_toucan_exception(self):
+        self.config.toucan = MagicMock()
+        self.config.toucan.get = MagicMock(side_effect=ToucanException)
         self.assertRaises(KeyError, self.config.get, 'alice.has.a.cat.named.kitty')
 
     def test_get_non_exist(self):
@@ -143,7 +149,18 @@ class ConfigTest(TestCase):
         self.config._cfg['alice'] = None
         filename = 'test_filename'
         self.config.reload(filename)
-        self.config.load.assert_called_once_with(filename, self.CONFIG)
+        cfg =  {
+            'alice': {
+                'has': {
+                    'a': 'cat',
+                    'not': [
+                        'cat'
+                    ]
+                },
+            },
+            'config_filename': 'test',
+        }
+        self.config.load.assert_called_once_with(filename, cfg)
 
     def test_contains(self):
         self.assertIn('cat', self.config['alice.has.not'])
@@ -153,3 +170,96 @@ class ConfigTest(TestCase):
 
     def test_not_list(self):
         self.assertNotIn('dog', self.config['alice.has'])
+
+    def test_set(self):
+        expected = MagicMock()
+        self.config['test.adding.key'] = expected
+        result = self.config._cfg.get('test', {}).get('adding', {}).get('key', None)
+
+        self.assertEqual(result, expected)
+
+    def test_set_exist_key(self):
+        self.config._cfg = {
+            'test': {
+                'adding': {
+                    'key': 'exist_key'
+                }
+            }
+        }
+        expected = MagicMock()
+        self.config['test.adding.key'] = expected
+        result = self.config._cfg.get('test', {}).get('adding', {}).get('key', None)
+
+        self.assertEqual(result, expected)
+
+    @patch('utils.config.time.time', MagicMock(return_value=20))
+    def test_get_non_exist_key_with_toucan(self):
+        self.config.toucan = MagicMock()
+        self.config.toucan.is_special.return_value = False
+        self.cache_time = 1
+        expected = 'test_value'
+        self.config.toucan.get.return_value = expected
+
+        result = self.config['non.exisists.key']
+
+        self.assertEqual(result, expected)
+        self.config.toucan.get.assert_called_once_with('non.exisists.key')
+
+    @patch('utils.config.time.time', MagicMock(return_value=20))
+    def test_get_cached_config_with_toucan(self):
+        self.config.toucan = MagicMock()
+        self.config.timestamps = {
+            'alice.has.a': 15,
+        }
+        self.config._immutable = {}
+        self.config.cache_time = 10
+        expected = 'cat'
+        self.assertFalse(self.config.toucan.get.called)
+
+        result = self.config['alice.has.a']
+        self.assertEqual(result, expected)
+
+    @patch('utils.config.time.time')
+    def test_get_strict_config_with_toucan(self, mock_time):
+        self.config.toucan = MagicMock()
+        self.config.timestamps = {
+            'alice.has.a': 15,
+        }
+        self.config._immutable = {'alice.has.a'}
+        self.config.cache_time = 10
+        expected = 'cat'
+        result = self.config['alice.has.a']
+
+        self.assertFalse(self.config.toucan.get.called)
+
+        self.assertEqual(result, expected)
+
+    @patch('utils.config.time.time', MagicMock(return_value=50))
+    def test_get_special_config_with_toucan(self):
+        self.config.toucan = MagicMock()
+        self.config.toucan.is_special.return_value = True
+        self.config.toucan.get.return_value = {'alice.has.a': 'cat', 'test.key': 'test_value'}
+        self.config.timestamps = {
+            'alice.has.a': 15,
+        }
+        self.config.cache_time = 10
+        expected = 'cat'
+
+        result = self.config['alice.has.a']
+        self.assertEqual(result, expected)
+        self.assertEqual(self.config['test.key'], 'test_value')
+        self.assertEqual(self.config.timestamps['alice.has.a'], 50)
+        self.assertEqual(self.config.timestamps['test.key'], 50)
+
+    def test_multtiple_key(self):
+        result = self.config._get('alice.*')
+        expected = {
+            'has': {
+                'a': 'cat',
+                'not': [
+                    'cat'
+                ]
+            }
+        }
+
+        self.assertEqual(result, expected)

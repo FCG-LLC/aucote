@@ -27,7 +27,6 @@ from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.threads import ThreadPool
 from utils.kudu_queue import KuduQueue
-import utils.log as log_cfg
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
 
@@ -57,7 +56,6 @@ def main():
     # read configuration
     cfg_load(args.cfg)
 
-    log_cfg.config(cfg.get('logging'))
     log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
 
     try:
@@ -67,17 +65,17 @@ def main():
         log.error("There is another Aucote instance running already")
         sys.exit(1)
 
-    exploit_filename = cfg.get('fixtures.exploits.filename')
+    exploit_filename = cfg['fixtures.exploits.filename']
     try:
         exploits = Exploits.read(file_name=exploit_filename)
     except NmapUnsupported:
         log.exception("Cofiguration seems to be invalid. Check ports and services or contact with collective-sense")
         exit(1)
 
-    with KuduQueue(cfg.get('kuduworker.queue.address')) as kudu_queue:
+    with KuduQueue(cfg['kuduworker.queue.address']) as kudu_queue:
 
         try:
-            os.remove(cfg.get('service.scans.storage'))
+            os.remove(cfg['service.scans.storage'])
         except FileNotFoundError:
             pass
 

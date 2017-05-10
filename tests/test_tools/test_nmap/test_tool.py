@@ -136,7 +136,7 @@ class NmapToolTest(TestCase):
         self.nmap_tool()
         self.assertEqual(port_scan_mock.call_count, 2)
 
-    @patch('tools.base.cfg', new_callable=Config)
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
     def test_custom_args_dns_zone_transfer(self, cfg):
         cfg._cfg = self.cfg
         cfg._cfg['tools']['nmap']['domains'] = ['test.host', 'test.host2']
@@ -144,7 +144,7 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(NmapTool.custom_args_dns_zone_transfer(), expected)
 
-    @patch('tools.base.cfg', new_callable=Config)
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
     def test_custom_args_dns_check_zone(self, cfg):
         cfg._cfg = self.cfg
         cfg._cfg['tools']['nmap']['domains'] = ['test.host', 'test.host2']
@@ -166,7 +166,7 @@ class NmapToolTest(TestCase):
     @patch('tools.nmap.tool.cfg', new_callable=Config)
     def test_disable_script_by_cfg(self, cfg, nmap_script):
         cfg._cfg = self.cfg
-        cfg._cfg['tools']['nmap']['disable_scripts'] = Config({'test_name', 'test_name2'})
+        cfg._cfg['tools']['nmap']['disable_scripts'] = ['test_name', 'test_name2']
 
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.nmap_tool()
@@ -174,14 +174,16 @@ class NmapToolTest(TestCase):
         self.assertFalse(nmap_script.called)
 
     @patch('tools.nmap.tool.NmapScript')
-    def test_disable_script_by_internal_cfg(self, nmap_script):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_disable_script_by_internal_cfg(self, cfg, nmap_script):
+        cfg._cfg = self.cfg
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.nmap_tool.config['disable_scripts'] = {'test_name', 'test_name2'}
         self.nmap_tool()
 
         self.assertFalse(nmap_script.called)
 
-    @patch('tools.base.cfg', new_callable=Config)
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
     def test_custom_args_dns_srv_enum(self, cfg):
         cfg._cfg = self.cfg
         cfg._cfg['tools']['nmap']['domains'] = ['test.host', 'test.host2']
@@ -189,7 +191,7 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(NmapTool.custom_args_dns_srv_enum(), expected)
 
-    @patch('tools.base.cfg', new_callable=Config)
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
     def test_custom_args_http_domino_enum_passwords(self, cfg):
         cfg._cfg = self.cfg
         cfg._cfg['tools']['nmap']['domino-http'] = {"username": "test_usernm", "password": "test_passwd"}
@@ -204,7 +206,15 @@ class NmapToolTest(TestCase):
 
         self.assertEqual(NmapTool.custom_args_http_useragent(), expected)
 
-    def test_custom_service_args(self):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_custom_service_args(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'disable_scripts': []
+                }
+            }
+        }
         custom_args = MagicMock(return_value="test_arg")
         self.config['services'] = {
             'test_service': {
@@ -220,7 +230,15 @@ class NmapToolTest(TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].args, expected)
 
-    def test_empty_custom_service_args(self):
+    @patch('tools.nmap.tool.cfg', new_callable=Config)
+    def test_empty_custom_service_args(self, cfg):
+        cfg._cfg = {
+            'tools': {
+                'nmap': {
+                    'disable_scripts': []
+                }
+            }
+        }
         self.nmap_tool.config = self.config
         self.nmap_tool.exploits = [self.exploit]
 
@@ -258,5 +276,82 @@ class NmapToolTest(TestCase):
         }
         result = self.nmap_tool.rate
         expected = 7331
+
+        self.assertEqual(result, expected)
+    def test_parse_nmap_ports_coma_separated_without_protocol(self):
+        ports = ["22", "80", "90"]
+
+        expected = {
+            TransportProtocol.TCP: {22, 80, 90},
+            TransportProtocol.UDP: set(),
+            TransportProtocol.SCTP: set()
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
+
+        self.assertEqual(result, expected)
+
+    def test_parse_nmap_ports_coma_separated_with_protocols(self):
+        ports = ["T:22", "80", "U:80", "90", "S:1", "2", "18"]
+
+        expected = {
+            TransportProtocol.TCP: {22, 80},
+            TransportProtocol.UDP: {80, 90},
+            TransportProtocol.SCTP: {1, 2, 18}
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
+
+        self.assertEqual(result, expected)
+
+    def test_parse_nmap_ports_range_without_protocol(self):
+        ports = ["22-30"]
+
+        expected = {
+            TransportProtocol.TCP: {22, 23, 24, 25, 26, 27, 28, 29, 30},
+            TransportProtocol.UDP: set(),
+            TransportProtocol.SCTP: set()
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
+
+        self.assertEqual(result, expected)
+
+    def test_parse_nmap_ports_range_with_protocol(self):
+        ports = ["T:22-30", "U:1-5", "S:13-14"]
+
+        expected = {
+            TransportProtocol.TCP: {22, 23, 24, 25, 26, 27, 28, 29, 30},
+            TransportProtocol.UDP: {1, 2, 3, 4, 5},
+            TransportProtocol.SCTP: {13, 14}
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
+
+        self.assertEqual(result, expected)
+
+    def test_parse_nmap_ports_everything(self):
+        ports = ["T:22", "80-82", "U:78-80,U:90", "S:1-2", "18-20"]
+
+        expected = {
+            TransportProtocol.TCP: {22, 80, 81, 82},
+            TransportProtocol.UDP: {78, 79, 80, 90},
+            TransportProtocol.SCTP: {1, 2, 18, 19, 20}
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
+
+        self.assertEqual(result, expected)
+
+    def test_parse_nmap_ports_empty(self):
+        ports = []
+
+        expected = {
+            TransportProtocol.TCP: set(),
+            TransportProtocol.UDP: set(),
+            TransportProtocol.SCTP: set()
+        }
+
+        result = self.nmap_tool.parse_nmap_ports(ports)
 
         self.assertEqual(result, expected)

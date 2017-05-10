@@ -8,7 +8,7 @@ from collections import defaultdict
 import itertools
 
 from aucote_cfg import cfg
-from structs import RiskLevel
+from structs import RiskLevel, TransportProtocol
 from tools.base import Tool
 from tools.nmap.base import NmapScript
 from tools.nmap.parsers import NmapVulnParser, NmapInfoParser
@@ -58,7 +58,7 @@ class NmapTool(Tool):
         tasks = []
 
         disabled_scripts = self.config.get('disable_scripts', set()).copy()
-        disabled_scripts.update(set(cfg.get('tools.nmap.disable_scripts').cfg or []))
+        disabled_scripts.update(set(cfg['tools.nmap.disable_scripts'] or []))
 
         for exploit in self.exploits:
             name = exploit.name
@@ -79,9 +79,8 @@ class NmapTool(Tool):
             if callable(args):
                 try:
                     args = args()
-                except ImproperConfigurationException as exception:
-                    log.warning("%s is not configured: Please configure %s in %s", name, exception,
-                                cfg.get('config_filename'))
+                except ImproperConfigurationException:
+                    log.warning("Please set up %s in configuration", name)
                     continue
 
             if not isinstance(args, (list, set)):
@@ -116,7 +115,7 @@ class NmapTool(Tool):
             list
 
         """
-        domains = cls.get_config('tools.nmap.domains')
+        domains = cfg['tools.nmap.domains']
         return ['dns-zone-transfer.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
@@ -128,7 +127,7 @@ class NmapTool(Tool):
             list
 
         """
-        domains = cls.get_config('tools.nmap.domains')
+        domains = cfg['tools.nmap.domains']
         return ['dns-srv-enum.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
@@ -140,7 +139,7 @@ class NmapTool(Tool):
             list
 
         """
-        domains = cls.get_config('tools.nmap.domains')
+        domains = cfg['tools.nmap.domains']
         return ['dns-check-zone.domain={0}'.format(domain) for domain in domains]
 
     @classmethod
@@ -152,9 +151,10 @@ class NmapTool(Tool):
             str
 
         """
-        config = cls.get_config('tools.nmap.domino-http')
-        return "domino-enum-passwords.username='{0}',domino-enum-passwords.password={1}".format(
-            config.get('username', None), config.get('password', None))
+        username = cfg['tools.nmap.domino-http.username']
+        password = cfg['tools.nmap.domino-http.password']
+
+        return "domino-enum-passwords.username='{0}',domino-enum-passwords.password={1}".format(username, password)
 
     @classmethod
     def custom_args_http_useragent(cls):
@@ -165,7 +165,7 @@ class NmapTool(Tool):
             str
 
         """
-        config = cfg.get('service.scans.useragent')
+        config = cfg['service.scans.useragent']
         if config:
             return "http.useragent='{0}'".format(config)
 
@@ -179,6 +179,54 @@ class NmapTool(Tool):
 
         """
         try:
-            return cfg.get('tools.nmap.rate')
+            return cfg['tools.nmap.rate']
         except KeyError:
-            return cfg.get('tools.common.rate')
+            return cfg['tools.common.rate']
+
+    @staticmethod
+    def parse_nmap_ports(sections):
+        """
+        Parses nmap ports argument and returns dictionary of sets
+
+        Args:
+            port_string (str):
+
+        Returns:
+            dict
+
+        """
+
+        return_value = {
+            "T": set(),
+            "U": set(),
+            "S": set()
+        }
+
+        if isinstance(sections, str):
+            sections = sections.split(",")
+
+        if isinstance(sections, list):
+            sections = [element for section in sections for element in section.split(",")]
+
+        protocol = "T"
+
+        for section in sections:
+            if not section:
+                continue
+
+            if ":" in section:
+                protocol = section[0]
+                section = section[2:]
+
+            if "-" in section:
+                range_args = [int(el) for el in section.split("-")]
+                return_value[protocol] |= set(range(range_args[0], range_args[1]+1))
+                continue
+
+            return_value[protocol] |= {int(section)}
+
+        return {
+            TransportProtocol.TCP: return_value["T"],
+            TransportProtocol.UDP: return_value["U"],
+            TransportProtocol.SCTP: return_value["S"]
+        }

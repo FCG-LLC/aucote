@@ -4,14 +4,19 @@ This module provides default configuration and the global instance for the utils
 import os.path as path
 from sys import stderr
 
+import yaml
+
+import utils.log as log_cfg
 from utils import Config
 
-#default values
+# default values
+from utils.toucan import Toucan
+
 _DEFAULT = {
-    'logging':{
+    'logging': {
         'file': lambda: path.join(path.dirname(__file__), 'aucote.log'),
         'level': 'info',
-        'max_file_size': 10*1024*1024,
+        'max_file_size': 10 * 1024 * 1024,
         'max_files': 5,
         'format': '%(levelname)s %(asctime)s %(threadName)s: %(message)s'
     },
@@ -20,81 +25,48 @@ _DEFAULT = {
             'filename': 'fixtures/exploits/exploits.csv'
         }
     },
-    'database': {
-        'migration':{
-            'path': lambda: path.join(path.dirname(__file__), 'migrations'),
-        },
-        'credentials':{
-            'port': 5432
-        }
-    },
-    'topdis':{
+    'topdis': {
         'api': {
             'host': 'localhost',
             'port': 1234
         }
     },
-    'tools':{
-        'nmap':{
-            'cmd': 'nmap',
-            'enable': True,
-            'period': '1d',
-            'disable_scripts': [],
-            'scripts_dir': './static/nmap/'
-        },
-        'masscan': {
-            'cmd': 'masscan',
-            'args': []
-        },
-        'hydra': {
-            'cmd': 'hydra',
-            'loginfile': 'static/logins.hydra.txt',
-            'passwordfile': 'static/passwords.hydra.txt',
-            'enable': True,
-            'disable_services': ['vnc', 'http', 'https'],
-            'period': '1d'
-        },
-        'skipfish': {
-            'cmd': 'skipfish',
-            'enable': True,
-            'limit': '0:10:00',
-            'threads': 5,
-            'tmp_directory': '/tmp',
-            'period': '1d'
-        },
-        'aucote-http-headers': {
-            'enable': True,
-            'period': ''
-        },
-        'common': {
-            'rate': 80
-        }
+    'toucan': {
+        'enable': True,
+        'api': 'http://toucan:3000',
+        'min_retry_time': 5,
+        'max_retry_time': 60 * 5,
+        'max_retry_count': 20
     },
-    'service': {
-        'scans': {
-            'useragent': None,
-            'threads': 10,
-            'ports': '0-65535,U:0-65535',
-            'network_scan_rate': 1000,
-            'port_scan_rate': 1000,
-            'port_period': '5m',
-            'node_period': '1m',
-            'storage': 'storage.sqlite3',
-            'physical': True,
-            'broadcast': True
-        },
-        "api": {
-            'v1': {
-                'host': '0.0.0.0',
-                'port': 1235
-            }
-        }
-    },
-    'pid_file': 'aucote.pid'
+    'pid_file': 'aucote.pid',
+    'default_config': 'aucote_cfg_default.yaml',
 }
 
-#global cfg
+# global cfg
 cfg = Config(_DEFAULT)
+
+
+def start_toucan(default_config):
+    """
+    Initialize Toucan
+
+    Args:
+        default_config:
+
+    Returns:
+        None
+
+    """
+    Toucan.min_retry_time = cfg['toucan.min_retry_time']
+    Toucan.max_retry_time = cfg['toucan.max_retry_time']
+    Toucan.max_retry_count = cfg['toucan.max_retry_count']
+
+    cfg.toucan = Toucan(api=cfg['toucan.api'])
+
+    with open(default_config, "r") as file:
+        config = yaml.load(file)
+
+    cfg.toucan.push_config(config, overwrite=False)
 
 
 def load(file_name=None):
@@ -104,14 +76,27 @@ def load(file_name=None):
     '''
 
     if file_name is None:
-        #by default search for "confg.yaml" in application dir
+        # by default search for "confg.yaml" in application dir
         file_name = path.join(path.dirname(__file__), 'aucote_cfg.yaml')
 
     file_name = path.abspath(file_name)
-    #at this point logs do not work, print info to stdout
+    # at this point logs do not work, print info to stdout
     print("Reading configuration from file:", file_name)
     try:
         cfg.load(file_name, _DEFAULT)
     except Exception:
         stderr.write("Cannot load configuration file {0}".format(file_name))
         exit()
+
+    log_cfg.config(cfg['logging'])
+
+    default_config_filename = cfg['default_config']
+
+    if cfg.get('toucan.enable'):
+        start_toucan(default_config_filename)
+    else:
+        try:
+            cfg.load(default_config_filename, cfg.cfg)
+        except Exception:
+            stderr.write("Cannot load configuration file {0}".format(default_config_filename))
+            exit()

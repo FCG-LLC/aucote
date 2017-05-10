@@ -38,31 +38,33 @@ class OpenPortsParserTest(unittest.TestCase):
 </nmaprun>
     """
 
-    BANNER_XML = r'''<?xml version="1.0" encoding="UTF-8"?>
+    BANNER_OUTPUT_XML = r'''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE nmaprun>
 <?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
-<!-- Nmap 7.40 scan initiated Wed Feb 15 15:54:54 2017 as: nmap -oX - -p 22 -&#45;script banner localhost -->
-<nmaprun scanner="nmap" args="nmap -oX - -p 22 -&#45;script banner localhost" start="1487170494" startstr="Wed Feb 15 15:54:54 2017" version="7.40" xmloutputversion="1.04">
-<scaninfo type="syn" protocol="tcp" numservices="1" services="22"/>
+<!-- Nmap 7.12 scan initiated Tue Aug 23 10:47:08 2016 as: nmap -n -&#45;privileged -oX - -T4 -p 0-1000 -sV 192.168.1.5 -->
+<nmaprun scanner="nmap" args="nmap -n -&#45;privileged -oX - -T4 -p 0-1000 -sV 192.168.1.5" start="1471942028" startstr="Tue Aug 23 10:47:08 2016" version="7.12" xmloutputversion="1.04">
+<scaninfo type="syn" protocol="tcp" numservices="1001" services="0-1000"/>
 <verbose level="0"/>
 <debugging level="0"/>
-<host starttime="1487170494" endtime="1487170494"><status state="up" reason="localhost-response" reason_ttl="0"/>
+<host starttime="1471942029" endtime="1471942067"><status state="up" reason="echo-reply" reason_ttl="62"/>
 <address addr="127.0.0.1" addrtype="ipv4"/>
 <hostnames>
-<hostname name="localhost" type="user"/>
-<hostname name="localhost" type="PTR"/>
 </hostnames>
-<ports><port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="ssh" method="table" conf="3"/><script id="banner" output="SSH-2.0-OpenSSH_7.4p1 Debian-6"/></port>
+<ports><extraports state="closed" count="993">
+<extrareasons reason="resets" count="993"/>
+</extraports>
+<port protocol="tcp" portid="993"><state state="open" reason="syn-ack" reason_ttl="62"/><service name="imap" product="Dovecot imapd" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:dovecot:dovecot</cpe></service><script id="banner" output="test_banner"/></port>
 </ports>
-<times srtt="149" rttvar="5000" to="100000"/>
+<times srtt="220492" rttvar="5732" to="243420"/>
 </host>
-<runstats><finished time="1487170494" timestr="Wed Feb 15 15:54:54 2017" elapsed="0.80" summary="Nmap done at Wed Feb 15 15:54:54 2017; 1 IP address (1 host up) scanned in 0.80 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+<runstats><finished time="1471942067" timestr="Tue Aug 23 10:47:47 2016" elapsed="38.93" summary="Nmap done at Tue Aug 23 10:47:47 2016; 1 IP address (1 host up) scanned in 38.93 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+>>>>>>> Define ports/networks include/exclude values
 </runstats>
 </nmaprun>'''
 
     MASSCAN_OUTPUT = ET.fromstring(MASSSCAN_OUTPUT_XML)
+    BANNER_OUTPUT = ET.fromstring(BANNER_OUTPUT_XML)
     NO_PORTS_ELEMENT = ET.fromstring(NO_PORTS_OUTPUT)
-    BANNER_OUTPUT = ET.fromstring(BANNER_XML)
 
     def setUp(self):
         self.parser = OpenPortsParser()
@@ -86,13 +88,14 @@ class OpenPortsParserTest(unittest.TestCase):
         self.assertEqual(ports[1].node, self.node)
         self.assertEqual(ports[1].scan.start, 1234)
 
-    def test_parse_with_banner(self):
-        self.node_by_ip = {self.node.ip: self.node}
-        ports = self.parser.parse(self.BANNER_OUTPUT, self.node_by_ip)
-        self.assertEqual(ports[0].banner, 'SSH-2.0-OpenSSH_7.4p1 Debian-6')
-
     def test_no_ports_scan(self):
         result = self.parser.parse(self.NO_PORTS_ELEMENT, self.node_by_ip)
         expected = []
 
         self.assertEqual(result, expected)
+
+    def test_banner(self):
+        result = self.parser.parse(self.BANNER_OUTPUT, self.node_by_ip)
+
+        self.assertEqual(result[0].banner, 'test_banner')
+

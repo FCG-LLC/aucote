@@ -27,10 +27,10 @@ class Executor(Task):
         self._ports = []
         self.ports = nodes or []
         self.scan_only = scan_only
-        if cfg.get('service.scans.broadcast'):
+        if cfg['service.scans.broadcast']:
             broadcast_port = BroadcastPort()
             broadcast_port.scan = Scan(start=time.time())
-            self.ports.append(broadcast_port)
+            self._ports.append(broadcast_port)
 
     @property
     def storage(self):
@@ -71,7 +71,7 @@ class Executor(Task):
 
         """
         ports = self.ports
-        storage_ports = self.storage.get_ports(parse_period(cfg.get('service.scans.port_period')))
+        storage_ports = self.storage.get_ports(parse_period(cfg['service.scans.port_period']))
 
         ports = self._get_ports_for_scanning(ports, storage_ports)
         log.info("Found %i recently not scanned ports", len(ports))

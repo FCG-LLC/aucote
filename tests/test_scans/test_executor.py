@@ -3,28 +3,40 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from scans.executor import Executor
-from structs import Node, Port, TransportProtocol
+from structs import Node, Port, TransportProtocol, BroadcastPort
+from utils import Config
+from utils.storage import Storage
 from utils.threads import ThreadPool
 
 
-@patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
 class ExecutorTest(TestCase):
 
-    def setUp(self):
+    @patch('scans.executor.cfg', new_callable=Config)
+    def setUp(self, cfg):
+        cfg._cfg = {
+            'service': {
+                'scans': {
+                    'broadcast': True,
+                    'port_period': None
+                }
+            }
+        }
+        self.cfg = cfg
         self.aucote = MagicMock()
         self.aucote.storage = MagicMock()
         self.executor = Executor(aucote=self.aucote)
 
     def test_init(self):
-        executor = Executor(aucote=self.aucote)
-
-        self.assertEqual(executor.exploits, self.aucote.exploits)
-        self.assertEqual(executor.thread_pool, self.aucote.thread_pool)
+        self.assertEqual(self.executor.exploits, self.aucote.exploits)
+        self.assertEqual(self.executor.thread_pool, self.aucote.thread_pool)
+        self.assertEqual(self.executor.ports, [BroadcastPort()])
 
     @patch('tools.masscan.MasscanPorts.scan_ports', MagicMock(return_value=[MagicMock()]))
     @patch('scans.executor.parse_period', MagicMock(return_value=10))
     @patch('scans.executor.Executor._get_ports_for_scanning')
-    def test_run_executor(self, mock_get_ports):
+    @patch('scans.executor.cfg', new_callable=Config)
+    def test_run_executor(self, cfg, mock_get_ports):
+        cfg._cfg = self.cfg._cfg
         self.executor._thread_pool = ThreadPool()
         port = Port(node=None, number=12, transport_protocol=TransportProtocol)
         mock_get_ports.return_value = [port]
@@ -76,7 +88,7 @@ class ExecutorTest(TestCase):
         self.assertNotEqual(id(result), id(expected))
 
     @patch('scans.executor.NmapPortInfoTask')
-    @patch('scans.executor.cfg')
+    @patch('scans.executor.cfg', new_callable=Config)
     def test_scan_only(self, mock_cfg, mock_port_info):
         mock_cfg.get = MagicMock(return_value="0s")
         self.executor.scan_only = MagicMock()

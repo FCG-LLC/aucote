@@ -36,7 +36,7 @@ class Command(object):
         if args is None:
             args = []
 
-        all_args = [cfg.get('tools.%s.cmd' % self.NAME)]
+        all_args = [cfg['tools.%s.cmd' % self.NAME]]
         all_args.extend(self.COMMON_ARGS)
         all_args.extend(args)
         cmd = ' '.join(all_args),
@@ -66,7 +66,7 @@ class Command(object):
         if args is None:
             args = []
 
-        all_args = [cfg.get('tools.%s.cmd' % self.NAME)]
+        all_args = [cfg['tools.%s.cmd' % self.NAME]]
         all_args.extend(self.COMMON_ARGS)
         all_args.extend(args)
         cmd = ' '.join(all_args),

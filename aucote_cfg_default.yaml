@@ -1,0 +1,176 @@
+# This section provides configurations related to aucote as a service
+# service:
+#   scans:
+#     useragent: <str> - User-Agent string used by Aucote scripts.
+#     storage: <str> - Path to local storage. Local storage is a SQLite3 database file.
+#     threads: <int> - Number of threads to be running
+#     port_period: <period> - Minimal port scanning period
+#     broadcast: (True|False) - Enable broadcast scanning if True (default)
+#     physical: (True|False) - Enable scanning of aucote's host physical interfaces (e.g. eth0) if True (default)
+#
+#   api:
+#     v1:
+#       host: <ip>  - IP on which web server should listen
+#       port: (int) - port on which web server should listen
+#     password: <hexstr> - SHA512 hash of password in hexadecimal format
+#                          Require for admin operations, e.g. killing aucote process.
+#                          Please do not use default password!
+
+service:
+    scans:
+        useragent: "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
+        storage: "tmp/storage.sqlite3"
+        threads: 30
+        port_period: 15m
+        physical: False
+        broadcast: False
+    api:
+        v1:
+            host: 0.0.0.0
+            port: 1235
+        # password: ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff # password: test
+
+
+# This section contains port detection configuration
+# portdetection:
+#   scan_enable: - Defines if scan is enable or not
+#   scan_cron: <cron-like format> - This options defines how often aucote should run scans. This time is in UTC!
+#                                   Examples:
+#                                     "*/5 * * * *" - run every 5 minutes
+#                                     "1 2 3 4 5" - run every 3rd march at 2:01, if it is friday(5)
+#                                   More information: http://www.nncron.ru/help/EN/working/cron-format.htm
+#                                                     https://en.wikipedia.org/wiki/Cron#CRON_expression
+#   tools_cron: <cron-like format> - This options defines how often aucote should run tools scan (nmap, hydra, etc)
+#   scan_interval: <int> - minimum number of seconds between particular host scan
+#   networks: - list of networks in CIDR format (eg. 127.0.0.1/32), which should be or shouldn't be scanned
+#     include:
+#       - <network in CIDR format>
+#       - ...
+#     exclude:
+#       - <network in CIDR format>
+#       - ...
+#   ports: - Defines list of ports which should be or shouldn't be scanned
+#     include: - Port range in NMAP ports format eg. T:0-65535 or list of ports this same format
+#       - <NMAP ports format>
+#       - ...
+#     exclude: - Port range in NMAP ports format eg. T:0-65535 or list of ports this same format
+#       - <NMAP ports format>
+#       - ...
+#   port_scan_rate: <int> - Rate in packets per seconds for port scanning (banner scan, service detection, etc)
+#   network_scan_rate: <int> - Rate in packets per seconds for networks scan (mostly SynScan)
+
+portdetection:
+    scan_enable: True
+    scan_cron: "0 */2 * * *" # run every day at 22:00 UTC
+    tools_cron: "0 22 * * *" # run every day at 22:00 UTC
+    scan_interval: 0s
+    networks: # Change it to proper values and uncomment
+        include: []
+        exclude: []
+    ports:
+        include:
+            - T:0-65535 # TCP: full range
+            - U:0-65535 # UDP: full range
+        exclude: []
+    port_scan_rate: 50
+    network_scan_rate: 1000
+
+
+# In this section there is configuration related to the tools used by the aucote
+#
+# This subsection shows common applications options
+#
+#    List of tools:
+#        - nmap - security scanner
+#        - masscan - port scanner based on nmap
+#        - skipfish - active web application scanner
+#        - hydra - parallelized login cracker
+#        - aucote-http-headers - HTTP security headers scanner
+#
+# tools:
+#   (nmap|masscan|hydra|skipfish|aucote-http-headers):
+#     enable: (True|False) - Enable tool
+#     cmd: <str> - Command used to run application
+#     period: <str> - Defines how often use application
+#     periods: - Defines how often using particular application modules (e.g. nmap scripts).
+#                These values are higher priority than 'period'.
+#       module1: <period> - Period for module1
+#       module2: <period> - Period for module2
+#     networks: - list of networks, which should be scanned by tool
+#     script_networks: - list of modules and restricted networks per module
+#       module1: - list of networks, which should be scanned by module/script. This option overwrite tools.app.networks!
+#         - <address/mask> - ip address of restricted network
+#         - <address/mask>
+#   common: - Contains common configuration e.g. rates
+#     rate: <int> - rate in pps for tools scan
+#
+#
+# This subsection provides app-specific options
+#
+# tools:
+#   nmap: - This subsection contains nmap configuration
+#     domains: - List of domains used by some scripts e.g. DNS
+#       - <str>
+#       - <str>
+#
+#   masscan: - This subsection contains masscan configuration
+#     args: additional arguments for masscan e.g. outgoing interface
+#       - <str>
+#       - <str>
+#
+#   hydra: - This subsection contains thc-hydra configuration
+#     loginfile: static/logins.hydra.txt
+#     passwordfile: static/passwords.hydra.txt
+#     enable: (True|False) - It is possible to disable this tool
+#     disable_services: - List of disabled services, e.g. vnc
+#       - <str>
+#       - <str>
+#
+#   skipfish:
+#     limit: 0:10:00 - Time limit of skipfish scan
+#     threads: 5 - Amount of thread used by skipfish
+#     tmp_directory: /tmp - Path to the temporary directory for reports processing
+
+tools:
+    nmap:
+        cmd: nmap
+        enable: True
+        period: 1d
+        scripts_dir: ./static/nmap/
+        disable_scripts: []
+        periods: {}
+        networks: []
+        script_networks: {}
+    masscan:
+        cmd: masscan
+    hydra:
+        cmd: hydra
+        loginfile: static/logins.hydra.txt
+        passwordfile: static/passwords.hydra.txt
+        enable: False
+        disable_services:
+            - vnc
+            - http
+            - https
+        period: 7d
+        periods: {}
+        networks: []
+        script_networks: {}
+    skipfish:
+        cmd: skipfish
+        enable: False
+        limit: 0:10:00
+        threads: 5
+        tmp_directory: /tmp
+        period: 7d
+        periods: {}
+        networks: []
+        script_networks: {}
+    aucote-http-headers:
+        enable: True
+        period: 0s
+        periods: {}
+        networks: []
+        script_networks: {}
+    common:
+        rate: 50

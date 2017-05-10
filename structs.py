@@ -103,9 +103,10 @@ class TransportProtocol(Enum):
         self.db_val = db_val
         self.iana = iana
 
+    ICMP = ('ICMP', 1)
     TCP = ('TCP', 6)
     UDP = ('UDP', 17)
-    ICMP = ('ICMP', 1)
+    SCTP = ('SCTP', 132)
     PHY = ('PHY', 255)
 
     @classmethod
@@ -265,6 +266,19 @@ class Port(object):
             format_string = "{0}://{1}:{2}"
         return format_string.format(self.service_name, self.node.ip, self.number)
 
+    def in_range(self, parsed_ports):
+        """
+        Check if port is in range of parsed_ports
+
+        Args:
+            parsed_ports (dict):
+
+        Returns:
+            bool
+
+        """
+        return self.number in parsed_ports[self.transport_protocol]
+
 
 class SpecialPort(Port):
     """
@@ -307,7 +321,6 @@ class Vulnerability(object):
     Vulnerability object
 
     """
-
     def __init__(self, exploit=None, port=None, output=None):
         """
         Init values
@@ -325,7 +338,6 @@ class Vulnerability(object):
 
 
 class StorageQuery(object):
-
     """
     Represents query to database which expects results
 
@@ -348,3 +360,12 @@ class StorageQuery(object):
         if self._args:
             return self._query, self._args
         return self._query,
+
+
+class ScanStatus(Enum):
+    """
+    Scan status
+
+    """
+    IDLE = "IDLE"
+    IN_PROGRESS = "IN PROGRESS"

@@ -72,3 +72,24 @@ class FinishThread(Exception):
     Raises if thread should be finished
 
     """
+
+
+class ToucanException(Exception):
+    """
+    Raises if Toucan cannot return configuration
+
+    """
+
+
+class ToucanUnsetException(ToucanException, KeyError):
+    """
+    Returns if configuration key is unset
+
+    """
+
+
+class ToucanConnectionException(Exception):
+    """
+    Raises if cannot connect to Toucan
+
+    """

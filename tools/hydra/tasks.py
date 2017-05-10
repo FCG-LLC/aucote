@@ -40,10 +40,10 @@ class HydraScriptTask(CommandTask):
         """
         args = []
         if self.login:
-            args.extend(['-L', cfg.get('tools.hydra.loginfile')])
+            args.extend(['-L', cfg['tools.hydra.loginfile']])
         if self._port.is_ipv6:
             args.append('-6')
 
-        args.extend(['-P', cfg.get('tools.hydra.passwordfile'), '-s', str(self._port.number), str(self._port.node.ip),
+        args.extend(['-P', cfg['tools.hydra.passwordfile'], '-s', str(self._port.number), str(self._port.node.ip),
                      self.service, ])
         return args
