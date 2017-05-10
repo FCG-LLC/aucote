@@ -782,8 +782,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertIsNone(node.os.version)
 
     @patch('scans.scan_async_task.requests.get')
+    @patch('scans.scan_async_task.parse_timestamp_to_time')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_get_os_for_nodes_request(self, cfg, mock_get):
+    def test_get_os_for_nodes_request(self, cfg, mock_parse, mock_get):
         cfg._cfg = {
             'topdis': {
                 'api': {
@@ -800,10 +801,11 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         node.scan = Scan(start=12)
+        mock_parse.return_value = '1970-01-01T01:00:12+00:50'
 
         self.thread._get_topdis_oses([node])
 
-        mock_get.assert_called_once_with('http://topdis:80/api/v1/node?id=1&when=1970-01-01T01:00:12+00:00')
+        mock_get.assert_called_once_with('http://topdis:80/api/v1/node?id=1&when=1970-01-01T01:00:12+00:50')
 
     @patch('scans.scan_async_task.Service.build_cpe')
     @patch('scans.scan_async_task.requests.get')
