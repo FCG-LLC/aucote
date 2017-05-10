@@ -13,6 +13,7 @@ from tools.base import Tool
 from tools.nmap.base import NmapScript
 from tools.nmap.parsers import NmapVulnParser, NmapInfoParser
 from tools.nmap.tasks.port_scan import NmapPortScanTask
+from utils import Config
 from utils.exceptions import ImproperConfigurationException
 
 
@@ -205,7 +206,7 @@ class NmapTool(Tool):
         if isinstance(sections, str):
             sections = sections.split(",")
 
-        if isinstance(sections, list):
+        if isinstance(sections, Config):
             sections = [element for section in sections for element in section.split(",")]
 
         protocol = "T"
