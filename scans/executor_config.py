@@ -157,5 +157,6 @@ EXECUTOR_CONFIG = {
         'cve-search': {
             'class': CVESearchTool,
         }
-    }
+    },
+    'node_scan': ['cve-search']
 }

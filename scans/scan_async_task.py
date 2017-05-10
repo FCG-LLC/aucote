@@ -11,8 +11,6 @@ import logging as log
 import time
 from threading import Lock
 import netifaces
-
-import datetime
 import requests
 from croniter import croniter
 from netaddr import IPSet
@@ -21,6 +19,7 @@ from tornado.ioloop import IOLoop
 
 from aucote_cfg import cfg
 from scans.executor import Executor
+from scans.task_mapper import TaskMapper
 from structs import Node, Scan, PhysicalPort, ScanStatus, TopisOSDiscoveryType, Service, CPEType
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
@@ -94,7 +93,7 @@ class ScanAsyncTask(object):
         self._get_topdis_oses(nodes=nodes)
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_task(Executor(aucote=self.aucote, ports=ports))
+        self.aucote.add_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports))
 
     @gen.coroutine
     def run_scan(self, nodes, scan_only=False):
@@ -157,7 +156,8 @@ class ScanAsyncTask(object):
                 port.scan = Scan(start=time.time())
                 ports.append(port)
 
-        self.aucote.add_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
+        self.aucote.add_task(Executor(aucote=self.aucote, ports=ports, nodes=nodes, scan_only=scan_only))
+
         self.current_scan = []
 
         self._clean_scan()
