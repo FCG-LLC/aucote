@@ -331,3 +331,10 @@ class ServiceTest(TestCase):
         expected = "cpe:2.3:a:collective\-sense:aucote:0.0.1\(test\):*:*:*:*:*:*:*"
 
         self.assertEqual(result, expected)
+
+    def test_copy(self):
+        service_copy = self.service.copy()
+
+        self.assertEqual(self.service._cpe, service_copy._cpe)
+        self.assertEqual(self.service.name, service_copy.name)
+        self.assertEqual(self.service.version, service_copy.version)
