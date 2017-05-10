@@ -239,7 +239,7 @@ class Config:
             else:
                 new_key = subkey
 
-            if isinstance(value, dict):
+            if isinstance(value, dict) and value:
                 self.push_config(value, new_key, immutable)
                 continue
 

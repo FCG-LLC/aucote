@@ -20,6 +20,7 @@ class ConfigTest(TestCase):
             },
         },
         'config_filename': 'test',
+        'empty_dict': {}
     }
 
     YAML = '''alice:
@@ -38,11 +39,15 @@ class ConfigTest(TestCase):
                 },
             },
             'config_filename': 'test',
+            'empty_dict': {}
         }
         self.config = Config(cfg=self.CONFIG)
 
     def test_len(self):
-        self.assertEqual(len(self.config), 2)
+        self.assertEqual(len(self.config), 3)
+
+    def test_empty_dict(self):
+        self.assertEqual(self.config._cfg['empty_dict'], {})
 
     def test_empty_config_len(self):
         config = Config()
@@ -105,7 +110,7 @@ class ConfigTest(TestCase):
 
     @patch('builtins.open', mock_open(read_data=YAML))
     def test_load_yaml_without_defaults(self):
-        expected = {'alice': {'has': {'not': ['cat'], 'a': 'dog'}}, 'config_filename': 'test'}
+        expected = {'alice': {'has': {'not': ['cat'], 'a': 'dog'}}, 'config_filename': 'test', 'empty_dict': {}}
 
         self.config.load('test')
 
@@ -159,6 +164,7 @@ class ConfigTest(TestCase):
                 },
             },
             'config_filename': 'test',
+            'empty_dict': {}
         }
         self.config.load.assert_called_once_with(filename, cfg)
 
