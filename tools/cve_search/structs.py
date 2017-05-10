@@ -52,3 +52,7 @@ class CVESearchVulnerabilityResults(object):
 
     def __getitem__(self, item):
         return self.vulnerabilities[item]
+
+    @property
+    def output(self):
+        return '\n\n----------\n'.join([vuln.output for vuln in self.vulnerabilities])

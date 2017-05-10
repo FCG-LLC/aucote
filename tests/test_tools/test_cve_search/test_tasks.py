@@ -28,6 +28,7 @@ class CVESearchServiceTaskTest(TestCase):
         self.port.scan = Scan()
         self.port.service = Service()
         self.cpe_txt = 'cpe:/a:microsoft:internet_explorer:8.0.6001:beta'
+        self.cpe_without_version = 'cpe:/o:cisco:ios'
         self.port.service.cpe = self.cpe_txt
         self.exploit = Exploit(exploit_id=1)
         self.aucote = MagicMock()
@@ -86,14 +87,32 @@ class CVESearchServiceTaskTest(TestCase):
 
         self.assertFalse(self.task.api_cvefor.called)
 
+    def test_call_with_cpe_without_version(self):
+        self.port.service = Service()
+        self.port.service.cpe = self.cpe_without_version
+
+        self.task.api_cvefor = MagicMock()
+        self.task()
+
+        self.assertFalse(self.task.api_cvefor.called)
+
+    def test_call_without_results(self):
+        self.task.api_cvefor = MagicMock(return_value=[])
+        self.task.store_vulnerability = MagicMock()
+        self.task()
+
+        self.assertFalse(self.task.store_vulnerability.called)
+
+    @patch('tools.cve_search.tasks.Vulnerability')
     @patch('tools.cve_search.tasks.CVESearchVulnerabilityResults.from_dict')
-    def test_call(self, mock_results):
+    def test_call(self, mock_results, mock_vuln):
         self.task.api_cvefor = MagicMock()
         self.task.get_vulnerabilities = MagicMock()
-        self.task.store_vulnerabilities = MagicMock()
+        self.task.store_vulnerability = MagicMock()
 
         self.task()
 
         mock_results.assert_called_once_with(self.task.api_cvefor.return_value)
-        self.task.get_vulnerabilities.assert_called_once_with(mock_results.return_value)
-        self.task.store_vulnerabilities.assert_called_once_with(self.task.get_vulnerabilities.return_value)
+        self.task.store_vulnerability.assert_called_once_with(mock_vuln.return_value)
+        mock_vuln.assert_called_once_with(exploit=self.task.exploit, port=self.task.port,
+                                          output=mock_results.return_value.output)

@@ -19,3 +19,9 @@ class CVESearchToolTest(TestCase):
         mock_task.assert_called_once_with(aucote=self.aucote, port=self.port,
                                           exploits=[self.aucote.exploits.find.return_value])
         self.aucote.exploits.find.assert_called_once_with('cve-search', 'cve-search')
+
+    @patch('tools.cve_search.tool.CVESearchServiceTask')
+    def test_call_without_port(self, mock_task):
+        self.tool.port = None
+        self.tool()
+        self.assertFalse(mock_task.called)

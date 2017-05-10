@@ -159,3 +159,15 @@ class CVESearchVulnerabilityResultsTest(TestCase):
         results = CVESearchVulnerabilityResults.from_dict(data=data)
 
         self.assertEqual(results.vulnerabilities, expected)
+
+    def test_output(self):
+        results = CVESearchVulnerabilityResults()
+        results.vulnerabilities.append(MagicMock(output='test_1'))
+        results.vulnerabilities.append(MagicMock(output='test_2'))
+
+        expected = '''test_1
+
+----------
+test_2'''
+
+        self.assertEqual(results.output, expected)

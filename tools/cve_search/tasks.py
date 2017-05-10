@@ -2,7 +2,7 @@ import requests
 import logging as log
 
 from aucote_cfg import cfg
-from structs import Vulnerability
+from structs import Vulnerability, Port, Node
 from tools.common.port_task import PortTask
 from tools.cve_search.exceptions import CVESearchAPIException, CVESearchAPIConnectionException
 from tools.cve_search.structs import CVESearchVulnerabilityResults
@@ -14,16 +14,30 @@ class CVESearchServiceTask(PortTask):
         super(CVESearchServiceTask, self).__init__(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        if not self.port.service.cpe:
-            log.warning("CVE search supports only CPE defined services")
+        cpe = self.get_cpe()
+        if not cpe:
             return
 
-        results = self.api_cvefor(self.port.service.cpe)
+        results = self.api_cvefor(cpe)
+        if not results:
+            return
         cves = CVESearchVulnerabilityResults.from_dict(results)
 
-        vulnerabilities = self.get_vulnerabilities(cves)
-        self.store_vulnerabilities(vulnerabilities)
-        return results
+        self.store_vulnerability(Vulnerability(exploit=self.exploit, port=self._port, output=cves.output))
+
+    def get_cpe(self):
+        if isinstance(self.port, Port):
+            if not self.port.service.cpe:
+                log.warning("CVE search supports only CPE defined services")
+                return
+
+            cpe = self.port.service.cpe
+
+            if not cpe.get_version()[0]:
+                log.warning("CVE search not supported for non-versioned service")
+                return
+
+            return cpe
 
     def api_cvefor(self, cpe):
         url = "{api}/cvefor/{cpe}".format(api=self.api, cpe=cpe.as_uri_2_3())
