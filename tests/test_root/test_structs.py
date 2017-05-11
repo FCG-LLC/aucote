@@ -327,7 +327,7 @@ class ServiceTest(TestCase):
         product = 'aucote'
         version = '0.0.1(test)'
 
-        result = self.service.build_cpe(product=product, vendor=vendor, version=version, type=CPEType.APPLICATION)
+        result = self.service.build_cpe(product=product, vendor=vendor, version=version, part=CPEType.APPLICATION)
         expected = "cpe:2.3:a:collective\-sense:aucote:0.0.1\(test\):*:*:*:*:*:*:*"
 
         self.assertEqual(result, expected)

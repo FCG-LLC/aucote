@@ -1,5 +1,14 @@
-class CVESearchVulnerabilityResult(object):
+"""
+CVESearch contains some custom result objects
 
+"""
+
+
+class CVESearchVulnerabilityResult(object):
+    """
+    Result of searching cve
+
+    """
     def __init__(self):
         self.published = None
         self.summary = None
@@ -16,6 +25,13 @@ class CVESearchVulnerabilityResult(object):
 
     @property
     def output(self):
+        """
+        CVE-Search output in human readable form
+
+        Returns:
+            str
+
+        """
         return """CVE: {cve}
 CWE: {cwe}
 CVSS: {cvss}
@@ -24,6 +40,16 @@ CVSS: {cvss}
 
     @classmethod
     def from_dict(cls, data):
+        """
+        Convert cve-search result dict to CVESearchVulnerabilityResult object
+
+        Args:
+            data (dict):
+
+        Returns:
+            CVESearchVulnerabilityResult
+
+        """
         vulnerability = cls()
         vulnerability.published = list(data.get('Published').values())[0]
         vulnerability.access = data.get('access')
@@ -41,11 +67,25 @@ CVSS: {cvss}
 
 
 class CVESearchVulnerabilityResults(object):
+    """
+    Contains results of CVE-Search
+
+    """
     def __init__(self):
         self.vulnerabilities = []
 
     @classmethod
     def from_dict(cls, data):
+        """
+        Convert list of cve-search result dicts to CVESearchVulnerabilityResults object
+
+        Args:
+            data (list):
+
+        Returns:
+            CVESearchVulnerabilityResults
+
+        """
         return_value = cls()
         return_value.vulnerabilities = [CVESearchVulnerabilityResult.from_dict(row) for row in data]
         return return_value
@@ -55,4 +95,11 @@ class CVESearchVulnerabilityResults(object):
 
     @property
     def output(self):
+        """
+        CVE-Search output in human readable form
+
+        Returns:
+            str
+
+        """
         return '\n\n----------\n'.join([vuln.output for vuln in self.vulnerabilities])

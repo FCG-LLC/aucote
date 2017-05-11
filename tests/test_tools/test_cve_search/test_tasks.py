@@ -65,20 +65,6 @@ class CVESearchServiceTaskTest(TestCase):
 
         self.assertRaises(CVESearchAPIConnectionException, self.task.api_cvefor, service.cpe)
 
-    def test_get_vulnerabilities(self):
-        results = CVESearchVulnerabilityResults()
-
-        vulnerability_1 = MagicMock()
-        vulnerability_1.output = 'test_vuln'
-
-        results.vulnerabilities.append(vulnerability_1)
-
-        result = self.task.get_vulnerabilities(results=results)
-
-        self.assertEqual(result[0].exploit, self.exploit)
-        self.assertEqual(result[0].port, self.port)
-        self.assertEqual(result[0].output, 'test_vuln')
-
     def test_call_with_port_without_cpe(self):
         self.port.service = Service()
 

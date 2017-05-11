@@ -237,7 +237,7 @@ class ScanAsyncTask(object):
                 if " " in software['osVersion']:
                     log.warning("Currently doesn't support space in OS Version for cpe")
                     continue
-                node.os.cpe = Service.build_cpe(product=software['os'], version=software['osVersion'], type=CPEType.OS)
+                node.os.cpe = Service.build_cpe(product=software['os'], version=software['osVersion'], part=CPEType.OS)
 
     def _get_nodes_for_scanning(self, timestamp=None):
         """
