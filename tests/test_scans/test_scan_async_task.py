@@ -230,10 +230,11 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         self.assertRaises(Exception, ScanAsyncTask._get_topdis_nodes)
 
+    @patch('scans.scan_async_task.ScanAsyncTask._get_topdis_oses')
     @patch('scans.scan_async_task.ScanAsyncTask._get_topdis_nodes')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.parse_period', MagicMock(return_value=5))
-    def test_get_nodes_for_scanning(self, cfg, mock_get_nodes):
+    def test_get_nodes_for_scanning(self, cfg, mock_get_nodes, mock_topdis):
         cfg._cfg = {
             'portdetection': {
                 'scan_interval': '5s',
@@ -255,6 +256,35 @@ class ScanAsyncTaskTest(AsyncTestCase):
         expected = [node_3]
 
         self.assertListEqual(result, expected)
+        self.assertFalse(mock_topdis.called)
+
+    @patch('scans.scan_async_task.ScanAsyncTask._get_topdis_oses')
+    @patch('scans.scan_async_task.ScanAsyncTask._get_topdis_nodes')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @patch('scans.scan_async_task.parse_period', MagicMock(return_value=5))
+    def test_get_nodes_for_scanning_with_oses(self, cfg, mock_get_nodes, mock_topdis):
+        cfg._cfg = {
+            'portdetection': {
+                'scan_interval': '5s',
+                'networks': {
+                    'include': ['127.0.0.2/31']
+                }
+            }
+        }
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
+        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
+
+        nodes = [node_1, node_2, node_3]
+        mock_get_nodes.return_value=nodes
+
+        self.thread.storage.get_nodes = MagicMock(return_value=[node_2])
+
+        result = self.thread._get_nodes_for_scanning(fetch_os=True)
+        expected = [node_3]
+
+        self.assertListEqual(result, expected)
+        mock_topdis.assert_called_once_with(expected)
 
     @patch('scans.scan_async_task.AsyncTaskManager.start')
     def test_run_as_service(self, mock_start):

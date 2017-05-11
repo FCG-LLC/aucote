@@ -59,7 +59,7 @@ class ScanAsyncTask(object):
         if self.as_service:
             self.aucote.async_task_manager.start()
         else:
-            IOLoop.current().add_callback(partial(self.run_scan, self._get_nodes_for_scanning()))
+            IOLoop.current().add_callback(partial(self.run_scan, self._get_nodes_for_scanning(fetch_os=True)))
 
     @AsyncTaskManager.unique_task
     @gen.coroutine
@@ -89,7 +89,7 @@ class ScanAsyncTask(object):
 
         """
         log.info("Starting security scan")
-        nodes = self._get_nodes_for_scanning()
+        nodes = self._get_nodes_for_scanning(fetch_os=True)
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
         self.aucote.add_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports))
@@ -111,8 +111,6 @@ class ScanAsyncTask(object):
         scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
 
         self.current_scan = nodes
-        if not scan_only:
-            self._get_topdis_oses(nodes=nodes)
 
         if not nodes:
             log.warning("List of nodes is empty")
@@ -205,7 +203,7 @@ class ScanAsyncTask(object):
 
     @classmethod
     def _get_topdis_oses(cls, nodes):
-        if not cfg.get('topdis.fetch_os'):
+        if not cfg['topdis.fetch_os']:
             return
 
         for node in nodes:
@@ -238,7 +236,7 @@ class ScanAsyncTask(object):
                     continue
                 node.os.cpe = Service.build_cpe(product=software['os'], version=software['osVersion'], part=CPEType.OS)
 
-    def _get_nodes_for_scanning(self, timestamp=None):
+    def _get_nodes_for_scanning(self, timestamp=None, fetch_os=False):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -260,8 +258,13 @@ class ScanAsyncTask(object):
         include_networks = self._get_networks_list()
         exclude_networks = self._get_excluded_networks_list()
 
-        return [node for node in nodes if node.ip.exploded in include_networks
+        nodes = [node for node in nodes if node.ip.exploded in include_networks
                  and node.ip.exploded not in exclude_networks]
+
+        if fetch_os:
+            self._get_topdis_oses(nodes)
+
+        return nodes
 
     @classmethod
     def _get_networks_list(cls):

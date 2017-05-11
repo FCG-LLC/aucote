@@ -1,6 +1,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+from structs import PhysicalPort
 from tools.cve_search.tool import CVESearchTool
 
 
@@ -10,7 +11,9 @@ class CVESearchToolTest(TestCase):
         self.exploits = MagicMock()
         self.port = MagicMock()
         self.config = MagicMock()
-        self.tool = CVESearchTool(aucote=self.aucote, exploits=self.exploits, port=self.port, config=self.config)
+        self.node = MagicMock()
+        self.tool = CVESearchTool(aucote=self.aucote, exploits=self.exploits, port=self.port, node=self.node,
+                                  config=self.config)
 
     @patch('tools.cve_search.tool.CVESearchServiceTask')
     def test_call(self, mock_task):
@@ -24,4 +27,5 @@ class CVESearchToolTest(TestCase):
     def test_call_without_port(self, mock_task):
         self.tool.port = None
         self.tool()
-        self.assertFalse(mock_task.called)
+        self.assertIsInstance(mock_task.call_args_list[0][1]['port'], PhysicalPort)
+        self.assertEqual(mock_task.call_args_list[0][1]['port'].node, self.node)

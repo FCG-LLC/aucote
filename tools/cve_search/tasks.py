@@ -6,7 +6,7 @@ import requests
 import logging as log
 
 from aucote_cfg import cfg
-from structs import Vulnerability, Port
+from structs import Vulnerability, Port, PhysicalPort
 from tools.common.port_task import PortTask
 from tools.cve_search.exceptions import CVESearchAPIException, CVESearchAPIConnectionException
 from tools.cve_search.structs import CVESearchVulnerabilityResults
@@ -41,18 +41,22 @@ class CVESearchServiceTask(PortTask):
             CPE
 
         """
-        if isinstance(self.port, Port):
-            if not self.port.service.cpe:
-                log.warning("CVE search supports only CPE defined services")
-                return
+        cpe = None
 
+        if isinstance(self.port, PhysicalPort):
+            cpe = self.port.node.os.cpe
+        elif isinstance(self.port, Port):
             cpe = self.port.service.cpe
 
-            if not cpe.get_version()[0]:
-                log.warning("CVE search not supported for non-versioned service")
-                return
+        if not cpe:
+            log.debug("CVE search: CPE is not defined")
+            return
 
-            return cpe
+        if not cpe.get_version()[0]:
+            log.debug("CVE search: CPE without version is not supported")
+            return
+
+        return cpe
 
     def api_cvefor(self, cpe):
         """

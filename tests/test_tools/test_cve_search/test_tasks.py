@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 import requests
 
 from fixtures.exploits import Exploit
-from structs import Port, Node, Scan, TransportProtocol, Service
+from structs import Port, Node, Scan, TransportProtocol, Service, PhysicalPort
 from tools.cve_search.exceptions import CVESearchAPIException, CVESearchAPIConnectionException
 from tools.cve_search.structs import CVESearchVulnerabilityResults, CVESearchVulnerabilityResult
 from tools.cve_search.tasks import CVESearchServiceTask
@@ -23,12 +23,16 @@ class CVESearchServiceTaskTest(TestCase):
             }
         }
 
-        self.port = Port(node=Node(ip='127.0.0.1', node_id=None), transport_protocol=TransportProtocol.TCP, number=22)
+        self.node = Node(ip='127.0.0.1', node_id=None)
+
+        self.port = Port(node=self.node, transport_protocol=TransportProtocol.TCP, number=22)
         self.port.service_name = 'ssh'
         self.port.scan = Scan()
         self.port.service = Service()
         self.cpe_txt = 'cpe:/a:microsoft:internet_explorer:8.0.6001:beta'
+        self.os_cpe_txt = 'cpe:/o:a:b:4'
         self.cpe_without_version = 'cpe:/o:cisco:ios'
+        self.node.os.cpe = self.os_cpe_txt
         self.port.service.cpe = self.cpe_txt
         self.exploit = Exploit(exploit_id=1)
         self.aucote = MagicMock()
@@ -102,3 +106,8 @@ class CVESearchServiceTaskTest(TestCase):
         self.task.store_vulnerability.assert_called_once_with(mock_vuln.return_value)
         mock_vuln.assert_called_once_with(exploit=self.task.exploit, port=self.task.port,
                                           output=mock_results.return_value.output)
+
+    def test_get_node_cpe(self):
+        self.task._port = PhysicalPort(node=self.node)
+        cpe = self.task.get_cpe()
+        self.assertEqual(cpe, self.node.os.cpe)
