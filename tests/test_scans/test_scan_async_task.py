@@ -609,7 +609,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         nodes = [MagicMock(), MagicMock(), MagicMock()]
 
         self.thread.get_ports_for_script_scan = MagicMock(return_value=ports)
-        self.thread._get_topdis_nodes = MagicMock(return_value=nodes)
+        self.thread._get_nodes_for_scanning = MagicMock(return_value=nodes)
 
         yield self.thread._run_tools()
 
