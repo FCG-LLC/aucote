@@ -16,8 +16,10 @@ class ExecutorTest(TestCase):
             'service': {
                 'scans': {
                     'broadcast': True,
-                    'port_period': None
                 }
+            },
+            'portdetection': {
+                'port_period': None
             }
         }
         self.cfg = cfg

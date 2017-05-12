@@ -25,8 +25,7 @@ class Executor(Task):
 
         """
         super(Executor, self).__init__(*args, **kwargs)
-        self._ports = []
-        self.ports = ports or []
+        self._ports = ports or []
         self.nodes = nodes or []
         self.scan_only = scan_only
         if cfg['service.scans.broadcast']:
@@ -82,7 +81,7 @@ class Executor(Task):
             self._execute_nodes(self.nodes)
 
     def _execute_ports(self, ports):
-        storage_ports = self.storage.get_ports(parse_period(cfg['service.scans.port_period']))
+        storage_ports = self.storage.get_ports(parse_period(cfg['portdetection.port_period']))
 
         ports = self._get_ports_for_scanning(ports, storage_ports)
         log.info("Found %i recently not scanned ports", len(ports))
@@ -95,7 +94,6 @@ class Executor(Task):
     def _execute_nodes(self, nodes):
         for node in nodes:
             TaskMapper(aucote=self.aucote).assign_tasks_for_node(node)
-
 
     def __call__(self, *args, **kwargs):
         """

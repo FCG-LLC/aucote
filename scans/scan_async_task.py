@@ -89,7 +89,7 @@ class ScanAsyncTask(object):
 
         """
         log.info("Starting security scan")
-        nodes = self._get_nodes_for_scanning(fetch_os=True)
+        nodes = self._get_nodes_for_scanning(fetch_os=True, filter_out_storage=False)
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
         self.aucote.add_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports))
@@ -236,7 +236,7 @@ class ScanAsyncTask(object):
                     continue
                 node.os.cpe = Service.build_cpe(product=software['os'], version=software['osVersion'], part=CPEType.OS)
 
-    def _get_nodes_for_scanning(self, timestamp=None, fetch_os=False):
+    def _get_nodes_for_scanning(self, timestamp=None, fetch_os=False, filter_out_storage=True):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -249,11 +249,11 @@ class ScanAsyncTask(object):
             list
 
         """
-        topdis_nodes = self._get_topdis_nodes()
+        nodes = self._get_topdis_nodes()
 
-        storage_nodes = self.storage.get_nodes(parse_period(cfg['portdetection.scan_interval']), timestamp=timestamp)
-
-        nodes = list(set(topdis_nodes) - set(storage_nodes))
+        if filter_out_storage:
+            storage_nodes = self.storage.get_nodes(parse_period(cfg['portdetection.scan_interval']), timestamp=timestamp)
+            nodes = list(set(nodes) - set(storage_nodes))
 
         include_networks = self._get_networks_list()
         exclude_networks = self._get_excluded_networks_list()
