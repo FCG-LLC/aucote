@@ -182,7 +182,7 @@ class UserAPITest(AsyncHTTPTestCase):
 
         self.assertDictEqual(result, expected)
 
-    @patch('api.main_handler.time.time', MagicMock(side_effect=(100, 120, 170)))
+    @patch('api.main_handler.time.time', MagicMock(side_effect=(100, 17, 120, 170)))
     def test_task_status_port_task(self):
         node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=12)
         port = Port(node=node, number=20, transport_protocol=None)

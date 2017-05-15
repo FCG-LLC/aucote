@@ -32,6 +32,15 @@ _DEFAULT = {
         },
         'fetch_os': False
     },
+    'tools':{
+        'nmap':{
+            'cmd': 'nmap',
+            'enable': True,
+            'period': '1d',
+            'disable_scripts': [],
+            'scripts_dir': './static/nmap/'
+        },
+    },
     'toucan': {
         'enable': True,
         'api': 'http://toucan:3000',

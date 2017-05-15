@@ -100,6 +100,7 @@ class NmapPortInfoTask(PortTask):
             cpe = service.find("cpe")
             if cpe is not None:
                 self._port.service.cpe = cpe.text
+                log.debug('Detected service: %s', cpe.text)
 
         self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
 

@@ -172,5 +172,12 @@ tools:
         periods: {}
         networks: []
         script_networks: {}
+    cve-search:
+        enable: False
+        period: 0s
+        periods: {}
+        networks: []
+        script_networks: {}
+        api: ''
     common:
         rate: 50

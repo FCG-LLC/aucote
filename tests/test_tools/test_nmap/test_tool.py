@@ -331,7 +331,7 @@ class NmapToolTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_parse_nmap_ports_everything(self):
-        ports = ["T:22", "80-82", "U:78-80,U:90", "S:1-2", "18-20"]
+        ports = Config(["T:22", "80-82", "U:78-80,U:90", "S:1-2", "18-20"])
 
         expected = {
             TransportProtocol.TCP: {22, 80, 81, 82},

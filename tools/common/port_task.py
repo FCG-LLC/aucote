@@ -46,7 +46,7 @@ class PortTask(Task):
             results(list): list of AucoteHttpHeaderResult
 
         Returns:
-            list: list of Vulneravbilities
+            list: list of Vulnerabilities
 
         """
         raise NotImplementedError
