@@ -66,12 +66,12 @@ class AucoteHttpHeadersTask(PortTask):
         if not results:
             return results
 
-        vulnerabilities = self._get_vulnerabilities(results)
+        vulnerabilities = self.get_vulnerabilities(results)
         self.store_vulnerabilities(vulnerabilities)
 
         return results
 
-    def _get_vulnerabilities(self, results):
+    def get_vulnerabilities(self, results):
         return_value = []
 
         for result in results:

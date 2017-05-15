@@ -1,11 +1,10 @@
 import ipaddress
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 
 from scans.executor import Executor
 from structs import Node, Port, TransportProtocol, BroadcastPort
 from utils import Config
-from utils.storage import Storage
 from utils.threads import ThreadPool
 
 
@@ -17,8 +16,10 @@ class ExecutorTest(TestCase):
             'service': {
                 'scans': {
                     'broadcast': True,
-                    'port_period': None
                 }
+            },
+            'portdetection': {
+                'port_period': None
             }
         }
         self.cfg = cfg
@@ -99,3 +100,15 @@ class ExecutorTest(TestCase):
         expected = self.executor.scan_only
 
         self.assertEqual(result, expected)
+
+    @patch('scans.executor.TaskMapper')
+    def test_nodes(self, mock_task):
+        self.executor._ports = []
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
+        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
+        self.executor.nodes = [node_1, node_2, node_3]
+        self.executor.scan_only = False
+
+        self.executor.run()
+        mock_task.return_value.assign_tasks_for_node.assert_has_calls((call(node_1), call(node_2), call(node_3)))

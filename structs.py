@@ -24,7 +24,7 @@ class Scan(object):
             end (int|float): end scan time
 
         """
-        self._start = start
+        self._start = start or time.time()
         self.end = end
 
     @property
@@ -193,7 +193,7 @@ class Service(object):
     Represents service/application/operating system. Contains basic information: name, version
 
     """
-    _CPE_SPECIAL = "\!|\"|\;|\#|\$|\%|\&|\'|\(|\)|\+|\,|\/|\:|\<|\=|\>|\@|\[|\]|\^|\`|\{|\||\}|\~|\-"
+    _CPE_SPECIAL = r"\!|\"|\;|\#|\$|\%|\&|\'|\(|\)|\+|\,|\/|\:|\<|\=|\>|\@|\[|\]|\^|\`|\{|\||\}|\~|\-"
     _ESCAPE_CPE = re.compile(_CPE_SPECIAL)
     _UNESCAPE_CPE = re.compile(r"(\\({0}))".format(_CPE_SPECIAL))
 
@@ -301,7 +301,20 @@ class Service(object):
         return cls._UNESCAPE_CPE.sub(_replace, text)
 
     @classmethod
-    def build_cpe(cls, type, vendor='*', product='*', version='*'):
+    def build_cpe(cls, part, vendor='*', product='*', version='*'):
+        """
+        Build cpe 2.3 string base on vendor, product, version and part
+
+        Args:
+            part (CPEType):
+            vendor (str):
+            product (str):
+            version (str):
+
+        Returns:
+            str: cpe2.3 string
+
+        """
         if vendor:
             vendor = cls._escape_cpe(vendor)
 
@@ -311,11 +324,15 @@ class Service(object):
         if version:
             version = cls._escape_cpe(version)
 
-        return "cpe:2.3:{part}:{vendor}:{product}:{version}:*:*:*:*:*:*:*".format(part=str(type.value), vendor=vendor,
+        return "cpe:2.3:{part}:{vendor}:{product}:{version}:*:*:*:*:*:*:*".format(part=str(part.value), vendor=vendor,
                                                                                   product=product, version=version)
 
 
 class CPEType(Enum):
+    """
+    Type of service (part) for CPE
+
+    """
     APPLICATION = "a"
     HARDWARE = "h"
     OS = "o"
@@ -343,7 +360,7 @@ class Port(object):
         self.app = Service()
         self.protocol = None
         self.banner = None
-        self.scan = None
+        self.scan = Scan()
         self.interface = None
 
     def __eq__(self, other):
@@ -372,7 +389,6 @@ class Port(object):
         return_value.vulnerabilities = self.vulnerabilities
         return_value.when_discovered = self.when_discovered
         return_value.service = self.service.copy()
-        return_value.app = self.app.copy()
         return_value.banner = self.banner
         return_value.protocol = self.protocol
         return_value.scan = self.scan
@@ -511,6 +527,10 @@ class ScanStatus(Enum):
 
 
 class TopisOSDiscoveryType(Enum):
+    """
+    Type of Topdis API OS discovery
+
+    """
     FINGERPRINT = "OSFINGERPRINT"
     DIRECT = "DIRECT"
     FROMDESCR = "FROMDESCR"
