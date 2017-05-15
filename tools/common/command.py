@@ -21,7 +21,7 @@ class Command(object):
     #to be set by child classes.
     COMMON_ARGS = None
     NAME = None
-    parser = Parser
+    parser = Parser()
 
     def call(self, args=None):
         """

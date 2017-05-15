@@ -13,7 +13,7 @@ class NmapBase(Command):
     """
     COMMON_ARGS = ('-n', '--privileged', '-oX', '-', '-T4')
     NAME = 'nmap'
-    parser = XMLParser
+    parser = XMLParser()
 
 
 class NmapScript(object):
