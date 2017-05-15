@@ -13,4 +13,4 @@ class MasscanBase(Command):
     """
     COMMON_ARGS = ('-oX', '-')
     NAME = 'masscan'
-    parser = XMLParser
+    parser = XMLParser()

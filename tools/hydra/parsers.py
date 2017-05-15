@@ -32,8 +32,7 @@ class HydraParser(Parser):
     regex_summary = re.compile(SUMMARY_PATTERN)
     regex_all = re.compile(ALL_PATTERN)
 
-    @classmethod
-    def parse(cls, stdout, stderr=None):
+    def parse(self, stdout, stderr=None):
         """
         Parses output and return collection of Hydra Results
 
@@ -47,11 +46,11 @@ class HydraParser(Parser):
         """
         results = HydraResults()
         for line in stdout.split("\n"):
-            match = cls.regex_all.match(line)
+            match = self.regex_all.match(line)
 
             if match.group('success_match'):
                 log.debug("Hydra: %s", line)
-                results.add(cls.from_re_match(match))
+                results.add(self.from_re_match(match))
 
             elif match.group('summary_match'):
                 log.debug("Hydra: %s", line)
@@ -65,8 +64,7 @@ class HydraParser(Parser):
 
         return results
 
-    @classmethod
-    def from_output(cls, output):
+    def from_output(self, output):
         """
         Converts hydra output line to Hydra Result
 
@@ -77,10 +75,9 @@ class HydraParser(Parser):
             HydraResult|None
 
         """
-        return cls.from_re_match(cls.regex_success.match(output))
+        return self.from_re_match(self.regex_success.match(output))
 
-    @classmethod
-    def from_re_match(cls, match):
+    def from_re_match(self, match):
         """
         Converts matching regex to Hydra Result
 
