@@ -231,10 +231,19 @@ class ScanAsyncTask(object):
 
             if software['osDiscoveryType'] in (TopisOSDiscoveryType.DIRECT.value,):
                 node.os.name, node.os.version = software['os'], software['osVersion']
+                vendor = '*'
+                version = software['osVersion']
+
                 if " " in software['osVersion']:
-                    log.warning("Currently doesn't support space in OS Version for cpe")
-                    continue
-                node.os.cpe = Service.build_cpe(product=software['os'], version=software['osVersion'], part=CPEType.OS)
+                    if software['os'] == "IOS":  # ToDo: Remove it after better service detection implemented
+                        vendor = 'cisco'
+                        version = version.split(" ")[0].strip(",")
+                    else:
+                        log.warning("Currently doesn't support space in OS Version for cpe")
+                        continue
+
+                node.os.cpe = Service.build_cpe(product=software['os'], version=version, part=CPEType.OS,
+                                                vendor=vendor)
 
     def _get_nodes_for_scanning(self, timestamp=None, fetch_os=False, filter_out_storage=True):
         """

@@ -13,7 +13,7 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from scans.scan_async_task import ScanAsyncTask
-from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus
+from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus, CPEType
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -122,40 +122,25 @@ class ScanAsyncTaskTest(AsyncTestCase):
     }"""
 
     NODE_DETAILS_FOR_CPE = rb"""{
-      "meta": {
-        "apiVersion": "1.0.0",
-        "requestTime": "2017-05-08T12:50:20.139895+00:00",
-        "url": "http://dev03.cs.int:1234/api/v1/node?id=24"
-      },
       "nodes": [
         {
-          "description": "Cisco IOS Software, C181X Software (C181X-ADVIPSERVICESK9-M), Version 12.4(11)XW, RELEASE SOFTWARE (fc1)\r\nSynched to technology version 12.4(12.12)T\r\nTechnical Support: http://www.cisco.com/techsupport\r\nCopyright (c) 1986-2007 by Cisco Systems, Inc.\r\nComp",
-          "deviceType": "L3 Switch",
-          "deviceTypeDiscoveryType": "DIRECT",
-          "displayName": "fishconnectVPN.fcg.com",
-          "hardware": {
-            "model": "CISCO1811W-AG-B/K9",
-            "sysObjId": "1.3.6.1.4.1.9.1.641",
-            "vendor": "ciscoSystems"
-          },
-          "id": 24,
-          "isCloud": false,
-          "isHost": false,
-          "managementIp": "10.80.80.2",
-          "name": "fishconnectVPN.fcg.com",
-          "serialNumber": "FHK113515FT",
-          "snmp": {
-            "communityString": "public",
-            "port": 161,
-            "version": "2c"
-          },
           "software": {
             "os": "IOS",
             "osDiscoveryType": "DIRECT",
-            "osVersion": "12.4(11)XW"
-          },
-          "stateId": 6597,
-          "supportsNat": false
+            "osVersion": "12.4(11)XW, RELEASE SOFTWARE (fc1)"
+          }
+        }
+      ]
+    }"""
+
+    NODE_DETAILS_FOR_CPE_UNRECOGNIZED_OS = rb"""{
+      "nodes": [
+        {
+          "software": {
+            "os": "OTHER",
+            "osDiscoveryType": "DIRECT",
+            "osVersion": "12.4(11)XW, some strange text"
+          }
         }
       ]
     }"""
@@ -863,6 +848,33 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread._get_topdis_oses([node])
 
         self.assertEqual(node.os.cpe, CPE(mock_cpe.return_value))
+        mock_cpe.assert_called_once_with(product='IOS', version='12.4(11)XW', part=CPEType.OS, vendor='cisco')
+
+    @patch('scans.scan_async_task.Service.build_cpe')
+    @patch('scans.scan_async_task.requests.get')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_get_os_nodes_with_cpe_without_vendor(self, cfg, mock_get, mock_cpe):
+        cfg._cfg = {
+            'topdis': {
+                'api': {
+                    'port': 80,
+                    'host': 'topdis'
+                },
+                'fetch_os': True
+                }
+            }
+
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value._content = self.NODE_DETAILS_FOR_CPE_UNRECOGNIZED_OS
+
+        mock_cpe.return_value = 'cpe:2.3:o:*:*:*:*:*:*:*:*:*:*'
+
+        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        node.scan = Scan(start=12)
+
+        self.thread._get_topdis_oses([node])
+        self.assertFalse(mock_cpe.called)
 
     @patch('scans.scan_async_task.requests.get')
     @patch('scans.scan_async_task.cfg', new_callable=Config)

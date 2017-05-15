@@ -2,10 +2,10 @@
 CVESearch is module which request to CVE server about vulnerabilities base on application name and version
 
 """
+
 from structs import PhysicalPort
 from tools.base import Tool
 from tools.cve_search.tasks import CVESearchServiceTask
-import logging as log
 
 
 class CVESearchTool(Tool):

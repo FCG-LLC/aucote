@@ -24,7 +24,7 @@ class Scan(object):
             end (int|float): end scan time
 
         """
-        self._start = start
+        self._start = start or time.time()
         self.end = end
 
     @property
@@ -360,7 +360,7 @@ class Port(object):
         self.app = Service()
         self.protocol = None
         self.banner = None
-        self.scan = None
+        self.scan = Scan()
         self.interface = None
 
     def __eq__(self, other):
