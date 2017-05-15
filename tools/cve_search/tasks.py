@@ -2,6 +2,8 @@
 Tasks related to cve-search module
 
 """
+from urllib import parse
+
 import requests
 import logging as log
 
@@ -69,7 +71,8 @@ class CVESearchServiceTask(PortTask):
             list
 
         """
-        url = "{api}/cvefor/{cpe}".format(api=self.api, cpe=cpe.as_uri_2_3())
+        cpe_encoded = cpe.as_uri_2_3().replace('%', '%2525')
+        url = "{api}/cvefor/{cpe}".format(api=self.api, cpe=cpe_encoded)
         try:
             response = requests.get(url)
         except requests.exceptions.ConnectionError:
