@@ -23,7 +23,7 @@ class Command(object):
     NAME = None
     parser = Parser()
 
-    def call(self, args=None):
+    def call(self, args=None, raise_error=True):
         """
         Calls system command and return parsed output or standard error output
 
@@ -48,12 +48,13 @@ class Command(object):
         if return_code != 0:
             log.warning("Command '%s' failed wit exit code: %s", cmd, return_code)
             log.debug("Command '%s':\nSTDOUT:\n%s\nSTDERR:\n%s", cmd, stdout, stderr)
-            raise subprocess.CalledProcessError(return_code, cmd)
+            if raise_error:
+                raise subprocess.CalledProcessError(return_code, cmd)
 
         return self.parser.parse(stdout.decode('utf-8'), stderr.decode('utf-8'))
 
     @gen.coroutine
-    def async_call(self, args=None):
+    def async_call(self, args=None, raise_error=True):
         """
         Calls system command and return parsed output or standard error output
 
@@ -81,6 +82,7 @@ class Command(object):
         if return_code != 0:
             log.warning("Command '%s' failed wit exit code: %s", cmd, return_code)
             log.debug("Command '%s':\nSTDOUT:\n%s\nSTDERR:\n%s", cmd, stdout, stderr)
-            raise subprocess.CalledProcessError(return_code, cmd)
+            if raise_error:
+                raise subprocess.CalledProcessError(return_code, cmd)
 
         return self.parser.parse(stdout.decode('utf-8'), stderr.decode('utf-8'))

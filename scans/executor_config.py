@@ -8,6 +8,7 @@ from tools.nmap.parsers import NmapBrutParser, NmapInfoParser
 from tools.nmap.tool import NmapTool
 from tools.skipfish.tool import SkipfishTool
 from tools.whatweb.tool import WhatWebTool
+from tools.ssl.tool import SSLTool
 
 EXECUTOR_CONFIG = {
     'apps': {
@@ -156,6 +157,9 @@ EXECUTOR_CONFIG = {
         },
         'whatweb': {
             'class': WhatWebTool
+        },
+        'testssl': {
+            'class': SSLTool,
         }
     }
 }

@@ -92,9 +92,10 @@ portdetection:
 #        - skipfish - active web application scanner
 #        - hydra - parallelized login cracker
 #        - aucote-http-headers - HTTP security headers scanner
+#        - testssl - SSL checks based on testssl.sh
 #
 # tools:
-#   (nmap|masscan|hydra|skipfish|aucote-http-headers):
+#   (nmap|masscan|hydra|skipfish|aucote-http-headers|testssl):
 #     enable: (True|False) - Enable tool
 #     cmd: <str> - Command used to run application
 #     period: <str> - Defines how often use application
@@ -173,6 +174,13 @@ tools:
         networks: []
         script_networks: {}
     aucote-http-headers:
+        enable: Tru
+        period: 0s
+        periods: {}
+        networks: []
+        script_networks: {}
+    testssl:
+        cmd: testssl
         enable: True
         period: 0s
         periods: {}

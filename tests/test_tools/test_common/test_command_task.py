@@ -32,7 +32,7 @@ class CommandTaskTest(TestCase):
 
         self.task()
 
-        self.command.call.assert_called_once_with(self.task.prepare_args.return_value)
+        self.command.call.assert_called_once_with(self.task.prepare_args.return_value, True)
         mock_vuln.assert_called_once_with(exploit=self.exploit, port=self.port,
                                                               output=self.command.call.return_value)
         self.task.store_vulnerability.assert_called_once_with(mock_vuln.return_value)
