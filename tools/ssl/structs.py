@@ -14,11 +14,15 @@ class SSLSeverity(Enum):
         self.score = score
 
     OK = ("OK", 0)
+    DEBUG = ("DEBUG", 0)
     INFO = ("INFO", 0)
     NOT_OK = ("NOT OK", 1)
     LOW = ("LOW", 1)
+    MINOR = ("MINOR", 1)
     MEDIUM = ("MEDIUM", 2)
+    WARN = ("WARN", 2)
     HIGH = ("HIGH", 3)
+    ERROR = ("ERROR", 3)
     CRITICAL = ("CRITICAL", 4)
 
     @classmethod
