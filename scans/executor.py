@@ -24,9 +24,9 @@ class Executor(Task):
 
         """
         super(Executor, self).__init__(*args, **kwargs)
-        self._ports = []
-        self.ports = ports or []
+        self._ports = ports or []
         self.nodes = nodes or []
+
         self.scan_only = scan_only
         if cfg['service.scans.broadcast']:
             broadcast_port = BroadcastPort()
