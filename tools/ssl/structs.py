@@ -92,7 +92,7 @@ class SSLResults(object):
             SSLResults
 
         """
-        return_value = SSLResults
+        return_value = SSLResults()
         return_value.results = [result for result in self.results if result.severity.score >= severity.score]
 
         return return_value
