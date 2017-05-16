@@ -14,8 +14,8 @@ class SSLParser(Parser):
     Main parser of testssl output
 
     """
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, tempfile):
+        self.tempfile = tempfile
         super(SSLParser, self).__init__()
 
     def parse(self, *args, **kwargs):
@@ -30,6 +30,6 @@ class SSLParser(Parser):
             SSLResults
 
         """
-        file = Path(self.filename)
+        file = Path(self.tempfile.name)
         text = "[{content}]".format(content=file.read_text())
         return SSLResults(json.loads(text))

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from tools.ssl.parsers import SSLParser
 from tools.ssl.structs import SSLResults
@@ -24,11 +24,11 @@ class SSLParserTest(TestCase):
           }"""
 
     def setUp(self):
-        self.filename = 'test_filename'
+        self.filename = MagicMock(name='test_filename')
         self.parser = SSLParser(self.filename)
 
     def test_init(self):
-        self.assertEqual(self.parser.filename, self.filename)
+        self.assertEqual(self.parser.tempfile, self.filename)
 
     @patch('tools.ssl.parsers.Path')
     def test_parse(self, mock_path):

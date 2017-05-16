@@ -14,11 +14,12 @@ class SSLSeverity(Enum):
         self.score = score
 
     OK = ("OK", 0)
-    INFO = ("INFO", 1)
-    LOW = ("LOW", 2)
-    MEDIUM = ("MEDIUM", 3)
-    HIGH = ("HIGH", 4)
-    CRITICAL = ("CRITICAL", 5)
+    INFO = ("INFO", 0)
+    NOT_OK = ("NOT OK", 1)
+    LOW = ("LOW", 1)
+    MEDIUM = ("MEDIUM", 2)
+    HIGH = ("HIGH", 3)
+    CRITICAL = ("CRITICAL", 4)
 
     @classmethod
     def from_name(cls, text):
