@@ -16,13 +16,13 @@ class SSLSeverity(Enum):
     OK = ("OK", 0)
     DEBUG = ("DEBUG", 0)
     INFO = ("INFO", 0)
-    NOT_OK = ("NOT OK", 1)
+    WARN = ("WARN", -1)
+    ERROR = ("ERROR", -2)
     LOW = ("LOW", 1)
+    NOT_OK = ("NOT OK", 1)
     MINOR = ("MINOR", 1)
     MEDIUM = ("MEDIUM", 2)
-    WARN = ("WARN", 2)
     HIGH = ("HIGH", 3)
-    ERROR = ("ERROR", 3)
     CRITICAL = ("CRITICAL", 4)
 
     @classmethod
@@ -67,6 +67,9 @@ class SSLResult(object):
             str
 
         """
+        if not self.cve:
+            return """{finding}""".format(cve=self.cve, finding=self.finding)
+
         return """CVE: {cve}
 Finding: {finding}""".format(cve=self.cve, finding=self.finding)
 
@@ -94,6 +97,22 @@ class SSLResults(object):
         """
         return_value = SSLResults()
         return_value.results = [result for result in self.results if result.severity.score >= severity.score]
+
+        return return_value
+
+    def with_severity_le(self, severity):
+        """
+        Get all results for which severity is less or equal than given
+
+        Args:
+            severity (SSLSeverity):
+
+        Returns:
+            SSLResults
+
+        """
+        return_value = SSLResults()
+        return_value.results = [result for result in self.results if result.severity.score <= severity.score]
 
         return return_value
 

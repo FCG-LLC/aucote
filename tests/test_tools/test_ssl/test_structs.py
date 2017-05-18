@@ -99,7 +99,7 @@ class SSLResultsTest(TestCase):
         "ip": "10.12.1.24/10.12.1.24",
         "port": "443",
         "severity": "MEDIUM",
-        "cve": "CVE-2014-0160",
+        "cve": "",
         "cwe": "CWE-119",
         "finding": "Heartbleed: not vulnerable , timed out"
     }
@@ -126,11 +126,19 @@ class SSLResultsTest(TestCase):
         self.assertEqual(self.results.results[0].severity, SSLSeverity.OK)
         self.assertEqual(self.results.results[0].id, "heartbleed")
 
-    def test_with_severity(self):
+    def test_with_severity_ge(self):
         self.results.results = [self.result_info, self.result_critical, self.result_ok, self.result_medium]
 
         result = self.results.with_severity_ge(SSLSeverity.MEDIUM)
         expected = [self.result_medium, self.result_critical]
+
+        self.assertCountEqual(result.results, expected)
+
+    def test_with_severity_le(self):
+        self.results.results = [self.result_info, self.result_critical, self.result_ok, self.result_medium]
+
+        result = self.results.with_severity_le(SSLSeverity.MEDIUM)
+        expected = [self.result_medium, self.result_ok, self.result_info]
 
         self.assertCountEqual(result.results, expected)
 
@@ -141,8 +149,7 @@ Finding: Heartbleed: not vulnerable , timed out
 
 ----------
 
-CVE: CVE-2014-0160
-Finding: Heartbleed: not vulnerable , timed out"""
+Heartbleed: not vulnerable , timed out"""
         result = self.results.output
 
         self.assertEqual(result, expected)
