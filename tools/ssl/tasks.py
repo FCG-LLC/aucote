@@ -22,6 +22,6 @@ class SSLScriptTask(CommandTask):
         return [str(self._port.node.ip)]
 
     def _get_vulnerabilities(self, results):
-        log.debug(results.with_severity_le(SSLSeverity.LOW).output)
+        log.debug(results.with_severity_le(SSLSeverity.WARN).output)
         return [Vulnerability(exploit=self.exploit, port=self._port,
                               output=results.with_severity_ge(SSLSeverity.LOW).output)]
