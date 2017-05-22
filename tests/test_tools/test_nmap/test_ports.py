@@ -35,7 +35,8 @@ class PortScanTest(TestCase):
                     'include': ['55'],
                     'exclude': []
                 },
-                'network_scan_rate': 1030
+                'network_scan_rate': 1030,
+                'host_timeout': 600
             },
             'tools': {
                 'nmap': {
@@ -56,7 +57,7 @@ class PortScanTest(TestCase):
         cfg._cfg = self.cfg._cfg
 
         result = self.scanner.prepare_args(nodes=self.nodes)
-        expected = ['-Pn', '-6', '-p', '55', '--max-rate', '1030', '192.168.1.5']
+        expected = ['-Pn', '--host-timeout', '600', '-6', '-p', '55', '--max-rate', '1030', '192.168.1.5']
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)
@@ -65,7 +66,8 @@ class PortScanTest(TestCase):
         self.cfg['portdetection.ports.exclude'] = ['45-89']
 
         result = self.scanner.prepare_args(nodes=self.nodes)
-        expected = ['-Pn', '-6', '-p', '55', '--max-rate', '1030', '--exclude-ports', '45-89', '192.168.1.5']
+        expected = ['-Pn', '--host-timeout', '600', '-6', '-p', '55', '--max-rate', '1030', '--exclude-ports', '45-89',
+                    '192.168.1.5']
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)
@@ -76,7 +78,8 @@ class PortScanTest(TestCase):
                 'ports': {
                     'include': ['T:17-45'],
                     'exclude': []
-                }
+                },
+                'host_timeout': 600
             },
             'tools': {
                 'masscan': {
@@ -91,7 +94,8 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000', '192.168.1.5']
+        expected = ['-Pn', '--host-timeout', '600', '-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
+                    '192.168.1.5']
 
         self.assertEqual(result, expected)
 
@@ -105,7 +109,8 @@ class PortScanTest(TestCase):
                 'ports': {
                     'include': 'T:17-45',
                     'exclude': ''
-                }
+                },
+                'host_timeout': 600
             },
             'tools': {
                 'masscan': {
@@ -120,7 +125,8 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '-sS', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000', '192.168.1.5']
+        expected = ['-Pn', '--host-timeout', '600', '-sS', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
+                    '192.168.1.5']
 
         self.assertEqual(result, expected)
 
@@ -134,7 +140,8 @@ class PortScanTest(TestCase):
                 'ports': {
                     'include': 'T:17-45',
                     'exclude': ''
-                }
+                },
+                'host_timeout': 600
             },
             'tools': {
                 'masscan': {
@@ -149,7 +156,8 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '-sU', '--max-retries', '2', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
+        expected = ['-Pn', '--host-timeout', '600', '-sU', '--min-rate', '1000', '--max-retries', '2',
+                    '--defeat-icmp-ratelimit', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
                     '192.168.1.5']
 
         self.assertEqual(result, expected)
@@ -162,7 +170,8 @@ class PortScanTest(TestCase):
                 'ports': {
                     'include': 'T:17-45',
                     'exclude': ''
-                }
+                },
+                'host_timeout': 600
             },
             'tools': {
                 'masscan': {
@@ -177,6 +186,7 @@ class PortScanTest(TestCase):
         }
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000', '192.168.1.5']
+        expected = ['-Pn', '--host-timeout', '600', '-6', '--datadir', 'test', '-p', 'T:17-45', '--max-rate', '1000',
+                    '192.168.1.5']
 
         self.assertEqual(result, expected)

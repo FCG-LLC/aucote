@@ -104,9 +104,7 @@ class ScanAsyncTask(object):
         self.scan_start = time.time()
         self.update_scan_status(ScanStatus.IN_PROGRESS)
 
-        scanner_ipv4 = MasscanPorts()
-        # scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
-        scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
+        nmap_udp = cfg['portdetection.nmap_udp']
 
         include_networks = self._get_networks_list()
         exclude_networks = self._get_excluded_networks_list()
@@ -129,15 +127,19 @@ class ScanAsyncTask(object):
         log.info('Scanning %i nodes (IPv4: %s, IPv6: %s)', len(nodes), len(nodes_ipv4), len(nodes_ipv6))
 
         log.info("Scanning %i IPv4 nodes for open ports.", len(nodes_ipv4))
+        scanner_ipv4 = MasscanPorts(udp=not nmap_udp)
         ports = yield scanner_ipv4.scan_ports(nodes_ipv4)
 
-        # ports_udp = yield scanner_ipv4_udp.scan_ports(nodes_ipv4)
-        # ports.extend(ports_udp)
-
         log.info("Scanning %i IPv6 nodes for open ports.", len(nodes_ipv6))
-
+        scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
         ports_ipv6 = yield scanner_ipv6.scan_ports(nodes_ipv6)
         ports.extend(ports_ipv6)
+
+        if nmap_udp:
+            log.info("Scanning %i IPv4 nodes for open UDP ports.", len(nodes_ipv4))
+            scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
+            ports_udp = yield scanner_ipv4_udp.scan_ports(nodes_ipv4)
+            ports.extend(ports_udp)
 
         port_range_allow = NmapTool.parse_nmap_ports(cfg['portdetection.ports.include'])
         port_range_deny = NmapTool.parse_nmap_ports(cfg['portdetection.ports.exclude'])
