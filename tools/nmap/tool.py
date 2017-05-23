@@ -13,7 +13,6 @@ from tools.base import Tool
 from tools.nmap.base import NmapScript
 from tools.nmap.parsers import NmapVulnParser, NmapInfoParser
 from tools.nmap.tasks.port_scan import NmapPortScanTask
-from utils.exceptions import ImproperConfigurationException
 
 
 class NmapTool(Tool):
@@ -79,7 +78,7 @@ class NmapTool(Tool):
             if callable(args):
                 try:
                     args = args()
-                except ImproperConfigurationException:
+                except KeyError:
                     log.warning("Please set up %s in configuration", name)
                     continue
 
