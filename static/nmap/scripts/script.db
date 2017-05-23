@@ -33,20 +33,25 @@ Entry { filename = "http-cisco-anyconnect.nse", categories = { "default", "disco
 Entry { filename = "http-default-accounts.nse", categories = { "auth", "discovery", "intrusive", } }
 Entry { filename = "http-dlink-backdoor.nse", categories = { "exploit", "vuln", } }
 Entry { filename = "http-domino-enum-passwords.nse", categories = { "auth", "intrusive", } }
+Entry { filename = "http-email-harvest.nse", categories = { "discovery", "safe", } }
 Entry { filename = "http-enum.nse", categories = { "discovery", "intrusive", "vuln", } }
 Entry { filename = "http-git.nse", categories = { "default", "safe", "vuln", } }
 Entry { filename = "http-headers.nse", categories = { "discovery", "safe", } }
 Entry { filename = "http-iis-webdav-vuln.nse", categories = { "intrusive", "vuln", } }
+Entry { filename = "http-litespeed-sourcecode-download.nse", categories = { "exploit", "intrusive", "vuln", } }
 Entry { filename = "http-mcmp.nse", categories = { "discovery", "safe", } }
+Entry { filename = "http-method-tamper.nse", categories = { "auth", "safe", "vuln", } }
 Entry { filename = "http-methods.nse", categories = { "default", "safe", } }
 Entry { filename = "http-mobileversion-checker.nse", categories = { "discovery", "safe", } }
 Entry { filename = "http-open-proxy.nse", categories = { "default", "discovery", "external", "safe", } }
 Entry { filename = "http-php-version.nse", categories = { "discovery", "safe", } }
+Entry { filename = "http-phpself-xss.nse", categories = { "fuzzer", "intrusive", "vuln", } }
 Entry { filename = "http-proxy-brute.nse", categories = { "brute", "external", "intrusive", } }
 Entry { filename = "http-robots.txt.nse", categories = { "default", "discovery", "safe", } }
 Entry { filename = "http-shellshock.nse", categories = { "exploit", "intrusive", "vuln", } }
 Entry { filename = "http-slowloris-check.nse", categories = { "safe", "vuln", } }
 Entry { filename = "http-svn-info.nse", categories = { "default", "discovery", "safe", } }
+Entry { filename = "http-trace.nse", categories = { "discovery", "safe", "vuln", } }
 Entry { filename = "http-useragent-tester.nse", categories = { "discovery", "safe", } }
 Entry { filename = "http-vmware-path-vuln.nse", categories = { "safe", "vuln", } }
 Entry { filename = "http-vuln-cve2006-3392.nse", categories = { "exploit", "intrusive", "vuln", } }
@@ -65,9 +70,11 @@ Entry { filename = "http-vuln-cve2014-2129.nse", categories = { "safe", "vuln", 
 Entry { filename = "http-vuln-cve2014-8877.nse", categories = { "exploit", "intrusive", "vuln", } }
 Entry { filename = "http-vuln-cve2015-1427.nse", categories = { "intrusive", "vuln", } }
 Entry { filename = "http-vuln-cve2015-1635.nse", categories = { "safe", "vuln", } }
+Entry { filename = "http-vuln-cve2017-5638.nse", categories = { "vuln", } }
 Entry { filename = "http-waf-detect.nse", categories = { "discovery", "intrusive", } }
 Entry { filename = "http-waf-fingerprint.nse", categories = { "discovery", "intrusive", } }
 Entry { filename = "http-webdav-scan.nse", categories = { "default", "discovery", "safe", } }
+Entry { filename = "http-wordpress-users.nse", categories = { "auth", "intrusive", "vuln", } }
 Entry { filename = "iax2-version.nse", categories = { "version", } }
 Entry { filename = "ike-version.nse", categories = { "default", "discovery", "safe", "version", } }
 Entry { filename = "imap-capabilities.nse", categories = { "default", "safe", } }
