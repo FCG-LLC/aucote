@@ -104,8 +104,18 @@ class AucoteHttpHeadersTaskTest(TestCase):
 
     @patch('tools.aucote_http_headers.tasks.requests')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
-    def test_with_requests_exception(self, mock_requests):
-        mock_requests.head.side_effect = Exception()
+    def test_with_requests_connection_error(self, mock_requests):
+        mock_requests.head.side_effect = ConnectionError
+
+        result = self.task()
+        expected = None
+
+        self.assertEqual(result, expected)
+
+    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
+    def test_with_requests_os_error(self, mock_requests):
+        mock_requests.head.side_effect = OSError
 
         result = self.task()
         expected = None
