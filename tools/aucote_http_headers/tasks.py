@@ -43,7 +43,7 @@ class AucoteHttpHeadersTask(PortTask):
                 log.warning("Server replied with status code: %i", response.status_code)
 
         except ConnectionError:
-            log.warning("Cannot connect to %s", self._port.url)
+            log.exception("Cannot connect to %s", self._port.url)
             return
         except OSError as exception:
             log.warning(str(exception))
