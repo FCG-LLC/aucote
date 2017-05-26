@@ -49,14 +49,14 @@ class SSLResult(object):
     Single result of testssl checks
 
     """
-    def __init__(self, json):
-        self.id = json.get('id')
-        self.ip = json.get('ip')
-        self.port = json.get('port')
-        self.severity = SSLSeverity.from_name(json.get('severity'))
-        self.cve = json.get('cve')
-        self.cwe = json.get('cwe')
-        self.finding = json.get('finding')
+    def __init__(self):
+        self.id = None
+        self.ip = None
+        self.port = None
+        self.severity = None
+        self.cve = None
+        self.cwe = None
+        self.finding = None
 
     @property
     def output(self):
@@ -79,10 +79,8 @@ class SSLResults(object):
     Contains set of SSLResult objects. Provides interface for managing them.
 
     """
-    def __init__(self, json=None):
-        self.results = None
-        if json:
-            self.results = [SSLResult(single_json) for single_json in json]
+    def __init__(self):
+        self.results = []
 
     def with_severity_ge(self, severity):
         """
