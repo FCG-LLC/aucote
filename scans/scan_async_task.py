@@ -3,7 +3,7 @@ This module contains class responsible for scanning.
 
 """
 import ipaddress
-import json
+import ujson as json
 from functools import partial
 from urllib.error import URLError
 import urllib.request as http

@@ -2,7 +2,7 @@
 Parsers for testssl
 
 """
-import json
+import ujson as json
 from pathlib import Path
 
 from tools.common.parsers import Parser

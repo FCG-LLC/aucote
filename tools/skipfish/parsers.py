@@ -1,7 +1,7 @@
 """
 This module provides parsers used by Skipfish tool
 """
-import json
+import ujson as json
 from ast import literal_eval
 from os.path import sep
 
