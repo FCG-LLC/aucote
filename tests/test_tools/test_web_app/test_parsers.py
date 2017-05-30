@@ -1,8 +1,8 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, call
 
-from tools.what_web.parsers import WhatWebParser
-from tools.what_web.structs import WhatWebPluginOutput, WhatWebResult, WhatWebResults
+from tools.whatweb.parsers import WhatWebParser
+from tools.whatweb.structs import WhatWebPluginOutput, WhatWebResult, WhatWebResults
 
 
 class WhatWebParserTest(TestCase):

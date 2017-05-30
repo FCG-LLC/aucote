@@ -3,7 +3,7 @@ Provides basic integrations of WhatWeb
 
 """
 from tools.common import Command
-from tools.what_web.parsers import WhatWebParser
+from tools.whatweb.parsers import WhatWebParser
 
 
 class WhatWebBase(Command):

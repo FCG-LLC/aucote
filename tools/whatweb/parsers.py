@@ -6,7 +6,7 @@ import re
 import logging as log
 
 from tools.common.parsers import Parser
-from tools.what_web.structs import WhatWebPluginOutput, WhatWebResult, WhatWebResults
+from tools.whatweb.structs import WhatWebPluginOutput, WhatWebResult, WhatWebResults
 
 
 class WhatWebParser(Parser):

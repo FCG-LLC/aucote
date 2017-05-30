@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from tools.what_web.structs import WhatWebPluginOutput, WhatWebResult, WhatWebResults
+from tools.whatweb.structs import WhatWebPluginOutput, WhatWebResult, WhatWebResults
 
 
 class WhatWebPluginOutputTest(TestCase):

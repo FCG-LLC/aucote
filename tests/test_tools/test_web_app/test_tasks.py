@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 from fixtures.exploits import Exploit
 from structs import Port, Node, TransportProtocol
-from tools.what_web.base import WhatWebBase
-from tools.what_web.tasks import WhatWebTask
+from tools.whatweb.base import WhatWebBase
+from tools.whatweb.tasks import WhatWebTask
 
 
 class WhatWebTaskTest(TestCase):

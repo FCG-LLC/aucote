@@ -3,7 +3,7 @@ Contains all tasks related to the WhatWeb tool
 
 """
 from tools.common.command_task import CommandTask
-from tools.what_web.base import WhatWebBase
+from tools.whatweb.base import WhatWebBase
 
 
 class WhatWebTask(CommandTask):

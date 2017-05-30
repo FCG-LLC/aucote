@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from tools.what_web.base import WhatWebBase
-from tools.what_web.parsers import WhatWebParser
+from tools.whatweb.base import WhatWebBase
+from tools.whatweb.parsers import WhatWebParser
 
 
 class WhatWebBaseTest(TestCase):
