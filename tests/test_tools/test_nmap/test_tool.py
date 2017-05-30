@@ -8,7 +8,6 @@ from tools.nmap.base import NmapScript
 from tools.nmap.tool import NmapTool
 from tools.nmap.parsers import NmapParser
 from utils import Config
-from utils.exceptions import ImproperConfigurationException
 from utils.storage import Storage
 
 
@@ -157,7 +156,7 @@ class NmapToolTest(TestCase):
     def test_improper_configure_args(self, cfg, nmap_script):
         cfg._cfg = self.cfg
         self.nmap_tool.exploits = [self.exploit_conf_args]
-        self.config['scripts']['test_name2']['args'].side_effect = ImproperConfigurationException('test.test2')
+        self.config['scripts']['test_name2']['args'].side_effect = KeyError('test.test2')
         self.nmap_tool()
 
         self.assertFalse(nmap_script.called)
