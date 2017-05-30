@@ -1,4 +1,8 @@
 class WhatWebPluginOutput(object):
+    """
+    Output of WhatWeb single plugin
+
+    """
     def __init__(self):
         self.name = None
         self.outputs = []
@@ -8,6 +12,10 @@ class WhatWebPluginOutput(object):
 
 
 class WhatWebResult(object):
+    """
+    Result of single WhatWeb output line
+
+    """
     def __init__(self):
         self.address = None
         self.status = None
@@ -20,6 +28,10 @@ class WhatWebResult(object):
 
 
 class WhatWebResults(object):
+    """
+    Result of WhatWeb execution
+
+    """
     def __init__(self):
         self.results = []
 
