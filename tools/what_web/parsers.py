@@ -7,12 +7,14 @@ from tools.what_web.structs import WhatWebPluginOutput, WhatWebResult, WhatWebRe
 
 class WhatWebParser(Parser):
     plugin_output_regex = re.compile("\[(.*?)\]")
-    plugin_name_regex = re.compile("^\W*(.*?)\[")
+    plugin_name_regex = re.compile("^\W*(?P<name>.*?)(\[|$)")
     output_line = re.compile('(?P<address>.*?) \[(?P<status_code>\d+) (?P<status>.*?)\] (?P<plugins>.*)')
 
     def parse(self, stdout, stderr):
         return_value = WhatWebResults()
         for line in stdout.split('\n'):
+            if not line:
+                continue
             result = self._parse_line(line)
             if not result:
                 continue
@@ -30,9 +32,9 @@ class WhatWebParser(Parser):
         return return_value
 
     def _get_plugin_name(self, text):
-        names = self.plugin_name_regex.findall(text)
-        if len(names) == 1:
-            return names[0]
+        match = self.plugin_name_regex.match(text)
+        if match:
+            return match.group('name')
         else:
             log.error("Parsing error for: %s", text)
 
@@ -47,6 +49,6 @@ class WhatWebParser(Parser):
         return_value.status = result.group('status')
         return_value.status_code = int(result.group('status_code'))
         return_value.plugins = [self._parse_plugin_string(plugin_output)
-                                for plugin_output in result.group('plugins').split(',')]
+                                for plugin_output in result.group('plugins').split(', ')]
 
         return return_value
