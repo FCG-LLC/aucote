@@ -19,7 +19,7 @@ class WhatWebParser(Parser):
         return_value = WhatWebPlugin()
         return_value.name = name
         return_value.os = data.get('os')
-        return_value.string = data.get('string')
+        return_value.string = data.get('string', [])
         return_value.account = data.get('account')
         return_value.model = data.get('model')
         return_value.firmware = data.get('firmware')
@@ -81,7 +81,7 @@ class WhatWebParser(Parser):
         if not name:
             return
         return_value = WhatWebPlugin()
-        return_value.outputs = outputs
+        return_value.string = outputs
         return_value.name = name
         return return_value
 

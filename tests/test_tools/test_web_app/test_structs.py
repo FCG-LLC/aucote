@@ -7,7 +7,7 @@ class WhatWebPluginOutputTest(TestCase):
     def setUp(self):
         self.output = WhatWebPlugin()
         self.output.name = 'test_name'
-        self.output.outputs = ('test_output_1', 'test_output_2')
+        self.output.string = ('test_output_1', 'test_output_2')
 
     def test_str(self):
         result = str(self.output)

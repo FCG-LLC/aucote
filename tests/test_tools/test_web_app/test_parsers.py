@@ -45,10 +45,10 @@ https://jenkins.cs.int/login?from=%2Fa%3Fa%3Dwe%252520wqe [200 OK] Cookies[JSESS
         result = self.parser._parse_plugin_string(self.PLUGIN_OUTPUT)
         expected = WhatWebPlugin()
         expected.name = 'plugin_name'
-        expected.outputs = ['output 1', 'test output', 'some other output']
+        expected.string = ['output 1', 'test output', 'some other output']
 
         self.assertEqual(result.name, expected.name)
-        self.assertCountEqual(result.outputs, expected.outputs)
+        self.assertCountEqual(result.string, expected.string)
 
     def test_plugin_output_parse_corrupt(self):
         result = self.parser._parse_plugin_string('')
@@ -117,6 +117,20 @@ https://jenkins.cs.int/login?from=%2Fa%3Fa%3Dwe%252520wqe [200 OK] Cookies[JSESS
         self.assertEqual(result.module, 'test_module')
         self.assertEqual(result.filepath, 'test_filepath')
         self.assertEqual(result.string, ['301 Moved Permanently'])
+
+    def test_get_plugin_from_dict_empty(self):
+        name = 'test_name'
+        plugin = {}
+
+        result = self.parser._get_plugin_from_dict(name, plugin)
+        self.assertEqual(result.name, name)
+        self.assertIsNone(result.os)
+        self.assertIsNone(result.account)
+        self.assertIsNone(result.model)
+        self.assertIsNone(result.firmware)
+        self.assertIsNone(result.module)
+        self.assertIsNone(result.filepath)
+        self.assertEqual(result.string, [])
 
     def test_get_target_from_dict(self):
         self.parser._get_plugin_from_dict = MagicMock()

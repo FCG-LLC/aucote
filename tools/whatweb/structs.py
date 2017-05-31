@@ -5,10 +5,9 @@ class WhatWebPlugin(object):
     """
     def __init__(self):
         self.name = None
-        self.outputs = []
         self.version = None
         self.os = None
-        self.string = None
+        self.string = []
         self.account = None
         self.model = None
         self.firmware = None
@@ -16,7 +15,7 @@ class WhatWebPlugin(object):
         self.filepath = None
 
     def __str__(self):
-        return """ - {name}: {plugins}""".format(name=self.name, plugins=", ".join(self.outputs))
+        return """ - {name}: {plugins}""".format(name=self.name, plugins=", ".join(self.string))
 
 
 class WhatWebTarget(object):
