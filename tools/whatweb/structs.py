@@ -1,4 +1,4 @@
-class WhatWebPluginOutput(object):
+class WhatWebPlugin(object):
     """
     Output of WhatWeb single plugin
 
@@ -6,34 +6,41 @@ class WhatWebPluginOutput(object):
     def __init__(self):
         self.name = None
         self.outputs = []
+        self.version = None
+        self.os = None
+        self.string = None
+        self.account = None
+        self.model = None
+        self.firmware = None
+        self.module = None
+        self.filepath = None
 
     def __str__(self):
         return """ - {name}: {plugins}""".format(name=self.name, plugins=", ".join(self.outputs))
 
 
-class WhatWebResult(object):
+class WhatWebTarget(object):
     """
     Result of single WhatWeb output line
 
     """
     def __init__(self):
-        self.address = None
+        self.uri = None
         self.status = None
-        self.status_code = None
         self.plugins = []
 
     def __str__(self):
-        return "{address} {status_code}:\n{plugins}".format(address=self.address, status_code=self.status_code,
-                                                           plugins="\n".join([str(plugin) for plugin in self.plugins]))
+        return "{address} {status_code}:\n{plugins}".format(address=self.uri, status_code=self.status,
+                                                            plugins="\n".join([str(plugin) for plugin in self.plugins]))
 
 
-class WhatWebResults(object):
+class WhatWebResult(object):
     """
     Result of WhatWeb execution
 
     """
     def __init__(self):
-        self.results = []
+        self.targets = []
 
     def __str__(self):
-        return "\n----------\n".join([str(result) for result in self.results])
+        return "\n----------\n".join([str(target) for target in self.targets])

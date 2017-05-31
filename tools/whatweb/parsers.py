@@ -6,7 +6,7 @@ import re
 import logging as log
 
 from tools.common.parsers import Parser
-from tools.whatweb.structs import WhatWebPluginOutput, WhatWebResult, WhatWebResults
+from tools.whatweb.structs import WhatWebPlugin, WhatWebTarget, WhatWebResult
 
 
 class WhatWebParser(Parser):
@@ -22,17 +22,17 @@ class WhatWebParser(Parser):
             stderr (str):
 
         Returns:
-            WhatWebResults
+            WhatWebResult
 
         """
-        return_value = WhatWebResults()
+        return_value = WhatWebResult()
         for line in stdout.split('\n'):
             if not line:
                 continue
             result = self._parse_line(line)
             if not result:
                 continue
-            return_value.results.append(result)
+            return_value.targets.append(result)
         return return_value
 
     def _parse_plugin_string(self, text):
@@ -43,14 +43,14 @@ class WhatWebParser(Parser):
             text (str):
 
         Returns:
-            WhatWebPluginOutput
+            WhatWebPlugin
 
         """
         outputs = self.plugin_output_regex.findall(text)
         name = self._get_plugin_name(text)
         if not name:
             return
-        return_value = WhatWebPluginOutput()
+        return_value = WhatWebPlugin()
         return_value.outputs = outputs
         return_value.name = name
         return return_value
@@ -80,7 +80,7 @@ class WhatWebParser(Parser):
             text (str):
 
         Returns:
-            WhatWebResult
+            WhatWebTarget
 
         """
         result = self.output_line.match(text)
@@ -88,10 +88,10 @@ class WhatWebParser(Parser):
             log.error('Parsing error for %s', text)
             return
 
-        return_value = WhatWebResult()
-        return_value.address = result.group('address')
+        return_value = WhatWebTarget()
+        return_value.uri = result.group('address')
         return_value.status = result.group('status')
-        return_value.status_code = int(result.group('status_code'))
+        return_value.status = int(result.group('status_code'))
         return_value.plugins = [self._parse_plugin_string(plugin_output)
                                 for plugin_output in result.group('plugins').split(', ')]
 

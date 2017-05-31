@@ -1,11 +1,11 @@
 from unittest import TestCase
 
-from tools.whatweb.structs import WhatWebPluginOutput, WhatWebResult, WhatWebResults
+from tools.whatweb.structs import WhatWebPlugin, WhatWebTarget, WhatWebResult
 
 
 class WhatWebPluginOutputTest(TestCase):
     def setUp(self):
-        self.output = WhatWebPluginOutput()
+        self.output = WhatWebPlugin()
         self.output.name = 'test_name'
         self.output.outputs = ('test_output_1', 'test_output_2')
 
@@ -18,11 +18,10 @@ class WhatWebPluginOutputTest(TestCase):
 
 class WhatWebResultTest(TestCase):
     def setUp(self):
-        self.result = WhatWebResult()
-        self.result.address = 'test_address'
+        self.result = WhatWebTarget()
+        self.result.uri = 'test_address'
         self.result.plugins = ('test_plugin_1', 'test_plugin_2')
-        self.result.status_code = 200
-        self.result.status = 'OK'
+        self.result.status = 200
 
     def test_str(self):
         result = str(self.result)
@@ -31,8 +30,8 @@ class WhatWebResultTest(TestCase):
 
 class WhatWebResultsTest(TestCase):
     def setUp(self):
-        self.results = WhatWebResults()
-        self.results.results = ('output_1', 'output_2')
+        self.results = WhatWebResult()
+        self.results.targets = ('output_1', 'output_2')
 
     def test_str(self):
         result = str(self.results)
