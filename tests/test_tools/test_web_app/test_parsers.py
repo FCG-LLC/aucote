@@ -7,14 +7,25 @@ from tools.whatweb.structs import WhatWebPlugin, WhatWebTarget, WhatWebResult
 
 class WhatWebParserTest(TestCase):
     JSON_MULTIPLE_LINES = """[
-{"target":"http://jenkins.cs.int","http_status":301,"plugins":{"IP":{"string":["10.12.1.110"]},"Title":{"string":["301 Moved Permanently"]},"nginx":{"version":["1.4.6"]},"HTTPServer":{"os":["Ubuntu Linux"],"string":["nginx/1.4.6 (Ubuntu)"]},"Country":{"string":["RESERVED"],"module":["ZZ"]},"RedirectLocation":{"string":["https://jenkins.cs.int/"]}}},
-{"target":"https://jenkins.cs.int/","http_status":403,"plugins":{"HttpOnly":{"string":["JSESSIONID.6d81b00c"]},"Jenkins":{"version":["2.62"]},"IP":{"string":["10.12.1.110"]},"nginx":{},"HTTPServer":{"string":["nginx"]},"Meta-Refresh-Redirect":{"string":["/login?from=%2F"]},"UncommonHeaders":{"string":["x-content-type-options,x-hudson,x-jenkins,x-jenkins-session,x-hudson-cli-port,x-jenkins-cli-port,x-jenkins-cli2-port,x-you-are-authenticated-as,x-you-are-in-group-disabled,x-required-permission,x-permission-implied-by"]},"Script":{},"Country":{"string":["RESERVED"],"module":["ZZ"]},"Cookies":{"string":["JSESSIONID.6d81b00c"]}}},
-{"target":"https://jenkins.cs.int/login?from=%2F","http_status":200,"plugins":{"HttpOnly":{"string":["JSESSIONID.6d81b00c"]},"Jenkins":{"version":["2.62"]},"IP":{"string":["10.12.1.110"]},"Title":{"string":["Jenkins"]},"nginx":{},"HTTPServer":{"string":["nginx"]},"UncommonHeaders":{"string":["x-content-type-options,x-hudson-theme,x-hudson,x-jenkins,x-jenkins-session,x-hudson-cli-port,x-jenkins-cli-port,x-jenkins-cli2-port,x-instance-identity"]},"Script":{"string":["text/javascript"]},"X-Frame-Options":{"string":["sameorigin"]},"Country":{"string":["RESERVED"],"module":["ZZ"]},"JQuery":{},"Cookies":{"string":["JSESSIONID.6d81b00c"]},"HTML5":{},"Prototype":{},"PasswordField":{"string":["j_password"]}}},
+{"target":"http://jenkins.cs.int","http_status":301,"plugins":{}},
+{"target":"https://jenkins.cs.int/","http_status":403,"plugins":{}},
+{"target":"https://jenkins.cs.int/login?from=%2F","http_status":200,"plugins":{}},
 {}
 ]"""
 
-    JSON_OUTPUT = """{"target":"http://jenkins.cs.int","http_status":301,"plugins":{"IP":{"string":["10.12.1.110"]},"Title":{"string":["301 Moved Permanently"]},"nginx":{"version":["1.4.6"]},"HTTPServer":{"os":["Ubuntu Linux"],"string":["nginx/1.4.6 (Ubuntu)"]},"Country":{"string":["RESERVED"],"module":["ZZ"]},"RedirectLocation":{"string":["https://jenkins.cs.int/"]}}}"""
-    JSON_PLUGIN_OUTPUT = """"IP":{"string":["10.12.1.110"]}"""
+    JSON_TARGET = {
+        "target": "http://jenkins.cs.int",
+        "http_status": 301,
+        "plugins": {
+            "IP": {
+                "string": ["10.12.1.110"]
+            },
+            "HTTPServer": {
+                "os": ["Ubuntu Linux"],
+                "string": ["nginx/1.4.6 (Ubuntu)"]
+            },
+        }
+    }
 
     MULTIPLE_LINES_OUTPUT = """http://jenkins.cs.int/a?a=we wqe [301 Moved Permanently] Country[RESERVED][ZZ]
 
@@ -84,3 +95,53 @@ https://jenkins.cs.int/login?from=%2Fa%3Fa%3Dwe%252520wqe [200 OK] Cookies[JSESS
         result = self.parser._get_plugin_name("test")
 
         self.assertIsNone(result)
+
+    def test_get_plugin_from_dict(self):
+        name = 'test_name'
+        plugin = {
+            "string": ["301 Moved Permanently"],
+            "os": "test_os",
+            "account": "test_account",
+            "model": "test_model",
+            "firmware": "test_firmware",
+            "module": "test_module",
+            "filepath": "test_filepath"
+        }
+
+        result = self.parser._get_plugin_from_dict(name, plugin)
+        self.assertEqual(result.name, name)
+        self.assertEqual(result.os, 'test_os')
+        self.assertEqual(result.account, 'test_account')
+        self.assertEqual(result.model, 'test_model')
+        self.assertEqual(result.firmware, 'test_firmware')
+        self.assertEqual(result.module, 'test_module')
+        self.assertEqual(result.filepath, 'test_filepath')
+        self.assertEqual(result.string, ['301 Moved Permanently'])
+
+    def test_get_target_from_dict(self):
+        self.parser._get_plugin_from_dict = MagicMock()
+        result = self.parser._get_target_from_dict(self.JSON_TARGET)
+
+        self.assertEqual(result.uri, "http://jenkins.cs.int")
+        self.assertEqual(result.status, 301)
+        self.assertEqual(len(result.plugins), 2)
+        self.parser._get_plugin_from_dict.assert_has_calls((
+            call("IP", {
+                "string": ["10.12.1.110"]
+            }),
+            call("HTTPServer", {
+                "os": ["Ubuntu Linux"],
+                "string": ["nginx/1.4.6 (Ubuntu)"]
+            })
+        ), any_order=True)
+
+    def test_parse_json(self):
+        self.parser._get_target_from_dict = MagicMock()
+        result = self.parser.parse_json(self.JSON_MULTIPLE_LINES, self.ERROR_OUTPUT)
+
+        self.assertEqual(len(result.targets), 3)
+        self.parser._get_target_from_dict.has_calls((
+            call({"target": "http://jenkins.cs.int", "http_status": 301, "plugins": {}}),
+            call({"target": "https://jenkins.cs.int/", "http_status": 403, "plugins": {}}),
+            call({"target": "https://jenkins.cs.int/login?from=%2F", "http_status": 200, "plugins": {}}),
+        ), any_order=True)

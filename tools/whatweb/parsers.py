@@ -2,6 +2,7 @@
 Parsers for WhatWeb output
 
 """
+import json
 import re
 import logging as log
 
@@ -13,6 +14,32 @@ class WhatWebParser(Parser):
     plugin_output_regex = re.compile("\[(.*?)\]")
     plugin_name_regex = re.compile("^\W*(?P<name>.*?)(\[|$)")
     output_line = re.compile('(?P<address>.*?) \[(?P<status_code>\d+) (?P<status>.*?)\] (?P<plugins>.*)')
+
+    def _get_plugin_from_dict(self, name, data):
+        return_value = WhatWebPlugin()
+        return_value.name = name
+        return_value.os = data.get('os')
+        return_value.string = data.get('string')
+        return_value.account = data.get('account')
+        return_value.model = data.get('model')
+        return_value.firmware = data.get('firmware')
+        return_value.module = data.get('module')
+        return_value.filepath = data.get('filepath')
+        return return_value
+
+    def _get_target_from_dict(self, data):
+        return_value = WhatWebTarget()
+        return_value.uri = data.get('target')
+        return_value.status = int(data.get('http_status'))
+        return_value.plugins = [self._get_plugin_from_dict(name, plugin) for name, plugin in
+                                data.get('plugins', {}).items()]
+        return return_value
+
+    def parse_json(self, stdout, stderr):
+        data = json.loads(stdout)
+        return_value = WhatWebResult()
+        return_value.targets = [self._get_target_from_dict(target) for target in data if target]
+        return return_value
 
     def parse(self, stdout, stderr):
         """
