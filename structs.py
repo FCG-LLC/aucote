@@ -340,7 +340,7 @@ class Port(object):
         self.number = number
         self.transport_protocol = transport_protocol
         self.service = Service()
-        self.app = Service()
+        self.apps = []
         self.protocol = None
         self.banner = None
         self.scan = None
@@ -372,7 +372,7 @@ class Port(object):
         return_value.vulnerabilities = self.vulnerabilities
         return_value.when_discovered = self.when_discovered
         return_value.service = self.service.copy()
-        return_value.app = self.app.copy()
+        return_value.apps = [app.copy() for app in self.apps]
         return_value.banner = self.banner
         return_value.protocol = self.protocol
         return_value.scan = self.scan
