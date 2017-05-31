@@ -11,7 +11,7 @@ class WhatWebBase(Command):
     WhatWeb base class
 
     """
-    COMMON_ARGS = ('-a', '3', '--color', 'never')
+    COMMON_ARGS = ('-a', '3', '--color', 'never', '-q', '--log-json', '-')
     NAME = 'whatweb'
 
     parser = WhatWebParser()

@@ -76,11 +76,11 @@ https://jenkins.cs.int/login?from=%2Fa%3Fa%3Dwe%252520wqe [200 OK] Cookies[JSESS
         result = self.parser._parse_line(self.ERROR_OUTPUT)
         self.assertIsNone(result)
 
-    def test_parse(self):
+    def test_parse_text(self):
         self.parser._parse_line = MagicMock()
         self.parser._parse_line.side_effect = (True, None, True)
 
-        result = self.parser.parse(self.MULTIPLE_LINES_OUTPUT, '')
+        result = self.parser.parse_text(self.MULTIPLE_LINES_OUTPUT, '')
 
         self.assertIsInstance(result, WhatWebResult)
         self.assertEqual(len(result.targets), 2)
@@ -145,3 +145,11 @@ https://jenkins.cs.int/login?from=%2Fa%3Fa%3Dwe%252520wqe [200 OK] Cookies[JSESS
             call({"target": "https://jenkins.cs.int/", "http_status": 403, "plugins": {}}),
             call({"target": "https://jenkins.cs.int/login?from=%2F", "http_status": 200, "plugins": {}}),
         ), any_order=True)
+
+    def test_parse(self):
+        self.parser.parse_json = MagicMock()
+        stdout = "test_stdout"
+        stderr = "test_stderr"
+        result = self.parser.parse(stdout, stderr)
+        self.parser.parse_json.assert_called_once_with(stdout, stderr)
+        self.assertEqual(result, self.parser.parse_json.return_value)

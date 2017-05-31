@@ -41,7 +41,10 @@ class WhatWebParser(Parser):
         return_value.targets = [self._get_target_from_dict(target) for target in data if target]
         return return_value
 
-    def parse(self, stdout, stderr):
+    def parse(self, *args, **kwargs):
+        return self.parse_json(*args, **kwargs)
+
+    def parse_text(self, stdout, stderr):
         """
         Parses WhatWeb output and returns result
         Args:
