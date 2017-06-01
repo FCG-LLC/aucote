@@ -11,9 +11,9 @@ from tools.whatweb.structs import WhatWebPlugin, WhatWebTarget, WhatWebResult
 
 
 class WhatWebParser(Parser):
-    plugin_output_regex = re.compile("\[(.*?)\]")
-    plugin_name_regex = re.compile("^\W*(?P<name>.*?)(\[|$)")
-    output_line = re.compile('(?P<address>.*?) \[(?P<status_code>\d+) (?P<status>.*?)\] (?P<plugins>.*)')
+    PLUGIN_OUTPUT_REGEX = re.compile("\[(.*?)\]")
+    PLUGIN_NAME_REGEX = re.compile("^\W*(?P<name>.*?)(\[|$)")
+    OUTPUT_LINE_REGEX = re.compile('(?P<address>.*?) \[(?P<status_code>\d+) (?P<status>.*?)\] (?P<plugins>.*)')
 
     def _get_plugin_from_dict(self, name, data):
         return_value = WhatWebPlugin()
@@ -73,10 +73,10 @@ class WhatWebParser(Parser):
             text (str):
 
         Returns:
-            WhatWebPlugin
+            WhatWebPlugin | None
 
         """
-        outputs = self.plugin_output_regex.findall(text)
+        outputs = self.PLUGIN_OUTPUT_REGEX.findall(text)
         name = self._get_plugin_name(text)
         if not name:
             return
@@ -93,10 +93,10 @@ class WhatWebParser(Parser):
             text (str):
 
         Returns:
-            str
+            str | None
 
         """
-        match = self.plugin_name_regex.match(text)
+        match = self.PLUGIN_NAME_REGEX.match(text)
         if match:
             return match.group('name')
         else:
@@ -110,17 +110,16 @@ class WhatWebParser(Parser):
             text (str):
 
         Returns:
-            WhatWebTarget
+            WhatWebTarget | None
 
         """
-        result = self.output_line.match(text)
+        result = self.OUTPUT_LINE_REGEX.match(text)
         if not result:
             log.error('Parsing error for %s', text)
             return
 
         return_value = WhatWebTarget()
         return_value.uri = result.group('address')
-        return_value.status = result.group('status')
         return_value.status = int(result.group('status_code'))
         return_value.plugins = [self._parse_plugin_string(plugin_output)
                                 for plugin_output in result.group('plugins').split(', ')]

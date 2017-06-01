@@ -90,8 +90,8 @@ https://jenkins.cs.int/login?from=%2Fa%3Fa%3Dwe%252520wqe [200 OK] Cookies[JSESS
              call('https://jenkins.cs.int/login?from=%2Fa%3Fa%3Dwe%252520wqe [200 OK] Cookies[JSESSIONID.6d81b00c]')))
 
     def test_get_plugin_name_parsing_error(self):
-        self.parser.plugin_name_regex = MagicMock()
-        self.parser.plugin_name_regex.match.return_value = None
+        self.parser.PLUGIN_NAME_REGEX = MagicMock()
+        self.parser.PLUGIN_NAME_REGEX.match.return_value = None
         result = self.parser._get_plugin_name("test")
 
         self.assertIsNone(result)
