@@ -13,7 +13,7 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from scans.scan_async_task import ScanAsyncTask
-from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus
+from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus, CPEType
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -160,6 +160,76 @@ class ScanAsyncTaskTest(AsyncTestCase):
       ]
     }"""
 
+    NODE_WITH_OS_FINGERPRINT = rb"""{
+  "meta": {
+    "apiVersion": "1.0.0",
+    "requestTime": "2016-08-11T11:42:32.842891+00:00",
+    "url": "http://10.12.1.175:1234/api/v1/nodes?ip=t"
+  },
+  "nodes": [
+    {
+      "id": 573,
+      "displayName": "EPSON1B0407",
+      "ips": [
+        "10.3.3.99"
+      ],
+      "software": {
+        "os": {
+            "discoveryType": "FINGERPRINT"
+        }
+      }
+    }
+  ]
+}"""
+
+    NODE_WITH_OS_DIRECT = rb"""{
+  "meta": {
+    "apiVersion": "1.0.0",
+    "requestTime": "2016-08-11T11:42:32.842891+00:00",
+    "url": "http://10.12.1.175:1234/api/v1/nodes?ip=t"
+  },
+  "nodes": [
+    {
+      "id": 573,
+      "displayName": "EPSON1B0407",
+      "ips": [
+        "10.3.3.99"
+      ],
+      "software": {
+        "os": {
+            "discoveryType": "DIRECT",
+            "name": "test_name",
+            "version": "11"
+        }
+      }
+    }
+  ]
+}"""
+
+    NODE_WITH_OS_DIRECT_SPACES_VERSION = rb"""{
+  "meta": {
+    "apiVersion": "1.0.0",
+    "requestTime": "2016-08-11T11:42:32.842891+00:00",
+    "url": "http://10.12.1.175:1234/api/v1/nodes?ip=t"
+  },
+  "nodes": [
+    {
+      "id": 573,
+      "displayName": "EPSON1B0407",
+      "ips": [
+        "10.3.3.99"
+      ],
+      "software": {
+        "os": {
+            "discoveryType": "DIRECT",
+            "name": "test_name",
+            "version": "11 abcde"
+        }
+      }
+    }
+  ]
+}"""
+
     EMPTY_NODE_DETAILS = rb"""{
   "meta": {
     "apiVersion": "1.0.0",
@@ -214,6 +284,53 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertEqual(nodes[0].id, 573)
         self.assertEqual(nodes[0].ip.exploded, '10.3.3.99')
         self.assertEqual(nodes[0].name, 'EPSON1B0407')
+
+    @patch('scans.scan_async_task.http.urlopen')
+    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    def test_getting_nodes_os_fingerprint(self, urllib):
+        urllib.return_value = self.urllib_response
+        self.urllib_response.read.return_value = self.NODE_WITH_OS_FINGERPRINT
+
+        nodes = self.thread._get_topdis_nodes()
+        self.assertEqual(len(nodes), 1)
+        result = nodes[0]
+
+        self.assertIsNone(result.os.name)
+        self.assertIsNone(result.os.version)
+
+    @patch('scans.scan_async_task.http.urlopen')
+    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.Service.build_cpe')
+    def test_getting_nodes_os_direct(self, mock_cpe, urllib):
+        urllib.return_value = self.urllib_response
+        self.urllib_response.read.return_value = self.NODE_WITH_OS_DIRECT
+        mock_cpe.return_value = 'cpe:2.3:a:b:c:d:*:*:*:*:*:*:*'
+
+        nodes = self.thread._get_topdis_nodes()
+        self.assertEqual(len(nodes), 1)
+        result = nodes[0]
+
+        self.assertEqual(result.os.name, 'test_name')
+        self.assertEqual(result.os.version, '11')
+        self.assertEqual(result.os.cpe, CPE(mock_cpe.return_value))
+        mock_cpe.assert_called_once_with(product='test_name', version='11', type=CPEType.OS)
+
+    @patch('scans.scan_async_task.http.urlopen')
+    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.Service.build_cpe')
+    def test_getting_nodes_os_direct_with_space_in_version(self, mock_cpe, urllib):
+        urllib.return_value = self.urllib_response
+        self.urllib_response.read.return_value = self.NODE_WITH_OS_DIRECT_SPACES_VERSION
+        mock_cpe.return_value = 'cpe:2.3:a:b:c:d:*:*:*:*:*:*:*'
+
+        nodes = self.thread._get_topdis_nodes()
+        self.assertEqual(len(nodes), 1)
+        result = nodes[0]
+
+        self.assertEqual(result.os.name, 'test_name')
+        self.assertEqual(result.os.version, '11 abcde')
+        self.assertIsNone(result.os.cpe)
+        self.assertFalse(mock_cpe.called)
 
     @patch('scans.scan_async_task.http.urlopen')
     @patch('scans.scan_async_task.cfg.get', MagicMock())
@@ -681,170 +798,3 @@ class ScanAsyncTaskTest(AsyncTestCase):
         }
 
         cfg.toucan.put.assert_called_once_with('portdetection.status', expected)
-
-    @patch('scans.scan_async_task.requests.get')
-    @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_get_os_for_nodes(self, cfg, mock_get):
-        cfg._cfg = {
-            'topdis': {
-                'api': {
-                    'port': 80,
-                    'host': 'topdis'
-                },
-                'fetch_os': True
-            }
-        }
-        mock_get.return_value = Response()
-        mock_get.return_value.status_code = 200
-        mock_get.return_value._content = self.NODE_DETAILS
-
-        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        node.scan = Scan(start=12)
-
-        self.thread._get_topdis_oses([node])
-
-        self.assertEqual(node.os.name, 'IOS')
-        self.assertEqual(node.os.version, '12.4(11)XW, RELEASE SOFTWARE (fc1)')
-
-    @patch('scans.scan_async_task.requests.get')
-    @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_get_os_for_nodes_http_error(self, cfg, mock_get):
-        cfg._cfg = {
-            'topdis': {
-                'api': {
-                    'port': 80,
-                    'host': 'topdis'
-                },
-                'fetch_os': True
-            }
-        }
-
-        mock_get.return_value = Response()
-        mock_get.return_value.status_code = 404
-        mock_get.return_value._content = self.NODE_DETAILS
-
-        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        node.scan = Scan(start=12)
-
-        self.thread._get_topdis_oses([node])
-
-        self.assertIsNone(node.os.name)
-        self.assertIsNone(node.os.version)
-
-    @patch('scans.scan_async_task.requests.get')
-    @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_get_os_for_nodes_connection_error(self, cfg, mock_get):
-        cfg._cfg = {
-            'topdis': {
-                'api': {
-                    'port': 80,
-                    'host': 'topdis'
-                },
-                'fetch_os': True
-            }
-        }
-
-        mock_get.side_effect = requests.exceptions.ConnectionError
-        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        node.scan = Scan(start=12)
-
-        self.thread._get_topdis_oses([node])
-
-        self.assertIsNone(node.os.name)
-        self.assertIsNone(node.os.version)
-
-    @patch('scans.scan_async_task.requests.get')
-    @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_get_os_for_nodes_empty(self, cfg, mock_get):
-        cfg._cfg = {
-            'topdis': {
-                'api': {
-                    'port': 80,
-                    'host': 'topdis'
-                },
-                'fetch_os': True
-            }
-        }
-
-        mock_get.return_value = Response()
-        mock_get.return_value.status_code = 200
-        mock_get.return_value._content = self.EMPTY_NODE_DETAILS
-
-        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        node.scan = Scan(start=12)
-
-        self.thread._get_topdis_oses([node])
-
-        self.assertIsNone(node.os.name)
-        self.assertIsNone(node.os.version)
-
-    @patch('scans.scan_async_task.requests.get')
-    @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_get_os_for_nodes_request(self, cfg, mock_get):
-        cfg._cfg = {
-            'topdis': {
-                'api': {
-                    'port': 80,
-                    'host': 'topdis'
-                },
-                'fetch_os': True
-            }
-        }
-
-        mock_get.return_value = Response()
-        mock_get.return_value.status_code = 200
-        mock_get.return_value._content = self.EMPTY_NODE_DETAILS
-
-        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        node.scan = Scan(start=12)
-
-        self.thread._get_topdis_oses([node])
-
-        mock_get.assert_called_once_with('http://topdis:80/api/v1/node?id=1&when=1970-01-01T01:00:12+00:00')
-
-    @patch('scans.scan_async_task.Service.build_cpe')
-    @patch('scans.scan_async_task.requests.get')
-    @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_get_os_nodes_with_cpe(self, cfg, mock_get, mock_cpe):
-        cfg._cfg = {
-            'topdis': {
-                'api': {
-                    'port': 80,
-                    'host': 'topdis'
-                },
-                'fetch_os': True
-            }
-        }
-
-        mock_get.return_value = Response()
-        mock_get.return_value.status_code = 200
-        mock_get.return_value._content = self.NODE_DETAILS_FOR_CPE
-
-        mock_cpe.return_value = 'cpe:2.3:o:*:*:*:*:*:*:*:*:*:*'
-
-        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        node.scan = Scan(start=12)
-
-        self.thread._get_topdis_oses([node])
-
-        self.assertEqual(node.os.cpe, CPE(mock_cpe.return_value))
-
-    @patch('scans.scan_async_task.requests.get')
-    @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_get_os_nodes_topdis_disable(self, cfg, mock_get):
-        cfg._cfg = {
-            'topdis': {
-                'api': {
-                    'port': 80,
-                    'host': 'topdis'
-                },
-                'fetch_os': False
-            }
-        }
-
-        node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        node.scan = Scan(start=12)
-
-        self.thread._get_topdis_oses([node])
-
-        self.assertFalse(mock_get.called)

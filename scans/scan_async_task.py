@@ -12,8 +12,6 @@ import time
 from threading import Lock
 import netifaces
 
-import datetime
-import requests
 from croniter import croniter
 from netaddr import IPSet
 from tornado import gen
@@ -26,7 +24,7 @@ from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
 from utils.async_task_manager import AsyncTaskManager
-from utils.time import parse_period, parse_time_to_timestamp, parse_timestamp_to_time
+from utils.time import parse_period, parse_time_to_timestamp
 
 
 class ScanAsyncTask(object):
@@ -112,8 +110,6 @@ class ScanAsyncTask(object):
         scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
 
         self.current_scan = nodes
-        if not scan_only:
-            self._get_topdis_oses(nodes=nodes)
 
         if not nodes:
             log.warning("List of nodes is empty")
@@ -198,45 +194,22 @@ class ScanAsyncTask(object):
                 node = Node(ip=ipaddress.ip_address(node_ip), node_id=node_struct['id'])
                 node.name = node_struct['displayName']
                 node.scan = Scan(start=timestamp)
+
+                software = node_struct.get('software', {})
+                os = software.get('os', {})
+
+                if os.get('discoveryType') in (TopisOSDiscoveryType.DIRECT.value,):
+                    node.os.name, node.os.version = os.get('name'), os.get('version')
+
+                    if " " in node.os.version:
+                        log.warning("Currently doesn't support space in OS Version for cpe")
+                    else:
+                        node.os.cpe = Service.build_cpe(product=node.os.name, version=node.os.version, type=CPEType.OS)
+
                 nodes.append(node)
 
         log.debug('Got %i nodes from topdis: %s', len(nodes), nodes)
         return nodes
-
-    @classmethod
-    def _get_topdis_oses(cls, nodes):
-        if not cfg.get('topdis.fetch_os'):
-            return
-
-        for node in nodes:
-            try:
-                when = parse_timestamp_to_time(node.scan.start)
-                url = 'http://{host}:{port}/api/v1/node?id={node}&when={when}'.format(host=cfg.get('topdis.api.host'),
-                                                                                      port=cfg.get('topdis.api.port'),
-                                                                                      node=node.id,
-                                                                                      when=when)
-                result = requests.get(url)
-            except requests.exceptions.ConnectionError:
-                log.exception('Cannot connect to topdis: %s:%s', cfg.get('topdis.api.host'), cfg.get('topdis.api.port'))
-                continue
-
-            if result.status_code != 200:
-                log.warning("Topdis returns %s for %s", result.status_code, result.url)
-                continue
-
-            data = result.json()
-            if len(data['nodes']) == 0:
-                log.warning("Cannot get OS from Todis for node: %s", node.id)
-                continue
-
-            software = data['nodes'][0]['software']
-
-            if software['osDiscoveryType'] in (TopisOSDiscoveryType.DIRECT.value,):
-                node.os.name, node.os.version = software['os'], software['osVersion']
-                if " " in software['osVersion']:
-                    log.warning("Currently doesn't support space in OS Version for cpe")
-                    continue
-                node.os.cpe = Service.build_cpe(product=software['os'], version=software['osVersion'], type=CPEType.OS)
 
     def _get_nodes_for_scanning(self, timestamp=None):
         """
