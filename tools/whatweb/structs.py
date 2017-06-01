@@ -15,7 +15,7 @@ class WhatWebPlugin(object):
         self.filepath = None
 
     def __str__(self):
-        return """ - {name}: {plugins}""".format(name=self.name, plugins=", ".join(self.string))
+        return """{name}: {plugins}""".format(name=self.name, plugins=", ".join(self.string))
 
 
 class WhatWebTarget(object):
@@ -30,7 +30,9 @@ class WhatWebTarget(object):
 
     def __str__(self):
         return "{address} {status_code}:\n{plugins}".format(address=self.uri, status_code=self.status,
-                                                            plugins="\n".join([str(plugin) for plugin in self.plugins]))
+                                                            plugins="\n".join([" - {0}".format(str(plugin))
+                                                                               for plugin in self.plugins
+                                                                               if plugin.string]))
 
 
 class WhatWebResult(object):
