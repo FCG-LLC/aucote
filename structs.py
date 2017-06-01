@@ -513,5 +513,3 @@ class ScanStatus(Enum):
 class TopisOSDiscoveryType(Enum):
     FINGERPRINT = "OSFINGERPRINT"
     DIRECT = "DIRECT"
-    FROMDESCR = "FROMDESCR"
-    DEVTYPEDATA = "DEVTYPEDATA"
