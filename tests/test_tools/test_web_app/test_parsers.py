@@ -78,7 +78,7 @@ https://jenkins.cs.int/login?from=%2Fa%3Fa%3Dwe%252520wqe [200 OK] Cookies[JSESS
 
     def test_parse_text(self):
         self.parser._parse_line = MagicMock()
-        self.parser._parse_line.side_effect = (True, None, True)
+        self.parser._parse_line.side_effect = (True, None, True, True, None, True)
 
         result = self.parser.parse_text(self.MULTIPLE_LINES_OUTPUT, '')
 

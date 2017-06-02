@@ -16,21 +16,10 @@ class WhatWebParser(Parser):
     OUTPUT_LINE_REGEX = re.compile('(?P<address>.*?) \[(?P<status_code>\d+) (?P<status>.*?)\] (?P<plugins>.*)')
 
     def _get_plugin_from_dict(self, name, data):
-        return_value = WhatWebPlugin()
-        return_value.name = name
-        return_value.os = data.get('os')
-        return_value.string = data.get('string', [])
-        return_value.account = data.get('account')
-        return_value.model = data.get('model')
-        return_value.firmware = data.get('firmware')
-        return_value.module = data.get('module')
-        return_value.filepath = data.get('filepath')
-        return return_value
+        return WhatWebPlugin(name=name, **data)
 
     def _get_target_from_dict(self, data):
-        return_value = WhatWebTarget()
-        return_value.uri = data.get('target')
-        return_value.status = int(data.get('http_status'))
+        return_value = WhatWebTarget(uri=data.get('target'), status=int(data.get('http_status')))
         return_value.plugins = [self._get_plugin_from_dict(name, plugin) for name, plugin in
                                 data.get('plugins', {}).items()]
         return return_value
@@ -55,15 +44,7 @@ class WhatWebParser(Parser):
             WhatWebResult
 
         """
-        return_value = WhatWebResult()
-        for line in stdout.split('\n'):
-            if not line:
-                continue
-            result = self._parse_line(line)
-            if not result:
-                continue
-            return_value.targets.append(result)
-        return return_value
+        return WhatWebResult(targets=list(filter(None, map(self._parse_line, filter(None, stdout.split('\n'))))))
 
     def _parse_plugin_string(self, text):
         """
@@ -80,10 +61,7 @@ class WhatWebParser(Parser):
         name = self._get_plugin_name(text)
         if not name:
             return
-        return_value = WhatWebPlugin()
-        return_value.string = outputs
-        return_value.name = name
-        return return_value
+        return WhatWebPlugin(string=outputs, name=name)
 
     def _get_plugin_name(self, text):
         """
