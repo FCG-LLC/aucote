@@ -21,7 +21,7 @@ class NmapTool(Tool):
 
     """
 
-    def call(self, *args, **kwargs):
+    def call(self):
         """
         Prepares nmap args, executes and manages nmap scripts.
 

@@ -14,7 +14,7 @@ class SkipfishTool(Tool):
 
     """
 
-    def call(self, *args, **kwargs):
+    def call(self):
         if self.port.is_ipv6:
             log.warning("Skipfish doesn't support ipv6 scanning")
             return

@@ -12,6 +12,6 @@ class AucoteHttpHeadersTool(Tool):
 
     """
 
-    def call(self, *args, **kwargs):
+    def call(self):
         self.aucote.add_task(AucoteHttpHeadersTask(aucote=self.aucote, port=self.port,
                                                    exploits=self.exploits, config=self.config))
