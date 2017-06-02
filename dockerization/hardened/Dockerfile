@@ -6,11 +6,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-add-repository ppa:pi-rho/security
 RUN apt-get update
 
-RUN apt-get install -y hydra --force-yes
-RUN apt-get install -y masscan --force-yes
-RUN apt-get install -y skipfish --force-yes
-RUN apt-get install -y whatweb --force-yes
-
 RUN apt-get install -y mq-broker aucote=*$destEnv
 
 RUN setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap
