@@ -8,6 +8,7 @@ import logging as log
 from tornado import gen
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
+from tornado.queues import Queue
 from tornado_crontab import CronTabCallback
 
 
@@ -21,10 +22,11 @@ class AsyncTaskManager(object):
     """
     _instance = None
 
-    def __init__(self):
+    def __init__(self, parallel_tasks=10):
         self._shutdown_condition = Event()
         self._cron_tasks = {}
         self.run_tasks = {}
+        self._tasks = Queue(maxsize=parallel_tasks)
 
     @classmethod
     def instance(cls):
@@ -49,6 +51,7 @@ class AsyncTaskManager(object):
         """
         for task in self._cron_tasks.values():
             task.start()
+        IOLoop.current().add_callback(self.process_tasks)
 
     def add_crontab_task(self, task, cron):
         """
@@ -78,7 +81,7 @@ class AsyncTaskManager(object):
         for task in self._cron_tasks.values():
             task.stop()
         IOLoop.current().add_callback(self.prepare_ioloop_shutdown)
-        yield [self._shutdown_condition.wait()]
+        yield [self._shutdown_condition.wait(), self._tasks.join()]
 
     @classmethod
     def unique_task(cls, function):
@@ -143,3 +146,31 @@ class AsyncTaskManager(object):
         """
         self._cron_tasks = {}
         self.run_tasks = {}
+
+    async def process_tasks(self):
+        """
+        Execute queue
+
+        Returns:
+            None
+
+        """
+        async for item in self._tasks:
+            try:
+                log.debug("Executing %s", item)
+                await item()
+            finally:
+                self._tasks.task_done()
+
+    def add_task(self, task):
+        """
+        Add task to the queue
+
+        Args:
+            task:
+
+        Returns:
+            None
+
+        """
+        self._tasks.put(task)
