@@ -2,7 +2,7 @@
 Parsers for WhatWeb output
 
 """
-import json
+import ujson as json
 import re
 import logging as log
 
