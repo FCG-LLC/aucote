@@ -109,16 +109,20 @@ class AsyncTaskManager(object):
                 None
 
             """
+            log.debug("UniqueTask: %s attempts to start")
             if cls._instance.run_tasks[function.__name__]:
+                log.debug("UniqueTask: %s didn't started")
                 return
+            log.debug("UniqueTask: %s started")
 
             cls._instance.run_tasks[function.__name__] = True
             try:
                 yield function(*args, **kwargs)
             except Exception:
                 log.exception("Exception while running %s", function.__name__)
-
-            cls._instance.run_tasks[function.__name__] = False
+            finally:
+                log.debug("UniqueTask: %s finished")
+                cls._instance.run_tasks[function.__name__] = False
 
         return return_function
 
