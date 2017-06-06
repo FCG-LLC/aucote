@@ -23,7 +23,6 @@ from structs import Node, Scan, PhysicalPort, ScanStatus, TopisOSDiscoveryType, 
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
-from utils.async_task_manager import AsyncTaskManager
 from utils.time import parse_period, parse_time_to_timestamp
 
 
@@ -60,7 +59,6 @@ class ScanAsyncTask(object):
         else:
             IOLoop.current().add_callback(partial(self.run_scan, self._get_nodes_for_scanning()))
 
-    @AsyncTaskManager.unique_task
     @gen.coroutine
     def _scan(self):
         """
@@ -77,7 +75,6 @@ class ScanAsyncTask(object):
         log.debug("Found %i nodes for potential scanning", len(nodes))
         yield self.run_scan(nodes, scan_only=True)
 
-    @AsyncTaskManager.unique_task
     @gen.coroutine
     def _run_tools(self):
         """
@@ -210,7 +207,7 @@ class ScanAsyncTask(object):
 
                 nodes.append(node)
 
-        log.debug('Got %i nodes from topdis: %s', len(nodes), nodes)
+        log.debug('Got %i nodes from topdis', len(nodes))
         return nodes
 
     def _get_nodes_for_scanning(self, timestamp=None):

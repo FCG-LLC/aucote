@@ -9,7 +9,8 @@ from tornado import gen
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
 from tornado.queues import Queue
-from tornado_crontab import CronTabCallback
+
+from utils.async_crontab_task import AsyncCrontabTask
 
 
 class AsyncTaskManager(object):
@@ -66,7 +67,7 @@ class AsyncTaskManager(object):
 
         """
 
-        self._cron_tasks[task.__name__] = CronTabCallback(task, cron, io_loop=IOLoop.current())
+        self._cron_tasks[task.__name__] = AsyncCrontabTask(cron, task)
         self.run_tasks[task.__name__] = False
 
     @gen.coroutine
@@ -109,11 +110,11 @@ class AsyncTaskManager(object):
                 None
 
             """
-            log.debug("UniqueTask: %s attempts to start")
+            log.debug("UniqueTask: %s attempts to start", function.__name__)
             if cls._instance.run_tasks[function.__name__]:
-                log.debug("UniqueTask: %s didn't started")
+                log.debug("UniqueTask: %s didn't started", function.__name__)
                 return
-            log.debug("UniqueTask: %s started")
+            log.debug("UniqueTask: %s started", function.__name__)
 
             cls._instance.run_tasks[function.__name__] = True
             try:
@@ -121,7 +122,7 @@ class AsyncTaskManager(object):
             except Exception:
                 log.exception("Exception while running %s", function.__name__)
             finally:
-                log.debug("UniqueTask: %s finished")
+                log.debug("UniqueTask: %s finished", function.__name__)
                 cls._instance.run_tasks[function.__name__] = False
 
         return return_function

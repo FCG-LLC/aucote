@@ -373,8 +373,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         self.assertListEqual(result, expected)
 
-    @patch('scans.scan_async_task.AsyncTaskManager.start')
-    def test_run_as_service(self, mock_start):
+    def test_run_as_service(self):
         self.thread.scheduler = MagicMock()
         self.thread.as_service = True
 
@@ -383,8 +382,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread._ioloop = MagicMock()
 
         self.thread.run()
-
-        mock_start.called_once_with()
+        self.thread.aucote.async_task_manager.start.assert_called_once_with()
 
     @patch('scans.scan_async_task.IOLoop')
     @patch('scans.scan_async_task.partial')

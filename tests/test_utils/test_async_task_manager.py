@@ -5,6 +5,7 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 from tornado_crontab import CronTabCallback
 
+from utils.async_crontab_task import AsyncCrontabTask
 from utils.async_task_manager import AsyncTaskManager
 
 
@@ -111,7 +112,7 @@ class TestAsyncTaskManager(AsyncTestCase):
 
         self.assertIn('test_name', self.task_manager._cron_tasks.keys())
         self.assertIn('test_name', self.task_manager.run_tasks.keys())
-        self.assertIsInstance(self.task_manager._cron_tasks.get('test_name'), CronTabCallback)
+        self.assertIsInstance(self.task_manager._cron_tasks.get('test_name'), AsyncCrontabTask)
         self.assertFalse(self.task_manager.run_tasks.get('test_name'))
 
     @gen_test
