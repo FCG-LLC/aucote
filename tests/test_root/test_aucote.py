@@ -134,9 +134,9 @@ class AucoteTest(AsyncTestCase):
         self.assertEqual(mock_scan_tasks.call_count, 1)
         self.assertEqual(mock_storage_task.call_count, 1)
         self.assertDictEqual(result, expected)
-        self.aucote._thread_pool.start.called_once_with()
-        self.aucote._thread_pool.join.called_once_with()
-        self.aucote._thread_pool.stop.called_once_with()
+        self.aucote._thread_pool.start.assert_called_once_with()
+        self.aucote._thread_pool.join.assert_called_once_with()
+        self.aucote._thread_pool.stop.assert_called_once_with()
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.StorageThread')
@@ -162,9 +162,9 @@ class AucoteTest(AsyncTestCase):
         self.assertEqual(mock_storage_task.call_count, 1)
         self.assertEqual(mock_watchdog.call_count, 1)
         self.assertDictEqual(result, expected)
-        self.aucote._thread_pool.start.called_once_with()
-        self.aucote._thread_pool.join.called_once_with()
-        self.aucote._thread_pool.stop.called_once_with()
+        self.aucote._thread_pool.start.assert_called_once_with()
+        self.aucote._thread_pool.join.assert_called_once_with()
+        self.aucote._thread_pool.stop.assert_called_once_with()
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))
@@ -191,14 +191,14 @@ class AucoteTest(AsyncTestCase):
         data = MagicMock()
 
         self.aucote.add_task(data)
-        self.aucote._thread_pool.add_task.called_once_with(data)
+        self.aucote._thread_pool.add_task.assert_called_once_with(data)
 
     def test_add_async_task(self):
         self.aucote._thread_pool = MagicMock()
         data = MagicMock()
 
-        self.aucote.add_task(data)
-        self.aucote.async_task_manager.add_task.called_once_with(data)
+        self.aucote.add_async_task(data)
+        self.aucote.async_task_manager.add_task.assert_called_once_with(data)
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
@@ -225,7 +225,7 @@ class AucoteTest(AsyncTestCase):
 
         self.assertEqual(aucote.storage, None)
         self.assertEqual(aucote.kudu_queue, kudu_queue)
-        mock_loader.called_once_With(cfg)
+        mock_loader.assert_called_once_with(cfg)
 
     def test_signal_handling(self):
         self.aucote.kill = MagicMock()
