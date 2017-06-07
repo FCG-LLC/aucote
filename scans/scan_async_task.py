@@ -15,7 +15,7 @@ from tornado.locks import Event
 
 from aucote_cfg import cfg
 from scans.executor import Executor
-from structs import Node, Scan, PhysicalPort, ScanStatus, TopisOSDiscoveryType, Service, CPEType
+from structs import Node, Scan, PhysicalPort, ScanStatus, ScanType, TopisOSDiscoveryType, Service, CPEType
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
@@ -38,9 +38,6 @@ class ScanAsyncTask(object):
         if as_service:
             self.aucote.async_task_manager.add_crontab_task(self._scan, self._scan_cron)
             self.aucote.async_task_manager.add_crontab_task(self._run_tools, self._tools_cron)
-
-    def _scan_cron(self):
-        return cfg['portdetection.scan_cron']
 
     @property
     def shutdown_condition(self):
@@ -236,7 +233,7 @@ class ScanAsyncTask(object):
         """
         topdis_nodes = await self._get_topdis_nodes()
 
-        storage_nodes = self.storage.get_nodes(parse_period(cfg['portdetection.scan_interval']), timestamp=timestamp)
+        storage_nodes = self.storage.get_nodes(self._scan_interval(), timestamp=timestamp)
 
         nodes = list(set(topdis_nodes) - set(storage_nodes))
 
@@ -311,7 +308,7 @@ class ScanAsyncTask(object):
 
         """
 
-        return croniter(cfg['portdetection.scan_cron'], time.time()).get_prev()
+        return croniter(self._scan_cron(), time.time()).get_prev()
 
     @property
     def previous_tool_scan(self):
@@ -343,7 +340,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg['portdetection.scan_cron'], time.time()).get_next()
+        return croniter(self._scan_cron(), time.time()).get_next()
 
     @property
     def next_tool_scan(self):
@@ -382,3 +379,29 @@ class ScanAsyncTask(object):
             data['portdetection.status.previous_scan_duration'] = int(time.time() - self.scan_start)
 
         await cfg.toucan.put('*', data)
+
+    def _scan_interval(self):
+        """
+        Get interval between particular node scan
+
+        Returns:
+            int
+
+        """
+        if cfg['portdetection.scan_type'] == ScanType.PERIODIC.value:
+            return 0
+
+        return parse_period(cfg['portdetection.live_scan.min_time_gap'])
+
+    def _scan_cron(self):
+        """
+        Get scan cron
+
+        Returns:
+            str
+
+        """
+        if cfg['portdetection.scan_type'] == ScanType.LIVE.value:
+            return '* * * * *'
+
+        return cfg['portdetection.periodic_scan.cron']

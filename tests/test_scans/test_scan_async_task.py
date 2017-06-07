@@ -245,7 +245,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
         super(ScanAsyncTaskTest, self).setUp()
         self.cfg = {
             'portdetection': {
-                'scan_cron': '* * * * *',
+                'scan_type': 'LIVE',
+                'live_scan': {
+                    'min_time_gap': 0,
+                },
                 'tools_cron': '* * * * *'
             },
             'topdis': {
@@ -373,7 +376,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
     async def test_get_nodes_for_scanning(self, cfg, mock_get_nodes):
         cfg._cfg = {
             'portdetection': {
-                'scan_interval': '5s',
+                'live_scan': {
+                    'min_time_gap': '5s'
+                },
+                'scan_type': 'LIVE',
                 'networks': {
                     'include': ['127.0.0.2/31']
                 }
@@ -797,7 +803,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_previous_scan(self, mock_cfg):
         mock_cfg._cfg = {
             'portdetection': {
-                'scan_cron': '* * * * *',
+                'scan_type': 'PERIODIC',
+                'periodic_scan': {
+                    'cron': '* * * * *'
+                },
                 'tools_cron': '* * * * *',
             }
         }
@@ -827,7 +836,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_previous_scan_second_test(self, mock_cfg):
         mock_cfg._cfg = {
             'portdetection': {
-                'scan_cron': '*/12 * * * *',
+                'scan_type': 'PERIODIC',
+                'periodic_scan': {
+                    'cron': '*/12 * * * *'
+                },
                 'tools_cron': '*/12 * * * *'
             }
         }
@@ -874,7 +886,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_next_scan(self, mock_cfg):
         mock_cfg._cfg = {
             'portdetection': {
-                'scan_cron': '*/5 * * * *',
+                'scan_type': 'PERIODIC',
+                'periodic_scan': {
+                    'cron': '*/5 * * * *'
+                },
                 'tools_cron': '*/12 * * * *'
             }
         }
@@ -947,16 +962,56 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_scan_cron(self, cfg):
         expected = "* * * * */45"
-        cfg['portdetection.scan_cron'] = expected
+        cfg['portdetection.scan_type'] = "PERIODIC"
+        cfg['portdetection.periodic_scan.cron'] = expected
         result = self.thread._scan_cron()
         self.assertEqual(result, expected)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_tools_cron(self, cfg):
         expected = "* * * * */45"
+        cfg['portdetection.scan_type'] = "PERIODIC"
         cfg['portdetection.tools_cron'] = expected
         result = self.thread._tools_cron()
         self.assertEqual(result, expected)
 
     def test_shutdown_condition(self):
         self.assertEqual(self.thread.shutdown_condition, self.thread._shutdown_condition)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_scan_interval_periodic(self, cfg):
+        cfg['portdetection.scan_type'] = "PERIODIC"
+
+        result = self.thread._scan_interval()
+        expected = 0
+
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_scan_interval_live(self, cfg):
+        cfg['portdetection.scan_type'] = "LIVE"
+        cfg['portdetection.live_scan.min_time_gap'] = "5m13s"
+
+        result = self.thread._scan_interval()
+        expected = 313
+
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_scan_cron_periodic(self, cfg):
+        cfg['portdetection.scan_type'] = "PERIODIC"
+        cfg['portdetection.periodic_scan.cron'] = "*/2 3 */5 * *"
+
+        result = self.thread._scan_cron()
+        expected = "*/2 3 */5 * *"
+
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_scan_cron_live(self, cfg):
+        cfg['portdetection.scan_type'] = "LIVE"
+
+        result = self.thread._scan_cron()
+        expected = '* * * * *'
+
+        self.assertEqual(result, expected)
