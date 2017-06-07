@@ -64,7 +64,7 @@ service:
 #   udp_retries: <int> - How many UDP scan retries is allowed by port detection
 
 portdetection:
-    scan_enable: True
+    scan_enabled: True
     scan_cron: "0 */2 * * *" # run every 2 hours
     tools_cron: "0 22 * * *" # run every day at 22:00 UTC
     scan_interval: 0s

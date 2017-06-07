@@ -77,7 +77,7 @@ class ScanAsyncTask(object):
             None
 
         """
-        if not cfg['portdetection.scan_enable']:
+        if not cfg['portdetection.scan_enabled']:
             return
         log.info("Starting port scan")
         nodes = await self._get_nodes_for_scanning(timestamp=None)
@@ -371,14 +371,14 @@ class ScanAsyncTask(object):
             return
 
         data = {
-            'previous_scan': self.previous_scan,
-            'next_scan': self.next_scan,
-            'scan_start': self.scan_start,
-            'scan_duration': None,
-            'status': status.value
+            'portdetection.status.previous_scan_start': self.previous_scan,
+            'portdetection.status.next_scan_start': self.next_scan,
+            'portdetection.status.scan_start': self.scan_start,
+            'portdetection.status.previous_scan_duration': 0,
+            'portdetection.status.code': status.value
         }
 
         if status is ScanStatus.IDLE:
-            data['scan_duration'] = time.time() - self.scan_start
+            data['portdetection.status.previous_scan_duration'] = int(time.time() - self.scan_start)
 
-        await cfg.toucan.put('portdetection.status', data)
+        await cfg.toucan.put('*', data)

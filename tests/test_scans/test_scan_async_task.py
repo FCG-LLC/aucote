@@ -757,7 +757,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
     async def test_periodical_scan(self, cfg):
-        cfg._cfg = {'portdetection': {'scan_enable': True}}
+        cfg._cfg = {'portdetection': {'scan_enabled': True}}
         nodes = MagicMock()
         future = Future()
         future.set_result(nodes)
@@ -778,7 +778,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
     def test_disable_periodical_scan(self, cfg):
-        cfg._cfg = {'portdetection': {'scan_enable': False}}
+        cfg._cfg = {'portdetection': {'scan_enabled': False}}
         self.thread._get_nodes_for_scanning = MagicMock()
 
         yield self.thread._scan()
@@ -912,14 +912,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
         await self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
 
         expected = {
-            'previous_scan': 57,
-            'next_scan': 75,
-            'scan_start': 17,
-            'scan_duration': None,
-            'status': "IN PROGRESS"
+            'portdetection.status.previous_scan_start': 57,
+            'portdetection.status.next_scan_start': 75,
+            'portdetection.status.scan_start': 17,
+            'portdetection.status.previous_scan_duration': 0,
+            'portdetection.status.code': "IN PROGRESS"
         }
 
-        cfg.toucan.put.assert_called_once_with('portdetection.status', expected)
+        cfg.toucan.put.assert_called_once_with('*', expected)
 
     @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
     @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
@@ -935,14 +935,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
         await self.thread.update_scan_status(ScanStatus.IDLE)
 
         expected = {
-            'previous_scan': 57,
-            'next_scan': 75,
-            'scan_start': 17,
-            'scan_duration': 283,
-            'status': "IDLE"
+            'portdetection.status.previous_scan_start': 57,
+            'portdetection.status.next_scan_start': 75,
+            'portdetection.status.scan_start': 17,
+            'portdetection.status.previous_scan_duration': 283,
+            'portdetection.status.code': "IDLE"
         }
 
-        cfg.toucan.put.assert_called_once_with('portdetection.status', expected)
+        cfg.toucan.put.assert_called_once_with('*', expected)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_scan_cron(self, cfg):

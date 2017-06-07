@@ -69,16 +69,16 @@ class MainHandler(Handler):
             },
             'ports': {
                 'tcp': {
-                    'include': cfg['portdetection.ports.tcp.include'],
-                    'exclude': cfg['portdetection.ports.tcp.exclude'],
+                    'include': list(cfg['portdetection.ports.tcp.include']),
+                    'exclude': list(cfg['portdetection.ports.tcp.exclude']),
                 },
                 'udp': {
-                    'include': cfg['portdetection.ports.udp.include'],
-                    'exclude': cfg['portdetection.ports.udp.exclude'],
+                    'include': list(cfg['portdetection.ports.udp.include']),
+                    'exclude': list(cfg['portdetection.ports.udp.exclude']),
                 },
                 'sctp': {
-                    'include': cfg['portdetection.ports.sctp.include'],
-                    'exclude': cfg['portdetection.ports.sctp.exclude'],
+                    'include': list(cfg['portdetection.ports.sctp.include']),
+                    'exclude': list(cfg['portdetection.ports.sctp.exclude']),
                 },
             },
             'previous_scan': scan_task.previous_scan,
