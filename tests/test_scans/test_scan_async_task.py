@@ -509,7 +509,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=[port_masscan, port_nmap],
                                               scan_only=False)
-        mock_loop.current.return_value.stop.assert_called_once_with()
+        self.thread.aucote.async_task_manager.stop.assert_called_once_with()
 
     @patch('scans.scan_async_task.netifaces')
     @patch('scans.scan_async_task.PortsScan')
@@ -657,7 +657,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread._get_networks_list.return_value = ['0.0.0.0/0']
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
         self.assertFalse(self.thread.storage.save_nodes.called)
-        mock_loop.current.return_value.stop.assert_called_once_with()
+        self.thread.aucote.async_task_manager.stop.assert_called_once_with()
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_get_networks_list(self, cfg):
@@ -797,7 +797,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         yield self.thread._run_tools()
 
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports)
-        self.thread.aucote.add_task.assert_called_once_with(mock_executor.return_value)
+        self.thread.aucote.add_async_task.assert_called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.time.time', MagicMock(return_value=595))

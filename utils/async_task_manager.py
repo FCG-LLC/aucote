@@ -2,6 +2,7 @@
 This module contains class for managing async tasks.
 
 """
+from functools import partial
 from functools import wraps
 import logging as log
 
@@ -27,10 +28,12 @@ class AsyncTaskManager(object):
         self._shutdown_condition = Event()
         self._cron_tasks = {}
         self.run_tasks = {}
+        self._parallel_tasks = parallel_tasks
         self._tasks = Queue(maxsize=parallel_tasks)
+        self._task_workers = []
 
     @classmethod
-    def instance(cls):
+    def instance(cls, *args, **kwargs):
         """
         Return instance of AsyncTaskManager
 
@@ -39,7 +42,7 @@ class AsyncTaskManager(object):
 
         """
         if cls._instance is None:
-            cls._instance = AsyncTaskManager()
+            cls._instance = AsyncTaskManager(*args, **kwargs)
         return cls._instance
 
     def start(self):
@@ -52,7 +55,9 @@ class AsyncTaskManager(object):
         """
         for task in self._cron_tasks.values():
             task.start()
-        IOLoop.current().add_callback(self.process_tasks)
+
+        for number in range(self._parallel_tasks):
+            self._task_workers.append(IOLoop.current().add_callback(partial(self.process_tasks, number)))
 
     def add_crontab_task(self, task, cron):
         """
@@ -83,6 +88,7 @@ class AsyncTaskManager(object):
             task.stop()
         IOLoop.current().add_callback(self.prepare_ioloop_shutdown)
         yield [self._shutdown_condition.wait(), self._tasks.join()]
+        IOLoop.current().stop()
 
     @classmethod
     def unique_task(cls, function):
@@ -152,7 +158,7 @@ class AsyncTaskManager(object):
         self._cron_tasks = {}
         self.run_tasks = {}
 
-    async def process_tasks(self):
+    async def process_tasks(self, number):
         """
         Execute queue
 
@@ -160,11 +166,15 @@ class AsyncTaskManager(object):
             None
 
         """
+        log.info("Starting worker %s", number)
         async for item in self._tasks:
             try:
-                log.debug("Executing %s", item)
+                log.debug("Worker %s: starting %s", number, item)
                 await item()
+            except:
+                log.exception("Worker %s: exception occurred")
             finally:
+                log.debug("Worker %s: %s finished", number, item)
                 self._tasks.task_done()
 
     def add_task(self, task):

@@ -38,12 +38,13 @@ class ScanAsyncTask(object):
         self._lock = Lock()
         self.scan_start = None
 
-        try:
-            self.aucote.async_task_manager.add_crontab_task(self._scan, cfg['portdetection.scan_cron'])
-            self.aucote.async_task_manager.add_crontab_task(self._run_tools, cfg['portdetection.tools_cron'])
-        except KeyError:
-            log.error("Please configure portdetection.scan_cron and portdetection.tools_cron")
-            exit(1)
+        if as_service:
+            try:
+                self.aucote.async_task_manager.add_crontab_task(self._scan, cfg['portdetection.scan_cron'])
+                self.aucote.async_task_manager.add_crontab_task(self._run_tools, cfg['portdetection.tools_cron'])
+            except KeyError:
+                log.error("Please configure portdetection.scan_cron and portdetection.tools_cron")
+                exit(1)
 
     def run(self):
         """
@@ -54,9 +55,8 @@ class ScanAsyncTask(object):
 
         """
         log.debug("Starting cron")
-        if self.as_service:
-            self.aucote.async_task_manager.start()
-        else:
+        self.aucote.async_task_manager.start()
+        if not self.as_service:
             IOLoop.current().add_callback(partial(self.run_scan, self._get_nodes_for_scanning()))
 
     @gen.coroutine
@@ -88,8 +88,7 @@ class ScanAsyncTask(object):
         nodes = self._get_topdis_nodes()
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_task(Executor(aucote=self.aucote, ports=ports))
-
+        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports))
     @gen.coroutine
     def run_scan(self, nodes, scan_only=False):
         """
@@ -151,7 +150,7 @@ class ScanAsyncTask(object):
                 port.scan = Scan(start=time.time())
                 ports.append(port)
 
-        self.aucote.add_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
+        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
         self.current_scan = []
 
         self._clean_scan()
@@ -167,7 +166,7 @@ class ScanAsyncTask(object):
         self.update_scan_status(ScanStatus.IDLE)
 
         if not self.as_service:
-            IOLoop.current().stop()
+            self.aucote.async_task_manager.stop()
 
     @classmethod
     def _get_topdis_nodes(cls):

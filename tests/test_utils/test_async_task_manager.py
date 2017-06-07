@@ -1,4 +1,5 @@
-from unittest.mock import MagicMock, patch
+from functools import partial
+from unittest.mock import MagicMock, patch, call
 
 from tornado import gen
 from tornado.concurrent import Future
@@ -15,7 +16,8 @@ class TestAsyncTaskManager(AsyncTestCase):
 
         self.task_1 = MagicMock()
         self.task_2 = MagicMock()
-        self.task_manager = AsyncTaskManager.instance()
+        AsyncTaskManager._instance = None
+        self.task_manager = AsyncTaskManager.instance(parallel_tasks=1)
         self.task_manager._shutdown_condition = MagicMock()
         self.task_manager._cron_tasks['task_1'] = self.task_1
         self.task_manager._cron_tasks['task_2'] = self.task_2
@@ -89,15 +91,28 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.assertEqual(self.task_manager.run_tasks, {})
 
     @patch('utils.async_task_manager.IOLoop')
-    def test_start(self, mock_ioloop):
+    @patch('utils.async_task_manager.partial')
+    def test_start(self, mock_partial, mock_ioloop):
+        self.task_manager._parallel_tasks = 2
         self.task_manager.start()
         self.task_1.start.assert_called_once_with()
         self.task_2.start.assert_called_once_with()
-        mock_ioloop.current.return_value.add_callback.assert_called_once_with(self.task_manager.process_tasks)
+        mock_partial.has_calls((call(self.task_manager.process_tasks, 0), call(self.task_manager.process_tasks, 1)))
+        mock_ioloop.current.return_value.add_callback.assert_has_calls((call(mock_partial.return_value),
+                                                                        call(mock_partial.return_value)))
 
     @patch('utils.async_task_manager.IOLoop')
+    @gen_test
     def test_stop(self, mock_ioloop):
         self.task_manager._tasks = MagicMock()
+        future_tasks = Future()
+        future_tasks.set_result(True)
+        self.task_manager._tasks.join.return_value = future_tasks
+
+        future_wait = Future()
+        future_wait.set_result(True)
+        self.task_manager._shutdown_condition.wait.return_value = future_wait
+
         self.task_manager.stop()
         self.task_1.stop.assert_called_once_with()
         self.task_2.stop.assert_called_once_with()
@@ -141,6 +156,16 @@ class TestAsyncTaskManager(AsyncTestCase):
 
         self.task_manager.add_task(task)
 
-        self.io_loop.add_callback(self.task_manager.process_tasks)
+        self.io_loop.add_callback(partial(self.task_manager.process_tasks, 0))
         yield self.task_manager._tasks.join()
         task.assert_called_once_with()
+
+    @patch('utils.async_task_manager.log.exception')
+    @gen_test
+    def test_process_queue_exception(self, mock_exception):
+        task = MagicMock(side_effect=Exception())
+        self.task_manager.add_task(task)
+
+        self.io_loop.add_callback(partial(self.task_manager.process_tasks, 0))
+        yield self.task_manager._tasks.join()
+        self.assertTrue(mock_exception.called)

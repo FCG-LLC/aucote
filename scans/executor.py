@@ -66,7 +66,7 @@ class Executor(Task):
         """
         return self.aucote.thread_pool
 
-    def run(self):
+    async def run(self):
         """
         Start tasks: scanning nodes and ports
 

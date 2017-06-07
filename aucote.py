@@ -210,6 +210,20 @@ class Aucote(object):
         log.debug('Added task: %s', task)
         self.thread_pool.add_task(task)
 
+    def add_async_task(self, task):
+        """
+        Add async task for executing
+
+        Args:
+            task (Task):
+
+        Returns:
+            None
+
+        """
+        log.debug('Added task: %s', task)
+        self.async_task_manager.add_task(task)
+
     def signal_handler(self, sig, frame):
         """
         Handling signals from operating system. Exits applications (kills all threads).
@@ -272,7 +286,6 @@ class Aucote(object):
         log.debug("Stop gracefuly")
         self._watch_thread.stop()
         yield self.async_task_manager.stop()
-        self.ioloop.stop()
 
     @classmethod
     def kill(cls):

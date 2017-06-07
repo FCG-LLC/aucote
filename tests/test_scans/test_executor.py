@@ -2,6 +2,10 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
+from tornado import gen
+from tornado.concurrent import Future
+from tornado.testing import AsyncTestCase, gen_test
+
 from scans.executor import Executor
 from structs import Node, Port, TransportProtocol, BroadcastPort
 from utils import Config
@@ -9,10 +13,11 @@ from utils.storage import Storage
 from utils.threads import ThreadPool
 
 
-class ExecutorTest(TestCase):
+class ExecutorTest(AsyncTestCase):
 
     @patch('scans.executor.cfg', new_callable=Config)
     def setUp(self, cfg):
+        super(ExecutorTest, self).setUp()
         cfg._cfg = {
             'service': {
                 'scans': {
@@ -35,6 +40,7 @@ class ExecutorTest(TestCase):
     @patch('scans.executor.parse_period', MagicMock(return_value=10))
     @patch('scans.executor.Executor._get_ports_for_scanning')
     @patch('scans.executor.cfg', new_callable=Config)
+    @gen_test
     def test_run_executor(self, cfg, mock_get_ports):
         cfg._cfg = self.cfg._cfg
         self.executor._thread_pool = ThreadPool()
@@ -42,7 +48,7 @@ class ExecutorTest(TestCase):
         mock_get_ports.return_value = [port]
 
         self.executor.add_task = MagicMock()
-        self.executor.run()
+        yield self.executor.run()
 
         self.assertEqual(self.executor.add_task.call_count, 1)
 
@@ -73,9 +79,13 @@ class ExecutorTest(TestCase):
         self.executor.add_task(data)
         self.executor._thread_pool.add_task.called_once_with(data)
 
+    @gen_test
     def test_call_method(self):
-        self.executor.run = MagicMock()
-        self.executor()
+        future = Future()
+        future.set_result("test")
+        self.executor.run = MagicMock(return_value=future)
+
+        yield self.executor()
 
         self.executor.run.assert_called_once_with()
 
@@ -89,11 +99,12 @@ class ExecutorTest(TestCase):
 
     @patch('scans.executor.NmapPortInfoTask')
     @patch('scans.executor.cfg', new_callable=Config)
+    @gen_test
     def test_scan_only(self, mock_cfg, mock_port_info):
         mock_cfg.get = MagicMock(return_value="0s")
         self.executor.scan_only = MagicMock()
         self.executor._get_ports_for_scanning = MagicMock(return_value=[MagicMock()])
-        self.executor.run()
+        yield self.executor.run()
 
         result = mock_port_info.call_args[1].get('scan_only')
         expected = self.executor.scan_only

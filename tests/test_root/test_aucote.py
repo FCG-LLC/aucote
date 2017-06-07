@@ -18,6 +18,7 @@ from utils.storage import Storage
 @patch('aucote.os.remove', MagicMock(side_effect=FileNotFoundError()))
 class AucoteTest(AsyncTestCase):
     @patch('aucote.cfg', new_callable=Config)
+    @patch('aucote.AsyncTaskManager', MagicMock())
     def setUp(self, cfg):
         super(AucoteTest, self).setUp()
         self.cfg = cfg
@@ -192,6 +193,13 @@ class AucoteTest(AsyncTestCase):
         self.aucote.add_task(data)
         self.aucote._thread_pool.add_task.called_once_with(data)
 
+    def test_add_async_task(self):
+        self.aucote._thread_pool = MagicMock()
+        data = MagicMock()
+
+        self.aucote.add_task(data)
+        self.aucote.async_task_manager.add_task.called_once_with(data)
+
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl')
@@ -206,6 +214,7 @@ class AucoteTest(AsyncTestCase):
 
     @patch('aucote.Aucote.load_tools')
     @patch('aucote.cfg', new_callable=Config)
+    @patch('aucote.AsyncTaskManager', MagicMock())
     def test_init(self, cfg, mock_loader):
         cfg._cfg = self.cfg._cfg
         exploits = MagicMock()
@@ -245,21 +254,19 @@ class AucoteTest(AsyncTestCase):
         config['apps']['app1']['loader'].assert_called_once_with(config['apps']['app1'], exploits)
         config['apps']['app2']['loader'].assert_called_once_with(config['apps']['app2'], exploits)
 
-    @patch('aucote.AsyncTaskManager.stop')
     @gen_test
-    def test_graceful_stop(self, mock_async_task):
+    def test_graceful_stop(self):
         self.aucote._scan_task = MagicMock()
 
         future_1 = Future()
         future_1.set_result(None)
-        mock_async_task.return_value = future_1
+        self.aucote.async_task_manager.stop.return_value = future_1
 
         self.aucote._watch_thread = MagicMock()
         yield self.aucote.graceful_stop()
 
         self.aucote._watch_thread.stop.assert_called_once_with()
-        mock_async_task.assert_called_once_with()
-        self.aucote.ioloop.stop.assert_called_once_with()
+        self.aucote.async_task_manager.stop.assert_called_once_with()
 
     @patch('aucote.os._exit')
     def test_kill(self, mock_kill):
