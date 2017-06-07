@@ -22,6 +22,7 @@ service:
         storage: "tmp/storage.sqlite3"
         parallel_tasks: 30
         port_period: 15m
+        port_period: 0s
         physical: False
         broadcast: False
     api:
@@ -64,19 +65,26 @@ service:
 
 portdetection:
     scan_enable: True
-    scan_cron: "0 */2 * * *" # run every day at 22:00 UTC
+    scan_cron: "0 */2 * * *" # run every 2 hours
     tools_cron: "0 22 * * *" # run every day at 22:00 UTC
     scan_interval: 0s
     networks: # Change it to proper values and uncomment
         include: []
         exclude: []
     ports:
-        include:
-            - T:0-65535 # TCP: full range
-            - U:0-65535 # UDP: full range
-        exclude: []
-    port_scan_rate: 50
-    network_scan_rate: 1000
+        tcp:
+            include:
+                - 0-65535 # TCP: full range
+            exclude: []
+        udp:
+            include:
+                - 0-65535 # UDP: full range
+            exclude: []
+        sctp:
+            include: []
+            exclude: []
+    port_scan_rate: 10
+    network_scan_rate: 500
     nmap_udp: True
     host_timeout: 600
     udp_retries: 2

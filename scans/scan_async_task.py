@@ -141,8 +141,11 @@ class ScanAsyncTask(object):
             ports_udp = await scanner_ipv4_udp.scan_ports(nodes_ipv4)
             ports.extend(ports_udp)
 
-        port_range_allow = NmapTool.parse_nmap_ports(cfg['portdetection.ports.include'])
-        port_range_deny = NmapTool.parse_nmap_ports(cfg['portdetection.ports.exclude'])
+        port_range_allow = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.include'],
+                                                    udp=cfg['portdetection.ports.tcp.include'])
+
+        port_range_deny = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.exclude'],
+                                                   udp=cfg['portdetection.ports.tcp.exclude'])
 
         ports = [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
 

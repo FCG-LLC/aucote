@@ -5,6 +5,7 @@ Provides class for scanning ports
 from tools.common.scan_task import ScanTask
 from tools.masscan.base import MasscanBase
 from aucote_cfg import cfg
+from tools.nmap.tool import NmapTool
 from utils.config import Config
 
 
@@ -34,18 +35,14 @@ class MasscanPorts(ScanTask):
         if not self.udp:
             args.extend(['--exclude-ports', 'U:0-65535'])
 
-        include_ports = cfg['portdetection.ports.include']
+        include_ports = NmapTool.list_to_ports_string(tcp=cfg['portdetection.ports.tcp.include'],
+                                                      udp=cfg['portdetection.ports.udp.include'])
 
-        if isinstance(include_ports, Config):
-            include_ports = ",".join(include_ports)
+        exclude_ports = NmapTool.list_to_ports_string(tcp=cfg['portdetection.ports.tcp.exclude'],
+                                                      udp=cfg['portdetection.ports.udp.exclude'])
 
         if include_ports:
             args.extend(['--ports', include_ports])
-
-        exclude_ports = cfg['portdetection.ports.exclude']
-
-        if isinstance(exclude_ports, Config):
-            exclude_ports = ",".join(exclude_ports)
 
         if exclude_ports:
             args.extend(['--exclude-ports', exclude_ports])

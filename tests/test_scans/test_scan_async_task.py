@@ -441,8 +441,18 @@ class ScanAsyncTaskTest(AsyncTestCase):
             },
             'portdetection': {
                 'ports': {
-                    'include': ['T:0-65535', 'U:0-65535', 'S:0-65535'],
-                    'exclude': ''
+                    'tcp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'udp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'sctp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
                 },
                 'nmap_udp': False
             }
@@ -502,8 +512,18 @@ class ScanAsyncTaskTest(AsyncTestCase):
             },
             'portdetection': {
                 'ports': {
-                    'include': ['T:0-65535', 'U:0-65535', 'S:0-65535'],
-                    'exclude': ''
+                    'tcp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'udp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'sctp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
                 },
                 'nmap_udp': False
             }
@@ -550,8 +570,18 @@ class ScanAsyncTaskTest(AsyncTestCase):
             },
             'portdetection': {
                 'ports': {
-                    'include': ['T:0-65535', 'U:0-65535', 'S:0-65535'],
-                    'exclude': ''
+                    'tcp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'udp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'sctp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
                 },
                 'networks': {
                     'exclude': [],
@@ -610,8 +640,18 @@ class ScanAsyncTaskTest(AsyncTestCase):
             },
             'portdetection': {
                 'ports': {
-                    'include': ['T:0-65535', 'U:0-65535', 'S:0-65535'],
-                    'exclude': ''
+                    'tcp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'udp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'sctp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
                 },
                 'networks': {
                     'exclude': [],

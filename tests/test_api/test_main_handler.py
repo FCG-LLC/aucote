@@ -61,8 +61,18 @@ class UserAPITest(AsyncHTTPTestCase):
                     'exclude': ['test_cfg1.ex'],
                 },
                 'ports': {
-                    'include': ['test_cfg2.in'],
-                    'exclude': ['test_cfg2.ex'],
+                    'tcp': {
+                        'include': ['test_cfg2.in'],
+                        'exclude': ['test_cfg2.ex'],
+                    },
+                    'udp': {
+                        'include': ['udp_1'],
+                        'exclude': ['udp_2']
+                    },
+                    'sctp': {
+                        'include': ['sctp_1'],
+                        'exclude': ['sctp_2']
+                    }
                 },
                 'scan_cron': '* */2 * * *',
                 'tools_cron': '0 22 * * * '
@@ -87,8 +97,18 @@ class UserAPITest(AsyncHTTPTestCase):
                 'exclude': ['test_cfg1.ex'],
             },
             'ports': {
-                'include': ['test_cfg2.in'],
-                'exclude': ['test_cfg2.ex'],
+                'tcp': {
+                    'include': ['test_cfg2.in'],
+                    'exclude': ['test_cfg2.ex'],
+                },
+                'udp': {
+                    'include': ['udp_1'],
+                    'exclude': ['udp_2']
+                },
+                'sctp': {
+                    'include': ['sctp_1'],
+                    'exclude': ['sctp_2']
+                }
             },
             'previous_scan': scan_thread.previous_scan,
             'previous_tool_scan': scan_thread.previous_tool_scan,

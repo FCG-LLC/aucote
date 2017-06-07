@@ -61,9 +61,6 @@ class MainHandler(Handler):
             dict
 
         """
-        ports_include = cfg['portdetection.ports.include']
-        ports_exlude = cfg['portdetection.ports.exclude']
-
         return {
             'nodes': [str(node.ip) for node in scan_task.current_scan],
             'networks': {
@@ -71,8 +68,18 @@ class MainHandler(Handler):
                 'exclude': list(cfg['portdetection.networks.exclude'])
             },
             'ports': {
-                'include': ports_include if isinstance(ports_include, str) else list(ports_include),
-                'exclude': ports_exlude if isinstance(ports_exlude, str) else list(ports_exlude),
+                'tcp': {
+                    'include': cfg['portdetection.ports.tcp.include'],
+                    'exclude': cfg['portdetection.ports.tcp.exclude'],
+                },
+                'udp': {
+                    'include': cfg['portdetection.ports.udp.include'],
+                    'exclude': cfg['portdetection.ports.udp.exclude'],
+                },
+                'sctp': {
+                    'include': cfg['portdetection.ports.sctp.include'],
+                    'exclude': cfg['portdetection.ports.sctp.exclude'],
+                },
             },
             'previous_scan': scan_task.previous_scan,
             'previous_tool_scan': scan_task.previous_tool_scan,
