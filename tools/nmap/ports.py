@@ -22,7 +22,7 @@ class PortsScan(ScanTask):
         super(PortsScan, self).__init__(NmapBase())
 
     def prepare_args(self, nodes):
-        args = ['-Pn', '--host-timeout', str(cfg['portdetection.host_timeout'])]
+        args = ['-Pn', '--host-timeout', str(cfg['portdetection._internal.host_timeout'])]
         rate = str(cfg['portdetection.network_scan_rate'])
 
         if self.ipv6:
@@ -32,7 +32,7 @@ class PortsScan(ScanTask):
             args.append('-sS')
 
         if self.udp:
-            args.extend(('-sU', '--min-rate', rate, '--max-retries', str(cfg['portdetection.udp_retries']),
+            args.extend(('-sU', '--min-rate', rate, '--max-retries', str(cfg['portdetection._internal.udp_retries']),
                          '--defeat-icmp-ratelimit'))
 
         scripts_dir = cfg['tools.nmap.scripts_dir']

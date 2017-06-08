@@ -107,7 +107,7 @@ class ScanAsyncTask(object):
         self.scan_start = time.time()
         await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
-        nmap_udp = cfg['portdetection.nmap_udp']
+        nmap_udp = cfg['portdetection._internal.nmap_udp']
 
         self.current_scan = nodes
 

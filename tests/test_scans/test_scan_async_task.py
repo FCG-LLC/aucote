@@ -462,7 +462,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
                         'exclude': []
                     },
                 },
-                'nmap_udp': False
+                '_internal': {
+                    'nmap_udp': False
+                }
             }
         }
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
@@ -533,7 +535,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
                         'exclude': []
                     },
                 },
-                'nmap_udp': False
+                '_internal': {
+                    'nmap_udp': False
+                }
             }
         }
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
@@ -596,7 +600,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
                     'include': '0.0.0.0/0'
                 },
                 'scan_enable': True,
-                'nmap_udp': False
+                '_internal': {
+                    'nmap_udp': False
+                }
             }
         }
         self.cfg = cfg
@@ -666,7 +672,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
                     'include': '0.0.0.0/0'
                 },
                 'scan_enable': True,
-                'nmap_udp': True
+                '_internal': {
+                    'nmap_udp': True
+                }
             }
         }
         self.cfg = cfg
@@ -702,7 +710,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_run_scan_without_nodes(self, cfg):
         cfg._cfg = {
             'portdetection': {
-                'nmap_udp': False
+                '_internal': {
+                    'nmap_udp': False
+                }
             }
         }
         self.thread._get_nodes_for_scanning = MagicMock(return_value=[])
@@ -716,7 +726,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_run_scan_as_non_service_without_nodes(self, cfg):
         cfg._cfg = {
             'portdetection': {
-                'nmap_udp': False
+                '_internal': {
+                    'nmap_udp': False
+                }
             }
         }
         self.thread.as_service = False

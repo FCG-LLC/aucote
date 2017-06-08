@@ -40,8 +40,10 @@ class PortScanTest(TestCase):
                     }
                 },
                 'network_scan_rate': 1030,
-                'host_timeout': 600,
-                'udp_retries': 2
+                '_internal': {
+                    'host_timeout': 600,
+                    'udp_retries': 2
+                }
             },
             'tools': {
                 'nmap': {
