@@ -28,6 +28,8 @@ class ScanAsyncTask(object):
     Class responsible for scanning
 
     """
+    LIVE_SCAN_CRON = '* * * * *'
+
     def __init__(self, aucote, as_service=True):
         self.as_service = as_service
         self._current_scan = []
@@ -402,6 +404,6 @@ class ScanAsyncTask(object):
 
         """
         if cfg['portdetection.scan_type'] == ScanType.LIVE.value:
-            return '* * * * *'
+            return self.LIVE_SCAN_CRON
 
         return cfg['portdetection.periodic_scan.cron']

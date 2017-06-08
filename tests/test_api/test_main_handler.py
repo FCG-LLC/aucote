@@ -74,8 +74,7 @@ class UserAPITest(AsyncHTTPTestCase):
                         'exclude': ['sctp_2']
                     }
                 },
-                'scan_cron': '* */2 * * *',
-                'tools_cron': '0 22 * * * '
+                'scan_type': 'PERIODIC'
             }
         }
         scan_thread = MagicMock()
@@ -114,8 +113,9 @@ class UserAPITest(AsyncHTTPTestCase):
             'previous_tool_scan': scan_thread.previous_tool_scan,
             'next_scan': scan_thread.next_scan,
             'next_tool_scan': scan_thread.next_tool_scan,
-            'scan_cron': "* */2 * * *",
-            'tools_cron': "0 22 * * * ",
+            'scan_cron': scan_thread._scan_cron(),
+            'scan_interval': scan_thread._scan_interval(),
+            'scan_type': 'PERIODIC'
         }
 
         self.assertCountEqual(result, expected)

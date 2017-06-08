@@ -85,8 +85,9 @@ class MainHandler(Handler):
             'previous_tool_scan': scan_task.previous_tool_scan,
             'next_scan': scan_task.next_scan,
             'next_tool_scan': scan_task.next_tool_scan,
-            'scan_cron': cfg['portdetection.scan_cron'],
-            'tools_cron': cfg['portdetection.tools_cron']
+            'scan_cron': scan_task._scan_cron(),
+            'scan_interval': scan_task._scan_interval(),
+            'scan_type': cfg['portdetection.scan_type']
         }
 
     @classmethod
