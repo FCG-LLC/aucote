@@ -26,7 +26,8 @@ class AucoteTest(AsyncTestCase):
             'service': {
                 'scans': {
                     'threads': 30,
-                    'storage': None
+                    'storage': None,
+                    'parallel_tasks': 30
                 },
                 'api': {
                     'v1': {

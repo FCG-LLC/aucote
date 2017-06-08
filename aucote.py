@@ -112,7 +112,7 @@ class Aucote(object):
         self._watch_thread = None
         self._storage_thread = None
         self.ioloop = IOLoop.current()
-        self.async_task_manager = AsyncTaskManager.instance()
+        self.async_task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
 
     @property
     def kudu_queue(self):

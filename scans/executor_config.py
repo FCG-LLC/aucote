@@ -14,6 +14,7 @@ EXECUTOR_CONFIG = {
     'apps': {
         'nmap': {
             'class': NmapTool,
+            'async': False,
             'scripts': {
                 'http-slowloris-check': {
                     'args': 'http-slowloris.threads=500,http-slowloris.timeout=200'
@@ -78,6 +79,7 @@ EXECUTOR_CONFIG = {
         },
         'hydra': {
             'class': HydraTool,
+            'async': False,
             'services': {'asterisk', 'cisco', 'cisco-enable', 'cvs', 'firebird', 'ftp', 'ftps', 'http', 'https',
                          'http-post', 'http-head', 'https-get', 'https-post', 'https-head', 'http-get-form',
                          'http-post-form', 'https-get-form', 'https-post-form', 'http-proxy', 'http-proxy-urlenum',
@@ -97,10 +99,12 @@ EXECUTOR_CONFIG = {
             'without-login': ['redis', 'cisco', 'oracle-listener', 's7-300', 'snmp', 'vnc']
         },
         'skipfish': {
-            'class': SkipfishTool
+            'class': SkipfishTool,
+            'async': False,
         },
         'aucote-http-headers': {
             'class': AucoteHttpHeadersTool,
+            'async': False,
             'loader': None,
             'headers': {
                 'x-frame-options':

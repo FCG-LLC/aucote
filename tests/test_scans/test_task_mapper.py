@@ -14,10 +14,12 @@ class TaskMapperTest(AsyncTestCase):
     EXECUTOR_CONFIG = {
         'apps': {
             'test': {
-                'class': MagicMock()
+                'class': MagicMock(),
+                'async': False
             },
             'test2': {
-                'class': MagicMock()
+                'class': MagicMock(),
+                'async': False
             }
         }
     }
@@ -28,7 +30,7 @@ class TaskMapperTest(AsyncTestCase):
     UDP.service_name = 'ftp'
     UDP.scan = Scan(start=19.0)
 
-    TCP = Port(transport_protocol=TransportProtocol.TCP, number = 22, node=NODE)
+    TCP = Port(transport_protocol=TransportProtocol.TCP, number=22, node=NODE)
     TCP.service_name = 'ssh'
     TCP.scan = Scan(start=19.0)
 
@@ -80,6 +82,32 @@ class TaskMapperTest(AsyncTestCase):
 
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 1)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 1)
+
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
+    @patch('scans.task_mapper.cfg', new_callable=Config)
+    @gen_test
+    async def test_app_add_async(self, cfg):
+        self.EXECUTOR_CONFIG['apps']['test']['async'] = True
+        cfg._cfg = {
+            'tools': {
+                'test': {
+                    'enable': True,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
+                },
+                'test2': {
+                    'enable': False,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
+                }
+            }
+        }
+        self.executor.storage.get_scan_info.return_value = []
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        self.task_mapper._aucote.add_async_task.assert_called_once_with(
+            self.EXECUTOR_CONFIG['apps']['test']['class'].return_value)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
