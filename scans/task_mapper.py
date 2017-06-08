@@ -27,7 +27,7 @@ class TaskMapper:
         """
         self._aucote = aucote
 
-    def assign_tasks(self, port, storage):
+    async def assign_tasks(self, port, storage):
         """
         Assign tasks for a provided port
 

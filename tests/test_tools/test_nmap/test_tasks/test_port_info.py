@@ -98,6 +98,8 @@ class NmapPortInfoTaskTest(AsyncTestCase):
     def setUp(self):
         super(NmapPortInfoTaskTest, self).setUp()
         self.aucote = MagicMock()
+        self.aucote.task_mapper.assign_tasks = MagicMock(return_value=Future())
+        self.aucote.task_mapper.assign_tasks.return_value.set_result(MagicMock())
 
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         self.node_ipv6 = Node(ip=ipaddress.ip_address('::1'), node_id=None)
