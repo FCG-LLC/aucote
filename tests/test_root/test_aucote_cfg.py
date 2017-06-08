@@ -110,12 +110,16 @@ class AucoteCfgTest(AsyncTestCase):
                 },
                 'min_retry_time': 15,
                 'max_retry_time': 25,
-                'max_retry_count': 35
+                'max_retry_count': 35,
+                'overwrite': False,
             }
         }
 
         toucan().push_config.return_value = Future()
         toucan().push_config.return_value.set_result(MagicMock())
+
+        toucan().get.return_value = Future()
+        toucan().get.return_value.set_result(MagicMock())
 
         await start_toucan('test_file')
         toucan.return_value.push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=False)
@@ -123,3 +127,32 @@ class AucoteCfgTest(AsyncTestCase):
         self.assertEqual(toucan.min_retry_time, 15)
         self.assertEqual(toucan.max_retry_count, 35)
         self.assertEqual(toucan.max_retry_time, 25)
+
+    @patch('builtins.open', mock_open(read_data=YAML))
+    @patch('aucote_cfg.Toucan')
+    @patch('aucote_cfg.cfg', new_callable=Config)
+    @gen_test
+    async def test_load_toucan_with_overwrite(self, cfg, toucan):
+        cfg._cfg = {
+            'toucan': {
+                'enable': True,
+                'api': {
+                    'host': 'localhost',
+                    'port': '3000',
+                    'protocol': 'http'
+                },
+                'min_retry_time': 15,
+                'max_retry_time': 25,
+                'max_retry_count': 35,
+                'overwrite': True
+            }
+        }
+
+        toucan().push_config.return_value = Future()
+        toucan().push_config.return_value.set_result(MagicMock())
+
+        toucan().get.return_value = Future()
+        toucan().get.return_value.set_result(MagicMock())
+
+        await start_toucan('test_file')
+        toucan.return_value.push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=True)

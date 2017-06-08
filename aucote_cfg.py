@@ -67,7 +67,7 @@ async def start_toucan(default_config):
     with open(default_config, "r") as file:
         config = yaml.load(file)
 
-    await cfg.toucan.push_config(config, overwrite=False)
+    await cfg.toucan.push_config(config, overwrite=cfg['toucan.overwrite'])
 
 
 async def load(file_name=None):

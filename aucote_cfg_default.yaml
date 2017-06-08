@@ -65,7 +65,7 @@ service:
 portdetection:
     scan_enabled: True
     scan_cron: "0 */2 * * *" # run every 2 hours
-    scan_interval: 0s
+    scan_interval: 2h
     networks: # Change it to proper values and uncomment
         include: []
         exclude: []
