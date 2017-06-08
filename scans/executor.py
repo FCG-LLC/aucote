@@ -61,7 +61,7 @@ class Executor(Task):
 
         """
         ports = self.ports
-        storage_ports = self.storage.get_ports(parse_period(cfg['service.scans.port_period']))
+        storage_ports = self.storage.get_ports(parse_period(cfg['portdetection._internal.port_period']))
 
         ports = self._get_ports_for_scanning(ports, storage_ports)
         log.info("Found %i recently not scanned ports", len(ports))

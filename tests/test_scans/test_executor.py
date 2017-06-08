@@ -16,7 +16,11 @@ class ExecutorTest(AsyncTestCase):
         cfg._cfg = {
             'service': {
                 'scans': {
-                    'broadcast': True,
+                    'broadcast': True
+                }
+            },
+            'portdetection': {
+                '_internal': {
                     'port_period': None
                 }
             }
@@ -94,7 +98,7 @@ class ExecutorTest(AsyncTestCase):
     @patch('scans.executor.cfg', new_callable=Config)
     @gen_test
     def test_scan_only(self, mock_cfg, mock_port_info):
-        mock_cfg['service.scans.port_period'] = "0s"
+        mock_cfg['portdetection._internal.port_period'] = "0s"
         self.executor.scan_only = MagicMock()
         self.executor._get_ports_for_scanning = MagicMock(return_value=[MagicMock()])
         yield self.executor.run()

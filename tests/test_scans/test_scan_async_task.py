@@ -249,13 +249,15 @@ class ScanAsyncTaskTest(AsyncTestCase):
                 'live_scan': {
                     'min_time_gap': 0,
                 },
-                'tools_cron': '* * * * *'
+                '_internal': {
+                    'tools_cron': '* * * * *'
+                }
             },
             'topdis': {
                 'api': {
                     'host': '',
                     'port': ''
-                }
+                },
             }
         }
 
@@ -822,7 +824,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
         mock_cfg._cfg = {
             'portdetection': {
                 'cron': '* * * * *',
-                'tools_cron': '*/8 * * * *',
+                '_internal': {
+                    'tools_cron': '*/8 * * * *',
+                }
             }
         }
 
@@ -905,7 +909,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
         mock_cfg._cfg = {
             'portdetection': {
                 'cron': '*/12 * * * *',
-                'tools_cron': '*/12 * * * *'
+                '_internal': {
+                    'tools_cron': '*/12 * * * *'
+                }
             }
         }
 
@@ -971,7 +977,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_tools_cron(self, cfg):
         expected = "* * * * */45"
         cfg['portdetection.scan_type'] = "PERIODIC"
-        cfg['portdetection.tools_cron'] = expected
+        cfg['portdetection._internal.tools_cron'] = expected
         result = self.thread._tools_cron()
         self.assertEqual(result, expected)
 

@@ -51,7 +51,7 @@ class ScanAsyncTask(object):
         return self._shutdown_condition
 
     def _tools_cron(self):
-        return cfg['portdetection.tools_cron']
+        return cfg['portdetection._internal.tools_cron']
 
     async def run(self):
         """
@@ -319,7 +319,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg['portdetection.tools_cron'], time.time()).get_prev()
+        return croniter(cfg['portdetection._internal.tools_cron'], time.time()).get_prev()
 
     def get_ports_for_script_scan(self, nodes):
         """
@@ -351,7 +351,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg['portdetection.tools_cron'], time.time()).get_next()
+        return croniter(cfg['portdetection._internal.tools_cron'], time.time()).get_next()
 
     async def update_scan_status(self, status):
         """
