@@ -47,10 +47,10 @@ class ExecutorTest(AsyncTestCase):
         port = Port(node=None, number=12, transport_protocol=TransportProtocol)
         mock_get_ports.return_value = [port]
 
-        self.executor.add_task = MagicMock()
+        self.executor.add_async_task = MagicMock()
         yield self.executor.run()
 
-        self.assertEqual(self.executor.add_task.call_count, 1)
+        self.assertEqual(self.executor.add_async_task.call_count, 1)
 
     def test_properties(self):
         self.assertEqual(self.executor.exploits, self.executor.aucote.exploits)

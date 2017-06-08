@@ -85,4 +85,12 @@ class KuduQueueTest(TestCase):
         msg.add_bool(True)
         self.kudu_queue.send_msg(msg)
 
-        self.kudu_queue._socket.send.assert_called_once_with(msg.data)
+        self.kudu_queue._socket.send.assert_called_once_with(msg.data, 0)
+
+    def test_send_non_blocking(self):
+        self.kudu_queue._socket = MagicMock()
+        msg = KuduMsg()
+        msg.add_bool(True)
+        self.kudu_queue.send_msg(msg, True)
+
+        self.kudu_queue._socket.send.assert_called_once_with(msg.data, 1)

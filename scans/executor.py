@@ -80,7 +80,7 @@ class Executor(Task):
         self.storage.save_ports(ports)
 
         for port in ports:
-            self.add_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only))
+            self.add_async_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only))
 
     def __call__(self, *args, **kwargs):
         """
@@ -107,6 +107,19 @@ class Executor(Task):
 
         """
         return self.aucote.add_task(task)
+
+    def add_async_task(self, task):
+        """
+        Add async task to aucote pool
+
+        Args:
+            task (Task):
+
+        Returns:
+            None
+
+        """
+        return self.aucote.add_async_task(task)
 
     @property
     def exploits(self):

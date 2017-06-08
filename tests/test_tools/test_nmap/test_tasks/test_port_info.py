@@ -1,9 +1,10 @@
 import ipaddress
-import unittest
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
 from cpe import CPE
+from tornado.concurrent import Future
+from tornado.testing import gen_test, AsyncTestCase
 
 from structs import Port, TransportProtocol, Node, BroadcastPort
 
@@ -12,7 +13,7 @@ from utils import Config
 
 
 @patch('scans.task_mapper.TaskMapper', MagicMock)
-class NmapPortInfoTaskTest(unittest.TestCase):
+class NmapPortInfoTaskTest(AsyncTestCase):
     XML = '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE nmaprun>
 <?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
@@ -95,6 +96,7 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 </nmaprun>'''
 
     def setUp(self):
+        super(NmapPortInfoTaskTest, self).setUp()
         self.aucote = MagicMock()
 
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
@@ -104,7 +106,6 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.port_ipv6 = Port(number=22, node=self.node_ipv6, transport_protocol=TransportProtocol.TCP)
 
         self.port_info = NmapPortInfoTask(aucote=self.aucote, port=self.port)
-        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML))
 
         self.cfg = {
             'portdetection': {
@@ -118,11 +119,15 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         }
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
-    def test_prepare_args(self):
+    @gen_test
+    async def test_prepare_args(self):
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.XML_BANNER))
+        self.port_info.command.async_call = MagicMock(return_value=future)
         self.port_info.prepare_args = MagicMock()
-        self.port_info()
+        await self.port_info()
 
-        result = self.port_info.command.call.call_args[1].get('args', [])
+        result = self.port_info.command.async_call.call_args[1].get('args', [])
         self.assertEqual(result, self.port_info.prepare_args.return_value)
 
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
@@ -171,9 +176,13 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
-    def test_parser_with_banner(self, cfg):
+    @gen_test
+    async def test_parser_with_banner(self, cfg):
         cfg._cfg = self.cfg
-        self.port_info()
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.XML))
+        self.port_info.command.async_call = MagicMock(return_value=future)
+        await self.port_info()
 
         result = self.port_info._port
 
@@ -182,10 +191,13 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
-    def test_parser_with_banner_and_without_service(self, cfg):
+    @gen_test
+    async def test_parser_with_banner_and_without_service(self, cfg):
         cfg._cfg = self.cfg
-        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_BANNER))
-        self.port_info()
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.XML_BANNER))
+        self.port_info.command.async_call = MagicMock(return_value=future)
+        await self.port_info()
 
         result = self.port_info._port
 
@@ -193,9 +205,13 @@ class NmapPortInfoTaskTest(unittest.TestCase):
         self.assertEqual(result.service.version, None)
         self.assertEqual(result.banner, r"SSH-1.99-Cisco-1.25")
 
-    def test_call_broadcast(self):
+    @gen_test
+    async def test_call_broadcast(self):
         self.port_info._port = BroadcastPort()
-        self.port_info()
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.XML_BANNER))
+        self.port_info.command.async_call = MagicMock(return_value=future)
+        await self.port_info()
 
         result = self.aucote.task_mapper.assign_tasks.call_args[0]
         expected = (BroadcastPort(), self.aucote.storage)
@@ -204,14 +220,17 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
-    def test_add_port_scan_info(self, cfg, mock_serializer):
+    @gen_test
+    async def test_add_port_scan_info(self, cfg, mock_serializer):
         cfg._cfg = self.cfg
-        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_BANNER))
-        self.port_info()
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.XML_BANNER))
+        self.port_info.command.async_call = MagicMock(return_value=future)
+        await self.port_info()
 
         mock_serializer.assert_called_once_with(self.port_info._port, None)
 
-        self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)
+        self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value, dont_wait=True)
 
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     def test_prepare_args_ipv6(self, cfg):
@@ -225,10 +244,13 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
-    def test_http_with_tunnel(self, cfg, mock_serializer):
+    @gen_test
+    async def test_http_with_tunnel(self, cfg, mock_serializer):
         cfg._cfg = self.cfg
-        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
-        self.port_info()
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
+        self.port_info.command.async_call = MagicMock(return_value=future)
+        await self.port_info()
 
         result = mock_serializer.call_args[0][0].protocol
         expected = 'https'
@@ -237,30 +259,40 @@ class NmapPortInfoTaskTest(unittest.TestCase):
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
-    def test_scan_only_true(self, cfg, mock_serializer):
+    @gen_test
+    async def test_scan_only_true(self, cfg, mock_serializer):
         cfg._cfg = self.cfg
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
+        self.port_info.command.async_call = MagicMock(return_value=future)
         self.port_info.scan_only = True
-        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
-        self.port_info()
+        await self.port_info()
 
         self.assertFalse(self.aucote.task_mapper.assign_tasks.called)
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
-    def test_scan_only_false(self, cfg, mock_serializer):
+    @gen_test
+    async def test_scan_only_false(self, cfg, mock_serializer):
         cfg._cfg = self.cfg
         self.port_info.scan_only = False
-        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
-        self.port_info()
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
+        self.port_info.command.async_call = MagicMock(return_value=future)
+
+        await self.port_info()
 
         self.assertTrue(self.aucote.task_mapper.assign_tasks.called)
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
-    def test_cpe(self, mock_serializer):
+    @gen_test
+    async def test_cpe(self, mock_serializer):
         self.port_info.scan_only = True
-        self.port_info.command.call = MagicMock(return_value=ElementTree.fromstring(self.XML_CPE))
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.XML_CPE))
+        self.port_info.command.async_call = MagicMock(return_value=future)
         self.port_info.prepare_args = MagicMock()
-        self.port_info()
+        await self.port_info()
 
         result = mock_serializer.call_args[0][0].service.cpe
         expected = CPE('cpe:/a:apache:http_server:2.4.23')

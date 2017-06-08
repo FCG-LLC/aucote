@@ -172,7 +172,7 @@ class AsyncTaskManager(object):
                 log.debug("Worker %s: starting %s", number, item)
                 await item()
             except:
-                log.exception("Worker %s: exception occurred")
+                log.exception("Worker %s: exception occurred", number)
             finally:
                 log.debug("Worker %s: %s finished", number, item)
                 self._tasks.task_done()
