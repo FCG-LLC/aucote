@@ -43,8 +43,8 @@ class NmapTool(Tool):
 
         for pack in packs:
             self.aucote.add_async_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
-                                                  script_classes=[val for val in pack if val is not None],
-                                                  rate=self.rate))
+                                                        script_classes=[val for val in pack if val is not None],
+                                                        rate=self.rate))
 
     def _get_tasks(self):
         """
@@ -98,7 +98,7 @@ class NmapTool(Tool):
 
                 if singular:
                     self.aucote.add_async_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
-                                                          script_classes=[task], rate=self.rate))
+                                                                script_classes=[task], rate=self.rate))
                     continue
                 tasks.append(task)
 
@@ -218,7 +218,7 @@ class NmapTool(Tool):
 
             if "-" in section:
                 range_args = [int(el) for el in section.split("-")]
-                return_value[protocol] |= set(range(range_args[0], range_args[1]+1))
+                return_value[protocol] |= set(range(range_args[0], range_args[1] + 1))
                 continue
 
             return_value[protocol] |= {int(section)}

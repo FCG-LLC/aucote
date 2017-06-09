@@ -6,7 +6,6 @@ import ipaddress
 import re
 from enum import Enum
 import time
-from threading import Semaphore
 
 from cpe import CPE
 

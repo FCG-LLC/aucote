@@ -261,6 +261,13 @@ class Aucote(object):
 
     @property
     def storage(self):
+        """
+        Aucote's storage
+
+        Returns:
+            Storage
+
+        """
         return self._storage
 
 # =================== start app =================

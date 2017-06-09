@@ -2,8 +2,6 @@
 Base class for scanners
 
 """
-from tornado import gen
-
 from tools.common import OpenPortsParser
 from utils.exceptions import NonXMLOutputException
 

@@ -176,7 +176,7 @@ class AsyncTaskManager(object):
             finally:
                 log.debug("Worker %s: %s finished", number, item)
                 self._tasks.task_done()
-                log.debug("Tasks left in queue: %s", self._tasks._unfinished_tasks)
+                log.debug("Tasks left in queue: %s", self.unfinished_tasks)
 
     def add_task(self, task):
         """
@@ -193,4 +193,11 @@ class AsyncTaskManager(object):
 
     @property
     def unfinished_tasks(self):
+        """
+        Task which are still processed or in queue
+
+        Returns:
+            int
+
+        """
         return self._tasks._unfinished_tasks
