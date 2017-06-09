@@ -21,7 +21,6 @@ from scans.executor_config import EXECUTOR_CONFIG
 from scans.scan_async_task import ScanAsyncTask
 from scans.task_mapper import TaskMapper
 from threads.watchdog_thread import WatchdogThread
-from threads.web_server_thread import WebServerThread
 from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
@@ -30,6 +29,7 @@ from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
 
 #constants
+from utils.web_server import WebServer
 
 VERSION = (0, 1, 0)
 APP_NAME = 'Automated Compliance Tests'
@@ -141,14 +141,12 @@ class Aucote(object):
 
             self._scan_task = ScanAsyncTask(aucote=self, as_service=as_service)
             self._scan_task.run()
-
-            web_server = WebServerThread(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
-            web_server.start()
+            web_server = WebServer(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
+            self.ioloop.add_callback(web_server.run)
 
             self.ioloop.start()
 
             web_server.stop()
-            web_server.join()
 
             self._scan_task = None
             self._watch_thread = None

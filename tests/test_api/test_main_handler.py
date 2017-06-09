@@ -35,11 +35,10 @@ class UserAPITest(AsyncHTTPTestCase):
     @patch('api.main_handler.MainHandler.thread_pool_status')
     @patch('api.main_handler.MainHandler.scanning_status')
     def test_aucote_status(self, mock_scan_info, thread_pool_status, metadata):
-        thread_pool_status.return_value = {'test': 'test_2'}
         metadata.return_value = 'test_meta'
 
         result = self.handler.aucote_status()
-        expected = {'test': 'test_2', 'scanner': mock_scan_info.return_value,
+        expected = {'scanner': mock_scan_info.return_value,
                     'meta': 'test_meta'}
 
         self.assertEqual(result, expected)

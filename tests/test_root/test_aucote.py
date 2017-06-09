@@ -118,7 +118,7 @@ class AucoteTest(AsyncTestCase):
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.Storage')
     @patch('aucote.ScanAsyncTask')
-    @patch('aucote.WebServerThread', MagicMock())
+    @patch('aucote.WebServer', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
     def test_scan(self, cfg, mock_scan_tasks, mock_storage_task):
@@ -144,7 +144,7 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.Storage')
     @patch('aucote.WatchdogThread')
     @patch('aucote.ScanAsyncTask')
-    @patch('aucote.WebServerThread', MagicMock())
+    @patch('aucote.WebServer', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
     def test_service(self, cfg, mock_scan_tasks, mock_watchdog, mock_storage_task):

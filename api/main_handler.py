@@ -35,7 +35,7 @@ class MainHandler(Handler):
             dict
 
         """
-        stats = self.thread_pool_status(self.aucote.thread_pool)
+        stats = {}
         stats['scanner'] = self.scanning_status(self.aucote.scan_task)
         stats['meta'] = self.metadata()
         return stats
