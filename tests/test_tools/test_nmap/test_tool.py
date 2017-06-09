@@ -84,7 +84,7 @@ class NmapToolTest(TestCase):
         self.exploit2.name = 'test_name2'
         self.nmap_tool()
 
-        result = self.nmap_tool.aucote.add_task.call_count
+        result = self.nmap_tool.aucote.add_async_task.call_count
         expected = 1
 
         self.assertEqual(result, expected)
@@ -96,7 +96,7 @@ class NmapToolTest(TestCase):
         self.exploit2.name = 'test_name2'
         self.nmap_tool()
 
-        result = self.nmap_tool.aucote.add_task.call_count
+        result = self.nmap_tool.aucote.add_async_task.call_count
         expected = 2
 
         self.assertEqual(result, expected)

@@ -29,7 +29,7 @@ class AsyncTaskManager(object):
         self._cron_tasks = {}
         self.run_tasks = {}
         self._parallel_tasks = parallel_tasks
-        self._tasks = Queue(maxsize=parallel_tasks)
+        self._tasks = Queue()
         self._task_workers = []
 
     @classmethod
@@ -176,6 +176,7 @@ class AsyncTaskManager(object):
             finally:
                 log.debug("Worker %s: %s finished", number, item)
                 self._tasks.task_done()
+                log.debug("Tasks left in queue: %s", self._tasks._unfinished_tasks)
 
     def add_task(self, task):
         """

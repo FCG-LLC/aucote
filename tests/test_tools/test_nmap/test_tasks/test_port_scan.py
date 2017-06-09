@@ -3,6 +3,9 @@ import unittest
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
+from tornado.concurrent import Future
+from tornado.testing import gen_test, AsyncTestCase
+
 from fixtures.exploits import Exploit
 from fixtures.exploits import Exploits
 from structs import Port, TransportProtocol, Node, Scan, PhysicalPort, BroadcastPort
@@ -14,7 +17,7 @@ from tools.nmap.base import NmapScript
 
 
 @patch('database.serializer.Serializer.serialize_port_vuln', MagicMock(return_value='test'))
-class NmapPortScanTaskTest(unittest.TestCase):
+class NmapPortScanTaskTest(AsyncTestCase):
     """
     Testing nmap port scanning task
 
@@ -112,6 +115,7 @@ class NmapPortScanTaskTest(unittest.TestCase):
             exploit, port, exploits, script, vulnerability, scan_task
 
         """
+        super(NmapPortScanTaskTest, self).setUp()
         self.aucote = MagicMock()
 
         self.exploit = Exploit(exploit_id=1, app='nmap', name='test')
@@ -135,8 +139,9 @@ class NmapPortScanTaskTest(unittest.TestCase):
                                           script_classes=[self.script, self.script2], rate=1337)
         self.scan_task.store_scan_end = MagicMock()
 
-        self.scan_task.command.call = MagicMock()
-        self.scan_task.command.call.return_value = ElementTree.fromstring(self.XML)
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.XML))
+        self.scan_task.command.async_call = MagicMock(return_value=future)
 
         self.cfg = {
             'tools': {
@@ -227,10 +232,13 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
     @patch('tools.nmap.tasks.port_scan.Vulnerability')
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_prescript(self, cfg, mock_vulnerability):
+    @gen_test
+    async def test_prescript(self, cfg, mock_vulnerability):
         cfg._cfg = self.cfg
-        self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
-        self.scan_task()
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.PRESCRIPT_XML))
+        self.scan_task.command.async_call = MagicMock(return_value=future)
+        await self.scan_task()
 
         expected = 'test'
         result = mock_vulnerability.call_args[1]['output']
@@ -239,10 +247,13 @@ class NmapPortScanTaskTest(unittest.TestCase):
 
     @patch('tools.nmap.tasks.port_scan.Vulnerability')
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_hostscript(self, cfg, mock_vulnerability):
+    @gen_test
+    async def test_hostscript(self, cfg, mock_vulnerability):
         cfg._cfg = self.cfg
-        self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.HOSTSCRIPT_XML))
-        self.scan_task()
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.HOSTSCRIPT_XML))
+        self.scan_task.command.async_call = MagicMock(return_value=future)
+        await self.scan_task()
 
         expected = 'test'
         result = mock_vulnerability.call_args[1]['output']
@@ -250,16 +261,17 @@ class NmapPortScanTaskTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_dns_scan(self, cfg):
+    @gen_test
+    async def test_dns_scan(self, cfg):
         """
         Test UDP scanning
 
         """
         cfg._cfg = self.cfg
         self.scan_task._port.number = 53
-        self.scan_task()
+        await self.scan_task()
 
-        result = self.scan_task.command.call.call_args[0][0]
+        result = self.scan_task.command.async_call.call_args[0][0]
         self.assertIn('-p', result)
         self.assertIn('53', result)
         self.assertIn('--dns-servers', result)
@@ -267,11 +279,14 @@ class NmapPortScanTaskTest(unittest.TestCase):
     @patch('time.time', MagicMock(return_value=27.0))
     @patch('tools.nmap.tasks.port_scan.Vulnerability', MagicMock())
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_storage(self, cfg):
+    @gen_test
+    async def test_storage(self, cfg):
         cfg._cfg = self.cfg
         self.scan_task._script_classes = [self.script]
-        self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.PRESCRIPT_XML))
-        self.scan_task()
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.PRESCRIPT_XML))
+        self.scan_task.command.async_call = MagicMock(return_value=future)
+        await self.scan_task()
 
         result = self.scan_task.store_scan_end.call_args[1]
         expected = {

@@ -3,6 +3,9 @@ import subprocess
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+from tornado.concurrent import Future
+from tornado.testing import gen_test, AsyncTestCase
+
 from fixtures.exploits import Exploit
 from structs import Port, TransportProtocol, Node, Scan
 from tools.hydra.parsers import HydraParser
@@ -10,7 +13,7 @@ from tools.hydra.tasks import HydraScriptTask
 from utils import Config
 
 
-class HydraScriptTaskTest(TestCase):
+class HydraScriptTaskTest(AsyncTestCase):
     OUTPUT_SUCCESSFUL = r'''Hydra v8.2 (c) 2016 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
 
 Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 14:19:36
@@ -21,6 +24,7 @@ Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 14:19:36
 Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
 
     def setUp(self):
+        super(HydraScriptTaskTest, self).setUp()
         self.aucote = MagicMock()
         self.port = Port(node=Node(ip='127.0.0.1', node_id=None), transport_protocol=TransportProtocol.TCP, number=22)
         self.port.service_name = 'ssh'
@@ -38,7 +42,8 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
 
     @patch('time.time', MagicMock(return_value=27.0))
     @patch('tools.hydra.tasks.cfg', new_callable=Config)
-    def test_storage(self, cfg):
+    @gen_test
+    async def test_storage(self, cfg):
         cfg._cfg = {
             'tools': {
                 'hydra': {
@@ -47,10 +52,12 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
                 }
             }
         }
-        self.hydra_script_task.command.call = MagicMock(return_value=MagicMock())
+        future = Future()
+        future.set_result(MagicMock())
+        self.hydra_script_task.command.async_call = MagicMock(return_value=future)
         self.hydra_script_task.aucote.kudu_queue = MagicMock()
         self.hydra_script_task.store_vulnerability = MagicMock()
-        self.hydra_script_task()
+        await self.hydra_script_task()
 
         result = self.hydra_script_task.store_scan_end.call_args[1]
         expected = {
