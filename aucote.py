@@ -20,12 +20,11 @@ from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
 from scans.scan_async_task import ScanAsyncTask
 from scans.task_mapper import TaskMapper
-from threads.storage_thread import StorageThread
 from threads.watchdog_thread import WatchdogThread
 from threads.web_server_thread import WebServerThread
 from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
-from utils.threads import ThreadPool
+from utils.storage import Storage
 from utils.kudu_queue import KuduQueue
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
@@ -109,7 +108,9 @@ class Aucote(object):
         self.load_tools(tools_config)
         self._scan_task = None
         self._watch_thread = None
-        self._storage_thread = None
+
+        self._storage = Storage(filename=cfg['service.scans.storage'])
+
         self.ioloop = IOLoop.current()
         self.async_task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
 
@@ -122,16 +123,6 @@ class Aucote(object):
         """
         return self._kudu_queue
 
-    @property
-    def storage(self):
-        """
-        Returns:
-            Storage
-
-        """
-        with self._lock:
-            return self._storage_thread
-
     def run_scan(self, as_service=True):
         """
         Start scanning ports.
@@ -140,8 +131,9 @@ class Aucote(object):
 
         """
         try:
-            self._storage_thread = StorageThread(filename=cfg.get('service.scans.storage'))
-            self._storage_thread.start()
+
+            self._storage.connect()
+            self._storage.init_schema()
 
             if as_service:
                 self._watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
@@ -158,12 +150,11 @@ class Aucote(object):
             web_server.stop()
             web_server.join()
 
-            self.storage.stop()
-            self.storage.join()
-
             self._scan_task = None
             self._watch_thread = None
             self._storage_thread = None
+
+            self._storage.close()
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")
@@ -268,6 +259,9 @@ class Aucote(object):
         """
         os._exit(1)
 
+    @property
+    def storage(self):
+        return self._storage
 
 # =================== start app =================
 

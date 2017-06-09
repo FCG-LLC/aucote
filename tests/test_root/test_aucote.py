@@ -17,16 +17,18 @@ from utils.storage import Storage
 @patch('utils.log.config', Mock(return_value=""))
 @patch('aucote.os.remove', MagicMock(side_effect=FileNotFoundError()))
 class AucoteTest(AsyncTestCase):
+    @patch('aucote.Storage')
     @patch('aucote.cfg', new_callable=Config)
     @patch('aucote.AsyncTaskManager', MagicMock())
-    def setUp(self, cfg):
+    def setUp(self, cfg, mock_storage):
         super(AucoteTest, self).setUp()
         self.cfg = cfg
+        self.storage = mock_storage
         self.cfg._cfg = {
             'service': {
                 'scans': {
                     'threads': 30,
-                    'storage': None,
+                    'storage': 'test_storage',
                     'parallel_tasks': 30
                 },
                 'api': {
@@ -114,7 +116,7 @@ class AucoteTest(AsyncTestCase):
         self.assertEqual(mock_aucote.return_value.run_syncdb.call_count, 1)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
-    @patch('aucote.StorageThread')
+    @patch('aucote.Storage')
     @patch('aucote.ScanAsyncTask')
     @patch('aucote.WebServerThread', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
@@ -133,11 +135,13 @@ class AucoteTest(AsyncTestCase):
         }
 
         self.assertEqual(mock_scan_tasks.call_count, 1)
-        self.assertEqual(mock_storage_task.call_count, 1)
+        self.aucote._storage.connect.assert_called_once_with()
+        self.aucote._storage.init_schema.assert_called_once_with()
+        self.aucote._storage.close.assert_called_once_with()
         self.assertDictEqual(result, expected)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
-    @patch('aucote.StorageThread')
+    @patch('aucote.Storage')
     @patch('aucote.WatchdogThread')
     @patch('aucote.ScanAsyncTask')
     @patch('aucote.WebServerThread', MagicMock())
@@ -156,7 +160,6 @@ class AucoteTest(AsyncTestCase):
         }
 
         self.assertEqual(mock_scan_tasks.call_count, 1)
-        self.assertEqual(mock_storage_task.call_count, 1)
         self.assertEqual(mock_watchdog.call_count, 1)
         self.assertDictEqual(result, expected)
 
@@ -172,7 +175,7 @@ class AucoteTest(AsyncTestCase):
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
     @patch('aucote.ScanAsyncTask.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
-    @patch('aucote.StorageThread', MagicMock())
+    @patch('aucote.Storage', MagicMock())
     @patch('scans.scan_async_task.Executor')
     @patch('aucote.cfg', new_callable=Config)
     def test_scan_with_exception(self, cfg, mock_executor):
@@ -199,10 +202,11 @@ class AucoteTest(AsyncTestCase):
             with patch('aucote.Aucote.run_scan'):
                 self.assertRaises(SystemExit, main)
 
+    @patch('aucote.Storage')
     @patch('aucote.Aucote.load_tools')
     @patch('aucote.cfg', new_callable=Config)
     @patch('aucote.AsyncTaskManager', MagicMock())
-    def test_init(self, cfg, mock_loader):
+    def test_init(self, cfg, mock_loader, mock_storage):
         cfg._cfg = self.cfg._cfg
         exploits = MagicMock()
         kudu_queue = MagicMock()
@@ -210,8 +214,9 @@ class AucoteTest(AsyncTestCase):
 
         aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=cfg)
 
-        self.assertEqual(aucote.storage, None)
         self.assertEqual(aucote.kudu_queue, kudu_queue)
+        mock_storage.assert_called_once_with(filename='test_storage')
+        self.assertEqual(aucote.storage, mock_storage())
         mock_loader.assert_called_once_with(cfg)
 
     def test_signal_handling(self):
@@ -220,6 +225,7 @@ class AucoteTest(AsyncTestCase):
         self.aucote.kill.assert_called_once_with()
 
     @patch('aucote.cfg', new_callable=Config)
+    @patch('aucote.Storage', MagicMock())
     def test_load_tools(self, cfg):
         cfg._cfg = self.cfg._cfg
         config = {

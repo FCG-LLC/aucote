@@ -5,7 +5,6 @@ import sqlite3
 import time
 import logging as log
 
-from structs import StorageQuery
 from utils.database_interface import DbInterface
 
 
@@ -58,8 +57,8 @@ class Storage(DbInterface):
             None
 
         """
-        self.execute(self.create_tables())
-        self.execute(self.clear_scan_details())
+        self.execute(self._create_tables())
+        self.execute(self._clear_scan_details())
 
     def connect(self):
         self.conn = sqlite3.connect(self.filename, check_same_thread=True)
@@ -80,7 +79,7 @@ class Storage(DbInterface):
         """
         return self._cursor
 
-    def save_node(self, node):
+    def _save_node(self, node):
         """
         Saves node into to the storage
 
@@ -93,7 +92,7 @@ class Storage(DbInterface):
         """
         return self.SAVE_NODE_QUERY, (node.id, str(node.ip), time.time())
 
-    def save_nodes(self, nodes):
+    def _save_nodes(self, nodes):
         """
         Saves nodes into local storage
 
@@ -109,7 +108,7 @@ class Storage(DbInterface):
         log.debug("Saving nodes")
         return queries
 
-    def get_nodes(self, pasttime, timestamp):
+    def _get_nodes(self, pasttime, timestamp):
         """
         Returns all nodes from local storage
 
@@ -121,7 +120,7 @@ class Storage(DbInterface):
             timestamp = time.time() - pasttime
         return self.SELECT_NODES, (timestamp,)
 
-    def save_port(self, port):
+    def _save_port(self, port):
         """
         Query for saving port scan into database
 
@@ -137,7 +136,7 @@ class Storage(DbInterface):
         return self.SAVE_PORT_QUERY, (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana,
                                       time.time())
 
-    def save_ports(self, ports):
+    def _save_ports(self, ports):
         """
         Queries for saving ports scans into database
 
@@ -153,7 +152,7 @@ class Storage(DbInterface):
 
         return queries
 
-    def get_ports(self, pasttime, ):
+    def _get_ports(self, pasttime):
         """
         Query for port scan detail from scans from pasttime ago
 
@@ -169,7 +168,7 @@ class Storage(DbInterface):
 
         return self.SELECT_PORTS, (timestamp,)
 
-    def save_scan(self, exploit, port):
+    def _save_scan(self, exploit, port):
         """
         Queries for saving scan into database
 
@@ -202,7 +201,7 @@ class Storage(DbInterface):
                                                         port.number)))
         return queries
 
-    def save_scans(self, exploits, port):
+    def _save_scans(self, exploits, port):
         """
         Queries for saving scans into database
 
@@ -232,7 +231,7 @@ class Storage(DbInterface):
 
         return queries
 
-    def get_scan_info(self, port, app):
+    def _get_scan_info(self, port, app):
         """
         Query for scan detail for provided port and app
 
@@ -246,7 +245,7 @@ class Storage(DbInterface):
         """
         return self.SELECT_SCANS, (app, port.node.id, str(port.node.ip), port.transport_protocol.iana, port.number)
 
-    def clear_scan_details(self):
+    def _clear_scan_details(self):
         """
         Query for cleaning table
 
@@ -257,7 +256,7 @@ class Storage(DbInterface):
         log.debug('Cleaning scan details')
         return self.CLEAR_SCANS,
 
-    def create_tables(self):
+    def _create_tables(self):
         """
         List of queries for table creation
 
@@ -271,7 +270,7 @@ class Storage(DbInterface):
 
         return queries
 
-    def get_ports_by_node(self, node, timestamp=None):
+    def _get_ports_by_node(self, node, timestamp):
         """
         Query for port scan detail from scans from pasttime ago
 
@@ -286,7 +285,7 @@ class Storage(DbInterface):
 
         return self.SELECT_PORTS_BY_NODE, (node.id, str(node.ip), timestamp,)
 
-    def get_ports_by_nodes(self, nodes, timestamp):
+    def _get_ports_by_nodes(self, nodes, timestamp):
         """
         Query for port scan detail from scans from pasttime ago
 
@@ -310,10 +309,10 @@ class Storage(DbInterface):
 
     def execute(self, query):
         """
-        Execute query or queries. In case of SELECT returns value to the given object and release sempahore
+        Execute query or queries.
 
         Args:
-            query (StorageQuery|list|tuple):
+            query (list|tuple|str):
 
         Returns:
             None
@@ -323,16 +322,182 @@ class Storage(DbInterface):
             log.debug("executing %i queries", len(query))
             for row in query:
                 self.cursor.execute(*row)
-        elif isinstance(query, StorageQuery):
-            try:
-                query.result = self.cursor.execute(*query.query).fetchall()
-            except Exception:
-                log.exception("Exception while executing query: %s", query.query[0])
-            finally:
-                query.semaphore.release()
-                return
         else:
             log.debug("executing query: %s", query[0])
-            self.cursor.execute(*query)
+            return self.cursor.execute(*query).fetchall()
 
         self.conn.commit()
+
+    def save_node(self, node):
+        """
+        Save node to database
+
+        Args:
+            node (Node):
+
+        Returns:
+            None
+
+        """
+        return self.execute(self._save_node(node=node))
+
+    def save_nodes(self, nodes):
+        """
+        Save nodes to database
+
+        Args:
+            nodes (lst):
+
+        Returns:
+            None
+
+        """
+        return self.execute(self._save_nodes(nodes=nodes))
+
+    def get_nodes(self, pasttime=0, timestamp=None):
+        """
+        Get nodes from database since timestamp. If timestamp is not given, it's computed basing on pastime.
+
+        Args:
+            pasttime (int):
+            timestamp (int):
+
+        Returns:
+            list - list of nodes
+        """
+        return self.execute(self._get_nodes(pasttime=pasttime, timestamp=timestamp))
+
+    def save_port(self, port):
+        """
+        Save port to database
+
+        Args:
+            port (Port):
+
+        Returns:
+            None
+
+        """
+        return self.execute(self._save_port(port=port))
+
+    def save_ports(self, ports):
+        """
+        Save ports to database
+
+        Args:
+            ports (list):
+
+        Returns:
+            None
+
+        """
+        return self.execute(self._save_ports(ports=ports))
+
+    def get_ports(self, pasttime=900):
+        """
+        Get nodes from database from pasttime.
+
+        Args:
+            pasttime (int):
+
+        Returns:
+            list - list of Ports
+
+        """
+        return self.execute(self._get_ports(pasttime=pasttime))
+
+    def save_scan(self, exploit, port):
+        """
+        Save scan of port by exploit to database
+
+        Args:
+            exploit (Exploit):
+            port (Port):
+
+        Returns:
+            None
+
+        """
+        return self.execute(self._save_scan(exploit=exploit, port=port))
+
+    def save_scans(self, exploits, port):
+        """
+        Save scans of port to database basing on given exploits
+
+        Args:
+            exploits (list):
+            port (Port):
+
+        Returns:
+            None
+
+        """
+        return self.execute(self._save_scans(exploits=exploits, port=port))
+
+    def get_scan_info(self, port, app):
+        """
+        Get scan info from database
+
+        Args:
+            port (Port):
+            app (str):
+
+        Returns:
+            tuple
+
+        """
+        return self.execute(self._get_scan_info(port=port, app=app))
+
+    def clear_scan_details(self):
+        """
+        Clear broken scan details
+
+        Returns:
+            None
+
+        """
+        return self.execute(self._clear_scan_details())
+
+    def create_tables(self):
+        """
+        Create tables in storage
+
+        Returns:
+            None
+
+        """
+        return self.execute(self._create_tables())
+
+    def get_ports_by_node(self, node, pasttime=0, timestamp=None):
+        """
+        Get open ports of node since timestamp or from pasttime if timestamp is not given.
+
+        Args:
+            node (Node):
+            pasttime (int):
+            timestamp (int):
+
+        Returns:
+            list - list of Nodes
+
+        """
+        if timestamp is None:
+            timestamp = time.time() - pasttime
+        return self.execute(self._get_ports_by_node(node=node, timestamp=timestamp))
+
+    def get_ports_by_nodes(self, nodes, pasttime=0, timestamp=None):
+        """
+        Get open ports of nodes since timestamp or from pasttime if timestamp is not given.
+
+        Args:
+            nodes (list):
+            pasttime (int):
+            timestamp (int):
+
+        Returns:
+            list - list of Ports
+
+        """
+        if timestamp is None:
+            timestamp = time.time() - pasttime
+        return self.execute(self._get_ports_by_nodes(nodes=nodes, timestamp=timestamp))
