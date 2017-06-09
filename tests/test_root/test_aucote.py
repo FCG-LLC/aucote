@@ -135,9 +135,6 @@ class AucoteTest(AsyncTestCase):
         self.assertEqual(mock_scan_tasks.call_count, 1)
         self.assertEqual(mock_storage_task.call_count, 1)
         self.assertDictEqual(result, expected)
-        self.aucote._thread_pool.start.assert_called_once_with()
-        self.aucote._thread_pool.join.assert_called_once_with()
-        self.aucote._thread_pool.stop.assert_called_once_with()
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.StorageThread')
@@ -148,7 +145,6 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.cfg', new_callable=Config)
     def test_service(self, cfg, mock_scan_tasks, mock_watchdog, mock_storage_task):
         cfg._cfg = self.cfg._cfg
-        self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
 
@@ -163,9 +159,6 @@ class AucoteTest(AsyncTestCase):
         self.assertEqual(mock_storage_task.call_count, 1)
         self.assertEqual(mock_watchdog.call_count, 1)
         self.assertDictEqual(result, expected)
-        self.aucote._thread_pool.start.assert_called_once_with()
-        self.aucote._thread_pool.join.assert_called_once_with()
-        self.aucote._thread_pool.stop.assert_called_once_with()
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))
@@ -186,13 +179,6 @@ class AucoteTest(AsyncTestCase):
         cfg._cfg = self.cfg._cfg
         self.aucote.run_scan()
         self.assertEqual(mock_executor.call_count, 0)
-
-    def test_add_task(self):
-        self.aucote._thread_pool = MagicMock()
-        data = MagicMock()
-
-        self.aucote.add_task(data)
-        self.aucote._thread_pool.add_task.assert_called_once_with(data)
 
     def test_add_async_task(self):
         self.aucote._thread_pool = MagicMock()
@@ -275,7 +261,7 @@ class AucoteTest(AsyncTestCase):
         mock_kill.assert_called_once_with(1)
 
     def test_unfinished_tasks(self):
-        self.assertEqual(self.aucote.unfinished_tasks, self.aucote.thread_pool.unfinished_tasks)
+        self.assertEqual(self.aucote.unfinished_tasks, self.aucote.async_task_manager.unfinished_tasks)
 
     def test_scan_task_property(self):
         self.assertEqual(self.aucote.scan_task, self.aucote._scan_task)

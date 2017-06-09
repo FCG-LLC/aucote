@@ -20,8 +20,7 @@ class NmapTool(Tool):
     It's responsible for managing and executing nmap tasks
 
     """
-
-    def call(self):
+    async def call(self, *args, **kwargs):
         """
         Prepares nmap args, executes and manages nmap scripts.
 

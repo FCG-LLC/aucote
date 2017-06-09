@@ -102,7 +102,6 @@ class Aucote(object):
     def __init__(self, exploits, kudu_queue, tools_config):
         self._lock = Lock()
         self.exploits = exploits
-        self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
         self.task_mapper = TaskMapper(self)
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -133,17 +132,6 @@ class Aucote(object):
         with self._lock:
             return self._storage_thread
 
-    @property
-    def thread_pool(self):
-        """
-        Returns aucote thread pool
-
-        Returns:
-            ThreadPool
-
-        """
-        return self._thread_pool
-
     def run_scan(self, as_service=True):
         """
         Start scanning ports.
@@ -162,18 +150,14 @@ class Aucote(object):
             self._scan_task = ScanAsyncTask(aucote=self, as_service=as_service)
             self._scan_task.run()
 
-            self.thread_pool.start()
             web_server = WebServerThread(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
             web_server.start()
 
             self.ioloop.start()
 
-            self.thread_pool.join()
-
             web_server.stop()
             web_server.join()
 
-            self.thread_pool.stop()
             self.storage.stop()
             self.storage.join()
 
@@ -195,20 +179,6 @@ class Aucote(object):
         serializer = Serializer()
         for exploit in self.exploits:
             self.kudu_queue.send_msg(serializer.serialize_exploit(exploit))
-
-    def add_task(self, task):
-        """
-        Add task for executing
-
-        Args:
-            task (Task):
-
-        Returns:
-            None
-
-        """
-        log.debug('Added task: %s', task)
-        self.thread_pool.add_task(task)
 
     def add_async_task(self, task):
         """
@@ -259,7 +229,7 @@ class Aucote(object):
             int
 
         """
-        return self.thread_pool.unfinished_tasks
+        return self.async_task_manager.unfinished_tasks
 
     def load_tools(self, config):
         """

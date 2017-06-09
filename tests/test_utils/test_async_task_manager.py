@@ -1,4 +1,5 @@
 from functools import partial
+from random import randint
 from unittest.mock import MagicMock, patch, call
 
 from tornado import gen
@@ -169,3 +170,10 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.io_loop.add_callback(partial(self.task_manager.process_tasks, 0))
         yield self.task_manager._tasks.join()
         self.assertTrue(mock_exception.called)
+
+    def test_unfinished_tasks(self):
+        tasks = randint(5, 10)
+        for i in range(tasks):
+            self.task_manager.add_task(i)
+
+        self.assertEqual(self.task_manager.unfinished_tasks, tasks)

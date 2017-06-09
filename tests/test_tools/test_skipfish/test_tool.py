@@ -2,13 +2,16 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
+from tornado.testing import gen_test, AsyncTestCase
+
 from fixtures.exploits import Exploit
 from structs import RiskLevel, Port, Node, TransportProtocol, Scan
 from tools.skipfish.tool import SkipfishTool
 
 
-class SkipfishToolTest(TestCase):
+class SkipfishToolTest(AsyncTestCase):
     def setUp(self):
+        super(SkipfishToolTest, self).setUp()
         self.exploit = Exploit(exploit_id=1)
         self.exploit.name = 'skipfish'
         self.exploit.risk_level = RiskLevel.NONE
@@ -25,8 +28,9 @@ class SkipfishToolTest(TestCase):
                                           config=self.config)
 
     @patch('tools.skipfish.tool.SkipfishScanTask')
-    def test_call(self, skipfish_scan_mock):
-        self.skipfish_tool()
+    @gen_test
+    async def test_call(self, skipfish_scan_mock):
+        await self.skipfish_tool()
 
         skipfish_scan_mock.assert_called_once_with(aucote=self.aucote, port=self.port,
                                                    exploits=[self.aucote.exploits.find.return_value])
@@ -40,8 +44,9 @@ class SkipfishToolTest(TestCase):
 
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=True))
     @patch('tools.skipfish.tool.SkipfishScanTask')
-    def test_disable_ipv6(self, mock_scantask):
+    @gen_test
+    async def test_disable_ipv6(self, mock_scantask):
         config = MagicMock()
-        SkipfishTool(exploits=MagicMock(), port=MagicMock(is_ipv6=True), aucote=self.aucote, config=config)()
+        await SkipfishTool(exploits=MagicMock(), port=MagicMock(is_ipv6=True), aucote=self.aucote, config=config)()
 
         self.assertFalse(mock_scantask.called)

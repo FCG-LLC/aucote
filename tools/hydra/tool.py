@@ -12,7 +12,7 @@ class HydraTool(Tool):
     This tool is responsible for managing task for Hydra.
 
     """
-    def call(self):
+    async def call(self, *args, **kwargs):
         """
         This function is executed by task manager. Based on configuration adds scan task to the tak manager.
 

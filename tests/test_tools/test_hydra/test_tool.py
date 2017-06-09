@@ -2,6 +2,8 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
+from tornado.testing import gen_test, AsyncTestCase
+
 from fixtures.exploits import Exploit
 from structs import RiskLevel, Port, Scan, Node, TransportProtocol
 from tools.hydra.tool import HydraTool
@@ -9,9 +11,10 @@ from utils import Config
 from utils.storage import Storage
 
 
-class HydraToolTest(TestCase):
+class HydraToolTest(AsyncTestCase):
 
     def setUp(self):
+        super(HydraToolTest, self).setUp()
         self.exploit = Exploit(exploit_id=1, name='hydra', app='hydra', risk_level=RiskLevel.NONE)
         self.exploit2 = Exploit(exploit_id=2, name='hydra', app='hydra', risk_level=RiskLevel.HIGH)
 
@@ -42,31 +45,35 @@ class HydraToolTest(TestCase):
 
     @patch('tools.hydra.tool.HydraScriptTask')
     @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=[])))
-    def test_call(self, hydra_task_mock):
-        self.hydra_tool()
+    @gen_test
+    async def test_call(self, hydra_task_mock):
+        await self.hydra_tool()
 
         hydra_task_mock.assert_called_once_with(aucote=self.aucote, service='ssh', port=self.port, login=True,
                                                 exploits=[self.aucote.exploits.find.return_value])
 
     @patch('tools.hydra.tool.HydraScriptTask')
     @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=[])))
-    def test_call_without_login(self, hydra_task_mock):
-        self.hydra_tool_without_login()
+    @gen_test
+    async def test_call_without_login(self, hydra_task_mock):
+        await self.hydra_tool_without_login()
 
         hydra_task_mock.assert_called_once_with(aucote=self.aucote, service='vnc', port=self.port_no_login,
                                                 login=False, exploits=[self.aucote.exploits.find.return_value])
 
-    def test_non_implemented_service(self):
+    @gen_test
+    async def test_non_implemented_service(self):
         self.config['mapper']['test'] = 'test'
-        HydraTool(port=MagicMock(), exploits=MagicMock(), aucote=self.aucote, config=self.config)()
+        await HydraTool(port=MagicMock(), exploits=MagicMock(), aucote=self.aucote, config=self.config)()
 
         result = self.aucote.add_task.called
 
         self.assertFalse(result)
 
     @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=Config(['test'])))
-    def test_disabled_service(self):
-        self.hydra_tool()
+    @gen_test
+    async def test_disabled_service(self):
+        await self.hydra_tool()
 
         result = self.aucote.add_task.called
 

@@ -190,3 +190,7 @@ class AsyncTaskManager(object):
 
         """
         self._tasks.put(task)
+
+    @property
+    def unfinished_tasks(self):
+        return self._tasks._unfinished_tasks
