@@ -15,7 +15,7 @@ class CommandTask(PortTask):
     Task which runs shell command
 
     """
-    def __init__(self, command, raise_error=True, *args, **kwargs):
+    def __init__(self, command, *args, **kwargs):
         """
         Initialize variables
 
@@ -29,7 +29,6 @@ class CommandTask(PortTask):
         """
         super().__init__(*args, **kwargs)
         self.command = command
-        self.raise_error = raise_error
 
     @classmethod
     def prepare_args(cls):
@@ -52,7 +51,7 @@ class CommandTask(PortTask):
         args = self.prepare_args()
 
         try:
-            results = self.command.call(args, self.raise_error)
+            results = self.command.call(args)
         except subprocess.CalledProcessError as exception:
             self._port.scan = Scan(0, 0)
             self.aucote.storage.save_scans(exploits=self.current_exploits, port=self._port)

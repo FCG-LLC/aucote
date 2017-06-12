@@ -19,7 +19,7 @@ class SSLScriptTaskTest(TestCase):
 
     def test_init(self):
         self.assertIsInstance(self.task.command, SSLBase)
-        self.assertFalse(self.task.raise_error)
+        self.assertFalse(self.task.command.RAISE_ERROR)
 
     def test_prepare_args(self):
         result = self.task.prepare_args()

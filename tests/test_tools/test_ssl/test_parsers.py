@@ -6,7 +6,7 @@ from tools.ssl.structs import SSLResults
 
 
 class SSLParserTest(TestCase):
-    FILE_CONTENT = """{
+    FILE_CONTENT = """, {
               "id"           : "service",
               "ip"           : "10.12.1.24/10.12.1.24",
               "port"         : "443",

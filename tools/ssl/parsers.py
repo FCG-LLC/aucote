@@ -31,7 +31,7 @@ class SSLParser(Parser):
 
         """
         file = Path(self.tempfile.name)
-        text = "[{content}]".format(content=file.read_text())
+        text = "[{content}]".format(content=file.read_text().strip(","))
         return self._dict_to_results(json.loads(text))
 
     def _dict_to_results(self, data):

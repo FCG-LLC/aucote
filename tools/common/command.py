@@ -20,10 +20,11 @@ class Command(object):
 
     #to be set by child classes.
     COMMON_ARGS = None
+    RAISE_ERROR = True
     NAME = None
     parser = Parser()
 
-    def call(self, args=None, raise_error=True):
+    def call(self, args=None):
         """
         Calls system command and return parsed output or standard error output
 
@@ -48,7 +49,7 @@ class Command(object):
         if return_code != 0:
             log.warning("Command '%s' failed wit exit code: %s", cmd, return_code)
             log.debug("Command '%s':\nSTDOUT:\n%s\nSTDERR:\n%s", cmd, stdout, stderr)
-            if raise_error:
+            if self.RAISE_ERROR:
                 raise subprocess.CalledProcessError(return_code, cmd)
 
         return self.parser.parse(stdout.decode('utf-8'), stderr.decode('utf-8'))

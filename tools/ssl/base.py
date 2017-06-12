@@ -15,6 +15,7 @@ class SSLBase(Command):
     """
     NAME = 'testssl'
     COMMON_ARGS = None
+    RAISE_ERROR = False
     parser = None
 
     def __init__(self):

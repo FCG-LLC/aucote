@@ -16,7 +16,7 @@ class SSLScriptTask(CommandTask):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(command=SSLBase(), raise_error=False, *args, **kwargs)
+        super().__init__(command=SSLBase(), *args, **kwargs)
 
     def prepare_args(self):
         return [str(self._port.node.ip)]
