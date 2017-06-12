@@ -30,7 +30,8 @@ class PortsScan(ScanTask):
             args.append('-sS')
 
         if self.udp:
-            args.extend(('-sU', '--min-rate', rate, '--max-retries', '2', '--defeat-icmp-ratelimit'))
+            args.extend(('-sU', '--min-rate', rate, '--max-retries', str(cfg['portdetection.udp_retries']),
+                         '--defeat-icmp-ratelimit'))
 
         scripts_dir = cfg['tools.nmap.scripts_dir']
 

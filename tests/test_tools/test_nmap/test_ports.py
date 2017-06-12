@@ -34,7 +34,8 @@ class PortScanTest(TestCase):
                     'exclude': []
                 },
                 'network_scan_rate': 1030,
-                'host_timeout': 600
+                'host_timeout': 600,
+                'udp_retries': 2
             },
             'tools': {
                 'nmap': {

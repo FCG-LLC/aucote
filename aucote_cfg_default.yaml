@@ -60,6 +60,7 @@ service:
 #   network_scan_rate: <int> - Rate in packets per seconds for networks scan (mostly SynScan)
 #   nmap_udp: <bool> - If true, UDP scan will be performed by Nmap, otherwise by masscan
 #   host_timeout: <int> - Number of seconds after which scanning particular host should be give up
+#   udp_retries: <int> - How many UDP scan retries is allowed by port detection
 
 portdetection:
     scan_enable: True
@@ -78,6 +79,7 @@ portdetection:
     network_scan_rate: 1000
     nmap_udp: True
     host_timeout: 600
+    udp_retries: 2
 
 
 # In this section there is configuration related to the tools used by the aucote
