@@ -11,7 +11,6 @@ import sys
 import fcntl
 
 import signal
-from threading import Lock
 from tornado.ioloop import IOLoop
 
 from fixtures.exploits import Exploits
@@ -23,8 +22,8 @@ from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
 from utils.kudu_queue import KuduQueue
 from database.serializer import Serializer
-from aucote_cfg import cfg, load as cfg_load
 from utils.web_server import WebServer
+from aucote_cfg import cfg, load as cfg_load
 
 VERSION = (0, 1, 0)
 APP_NAME = 'Automated Compliance Tests'
@@ -94,7 +93,6 @@ class Aucote(object):
     """
 
     def __init__(self, exploits, kudu_queue, tools_config):
-        self._lock = Lock()
         self.exploits = exploits
         self._kudu_queue = kudu_queue
         self.task_mapper = TaskMapper(self)
@@ -103,7 +101,6 @@ class Aucote(object):
         signal.signal(signal.SIGHUP, self.graceful_stop)
         self.load_tools(tools_config)
         self._scan_task = None
-        self._watch_thread = None
 
         self._storage = Storage(filename=cfg['service.scans.storage'])
 
@@ -141,8 +138,6 @@ class Aucote(object):
             web_server.stop()
 
             self._scan_task = None
-            self._watch_thread = None
-            self._storage_thread = None
 
             self._storage.close()
 
@@ -198,8 +193,7 @@ class Aucote(object):
             ScanAsyncTask
 
         """
-        with self._lock:
-            return self._scan_task
+        return self._scan_task
 
     @property
     def unfinished_tasks(self):

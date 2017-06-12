@@ -3,7 +3,6 @@ This module contains class for managing async tasks.
 
 """
 from functools import partial
-from functools import wraps
 import logging as log
 
 from tornado import gen
@@ -89,49 +88,6 @@ class AsyncTaskManager(object):
         IOLoop.current().add_callback(self.prepare_ioloop_shutdown)
         yield [self._shutdown_condition.wait(), self._tasks.join()]
         IOLoop.current().stop()
-
-    @classmethod
-    def unique_task(cls, function):
-        """
-        Decorator which allow execution only one instance of function this same time
-
-        Args:
-            function:
-
-        Returns:
-            function
-
-        """
-        @gen.coroutine
-        @wraps(function)
-        def return_function(*args, **kwargs):
-            """
-            Wrapper on original function
-
-            Args:
-                *args:
-                **kwargs:
-
-            Returns:
-                None
-
-            """
-            log.debug("UniqueTask: %s attempts to start", function.__name__)
-            if cls._instance.run_tasks[function.__name__]:
-                log.debug("UniqueTask: %s didn't started", function.__name__)
-                return
-            log.debug("UniqueTask: %s started", function.__name__)
-
-            cls._instance.run_tasks[function.__name__] = True
-            try:
-                yield function(*args, **kwargs)
-            except Exception:
-                log.exception("Exception while running %s", function.__name__)
-            finally:
-                log.debug("UniqueTask: %s finished", function.__name__)
-                cls._instance.run_tasks[function.__name__] = False
-
-        return return_function
 
     def prepare_ioloop_shutdown(self):
         """

@@ -35,7 +35,6 @@ class ScanAsyncTask(object):
         self.as_service = as_service
         self._current_scan = []
         self.aucote = aucote
-        self._lock = Lock()
         self.scan_start = None
 
         if as_service:
@@ -283,13 +282,11 @@ class ScanAsyncTask(object):
             list
 
         """
-        with self._lock:
-            return self._current_scan[:]
+        return self._current_scan[:]
 
     @current_scan.setter
     def current_scan(self, val):
-        with self._lock:
-            self._current_scan = val
+        self._current_scan = val
 
     @property
     def previous_scan(self):

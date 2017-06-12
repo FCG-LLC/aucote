@@ -55,17 +55,6 @@ class Executor(Task):
         """
         return self.aucote.kudu_queue
 
-    @property
-    def thread_pool(self):
-        """
-        Returns aucote's thread pool
-
-        Returns:
-            ThreadPool
-
-        """
-        return self.aucote.thread_pool
-
     async def run(self):
         """
         Start tasks: scanning nodes and ports
@@ -162,10 +151,8 @@ class Executor(Task):
             list - list of Ports
 
         """
-        with self._lock:
-            return self._ports[:]
+        return self._ports[:]
 
     @ports.setter
     def ports(self, val):
-        with self._lock:
-            self._ports = val
+        self._ports = val

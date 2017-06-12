@@ -56,10 +56,8 @@ class Tool(Task):
             Port
 
         """
-        with self._lock:
-            return self._port
+        return self._port
 
     @port.setter
     def port(self, val):
-        with self._lock:
-            self._port = val
+        self._port = val

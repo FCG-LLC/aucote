@@ -1,16 +1,11 @@
 import ipaddress
-from unittest import TestCase
 from unittest.mock import patch, MagicMock
-
-from tornado import gen
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from scans.executor import Executor
 from structs import Node, Port, TransportProtocol, BroadcastPort
 from utils import Config
-from utils.storage import Storage
-from utils.threads import ThreadPool
 
 
 class ExecutorTest(AsyncTestCase):
@@ -33,7 +28,6 @@ class ExecutorTest(AsyncTestCase):
 
     def test_init(self):
         self.assertEqual(self.executor.exploits, self.aucote.exploits)
-        self.assertEqual(self.executor.thread_pool, self.aucote.thread_pool)
         self.assertEqual(self.executor.ports, [BroadcastPort()])
 
     @patch('tools.masscan.MasscanPorts.scan_ports', MagicMock(return_value=[MagicMock()]))
@@ -43,7 +37,6 @@ class ExecutorTest(AsyncTestCase):
     @gen_test
     def test_run_executor(self, cfg, mock_get_ports):
         cfg._cfg = self.cfg._cfg
-        self.executor._thread_pool = ThreadPool()
         port = Port(node=None, number=12, transport_protocol=TransportProtocol)
         mock_get_ports.return_value = [port]
 

@@ -60,13 +60,11 @@ class PortTask(Task):
             list
 
         """
-        with self._lock:
-            return self._current_exploits[:]
+        return self._current_exploits[:]
 
     @current_exploits.setter
     def current_exploits(self, val):
-        with self._lock:
-            self._current_exploits = val
+        self._current_exploits = val
 
     @property
     def port(self):
@@ -77,5 +75,4 @@ class PortTask(Task):
             Port
 
         """
-        with self._lock:
-            return self._port
+        return self._port
