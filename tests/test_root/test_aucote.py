@@ -142,12 +142,11 @@ class AucoteTest(AsyncTestCase):
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.Storage')
-    @patch('aucote.WatchdogThread')
     @patch('aucote.ScanAsyncTask')
     @patch('aucote.WebServer', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
-    def test_service(self, cfg, mock_scan_tasks, mock_watchdog, mock_storage_task):
+    def test_service(self, cfg, mock_scan_tasks, mock_storage_task):
         cfg._cfg = self.cfg._cfg
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
@@ -160,7 +159,6 @@ class AucoteTest(AsyncTestCase):
         }
 
         self.assertEqual(mock_scan_tasks.call_count, 1)
-        self.assertEqual(mock_watchdog.call_count, 1)
         self.assertDictEqual(result, expected)
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
@@ -256,10 +254,9 @@ class AucoteTest(AsyncTestCase):
         self.aucote.async_task_manager.stop.return_value = future_1
 
         self.aucote._watch_thread = MagicMock()
-        yield self.aucote.graceful_stop()
+        self.aucote.graceful_stop(None, None)
 
-        self.aucote._watch_thread.stop.assert_called_once_with()
-        self.aucote.async_task_manager.stop.assert_called_once_with()
+        self.aucote.ioloop.add_callback.assert_called_once_with(self.aucote.async_task_manager.stop)
 
     @patch('aucote.os._exit')
     def test_kill(self, mock_kill):

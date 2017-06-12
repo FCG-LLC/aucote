@@ -18,7 +18,7 @@ _DEFAULT = {
         'level': 'info',
         'max_file_size': 10 * 1024 * 1024,
         'max_files': 5,
-        'format': '%(levelname)s %(asctime)s %(threadName)s: %(message)s'
+        'format': '%(levelname)s %(asctime)s %(funcName)s: %(message)s'
     },
     'fixtures': {
         'exploits': {
