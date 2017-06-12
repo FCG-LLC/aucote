@@ -78,12 +78,16 @@ https://jenkins.cs.int/login?from=%2Fa%3Fa%3Dwe%252520wqe [200 OK] Cookies[JSESS
 
     def test_parse_text(self):
         self.parser._parse_line = MagicMock()
-        self.parser._parse_line.side_effect = (True, None, True, True, None, True)
+
+        # Consider second line of non-empty output as incorrect
+        self.parser._parse_line.side_effect = (True, None, True)
 
         result = self.parser.parse_text(self.MULTIPLE_LINES_OUTPUT, '')
 
         self.assertIsInstance(result, WhatWebResult)
         self.assertEqual(len(result.targets), 2)
+
+        # only non-empty lines should be passed to parse_line
         self.parser._parse_line.assert_has_calls(
             (call('http://jenkins.cs.int/a?a=we wqe [301 Moved Permanently] Country[RESERVED][ZZ]'),
              call('https://jenkins.cs.int/a?a=we%20wqe [403 Forbidden] Cookies[JSESSIONID.6d81b00c]'),
