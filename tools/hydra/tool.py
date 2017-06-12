@@ -24,10 +24,10 @@ class HydraTool(Tool):
             None
 
         """
-        service_name = self.config.get('mapper').get(self.port.service_name, None) or self.port.service_name
+        service_name = self.config.get('mapper').get(self.port.protocol, None) or self.port.protocol
 
         if service_name not in self.config.get('services', set()) or \
-           self.port.service_name in cfg['tools.hydra.disable_services']:
+           self.port.protocol in cfg['tools.hydra.disable_services']:
             return
 
         login = service_name not in self.config.get('without-login', [])

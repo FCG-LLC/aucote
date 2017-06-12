@@ -3,9 +3,12 @@ This file provides structures for project.
 
 """
 import ipaddress
+import re
 from enum import Enum
 import time
 from threading import Semaphore
+
+from cpe import CPE
 
 
 class Scan(object):
@@ -53,6 +56,7 @@ class Node:
         self.ip = ip
         self.id = node_id
         self.scan = None
+        self.os = Service()
 
     def __eq__(self, other):
         return isinstance(other, Node) and self.ip == other.ip and self.id == other.id
@@ -184,6 +188,139 @@ class RiskLevel(Enum):
         raise ValueError('Unsupported risk level name: %s' % name)
 
 
+class Service(object):
+    """
+    Represents service/application/operating system. Contains basic information: name, version
+
+    """
+    _CPE_SPECIAL = "\!|\"|\;|\#|\$|\%|\&|\'|\(|\)|\+|\,|\/|\:|\<|\=|\>|\@|\[|\]|\^|\`|\{|\||\}|\~|\-"
+    _ESCAPE_CPE = re.compile(_CPE_SPECIAL)
+    _UNESCAPE_CPE = re.compile(r"(\\({0}))".format(_CPE_SPECIAL))
+
+    def __init__(self, name=None, version=None):
+        self.name = name
+        self.version = version
+        self._cpe = None
+
+    @property
+    def cpe(self):
+        """
+        CPE representation of service
+
+        Returns:
+            CPE
+
+        """
+        return self._cpe
+
+    @cpe.setter
+    def cpe(self, value):
+        if value:
+            self._cpe = CPE(value)
+
+    @property
+    def cpe_vendor(self):
+        """
+        Get vendor name based on CPE
+
+        Returns:
+            str|None
+
+        """
+        if isinstance(self._cpe, CPE):
+            return self._unescape_cpe(" ".join(self._cpe.get_vendor()))
+
+    @property
+    def cpe_product(self):
+        """
+        Get product name based on CPE
+
+        Returns:
+            str|None
+
+        """
+        if isinstance(self._cpe, CPE):
+            return self._unescape_cpe(" ".join(self._cpe.get_product()))
+
+    @property
+    def cpe_version(self):
+        """
+        Get product name based on CPE
+
+        Returns:
+            str|None
+
+        """
+        if isinstance(self._cpe, CPE):
+            return self._unescape_cpe(" ".join(self._cpe.get_version()))
+
+    def __str__(self):
+        return "{name} {version}".format(name=self.name or '', version=self.version or '').strip()
+
+    def copy(self):
+        """
+        Make copy of service
+
+        Returns:
+            Service
+
+        """
+        return_value = Service(name=self.name, version=self.version)
+        return_value._cpe = self._cpe
+        return return_value
+
+    @classmethod
+    def _escape_cpe(cls, text):
+        """
+        Special characters should be escaped before building CPE string
+
+        Args:
+            text (str):
+
+        Returns:
+            str
+
+        """
+        text = text.lower()
+
+        def _replace(txt):
+            return r"\{0}".format(txt.group())
+
+        if " " in text:
+            raise ValueError("{0}: Space is not allowed in CPE string".format(text))
+
+        return cls._ESCAPE_CPE.sub(_replace, text)
+
+    @classmethod
+    def _unescape_cpe(cls, text):
+        text = text.lower()
+
+        def _replace(txt):
+            return txt.group()[1]
+
+        return cls._UNESCAPE_CPE.sub(_replace, text)
+
+    @classmethod
+    def build_cpe(cls, type, vendor='*', product='*', version='*'):
+        if vendor:
+            vendor = cls._escape_cpe(vendor)
+
+        if product:
+            product = cls._escape_cpe(product)
+
+        if version:
+            version = cls._escape_cpe(version)
+
+        return "cpe:2.3:{part}:{vendor}:{product}:{version}:*:*:*:*:*:*:*".format(part=str(type.value), vendor=vendor,
+                                                                                  product=product, version=version)
+
+
+class CPEType(Enum):
+    APPLICATION = "a"
+    HARDWARE = "h"
+    OS = "o"
+
+
 class Port(object):
     """
     Port object
@@ -202,8 +339,9 @@ class Port(object):
         self.node = node
         self.number = number
         self.transport_protocol = transport_protocol
-        self.service_name = None
-        self.service_version = None
+        self.service = Service()
+        self.apps = []
+        self.protocol = None
         self.banner = None
         self.scan = None
         self.interface = None
@@ -233,9 +371,10 @@ class Port(object):
         return_value = type(self)(node=self.node, number=self.number, transport_protocol=self.transport_protocol)
         return_value.vulnerabilities = self.vulnerabilities
         return_value.when_discovered = self.when_discovered
-        return_value.service_name = self.service_name
-        return_value.service_version = self.service_version
+        return_value.service = self.service.copy()
+        return_value.apps = [app.copy() for app in self.apps]
         return_value.banner = self.banner
+        return_value.protocol = self.protocol
         return_value.scan = self.scan
         return_value.interface = self.interface
         return return_value
@@ -264,7 +403,7 @@ class Port(object):
             format_string = "{0}://[{1}]:{2}"
         else:
             format_string = "{0}://{1}:{2}"
-        return format_string.format(self.service_name, self.node.ip, self.number)
+        return format_string.format(self.protocol, self.node.ip, self.number)
 
     def in_range(self, parsed_ports):
         """
@@ -369,3 +508,8 @@ class ScanStatus(Enum):
     """
     IDLE = "IDLE"
     IN_PROGRESS = "IN PROGRESS"
+
+
+class TopisOSDiscoveryType(Enum):
+    FINGERPRINT = "OSFINGERPRINT"
+    DIRECT = "DIRECT"

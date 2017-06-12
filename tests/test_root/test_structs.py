@@ -2,7 +2,9 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, StorageQuery
+from cpe import CPE
+
+from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, StorageQuery, Service, CPEType
 from structs import TransportProtocol
 
 
@@ -147,7 +149,7 @@ class PortTest(TestCase):
     def test_get_url(self):
         node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         port1 = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
-        port1.service_name = 'http'
+        port1.protocol = 'http'
 
         expected = "http://127.0.0.1:1"
 
@@ -156,7 +158,7 @@ class PortTest(TestCase):
     def test_get_url_ipv6(self):
         node1 = Node(ip=ipaddress.ip_address('::1'), node_id=1)
         port1 = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
-        port1.service_name = 'http'
+        port1.protocol = 'http'
 
         expected = "http://[::1]:1"
 
@@ -173,8 +175,8 @@ class PortTest(TestCase):
         self.assertEqual(result.banner, port.banner)
         self.assertEqual(result.node, port.node)
         self.assertEqual(result.number, port.number)
-        self.assertEqual(result.service_name, port.service_name)
-        self.assertEqual(result.service_version, port.service_version)
+        self.assertEqual(result.service.name, port.service.name)
+        self.assertEqual(result.service.version, port.service.version)
         self.assertEqual(result.transport_protocol, port.transport_protocol)
         self.assertEqual(result.vulnerabilities, port.vulnerabilities)
         self.assertEqual(result.when_discovered, port.when_discovered)
@@ -224,6 +226,7 @@ class SpecialPortTest(TestCase):
     def test_copy_broadcast(self):
         self.assertIsInstance(self.broadcast.copy(), BroadcastPort)
 
+
 class PhysicalPortTest(TestCase):
     def setUp(self):
         self.port = PhysicalPort()
@@ -242,6 +245,7 @@ class BroadcastPortTest(TestCase):
         expected = "broadcast"
         self.assertEqual(str(self.port), expected)
 
+
 class StorageQueryTest(TestCase):
     def setUp(self):
         self.test_query = "test_query"
@@ -259,3 +263,78 @@ class StorageQueryTest(TestCase):
     def test_only_query(self):
         expected = (self.test_query,)
         self.assertEqual(self.only_query.query, expected)
+
+
+class ServiceTest(TestCase):
+    def setUp(self):
+        self.name = 'test_name'
+        self.version = 'test_version'
+        self.vendor = 'apache'
+        self.product = 'http_server'
+        self.version = '2.4\(23\)'
+        self.cpe = 'cpe:2.3:a:{vendor}:{product}:{version}:*:*:*:*:*:*:*'.format(vendor=self.vendor,
+                                                                                 product=self.product,
+                                                                                 version=self.version)
+        self.service = Service(self.name, self.version)
+        self.service.cpe = self.cpe
+
+    def test_init(self):
+        self.assertEqual(self.name, self.service.name)
+        self.assertEqual(self.version, self.service.version)
+
+    def test_cpe_setter_and_getter(self):
+        self.assertEqual(self.service.cpe, CPE(self.cpe))
+
+    def test_vendor(self):
+        self.assertEqual(self.service.cpe_vendor, self.vendor)
+
+    def test_product(self):
+        self.assertEqual(self.service.cpe_product, self.product)
+
+    def test_vendor_without_cpe(self):
+        self.service._cpe = None
+        self.assertIsNone(self.service.cpe_vendor)
+
+    def test_product_without_cpe(self):
+        self.service._cpe = None
+        self.assertIsNone(self.service.cpe_product)
+    
+    def test_escape_cpe(self):
+        data = r""""!";#$%&'()+,/:<=>@test123[]^`{}~-"""
+        expected = r"""\"\!\"\;\#\$\%\&\'\(\)\+\,\/\:\<\=\>\@test123\[\]\^\`\{\}\~\-"""
+
+        result = self.service._escape_cpe(data)
+
+        self.assertEqual(result, expected)
+
+    def test_escape_cpe_with_space(self):
+        data = "12 13"
+        self.assertRaises(ValueError, self.service._escape_cpe, data)
+
+    def test_unescape_cpe(self):
+        data = r"""\"\!\"\;\#\$\%\&\'\(\)\+\,\/\:\<\=\>\@test123\[\]\^\`\{\}\~\-"""
+        expected = r""""!";#$%&'()+,/:<=>@test123[]^`{}~-"""
+
+        result = self.service._unescape_cpe(data)
+
+        self.assertEqual(result, expected)
+
+    def test_version(self):
+        self.assertEqual(self.service.cpe_version, '2.4(23)')
+
+    def test_build_cpe(self):
+        vendor = 'Collective-Sense'
+        product = 'aucote'
+        version = '0.0.1(test)'
+
+        result = self.service.build_cpe(product=product, vendor=vendor, version=version, type=CPEType.APPLICATION)
+        expected = "cpe:2.3:a:collective\-sense:aucote:0.0.1\(test\):*:*:*:*:*:*:*"
+
+        self.assertEqual(result, expected)
+
+    def test_copy(self):
+        service_copy = self.service.copy()
+
+        self.assertEqual(self.service._cpe, service_copy._cpe)
+        self.assertEqual(self.service.name, service_copy.name)
+        self.assertEqual(self.service.version, service_copy.version)

@@ -222,7 +222,7 @@ class UserAPITest(AsyncHTTPTestCase):
             Port(node=node, number=20, transport_protocol=None),
             Port(node=node, number=22, transport_protocol=None),
             Port(node=node, number=24, transport_protocol=None)]
-        task = Executor(aucote=MagicMock(), nodes=ports)
+        task = Executor(aucote=MagicMock(), ports=ports)
         task.start_time = 15
 
         result = MainHandler.task_status(task)

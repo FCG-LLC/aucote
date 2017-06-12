@@ -35,8 +35,8 @@ class Serializer:
         msg.add_short(port.number)
         msg.add_ip(port.node.ip)
         msg.add_int(port.node.id)
-        msg.add_str(port.service_name or '')
-        msg.add_str(port.service_version or '')
+        msg.add_str(port.protocol or '')
+        msg.add_str(str(port.service) or '')
         msg.add_str(port.banner or "")
         msg.add_byte(port.transport_protocol.iana)
         msg.add_datetime(port.when_discovered)  # port_scan_start

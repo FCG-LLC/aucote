@@ -19,7 +19,7 @@ from tornado.ioloop import IOLoop
 
 from aucote_cfg import cfg
 from scans.executor import Executor
-from structs import Node, Scan, PhysicalPort, ScanStatus
+from structs import Node, Scan, PhysicalPort, ScanStatus, TopisOSDiscoveryType, Service, CPEType
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
@@ -88,9 +88,10 @@ class ScanAsyncTask(object):
 
         """
         log.info("Starting security scan")
-        ports = self.get_ports_for_script_scan()
+        nodes = self._get_topdis_nodes()
+        ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports))
+        self.aucote.add_task(Executor(aucote=self.aucote, ports=ports))
 
     @gen.coroutine
     def run_scan(self, nodes, scan_only=False):
@@ -107,12 +108,6 @@ class ScanAsyncTask(object):
         scanner_ipv4 = MasscanPorts()
         # scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
         scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
-
-        include_networks = self._get_networks_list()
-        exclude_networks = self._get_excluded_networks_list()
-
-        nodes = [node for node in nodes if node.ip.exploded in include_networks
-                 and node.ip.exploded not in exclude_networks]
 
         self.current_scan = nodes
 
@@ -157,7 +152,7 @@ class ScanAsyncTask(object):
                 port.scan = Scan(start=time.time())
                 ports.append(port)
 
-        self.aucote.add_task(Executor(aucote=self.aucote, nodes=ports, scan_only=scan_only))
+        self.aucote.add_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
         self.current_scan = []
 
         self._clean_scan()
@@ -199,6 +194,18 @@ class ScanAsyncTask(object):
                 node = Node(ip=ipaddress.ip_address(node_ip), node_id=node_struct['id'])
                 node.name = node_struct['displayName']
                 node.scan = Scan(start=timestamp)
+
+                software = node_struct.get('software', {})
+                os = software.get('os', {})
+
+                if os.get('discoveryType') in (TopisOSDiscoveryType.DIRECT.value,):
+                    node.os.name, node.os.version = os.get('name'), os.get('version')
+
+                    if " " in node.os.version:
+                        log.warning("Currently doesn't support space in OS Version for cpe")
+                    else:
+                        node.os.cpe = Service.build_cpe(product=node.os.name, version=node.os.version, type=CPEType.OS)
+
                 nodes.append(node)
 
         log.debug('Got %i nodes from topdis: %s', len(nodes), nodes)
@@ -206,7 +213,9 @@ class ScanAsyncTask(object):
 
     def _get_nodes_for_scanning(self, timestamp=None):
         """
-        Get nodes for scan since timestamp. If timestamp is None, it is equal: current timestamp - node scan period
+        Get nodes for scan since timestamp.
+            - If timestamp is None, it is equal: current timestamp - node scan period
+            - Restrict nodes to allowed networks
 
         Args:
             timestamp (float):
@@ -219,7 +228,13 @@ class ScanAsyncTask(object):
 
         storage_nodes = self.storage.get_nodes(parse_period(cfg['portdetection.scan_interval']), timestamp=timestamp)
 
-        return list(set(topdis_nodes) - set(storage_nodes))
+        nodes = list(set(topdis_nodes) - set(storage_nodes))
+
+        include_networks = self._get_networks_list()
+        exclude_networks = self._get_excluded_networks_list()
+
+        return [node for node in nodes if node.ip.exploded in include_networks
+                 and node.ip.exploded not in exclude_networks]
 
     @classmethod
     def _get_networks_list(cls):
@@ -301,7 +316,7 @@ class ScanAsyncTask(object):
         """
         return croniter(cfg['portdetection.tools_cron'], time.time()).get_prev()
 
-    def get_ports_for_script_scan(self):
+    def get_ports_for_script_scan(self, nodes):
         """
         Get ports for scanning. Topdis node data combined with stored open ports data.
 
@@ -309,7 +324,7 @@ class ScanAsyncTask(object):
             list
 
         """
-        return self.storage.get_ports_by_nodes(self._get_topdis_nodes(), timestamp=self.previous_tool_scan)
+        return self.storage.get_ports_by_nodes(nodes=nodes, timestamp=self.previous_tool_scan)
 
     @property
     def next_scan(self):

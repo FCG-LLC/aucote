@@ -3,13 +3,17 @@ from unittest.mock import patch, MagicMock, PropertyMock, call
 from urllib.error import URLError
 
 import time
+
+import requests
+from cpe import CPE
 from croniter import croniter
 from netaddr import IPSet
+from requests import Response
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from scans.scan_async_task import ScanAsyncTask
-from structs import Node, PhysicalPort, Port, TransportProtocol, ScanStatus
+from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus, CPEType
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -78,6 +82,164 @@ class ScanAsyncTaskTest(AsyncTestCase):
   ]
 }"""
 
+    NODE_DETAILS = rb"""{
+      "meta": {
+        "apiVersion": "1.0.0",
+        "requestTime": "2017-05-08T12:50:20.139895+00:00",
+        "url": "http://dev03.cs.int:1234/api/v1/node?id=24"
+      },
+      "nodes": [
+        {
+          "description": "Cisco IOS Software, C181X Software (C181X-ADVIPSERVICESK9-M), Version 12.4(11)XW, RELEASE SOFTWARE (fc1)\r\nSynched to technology version 12.4(12.12)T\r\nTechnical Support: http://www.cisco.com/techsupport\r\nCopyright (c) 1986-2007 by Cisco Systems, Inc.\r\nComp",
+          "deviceType": "L3 Switch",
+          "deviceTypeDiscoveryType": "DIRECT",
+          "displayName": "fishconnectVPN.fcg.com",
+          "hardware": {
+            "model": "CISCO1811W-AG-B/K9",
+            "sysObjId": "1.3.6.1.4.1.9.1.641",
+            "vendor": "ciscoSystems"
+          },
+          "id": 24,
+          "isCloud": false,
+          "isHost": false,
+          "managementIp": "10.80.80.2",
+          "name": "fishconnectVPN.fcg.com",
+          "serialNumber": "FHK113515FT",
+          "snmp": {
+            "communityString": "public",
+            "port": 161,
+            "version": "2c"
+          },
+          "software": {
+            "os": "IOS",
+            "osDiscoveryType": "DIRECT",
+            "osVersion": "12.4(11)XW, RELEASE SOFTWARE (fc1)"
+          },
+          "stateId": 6597,
+          "supportsNat": false
+        }
+      ]
+    }"""
+
+    NODE_DETAILS_FOR_CPE = rb"""{
+      "meta": {
+        "apiVersion": "1.0.0",
+        "requestTime": "2017-05-08T12:50:20.139895+00:00",
+        "url": "http://dev03.cs.int:1234/api/v1/node?id=24"
+      },
+      "nodes": [
+        {
+          "description": "Cisco IOS Software, C181X Software (C181X-ADVIPSERVICESK9-M), Version 12.4(11)XW, RELEASE SOFTWARE (fc1)\r\nSynched to technology version 12.4(12.12)T\r\nTechnical Support: http://www.cisco.com/techsupport\r\nCopyright (c) 1986-2007 by Cisco Systems, Inc.\r\nComp",
+          "deviceType": "L3 Switch",
+          "deviceTypeDiscoveryType": "DIRECT",
+          "displayName": "fishconnectVPN.fcg.com",
+          "hardware": {
+            "model": "CISCO1811W-AG-B/K9",
+            "sysObjId": "1.3.6.1.4.1.9.1.641",
+            "vendor": "ciscoSystems"
+          },
+          "id": 24,
+          "isCloud": false,
+          "isHost": false,
+          "managementIp": "10.80.80.2",
+          "name": "fishconnectVPN.fcg.com",
+          "serialNumber": "FHK113515FT",
+          "snmp": {
+            "communityString": "public",
+            "port": 161,
+            "version": "2c"
+          },
+          "software": {
+            "os": "IOS",
+            "osDiscoveryType": "DIRECT",
+            "osVersion": "12.4(11)XW"
+          },
+          "stateId": 6597,
+          "supportsNat": false
+        }
+      ]
+    }"""
+
+    NODE_WITH_OS_FINGERPRINT = rb"""{
+  "meta": {
+    "apiVersion": "1.0.0",
+    "requestTime": "2016-08-11T11:42:32.842891+00:00",
+    "url": "http://10.12.1.175:1234/api/v1/nodes?ip=t"
+  },
+  "nodes": [
+    {
+      "id": 573,
+      "displayName": "EPSON1B0407",
+      "ips": [
+        "10.3.3.99"
+      ],
+      "software": {
+        "os": {
+            "discoveryType": "FINGERPRINT"
+        }
+      }
+    }
+  ]
+}"""
+
+    NODE_WITH_OS_DIRECT = rb"""{
+  "meta": {
+    "apiVersion": "1.0.0",
+    "requestTime": "2016-08-11T11:42:32.842891+00:00",
+    "url": "http://10.12.1.175:1234/api/v1/nodes?ip=t"
+  },
+  "nodes": [
+    {
+      "id": 573,
+      "displayName": "EPSON1B0407",
+      "ips": [
+        "10.3.3.99"
+      ],
+      "software": {
+        "os": {
+            "discoveryType": "DIRECT",
+            "name": "test_name",
+            "version": "11"
+        }
+      }
+    }
+  ]
+}"""
+
+    NODE_WITH_OS_DIRECT_SPACES_VERSION = rb"""{
+  "meta": {
+    "apiVersion": "1.0.0",
+    "requestTime": "2016-08-11T11:42:32.842891+00:00",
+    "url": "http://10.12.1.175:1234/api/v1/nodes?ip=t"
+  },
+  "nodes": [
+    {
+      "id": 573,
+      "displayName": "EPSON1B0407",
+      "ips": [
+        "10.3.3.99"
+      ],
+      "software": {
+        "os": {
+            "discoveryType": "DIRECT",
+            "name": "test_name",
+            "version": "11 abcde"
+        }
+      }
+    }
+  ]
+}"""
+
+    EMPTY_NODE_DETAILS = rb"""{
+  "meta": {
+    "apiVersion": "1.0.0",
+    "requestTime": "2017-05-08T12:50:20.139895+00:00",
+    "url": "http://dev03.cs.int:1234/api/v1/node?id=24"
+  },
+  "nodes": [
+  ]
+}"""
+
     @patch('scans.scan_async_task.ScanAsyncTask._get_topdis_nodes', MagicMock(return_value=[]))
     @patch('scans.scan_async_task.croniter', MagicMock(return_value=croniter('* * * * *', time.time())))
     @patch('scans.scan_async_task.cfg', new_callable=Config)
@@ -125,6 +287,53 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
     @patch('scans.scan_async_task.http.urlopen')
     @patch('scans.scan_async_task.cfg.get', MagicMock())
+    def test_getting_nodes_os_fingerprint(self, urllib):
+        urllib.return_value = self.urllib_response
+        self.urllib_response.read.return_value = self.NODE_WITH_OS_FINGERPRINT
+
+        nodes = self.thread._get_topdis_nodes()
+        self.assertEqual(len(nodes), 1)
+        result = nodes[0]
+
+        self.assertIsNone(result.os.name)
+        self.assertIsNone(result.os.version)
+
+    @patch('scans.scan_async_task.http.urlopen')
+    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.Service.build_cpe')
+    def test_getting_nodes_os_direct(self, mock_cpe, urllib):
+        urllib.return_value = self.urllib_response
+        self.urllib_response.read.return_value = self.NODE_WITH_OS_DIRECT
+        mock_cpe.return_value = 'cpe:2.3:a:b:c:d:*:*:*:*:*:*:*'
+
+        nodes = self.thread._get_topdis_nodes()
+        self.assertEqual(len(nodes), 1)
+        result = nodes[0]
+
+        self.assertEqual(result.os.name, 'test_name')
+        self.assertEqual(result.os.version, '11')
+        self.assertEqual(result.os.cpe, CPE(mock_cpe.return_value))
+        mock_cpe.assert_called_once_with(product='test_name', version='11', type=CPEType.OS)
+
+    @patch('scans.scan_async_task.http.urlopen')
+    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.Service.build_cpe')
+    def test_getting_nodes_os_direct_with_space_in_version(self, mock_cpe, urllib):
+        urllib.return_value = self.urllib_response
+        self.urllib_response.read.return_value = self.NODE_WITH_OS_DIRECT_SPACES_VERSION
+        mock_cpe.return_value = 'cpe:2.3:a:b:c:d:*:*:*:*:*:*:*'
+
+        nodes = self.thread._get_topdis_nodes()
+        self.assertEqual(len(nodes), 1)
+        result = nodes[0]
+
+        self.assertEqual(result.os.name, 'test_name')
+        self.assertEqual(result.os.version, '11 abcde')
+        self.assertIsNone(result.os.cpe)
+        self.assertFalse(mock_cpe.called)
+
+    @patch('scans.scan_async_task.http.urlopen')
+    @patch('scans.scan_async_task.cfg.get', MagicMock())
     def test_getting_nodes_cannot_connect_to_topdis(self, urllib):
         urllib.side_effect = URLError('')
         result = self.thread._get_topdis_nodes()
@@ -139,20 +348,28 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertRaises(Exception, ScanAsyncTask._get_topdis_nodes)
 
     @patch('scans.scan_async_task.ScanAsyncTask._get_topdis_nodes')
-    @patch('scans.scan_async_task.cfg.get', MagicMock(return_value='5s'))
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.parse_period', MagicMock(return_value=5))
-    def test_get_nodes_for_scanning(self, mock_get_nodes):
+    def test_get_nodes_for_scanning(self, cfg, mock_get_nodes):
+        cfg._cfg = {
+            'portdetection': {
+                'scan_interval': '5s',
+                'networks': {
+                    'include': ['127.0.0.2/31']
+                }
+            }
+        }
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
         node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
 
-        nodes = [node_1, node_2,]
+        nodes = [node_1, node_2, node_3]
         mock_get_nodes.return_value=nodes
 
-        self.thread.storage.get_nodes = MagicMock(return_value=[node_2, node_3])
+        self.thread.storage.get_nodes = MagicMock(return_value=[node_2])
 
         result = self.thread._get_nodes_for_scanning()
-        expected = [node_1]
+        expected = [node_3]
 
         self.assertListEqual(result, expected)
 
@@ -197,6 +414,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
                     'physical': True,
                 }
             },
+            'topdis': {
+                'fetch_os': False
+            },
             'portdetection': {
                 'ports': {
                     'include': ['T:0-65535', 'U:0-65535', 'S:0-65535'],
@@ -238,7 +458,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=ports, scan_only=False)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=False)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
         self.assertFalse(mock_ioloop.current.return_value.current.called)
 
@@ -255,6 +475,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
                 'scans': {
                     'physical': False,
                 }
+            },
+            'topdis': {
+                'fetch_os': False
             },
             'portdetection': {
                 'ports': {
@@ -284,7 +507,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         mock_nmap.return_value.scan_ports.return_value = future_nmap
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=[port_masscan, port_nmap],
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=[port_masscan, port_nmap],
                                               scan_only=False)
         mock_loop.current.return_value.stop.assert_called_once_with()
 
@@ -300,6 +523,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
                 'scans': {
                     'physical': True,
                 }
+            },
+            'topdis': {
+                'fetch_os': False
             },
             'portdetection': {
                 'ports': {
@@ -344,7 +570,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning(), scan_only=scan_only)
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=ports, scan_only=scan_only)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=scan_only)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
     @gen_test
@@ -479,7 +705,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.ScanAsyncTask.previous_tool_scan', new_callable=PropertyMock)
     def test_get_ports_for_script_scan(self, mock_previous):
         nodes = [MagicMock(), MagicMock(), MagicMock()]
-        self.thread._get_topdis_nodes = MagicMock(return_value=nodes)
         mock_previous.return_value = 100
         ports = [
             MagicMock(),
@@ -488,20 +713,23 @@ class ScanAsyncTaskTest(AsyncTestCase):
         ]
         self.thread.storage.get_ports_by_nodes.return_value = ports
 
-        result = self.thread.get_ports_for_script_scan()
+        result = self.thread.get_ports_for_script_scan(nodes)
 
         self.assertEqual(result, ports)
-        self.thread.storage.get_ports_by_nodes.assert_has_calls([call(nodes, timestamp=100)])
+        self.thread.storage.get_ports_by_nodes.assert_has_calls([call(nodes=nodes, timestamp=100)])
 
     @patch('scans.scan_async_task.Executor')
     @gen_test
     def test_run_scripts(self, mock_executor):
         ports = MagicMock()
+        nodes = [MagicMock(), MagicMock(), MagicMock()]
 
         self.thread.get_ports_for_script_scan = MagicMock(return_value=ports)
+        self.thread._get_topdis_nodes = MagicMock(return_value=nodes)
+
         yield self.thread._run_tools()
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=ports)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports)
         self.thread.aucote.add_task.assert_called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)

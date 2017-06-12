@@ -54,7 +54,7 @@ class NmapToolTest(TestCase):
                          node=Node(node_id=1,ip=ipaddress.ip_address('127.0.0.1')))
 
         self.port.scan = Scan(start=14, end=13)
-        self.port.service_name = 'test_service'
+        self.port.protocol = 'test_service'
 
         self.aucote = MagicMock(storage=Storage(":memory:"))
         self.nmap_tool = NmapTool(aucote=self.aucote, exploits=self.exploits, port=self.port, config=self.config)

@@ -42,6 +42,7 @@ class NmapPortInfoTask(PortTask):
         args = [
             '-p', str(self._port.number),
             '-sV', '-Pn',
+            '--version-all',
             '--max-rate', str(cfg['portdetection.port_scan_rate'])
         ]
 
@@ -88,13 +89,17 @@ class NmapPortInfoTask(PortTask):
         if service is None:
             log.warning('No service for %s:%i', self._port.node.ip, self._port.number)
         else:
-            self._port.service_name = service.get('name')
-            if self._port.service_name == 'http':
+            self._port.protocol = service.get('name')
+            if self._port.protocol == 'http':
                 if service.get('tunnel') == 'ssl':
-                    self._port.service_name = 'https'
+                    self._port.protocol = 'https'
 
-            self._port.service_version = "{0} {1}".format(service.get('product') or "",
-                                                          service.get('version') or "").strip()
+            self._port.service.name = service.get('product')
+            self._port.service.version = service.get('version')
+
+            cpe = service.find("cpe")
+            if cpe is not None:
+                self._port.service.cpe = cpe.text
 
         self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
 
