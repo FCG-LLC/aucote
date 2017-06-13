@@ -586,7 +586,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         cfg._cfg = {
             'service': {
                 'scans': {
-                    'physical': True,
+                    'physical': False,
                 }
             },
             'portdetection': {
@@ -622,18 +622,12 @@ class ScanAsyncTaskTest(AsyncTestCase):
         future_nmap.set_result(ports_nmap)
         mock_nmap.return_value.scan_ports.return_value = future_nmap
 
-        port = PhysicalPort()
-        port.interface = 'test'
-
-        ports = [ports_masscan[0], ports_nmap[0],
-                 ports_nmap[0],
-                 port]
-
+        ports = [ports_masscan[0], ports_nmap[0],ports_nmap[0]]
         scan_only = MagicMock()
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning(), scan_only=scan_only)
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=ports, scan_only=scan_only)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=scan_only)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
