@@ -14,11 +14,11 @@ class MasscanPorts(ScanTask):
 
     """
 
-    def __init__(self):
+    def __init__(self, udp=True):
+        self.udp = udp
         super(MasscanPorts, self).__init__(MasscanBase())
 
-    @classmethod
-    def prepare_args(cls, nodes):
+    def prepare_args(self, nodes):
         """
         Prepare args for command execution
 
@@ -29,9 +29,10 @@ class MasscanPorts(ScanTask):
             list
 
         """
-        args = ['--rate', str(cfg['portdetection.network_scan_rate']),
-                # '--exclude-ports', 'U:0-65535'
-               ]
+        args = ['--rate', str(cfg['portdetection.network_scan_rate'])]
+
+        if not self.udp:
+            args.extend(['--exclude-ports', 'U:0-65535'])
 
         include_ports = cfg['portdetection.ports.include']
 

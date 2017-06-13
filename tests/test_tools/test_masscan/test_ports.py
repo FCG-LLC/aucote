@@ -1,7 +1,6 @@
 import ipaddress
-import subprocess
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from structs import Node, Scan
 from tools.masscan import MasscanPorts
@@ -49,7 +48,6 @@ class MasscanPortsTest(TestCase):
 
         result = self.masscanports.prepare_args(self.nodes)
         expected = ['--rate', '1000',
-                    # '--exclude-ports', 'U:0-65535',
                     '--ports', 'T:17-45', self.NODE_IP]
 
         self.assertEqual(result, expected)
@@ -68,7 +66,6 @@ class MasscanPortsTest(TestCase):
 
         result = self.masscanports.prepare_args(self.nodes)
         expected = ['--rate', '1000',
-                    # '--exclude-ports', 'U:0-65535',
                     '--ports', 'T:17-45', self.NODE_IP]
 
         self.assertEqual(result, expected)
@@ -80,7 +77,19 @@ class MasscanPortsTest(TestCase):
 
         result = self.masscanports.prepare_args(nodes=self.nodes)
         expected = ['--rate', '1000',
-                    # '--exclude-ports', 'U:0-65535',
+                    '--ports', '9',
+                    '--exclude-ports', '45-89', '127.0.0.1']
+        self.assertEqual(result, expected)
+
+    @patch('tools.masscan.ports.cfg', new_callable=Config)
+    def test_scan_without_udp(self, cfg):
+        cfg._cfg = self.cfg
+        cfg['portdetection.ports.exclude'] = ['45-89']
+        masscanports = MasscanPorts(udp=False)
+
+        result = masscanports.prepare_args(nodes=self.nodes)
+        expected = ['--rate', '1000',
+                    '--exclude-ports', 'U:0-65535',
                     '--ports', '9',
                     '--exclude-ports', '45-89', '127.0.0.1']
         self.assertEqual(result, expected)
