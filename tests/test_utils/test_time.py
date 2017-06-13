@@ -35,5 +35,18 @@ class TimeTest(TestCase):
 
     def test_parse_timestamp_to_time(self):
         result = parse_timestamp_to_time(12)
-        expected = '1970-01-01T01:00:12+00:00'
+        expected = '1970-01-01T00:00:12+00:00'
+        self.assertEqual(result, expected)
+
+    def test_pasrsers_from_timestamp_to_timestamp(self):
+        expected = 197
+        result = parse_time_to_timestamp(parse_timestamp_to_time(expected))
+
+        self.assertEqual(result, expected)
+
+    def test_pasrsers_from_time_to_time(self):
+        initial = '2017-06-04T13:26:17+01:00'
+        expected = '2017-06-04T12:26:17+00:00'
+        result = parse_timestamp_to_time(parse_time_to_timestamp(initial))
+
         self.assertEqual(result, expected)
