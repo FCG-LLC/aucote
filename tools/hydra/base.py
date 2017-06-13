@@ -11,7 +11,7 @@ class HydraBase(Command):
     """
     COMMON_ARGS = ('-t', '4')
     NAME = 'hydra'
-    parser = HydraParser
+    parser = HydraParser()
 
     SUPORTED_SERVICES = ['asterisk', 'cisco', 'cisco-enable', 'cvs', 'firebird', 'ftp', 'ftps', 'http-get', 'http-post',
                          'http-head', 'https-get', 'https-post', 'https-head', 'http-get-form', 'http-post-form',

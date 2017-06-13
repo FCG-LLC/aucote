@@ -1,11 +1,10 @@
 """
 This module provides parsers used by Skipfish tool
 """
-import json
 from ast import literal_eval
 from os.path import sep
-
 from shutil import rmtree
+import ujson as json
 
 from aucote_cfg import cfg
 from tools.common.parsers import Parser
@@ -112,8 +111,7 @@ class SkipfishOutputParser(Parser):
     Provides functions for parsing skipfish stdout
 
     """
-    @classmethod
-    def parse(cls, stdout, stderr=None):
+    def parse(self, stdout, stderr=None):
         """
         Prepares skipfish's report parser
 
@@ -125,12 +123,11 @@ class SkipfishOutputParser(Parser):
             SkipfishIssues object
 
         """
-        parser = SkipfishResultsParser(directory=cls._get_log_dir(output=stdout,
-                                                                  directory=cfg['tools.skipfish.tmp_directory']))
+        parser = SkipfishResultsParser(directory=self._get_log_dir(output=stdout,
+                                                                   directory=cfg['tools.skipfish.tmp_directory']))
         return parser.parse()
 
-    @classmethod
-    def _get_log_dir(cls, output, directory):
+    def _get_log_dir(self, output, directory):
         """
         Parse skipfish output and return path to log directory
 

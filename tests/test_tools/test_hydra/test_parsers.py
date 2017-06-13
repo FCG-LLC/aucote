@@ -23,8 +23,11 @@ Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 15:46:32
     OUTPUT_ERROR_LINE = r"[ERROR] could not connect to ssh://192.168.56.102:29 - Connection refused"
     OUTPUT_DATA_LINE = r"[DATA] attacking service ssh on port 29"
 
+    def setUp(self):
+        self.parser = HydraParser()
+
     def test_parse(self):
-        result = HydraParser.parse(stdout=self.OUTPUT)
+        result = self.parser.parse(stdout=self.OUTPUT)
         self.assertEqual(result.success, 1)
         self.assertEqual(result.fail, 0)
         self.assertEqual(len(result), 1)
@@ -36,7 +39,7 @@ Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 15:46:32
         self.assertEqual(result[0].host, '192.168.56.102')
 
     def test_parse_output_with_space_password(self):
-        result = HydraParser.from_output(self.OUTPUT_LINE_WITH_SPACE_PASSWORD)
+        result = self.parser.from_output(self.OUTPUT_LINE_WITH_SPACE_PASSWORD)
         self.assertEqual(result.port, 80)
         self.assertEqual(result.service, 'http-get')
         self.assertEqual(result.host, '192.168.56.102')
@@ -44,7 +47,7 @@ Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 15:46:32
         self.assertEqual(result.password, 'test_password ')
 
     def test_parse_output_space_login(self):
-        result = HydraParser.from_output(output=self.OUTPUT_LINE_WITH_SPACE_LOGIN)
+        result = self.parser.from_output(output=self.OUTPUT_LINE_WITH_SPACE_LOGIN)
         self.assertEqual(result.port, 80)
         self.assertEqual(result.service, 'http-get')
         self.assertEqual(result.host, '192.168.56.102')
@@ -52,13 +55,13 @@ Hydra (http://www.thc.org/thc-hydra) starting at 2016-08-09 15:46:32
         self.assertEqual(result.password, 'test_password')
 
     def test_output_error_line(self):
-        result = HydraParser.from_output(self.OUTPUT_ERROR_LINE)
+        result = self.parser.from_output(self.OUTPUT_ERROR_LINE)
         expected = None
 
         self.assertEqual(result, expected)
 
     def test_output_data_line(self):
-        result = HydraParser.from_output(self.OUTPUT_DATA_LINE)
+        result = self.parser.from_output(self.OUTPUT_DATA_LINE)
         expected = None
 
         self.assertEqual(result, expected)

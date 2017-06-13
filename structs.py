@@ -193,7 +193,7 @@ class Service(object):
     Represents service/application/operating system. Contains basic information: name, version
 
     """
-    _CPE_SPECIAL = "\!|\"|\;|\#|\$|\%|\&|\'|\(|\)|\+|\,|\/|\:|\<|\=|\>|\@|\[|\]|\^|\`|\{|\||\}|\~|\-"
+    _CPE_SPECIAL = r"\!|\"|\;|\#|\$|\%|\&|\'|\(|\)|\+|\,|\/|\:|\<|\=|\>|\@|\[|\]|\^|\`|\{|\||\}|\~|\-"
     _ESCAPE_CPE = re.compile(_CPE_SPECIAL)
     _UNESCAPE_CPE = re.compile(r"(\\({0}))".format(_CPE_SPECIAL))
 
@@ -302,6 +302,19 @@ class Service(object):
 
     @classmethod
     def build_cpe(cls, type, vendor='*', product='*', version='*'):
+        """
+        Build cpe basing on vendor, product and version
+
+        Args:
+            type (CPEType:
+            vendor (str):
+            product (str):
+            version (str):
+
+        Returns:
+            str
+
+        """
         if vendor:
             vendor = cls._escape_cpe(vendor)
 
@@ -316,6 +329,10 @@ class Service(object):
 
 
 class CPEType(Enum):
+    """
+    Type of CPE (application, hardware or os)
+
+    """
     APPLICATION = "a"
     HARDWARE = "h"
     OS = "o"
@@ -511,5 +528,9 @@ class ScanStatus(Enum):
 
 
 class TopisOSDiscoveryType(Enum):
+    """
+    Type of Topdis OS discovery
+
+    """
     FINGERPRINT = "OSFINGERPRINT"
     DIRECT = "DIRECT"

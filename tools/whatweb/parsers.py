@@ -2,18 +2,22 @@
 Parsers for WhatWeb output
 
 """
-import ujson as json
 import re
 import logging as log
+import ujson as json
 
 from tools.common.parsers import Parser
 from tools.whatweb.structs import WhatWebPlugin, WhatWebTarget, WhatWebResult
 
 
 class WhatWebParser(Parser):
-    PLUGIN_OUTPUT_REGEX = re.compile("\[(.*?)\]")
-    PLUGIN_NAME_REGEX = re.compile("^\W*(?P<name>.*?)(\[|$)")
-    OUTPUT_LINE_REGEX = re.compile('(?P<address>.*?) \[(?P<status_code>\d+) (?P<status>.*?)\] (?P<plugins>.*)')
+    """
+    Parser of WhatWeb tool output
+
+    """
+    PLUGIN_OUTPUT_REGEX = re.compile(r"\[(.*?)\]")
+    PLUGIN_NAME_REGEX = re.compile(r"^\W*(?P<name>.*?)(\[|$)")
+    OUTPUT_LINE_REGEX = re.compile(r'(?P<address>.*?) \[(?P<status_code>\d+) (?P<status>.*?)\] (?P<plugins>.*)')
 
     def _get_plugin_from_dict(self, name, data):
         return WhatWebPlugin(name=name, **data)
@@ -25,6 +29,17 @@ class WhatWebParser(Parser):
         return return_value
 
     def parse_json(self, stdout, stderr):
+        """
+        Parses output in json format and returns WhatWebResult
+
+        Args:
+            stdout (str):
+            stderr (str):
+
+        Returns:
+            WhatWebResult | list
+
+        """
         if stderr:
             log.error(stderr)
         data = json.loads(stdout)

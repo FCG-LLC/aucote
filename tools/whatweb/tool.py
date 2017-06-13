@@ -13,4 +13,4 @@ class WhatWebTool(Tool):
     """
     def call(self):
         self.aucote.add_task(WhatWebTask(aucote=self.aucote, port=self.port,
-                                              exploits=[self.aucote.exploits.find('whatweb', 'whatweb')]))
+                                         exploits=[self.aucote.exploits.find('whatweb', 'whatweb')]))

@@ -8,8 +8,11 @@ from utils.exceptions import NonXMLOutputException
 class ParserTest(TestCase):
     OUTPUT = 'TEST_output'
 
+    def setUp(self):
+        self.parser = Parser()
+
     def test_parse(self):
-        self.assertEqual(Parser.parse(self.OUTPUT), self.OUTPUT)
+        self.assertEqual(self.parser.parse(self.OUTPUT), self.OUTPUT)
 
 class ParserXMLTest(TestCase):
     NON_XML = '''This is non XML output!'''
@@ -18,8 +21,11 @@ class ParserXMLTest(TestCase):
         </script>
         '''
 
+    def setUp(self):
+        self.parser = XMLParser()
+
     def test_parse(self):
-        self.assertIsInstance(XMLParser.parse(self.SCRIPT_XML), ElementTree.Element)
+        self.assertIsInstance(self.parser.parse(self.SCRIPT_XML), ElementTree.Element)
 
     def test_parse_non_xml(self):
-        self.assertRaises(NonXMLOutputException, XMLParser.parse, self.NON_XML)
+        self.assertRaises(NonXMLOutputException, self.parser.parse, self.NON_XML)
