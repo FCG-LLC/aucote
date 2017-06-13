@@ -12,7 +12,7 @@ class WhatWebTaskTest(TestCase):
     def setUp(self):
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         self.port = Port(node=self.node, number=19, transport_protocol=TransportProtocol.UDP)
-        self.port.service_name = 'http'
+        self.port.protocol = 'http'
         self.aucote = MagicMock()
         self.exploit = Exploit(app='whatweb', name='whatweb', exploit_id=1)
         self.task = WhatWebTask(port=self.port, aucote=self.aucote, exploits=[self.exploit])
