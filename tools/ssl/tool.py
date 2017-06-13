@@ -11,7 +11,7 @@ class SSLTool(Tool):
     Entrypoint for testssl integration
 
     """
-    def call(self, *args, **kwargs):
+    async def call(self, *args, **kwargs):
         """
         Prepares tasks for executing
 
@@ -23,5 +23,5 @@ class SSLTool(Tool):
             None
 
         """
-        self.aucote.add_task(SSLScriptTask(aucote=self.aucote, port=self.port,
+        self.aucote.add_async_task(SSLScriptTask(aucote=self.aucote, port=self.port,
                                            exploits=[self.aucote.exploits.find('testssl', 'testssl')]))

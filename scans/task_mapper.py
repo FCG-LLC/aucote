@@ -67,11 +67,8 @@ class TaskMapper:
             self.store_scan_details(port=port, exploits=exploits, storage=storage)
             task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, port=port.copy(),
                                                          config=EXECUTOR_CONFIG['apps'][app])
-            if EXECUTOR_CONFIG['apps'][app]['async']:
-                self._aucote.add_async_task(task)
-            else:
-                self._aucote.add_task(task)
 
+            self._aucote.add_async_task(task)
     @property
     def exploits(self):
         """
