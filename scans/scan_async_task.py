@@ -3,13 +3,13 @@ This module contains class responsible for scanning.
 
 """
 import ipaddress
-import ujson as json
 from functools import partial
 from urllib.error import URLError
 import urllib.request as http
 import logging as log
 import time
 from threading import Lock
+import ujson as json
 import netifaces
 
 from croniter import croniter
@@ -236,7 +236,7 @@ class ScanAsyncTask(object):
         exclude_networks = self._get_excluded_networks_list()
 
         return [node for node in nodes if node.ip.exploded in include_networks
-                 and node.ip.exploded not in exclude_networks]
+                and node.ip.exploded not in exclude_networks]
 
     @classmethod
     def _get_networks_list(cls):

@@ -2,8 +2,8 @@
 Parsers for testssl
 
 """
-import ujson as json
 from pathlib import Path
+import ujson as json
 
 from tools.common.parsers import Parser
 from tools.ssl.structs import SSLResults, SSLResult, SSLSeverity
@@ -69,4 +69,3 @@ class SSLParser(Parser):
         return_value.cwe = data.get('cwe')
         return_value.finding = data.get('finding')
         return return_value
-

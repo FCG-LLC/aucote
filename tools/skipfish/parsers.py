@@ -1,11 +1,10 @@
 """
 This module provides parsers used by Skipfish tool
 """
-import ujson as json
 from ast import literal_eval
 from os.path import sep
-
 from shutil import rmtree
+import ujson as json
 
 from aucote_cfg import cfg
 from tools.common.parsers import Parser

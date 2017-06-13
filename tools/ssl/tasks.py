@@ -2,11 +2,11 @@
 Tasks of testssl integration
 
 """
+import logging as log
 from structs import Vulnerability
 from tools.common.command_task import CommandTask
 from tools.ssl.base import SSLBase
 from tools.ssl.structs import SSLSeverity
-import logging as log
 
 
 class SSLScriptTask(CommandTask):

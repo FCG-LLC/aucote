@@ -1,3 +1,9 @@
+"""
+Structures used by WhatWeb
+
+"""
+
+
 class WhatWebPlugin(object):
     """
     Output of WhatWeb single plugin
