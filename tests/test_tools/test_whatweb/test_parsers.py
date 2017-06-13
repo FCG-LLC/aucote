@@ -164,6 +164,12 @@ https://jenkins.cs.int/login?from=%2Fa%3Fa%3Dwe%252520wqe [200 OK] Cookies[JSESS
             call({"target": "https://jenkins.cs.int/login?from=%2F", "http_status": 200, "plugins": {}}),
         ), any_order=True)
 
+    def test_parse_json_without_targets(self):
+        self.parser._get_target_from_dict = MagicMock()
+        result = self.parser.parse_json('[{}]', self.ERROR_OUTPUT)
+
+        self.assertEqual(result, [])
+
     def test_parse(self):
         self.parser.parse_json = MagicMock()
         stdout = "test_stdout"

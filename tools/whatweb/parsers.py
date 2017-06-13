@@ -25,10 +25,13 @@ class WhatWebParser(Parser):
         return return_value
 
     def parse_json(self, stdout, stderr):
+        if stderr:
+            log.error(stderr)
         data = json.loads(stdout)
-        return_value = WhatWebResult()
-        return_value.targets = [self._get_target_from_dict(target) for target in data if target]
-        return return_value
+        targets = [self._get_target_from_dict(target) for target in data if target]
+        if not targets:
+            return []
+        return WhatWebResult(targets=targets)
 
     def parse(self, *args, **kwargs):
         return self.parse_json(*args, **kwargs)
