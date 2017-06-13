@@ -178,5 +178,12 @@ tools:
         periods: {}
         networks: []
         script_networks: {}
+    whatweb:
+        cmd: whatweb
+        enable: True
+        period: 0s
+        periods: {}
+        networks: []
+        script_networks: {}
     common:
         rate: 50

@@ -7,6 +7,7 @@ from tools.hydra.tool import HydraTool
 from tools.nmap.parsers import NmapBrutParser, NmapInfoParser
 from tools.nmap.tool import NmapTool
 from tools.skipfish.tool import SkipfishTool
+from tools.whatweb.tool import WhatWebTool
 
 EXECUTOR_CONFIG = {
     'apps': {
@@ -152,6 +153,9 @@ EXECUTOR_CONFIG = {
                 'x-xss-protection':
                     HeaderDefinition(pattern=r'^1$', obligatory=True)
             }
+        },
+        'whatweb': {
+            'class': WhatWebTool
         }
     }
 }

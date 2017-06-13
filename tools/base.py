@@ -27,14 +27,14 @@ class Tool(Task):
         self.config = config
         self.port = port
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self):
         """
         Called by task managers
 
         """
-        self.call(*args, **kwargs)
+        self.call()
 
-    def call(self, *args, **kwargs):
+    def call(self):
         """
         It is main call for executor. Should be override by inherits classes
 
