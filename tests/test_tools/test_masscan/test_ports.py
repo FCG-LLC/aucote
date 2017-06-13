@@ -102,11 +102,11 @@ class MasscanPortsTest(TestCase):
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     def test_scan_without_udp(self, cfg):
         cfg._cfg = self.cfg
+        cfg['portdetection.ports.udp.include'] = ['15']
+        cfg['portdetection.ports.udp.exclude'] = ['34']
         masscanports = MasscanPorts(udp=False)
 
         result = masscanports.prepare_args(nodes=self.nodes)
-        expected = ['--rate', '1000',
-                    '--exclude-ports', 'U:0-65535',
-                    '--ports', 'T:9', '127.0.0.1']
+        expected = ['--rate', '1000', '--ports', 'T:9', '127.0.0.1']
 
         self.assertEqual(result, expected)

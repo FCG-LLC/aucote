@@ -16,6 +16,7 @@ class MasscanPorts(ScanTask):
     """
 
     def __init__(self, udp=True):
+        self.tcp = True
         self.udp = udp
         super(MasscanPorts, self).__init__(MasscanBase())
 
@@ -32,14 +33,11 @@ class MasscanPorts(ScanTask):
         """
         args = ['--rate', str(cfg['portdetection.network_scan_rate'])]
 
-        if not self.udp:
-            args.extend(['--exclude-ports', 'U:0-65535'])
+        include_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.ports.tcp.include'],
+                                                      udp=self.udp and cfg['portdetection.ports.udp.include'])
 
-        include_ports = NmapTool.list_to_ports_string(tcp=cfg['portdetection.ports.tcp.include'],
-                                                      udp=cfg['portdetection.ports.udp.include'])
-
-        exclude_ports = NmapTool.list_to_ports_string(tcp=cfg['portdetection.ports.tcp.exclude'],
-                                                      udp=cfg['portdetection.ports.udp.exclude'])
+        exclude_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.ports.tcp.exclude'],
+                                                      udp=self.udp and cfg['portdetection.ports.udp.exclude'])
 
         if include_ports:
             args.extend(['--ports', include_ports])
