@@ -35,5 +35,5 @@ class TimeTest(TestCase):
 
     def test_parse_timestamp_to_time(self):
         result = parse_timestamp_to_time(12)
-        expected = '1970-01-01T01:00:12+00:00'
+        expected = '1970-01-01T00:00:12+00:00'
         self.assertEqual(result, expected)
