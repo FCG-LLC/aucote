@@ -317,9 +317,9 @@ class NmapToolTest(AsyncTestCase):
         self.assertEqual(result, expected)
 
     def test_list_to_ports(self):
-        tcp = ['14', '16-18']
-        udp = ['87', '34-36']
-        sctp = ['19', '25-28']
+        tcp = [14, '16-18']
+        udp = [87, '34-36']
+        sctp = [19, '25-28']
 
         expected = 'T:14,16-18,U:87,34-36,S:19,25-28'
         result = NmapTool.list_to_ports_string(tcp=tcp, udp=udp, sctp=sctp)

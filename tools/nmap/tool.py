@@ -255,9 +255,9 @@ class NmapTool(Tool):
             TransportProtocol.SCTP: set()
         }
 
-        tcp = tcp or []
-        udp = udp or []
-        sctp = sctp or []
+        tcp = map(str, tcp or [])
+        udp = map(str, udp or [])
+        sctp = map(str, sctp or [])
 
         for port in tcp:
             return_value[TransportProtocol.TCP] |= NmapTool.parse_ports_string(port)
@@ -288,12 +288,12 @@ class NmapTool(Tool):
         ports = []
 
         if tcp:
-            ports.append("T:{0}".format(",".join(tcp)))
+            ports.append("T:{0}".format(",".join(map(str, tcp))))
 
         if udp:
-            ports.append("U:{0}".format(",".join(udp)))
+            ports.append("U:{0}".format(",".join(map(str, udp))))
 
         if sctp:
-            ports.append("S:{0}".format(",".join(sctp)))
+            ports.append("S:{0}".format(",".join(map(str, sctp))))
 
         return ",".join(ports)

@@ -370,17 +370,21 @@ class ScanAsyncTask(object):
             return
 
         data = {
-            'portdetection.status.previous_scan_start': self.previous_scan,
-            'portdetection.status.next_scan_start': self.next_scan,
-            'portdetection.status.scan_start': self.scan_start,
-            'portdetection.status.previous_scan_duration': 0,
-            'portdetection.status.code': status.value
+            'portdetection': {
+                'status': {
+                    'previous_scan_start': self.previous_scan,
+                    'next_scan_start': self.next_scan,
+                    'scan_start': self.scan_start,
+                    'previous_scan_duration': 0,
+                    'code': status.value
+                }
+            }
         }
 
         if status is ScanStatus.IDLE:
-            data['portdetection.status.previous_scan_duration'] = int(time.time() - self.scan_start)
+            data['portdetection']['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
 
-        await cfg.toucan.put('*', data)
+        await cfg.toucan.push_config(data, force=True)
 
     def _scan_interval(self):
         """
