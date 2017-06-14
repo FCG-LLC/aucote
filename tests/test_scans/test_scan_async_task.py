@@ -956,7 +956,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
             }
         }
 
-        cfg.toucan.push_config.assert_called_once_with(expected, force=True)
+        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True)
 
     @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
     @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
@@ -983,7 +983,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
             }
         }
 
-        cfg.toucan.push_config.assert_called_once_with(expected, force=True)
+        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_scan_cron(self, cfg):

@@ -384,7 +384,7 @@ class ScanAsyncTask(object):
         if status is ScanStatus.IDLE:
             data['portdetection']['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
 
-        await cfg.toucan.push_config(data, force=True)
+        await cfg.toucan.push_config(data, overwrite=True)
 
     def _scan_interval(self):
         """
