@@ -290,13 +290,24 @@ class StorageTest(TestCase):
         self.storage.execute.assert_called_once_with(self.storage._save_nodes())
 
     def test_get_nodes(self):
+        self.storage._get_nodes = MagicMock()
         timestamp = MagicMock()
         pasttime = MagicMock()
-        self.storage._get_nodes = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.get_nodes(pasttime=pasttime, timestamp=timestamp)
+        self.storage.execute = MagicMock(return_value=(
+            (1, '127.0.0.1'),
+            (2, '::1'),
+        ))
+
+        result = self.storage.get_nodes(pasttime=pasttime, timestamp=timestamp)
+
         self.storage._get_nodes.assert_called_once_with(pasttime=pasttime, timestamp=timestamp)
         self.storage.execute.assert_called_once_with(self.storage._get_nodes())
+
+        self.assertEqual(result[0].id, 1)
+        self.assertEqual(result[1].id, 2)
+
+        self.assertEqual(result[0].ip, ipaddress.ip_address('127.0.0.1'))
+        self.assertEqual(result[1].ip, ipaddress.ip_address('::1'))
 
     def test_save_port(self):
         port = MagicMock()
@@ -315,12 +326,29 @@ class StorageTest(TestCase):
         self.storage.execute.assert_called_once_with(self.storage._save_ports())
 
     def test_get_ports(self):
-        pasttime = MagicMock()
         self.storage._get_ports = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.get_ports(pasttime=pasttime)
-        self.storage._get_ports.assert_called_once_with(pasttime=pasttime)
-        self.storage.execute.assert_called_once_with(self.storage._get_ports())
+        self.storage.execute = MagicMock(return_value=(
+            (1, '127.0.0.1', 20, 6),
+            (2, '::1', 23, 17),
+        ))
+
+        result = self.storage.get_ports(pasttime=100)
+
+        self.storage._get_ports.assert_called_once_with(pasttime=100)
+        self.storage.execute.assert_called_once_with(self.storage._get_ports(pasttime=100))
+
+        self.assertEqual(result[0].node.id, 1)
+        self.assertEqual(result[1].node.id, 2)
+
+        self.assertEqual(result[0].node.ip, ipaddress.ip_address('127.0.0.1'))
+        self.assertEqual(result[1].node.ip, ipaddress.ip_address('::1'))
+
+        self.assertEqual(result[0].number, 20)
+        self.assertEqual(result[1].number, 23)
+
+        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
+
+        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
 
     def test_save_scan(self):
         exploit = MagicMock()
@@ -343,11 +371,40 @@ class StorageTest(TestCase):
     def test_get_scan_info(self):
         port = MagicMock()
         app = MagicMock()
+
+        self.storage.execute = MagicMock(return_value=(
+            (11, None, 'test_name', 1, '127.0.0.1', 6, 11, 10., 10.),
+            (22, None, 'test_name_2', 2, '::1', 17, 22, None, None),
+        ))
         self.storage._get_scan_info = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.get_scan_info(port=port, app=app)
+
+        result = self.storage.get_scan_info(port, app)
         self.storage._get_scan_info.assert_called_once_with(port=port, app=app)
         self.storage.execute.assert_called_once_with(self.storage._get_scan_info())
+
+        self.assertEqual(result[0]['port'].node.id, 1)
+        self.assertEqual(result[1]['port'].node.id, 2)
+
+        self.assertEqual(result[0]['port'].node.ip, ipaddress.ip_address('127.0.0.1'))
+        self.assertEqual(result[1]['port'].node.ip, ipaddress.ip_address('::1'))
+
+        self.assertEqual(result[0]['port'].number, 11)
+        self.assertEqual(result[1]['port'].number, 22)
+
+        self.assertEqual(result[0]['port'].transport_protocol, TransportProtocol.TCP)
+        self.assertEqual(result[1]['port'].transport_protocol, TransportProtocol.UDP)
+
+        self.assertEqual(result[0]['exploit_name'], 'test_name')
+        self.assertEqual(result[1]['exploit_name'], 'test_name_2')
+
+        self.assertEqual(result[0]['scan_start'], 10.)
+        self.assertEqual(result[1]['scan_start'], 0.)
+
+        self.assertEqual(result[0]['scan_end'], 10.)
+        self.assertEqual(result[1]['scan_end'], 0.)
+
+        self.assertEqual(result[0]['exploit'].id, 11)
+        self.assertEqual(result[1]['exploit'].id, 22)
 
     def test_clear_scan_details(self):
         self.storage._clear_scan_details = MagicMock()
@@ -365,12 +422,27 @@ class StorageTest(TestCase):
 
     def test_get_ports_by_node(self):
         node = MagicMock()
-        timestamp = MagicMock()
         self.storage._get_ports_by_node = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.get_ports_by_node(node=node, timestamp=timestamp)
+        timestamp = MagicMock()
+        self.storage.execute = MagicMock(return_value=(
+            (1, '127.0.0.1', 20, 6),
+            (1, '127.0.0.1', 23, 17),
+        ))
+
+        result = self.storage.get_ports_by_node(node=node, timestamp=timestamp)
+
         self.storage._get_ports_by_node.assert_called_once_with(node=node, timestamp=timestamp)
         self.storage.execute.assert_called_once_with(self.storage._get_ports_by_node())
+
+        self.assertEqual(result[0].node, node)
+        self.assertEqual(result[1].node, node)
+
+        self.assertEqual(result[0].number, 20)
+        self.assertEqual(result[1].number, 23)
+
+        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
+        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
+
 
     @patch('utils.storage.time.time', MagicMock(return_value=37))
     def test_get_ports_by_node_without_timestamp(self):
@@ -384,13 +456,43 @@ class StorageTest(TestCase):
 
     @patch('utils.storage.time.time', MagicMock(return_value=108))
     def test_get_ports_by_nodes(self):
-        nodes = MagicMock()
         pasttime = 30
         self.storage._get_ports_by_nodes = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.get_ports_by_nodes(nodes=nodes, pasttime=pasttime)
+        self.storage.execute = MagicMock(return_value=(
+            (1, '127.0.0.1', 20, 6),
+            (2, '::1', 23, 17),
+            (1, '127.0.0.1', 14, 17),
+        ))
+
+        node_1 = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
+        node_1.name = 'test'
+        node_1.scan = Scan(start=15)
+        node_2 = Node(node_id=2, ip=ipaddress.ip_address('::1'))
+        node_2.scan = Scan(start=15)
+        node_2.name = 'test'
+
+        nodes = [node_1, node_2]
+        result = self.storage.get_ports_by_nodes(nodes, pasttime=pasttime)
         self.storage._get_ports_by_nodes.assert_called_once_with(nodes=nodes, timestamp=78)
         self.storage.execute.assert_called_once_with(self.storage._get_ports_by_nodes())
+
+        self.assertEqual(result[0].node, node_1)
+        self.assertEqual(result[0].node.name, node_1.name)
+        self.assertEqual(result[1].node, node_2)
+        self.assertEqual(result[1].node.name, node_2.name)
+        self.assertEqual(result[2].node, node_1)
+
+        self.assertEqual(result[0].number, 20)
+        self.assertEqual(result[1].number, 23)
+        self.assertEqual(result[2].number, 14)
+
+        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
+        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
+        self.assertEqual(result[2].transport_protocol, TransportProtocol.UDP)
+
+        self.assertEqual(result[0].scan.start, node_1.scan.start)
+        self.assertEqual(result[1].scan.start, node_2.scan.start)
+        self.assertEqual(result[2].scan.start, node_1.scan.start)
 
     def test_execute_query(self):
         query = "part_1", "arg_1", "arg_2"
