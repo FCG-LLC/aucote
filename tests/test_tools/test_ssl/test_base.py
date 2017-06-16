@@ -12,5 +12,6 @@ class SSLBaseTest(TestCase):
         self.base = SSLBase()
 
     def test_init(self):
-        self.assertEqual(self.base.COMMON_ARGS, ('--jsonfile', self.mock_file.return_value.name, '--append'))
+        self.assertEqual(self.base.COMMON_ARGS, ['--warnings', 'batch', '--jsonfile', self.mock_file.return_value.name,
+                                                 '--append'])
         self.assertEqual(self.base.parser.tempfile, self.mock_file.return_value)
