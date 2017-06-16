@@ -13,7 +13,7 @@ class SSLScriptTaskTest(TestCase):
     def setUp(self):
         exploit = Exploit(exploit_id=3)
         port = Port(node=Node(node_id=2, ip=ipaddress.ip_address('127.0.0.1')),
-                    transport_protocol=TransportProtocol.UDP, number=16)
+                    transport_protocol=TransportProtocol.TCP, number=16)
         aucote = MagicMock()
         self.task = SSLScriptTask(port=port, exploits=[exploit], aucote=aucote)
 
@@ -23,7 +23,13 @@ class SSLScriptTaskTest(TestCase):
 
     def test_prepare_args(self):
         result = self.task.prepare_args()
-        expected = ['127.0.0.1']
+        expected = ['127.0.0.1:16']
+        self.assertEqual(result, expected)
+
+    def test_prepare_args_non_default_service(self):
+        self.task._port.protocol = 'smtp'
+        result = self.task.prepare_args()
+        expected = ['-t', 'smtp', '127.0.0.1:16']
         self.assertEqual(result, expected)
 
     @patch('tools.ssl.tasks.Vulnerability')
