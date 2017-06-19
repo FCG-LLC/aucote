@@ -14,12 +14,12 @@ class SSLBase(Command):
 
     """
     NAME = 'testssl'
-    COMMON_ARGS = ['--warnings',  'batch']
+    COMMON_ARGS = None
     RAISE_ERROR = False
     parser = None
 
     def __init__(self):
         temporary_file = tempfile.NamedTemporaryFile('r+')
-        self.COMMON_ARGS.extend(['--jsonfile', temporary_file.name, '--append'])
+        self.COMMON_ARGS = ['--warnings',  'batch', '--jsonfile', temporary_file.name, '--append']
         self.parser = SSLParser(temporary_file)
         super(SSLBase, self).__init__()
