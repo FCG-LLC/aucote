@@ -110,9 +110,6 @@ class SSLResultsTest(TestCase):
         self.RESULTS.results = [self.CRITICAL_RESULT, self.MEDIUM_RESULT]
         expected = """CVE: CVE-2014-0160
 Finding: Heartbleed: not vulnerable , timed out
-
-----------
-
 Heartbleed: not vulnerable , timed out"""
         result = self.RESULTS.output
 
