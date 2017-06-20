@@ -123,4 +123,4 @@ class SSLResults(object):
             str
 
         """
-        return "\n".join([result.output for result in self.results])
+        return "\n".join(result.output for result in self.results)
