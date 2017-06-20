@@ -17,13 +17,27 @@ class AsyncCrontabTask(object):
 
     """
     def __init__(self, cron, func):
-        self.cron = cron
+        self._cron = cron
         self._last_execute = None
         self._is_running = False
         self._started = False
         self._stop = False
         self.func = func
         self._loop = IOLoop.current().instance()
+
+    @property
+    def cron(self):
+        """
+        Cron value of current task
+
+        Returns:
+            str
+
+        """
+        if callable(self._cron):
+            return self._cron()
+
+        return self._cron
 
     async def __call__(self):
         """

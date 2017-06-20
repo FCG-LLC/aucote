@@ -269,10 +269,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def tearDown(self):
         AsyncTaskManager.instance().clear()
 
-    @patch('scans.scan_async_task.cfg.get', MagicMock(side_effect=KeyError('test')))
-    def test_init_with_exception(self):
-        self.assertRaises(SystemExit, ScanAsyncTask, aucote=MagicMock())
-
     @patch('scans.scan_async_task.http.urlopen')
     @patch('scans.scan_async_task.cfg.get', MagicMock())
     def test_getting_nodes(self, urllib):
@@ -865,3 +861,17 @@ class ScanAsyncTaskTest(AsyncTestCase):
         }
 
         cfg.toucan.put.assert_called_once_with('portdetection.status', expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_scan_cron(self, cfg):
+        expected = "* * * * */45"
+        cfg['portdetection.scan_cron'] = expected
+        result = self.thread._scan_cron()
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_tools_cron(self, cfg):
+        expected = "* * * * */45"
+        cfg['portdetection.tools_cron'] = expected
+        result = self.thread._tools_cron()
+        self.assertEqual(result, expected)

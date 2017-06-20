@@ -37,12 +37,14 @@ class ScanAsyncTask(object):
         self.scan_start = None
 
         if as_service:
-            try:
-                self.aucote.async_task_manager.add_crontab_task(self._scan, cfg['portdetection.scan_cron'])
-                self.aucote.async_task_manager.add_crontab_task(self._run_tools, cfg['portdetection.tools_cron'])
-            except KeyError:
-                log.error("Please configure portdetection.scan_cron and portdetection.tools_cron")
-                exit(1)
+            self.aucote.async_task_manager.add_crontab_task(self._scan, self._scan_cron)
+            self.aucote.async_task_manager.add_crontab_task(self._run_tools, self._tools_cron)
+
+    def _scan_cron(self):
+        return cfg['portdetection.scan_cron']
+
+    def _tools_cron(self):
+        return cfg['portdetection.tools_cron']
 
     def run(self):
         """

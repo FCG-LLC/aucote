@@ -100,3 +100,7 @@ class AsyncCrontabTaskTest(AsyncTestCase):
 
         self.assertFalse(self.task._is_running)
         self.task._loop.call_later.assert_called_once_with(1, self.task)
+
+    def test_cron_callable(self):
+        self.task._cron = MagicMock()
+        self.assertEqual(self.task.cron, self.task._cron.return_value)
