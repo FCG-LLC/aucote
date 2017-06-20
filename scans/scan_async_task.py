@@ -8,7 +8,6 @@ from urllib.error import URLError
 import urllib.request as http
 import logging as log
 import time
-from threading import Lock
 import ujson as json
 import netifaces
 
@@ -88,6 +87,7 @@ class ScanAsyncTask(object):
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
         self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports))
+
     @gen.coroutine
     def run_scan(self, nodes, scan_only=False):
         """

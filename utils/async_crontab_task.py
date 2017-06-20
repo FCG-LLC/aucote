@@ -5,20 +5,25 @@ Asynchronous Task controller. Executes task on given cron time
 import time
 import logging as log
 from croniter import croniter
-from tornado.ioloop import PeriodicCallback, IOLoop
+from tornado.ioloop import IOLoop
 
 
 class AsyncCrontabTask(object):
     """
-    Asynchronous Task controller. Executes task on given cron time. Maximum one this same time
+    Asynchronous Task controller. Executes task on given cron time. No more than one at a time.
+
+    If there is time to execute new task, but other task is already executing, the new task is ignored.
+    If task is unfinishable, it would block executing new tasks.
 
     """
     def __init__(self, cron, func):
         self.cron = cron
         self._last_execute = None
         self._is_running = False
+        self._started = False
+        self._stop = False
         self.func = func
-        self._callback = PeriodicCallback(self, 1000, IOLoop.instance().current())
+        self._loop = IOLoop.current().instance()
 
     async def __call__(self):
         """
@@ -28,7 +33,8 @@ class AsyncCrontabTask(object):
             None
 
         """
-        if self._is_running:
+        if self._stop:
+            self._started = False
             return
 
         self._is_running = True
@@ -38,19 +44,20 @@ class AsyncCrontabTask(object):
         current_cron = croniter(self.cron, current_time - 60).next()
 
         if current_cron != current_cron_time or current_cron_time == self._last_execute:
-            self._is_running = False
+            self._prepare_next_iteration()
             return
 
         self._last_execute = current_cron_time
 
+
         try:
             log.debug("AsyncCrontabTask[%s]: Executing", self.func.__name__)
             await self.func()
-        except:
+        except Exception:
             log.exception("AsyncCrontabTask[%s]: Exception", self.func.__name__)
         finally:
-            self._is_running = False
             log.debug("AsyncCrontabTask[%s]: Finished", self.func.__name__)
+            self._prepare_next_iteration()
 
     def is_running(self):
         """
@@ -70,7 +77,9 @@ class AsyncCrontabTask(object):
             None
 
         """
-        self._callback.start()
+        if not self._started:
+            self._started = True
+            self._loop.call_later(1, self)
 
     def stop(self):
         """
@@ -80,4 +89,8 @@ class AsyncCrontabTask(object):
             None
 
         """
-        self._callback.stop()
+        self._stop = True
+
+    def _prepare_next_iteration(self):
+        self._is_running = False
+        self._loop.call_later(1, self)
