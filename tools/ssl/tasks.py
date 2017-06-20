@@ -14,12 +14,16 @@ class SSLScriptTask(CommandTask):
     Task responsible for executing the testssl
 
     """
+    _ADDITIONAL_PROTOCOLS = ('ftp', 'smtp', 'pop3', 'imap', 'xmpp', 'telnet', 'ldap')
 
     def __init__(self, *args, **kwargs):
         super().__init__(command=SSLBase(), *args, **kwargs)
 
     def prepare_args(self):
-        return [str(self._port.node.ip)]
+        target = "{0}:{1}".format(str(self._port.node.ip), str(self._port.number))
+        if self._port.protocol in self._ADDITIONAL_PROTOCOLS:
+            return ['-t', self._port.protocol, target]
+        return [target]
 
     def _get_vulnerabilities(self, results):
         log.debug(results.with_severity_le(SSLSeverity.WARN).output)
