@@ -157,7 +157,8 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertEqual(self.scan_task.script_classes, [self.script, self.script2])
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_tcp_scan(self, cfg):
+    @gen_test
+    async def test_tcp_scan(self, cfg):
         """
         Test TCP scanning
 
@@ -169,7 +170,7 @@ class NmapPortScanTaskTest(AsyncTestCase):
                 }
             }
         }
-        self.scan_task()
+        await self.scan_task()
 
         result = set(self.scan_task.prepare_args())
         expected = {'--max-rate', '1337', '-p', '22', '--script', '--script-args', 'test_args',
@@ -179,7 +180,8 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertTrue('test,test2' in result or 'test2,test' in result)
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_tcp_scan_service_detection(self, cfg):
+    @gen_test
+    async def test_tcp_scan_service_detection(self, cfg):
         """
         Test TCP scanning
 
@@ -191,7 +193,7 @@ class NmapPortScanTaskTest(AsyncTestCase):
                 }
             }
         }
-        self.scan_task()
+        await self.scan_task()
 
         result = set(self.scan_task.prepare_args())
         expected = {'-sV'}
@@ -200,7 +202,8 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertTrue('test,test2' in result or 'test2,test' in result)
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_udp_scan(self, cfg):
+    @gen_test
+    async def test_udp_scan(self, cfg):
         """
         Test UDP scanning
 
@@ -213,7 +216,7 @@ class NmapPortScanTaskTest(AsyncTestCase):
             }
         }
         self.scan_task._port.transport_protocol = TransportProtocol.UDP
-        self.scan_task()
+        await self.scan_task()
 
         result = set(self.scan_task.prepare_args())
         expected = {'--max-rate', '1337', '-p', '22', '-sU', '--script', '--script-args', 'test_args',
@@ -223,10 +226,13 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertTrue('test,test2' in result or 'test2,test' in result)
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_no_vulnerabilities(self, cfg):
+    @gen_test
+    async def test_no_vulnerabilities(self, cfg):
         cfg._cfg = self.cfg
-        self.scan_task.command.call = MagicMock(return_value=ElementTree.fromstring(self.NO_VULNERABILITIES_XML))
-        self.scan_task()
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.NO_VULNERABILITIES_XML))
+        self.scan_task.command.async_call = MagicMock(return_value=future)
+        await self.scan_task()
 
         self.assertFalse(self.scan_task.kudu_queue.send_msg.called)
 

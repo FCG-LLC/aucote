@@ -36,9 +36,10 @@ class SkipfishToolTest(AsyncTestCase):
                                                    exploits=[self.aucote.exploits.find.return_value])
 
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
-    def test_disable(self):
+    @gen_test
+    async def test_disable(self):
         config = MagicMock()
-        SkipfishTool(exploits=MagicMock(), port=MagicMock(is_ipv6=False), aucote=self.aucote, config=config)()
+        await SkipfishTool(exploits=MagicMock(), port=MagicMock(is_ipv6=False), aucote=self.aucote, config=config)()
 
         self.assertEqual(config.get.call_count, 0)
 

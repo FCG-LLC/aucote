@@ -111,8 +111,9 @@ class TaskMapperTest(AsyncTestCase):
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
-    def test_disable_all_app_running(self):
-        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+    @gen_test
+    async def test_disable_all_app_running(self):
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
 
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 0)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 0)
