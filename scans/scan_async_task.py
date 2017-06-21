@@ -5,7 +5,6 @@ This module contains class responsible for scanning.
 import ipaddress
 from functools import partial
 from urllib.error import URLError
-import urllib.request as http
 import logging as log
 import time
 import ujson as json
@@ -13,7 +12,6 @@ import netifaces
 
 from croniter import croniter
 from netaddr import IPSet
-from tornado import gen
 from tornado.ioloop import IOLoop
 
 from aucote_cfg import cfg
@@ -22,6 +20,7 @@ from structs import Node, Scan, PhysicalPort, ScanStatus, TopisOSDiscoveryType, 
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
+from utils.http_client import HTTPClient
 from utils.time import parse_period, parse_time_to_timestamp
 
 
@@ -46,7 +45,7 @@ class ScanAsyncTask(object):
     def _tools_cron(self):
         return cfg['portdetection.tools_cron']
 
-    def run(self):
+    async def run(self):
         """
         Run tasks
 
@@ -57,10 +56,9 @@ class ScanAsyncTask(object):
         log.debug("Starting cron")
         self.aucote.async_task_manager.start()
         if not self.as_service:
-            IOLoop.current().add_callback(partial(self.run_scan, self._get_nodes_for_scanning()))
+            IOLoop.current().add_callback(partial(self.run_scan, await self._get_nodes_for_scanning()))
 
-    @gen.coroutine
-    def _scan(self):
+    async def _scan(self):
         """
         Scan nodes for open ports
 
@@ -71,12 +69,11 @@ class ScanAsyncTask(object):
         if not cfg['portdetection.scan_enable']:
             return
         log.info("Starting port scan")
-        nodes = self._get_nodes_for_scanning(timestamp=None)
+        nodes = await self._get_nodes_for_scanning(timestamp=None)
         log.debug("Found %i nodes for potential scanning", len(nodes))
-        yield self.run_scan(nodes, scan_only=True)
+        await self.run_scan(nodes, scan_only=True)
 
-    @gen.coroutine
-    def _run_tools(self):
+    async def _run_tools(self):
         """
         Run scan by using tools and historical port data
 
@@ -85,13 +82,12 @@ class ScanAsyncTask(object):
 
         """
         log.info("Starting security scan")
-        nodes = self._get_topdis_nodes()
+        nodes = await self._get_topdis_nodes()
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
         self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports))
 
-    @gen.coroutine
-    def run_scan(self, nodes, scan_only=False):
+    async def run_scan(self, nodes, scan_only=False):
         """
         Run scanning.
 
@@ -120,17 +116,17 @@ class ScanAsyncTask(object):
 
         log.info("Scanning %i IPv4 nodes for open ports.", len(nodes_ipv4))
         scanner_ipv4 = MasscanPorts(udp=not nmap_udp)
-        ports = yield scanner_ipv4.scan_ports(nodes_ipv4)
+        ports = await scanner_ipv4.scan_ports(nodes_ipv4)
 
         log.info("Scanning %i IPv6 nodes for open ports.", len(nodes_ipv6))
         scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
-        ports_ipv6 = yield scanner_ipv6.scan_ports(nodes_ipv6)
+        ports_ipv6 = await scanner_ipv6.scan_ports(nodes_ipv6)
         ports.extend(ports_ipv6)
 
         if nmap_udp:
             log.info("Scanning %i IPv4 nodes for open UDP ports.", len(nodes_ipv4))
             scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
-            ports_udp = yield scanner_ipv4_udp.scan_ports(nodes_ipv4)
+            ports_udp = await scanner_ipv4_udp.scan_ports(nodes_ipv4)
             ports.extend(ports_udp)
 
         port_range_allow = NmapTool.parse_nmap_ports(cfg['portdetection.ports.include'])
@@ -170,21 +166,19 @@ class ScanAsyncTask(object):
             self.aucote.async_task_manager.stop()
 
     @classmethod
-    def _get_topdis_nodes(cls):
+    async def _get_topdis_nodes(cls):
         """
         Get nodes from todis application
 
         """
         url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg['topdis.api.host'], cfg['topdis.api.port'])
         try:
-            resource = http.urlopen(url)
+            resource = await HTTPClient.instance().get(url)
         except URLError:
             log.exception('Cannot connect to topdis: %s:%s', cfg['topdis.api.host'], cfg['topdis.api.port'])
             return []
 
-        charset = resource.headers.get_content_charset() or 'utf-8'
-        nodes_txt = resource.read().decode(charset)
-        nodes_cfg = json.loads(nodes_txt)
+        nodes_cfg = json.loads(resource.body)
 
         timestamp = parse_time_to_timestamp(nodes_cfg['meta']['requestTime'])
         nodes = []
@@ -211,7 +205,7 @@ class ScanAsyncTask(object):
         log.debug('Got %i nodes from topdis', len(nodes))
         return nodes
 
-    def _get_nodes_for_scanning(self, timestamp=None):
+    async def _get_nodes_for_scanning(self, timestamp=None):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -224,7 +218,7 @@ class ScanAsyncTask(object):
             list
 
         """
-        topdis_nodes = self._get_topdis_nodes()
+        topdis_nodes = await self._get_topdis_nodes()
 
         storage_nodes = self.storage.get_nodes(parse_period(cfg['portdetection.scan_interval']), timestamp=timestamp)
 

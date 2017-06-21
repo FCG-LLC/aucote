@@ -2,6 +2,8 @@ from collections import KeysView
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+from tornado.concurrent import Future
+from tornado.httpclient import HTTPClient
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
@@ -41,6 +43,7 @@ class AucoteHttpHeadersTaskTest(AsyncTestCase):
 
     def setUp(self):
         super(AucoteHttpHeadersTaskTest, self).setUp()
+        HTTPClient._instance = MagicMock()
         self.port = Port(node=MagicMock(), transport_protocol=None, number=None)
         self.port.scan = Scan()
         self.aucote = MagicMock()
@@ -55,11 +58,17 @@ class AucoteHttpHeadersTaskTest(AsyncTestCase):
         self.task = AucoteHttpHeadersTask(port=self.port, aucote=self.aucote, exploits=[self.exploit],
                                           config=self.config)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    def tearDown(self):
+        HTTPClient._instance = None
+
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
     @gen_test
-    async def test_call(self, mock_requests):
-        mock_requests.head.return_value = self.SERVER_RETURN
+    async def test_call(self, http_client):
+        future = Future()
+        future.set_result(self.SERVER_RETURN)
+        http_client.instance().head.return_value = future
+
         self.exploit.name = 'test'
         self.task.current_exploits = [self.exploit]
         self.task.config = {
@@ -70,12 +79,13 @@ class AucoteHttpHeadersTaskTest(AsyncTestCase):
         self.task.store_vulnerability = MagicMock()
         self.task.store_scan_end = MagicMock()
         self.assertEqual(await self.task(), [])
-        mock_requests.head.assert_called_once_with(self.port.url, headers=self.custom_headers, verify=False)
+        http_client.instance().head.assert_called_once_with(url=self.port.url, headers=self.custom_headers,
+                                                            validate_cert=False)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
     @gen_test
-    async def test_call_errors(self, mock_requests):
+    async def test_call_errors(self, http_client):
 
         exploit_1 = MagicMock()
         exploit_1.title = 'X-Frame-Options'
@@ -95,7 +105,9 @@ class AucoteHttpHeadersTaskTest(AsyncTestCase):
                 'exploit_3': HeaderDefinition(pattern='^((?!\*).)*$', obligatory=False)
             }
         }
-        mock_requests.head.return_value = self.SERVER_RETURN
+        future = Future()
+        future.set_result(self.SERVER_RETURN)
+        http_client.instance().head.return_value = future
         self.task.store_vulnerability = MagicMock()
         self.task.store_scan_end = MagicMock()
 
@@ -107,45 +119,49 @@ class AucoteHttpHeadersTaskTest(AsyncTestCase):
 
         self.assertCountEqual(result, expected)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
     @gen_test
-    async def test_with_requests_connection_error(self, mock_requests):
-        mock_requests.head.side_effect = ConnectionError
+    async def test_with_requests_connection_error(self, http_client):
+        http_client.instance().head.side_effect = ConnectionError
 
         result = await self.task()
         expected = None
 
         self.assertEqual(result, expected)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
     @gen_test
-    async def test_with_requests_os_error(self, mock_requests):
-        mock_requests.head.side_effect = OSError
+    async def test_with_requests_os_error(self, http_client):
+        http_client.instance().head.side_effect = OSError
 
         result = await self.task()
         expected = None
 
         self.assertEqual(result, expected)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.log')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
     @gen_test
-    async def test_server_reponse_403_logging(self, mock_log, mock_requests):
-        mock_requests.head.return_value.status_code = 403
+    async def test_server_reponse_403_logging(self, mock_log, http_client):
+        future = Future()
+        future.set_result(MagicMock(code=403))
+        http_client.instance().head.return_value = future
         self.task.store_vulnerability = MagicMock()
 
         await self.task()
 
         self.assertTrue(mock_log.warning.called)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(side_effect=(None, 'test')))
     @gen_test
-    async def test_call_config_without_user_agent(self, mock_requests):
-        mock_requests.head.return_value = self.SERVER_RETURN
+    async def test_call_config_without_user_agent(self, http_client):
+        future = Future()
+        future.set_result(self.SERVER_RETURN)
+        http_client.instance().head.return_value = future
         self.exploit.name = 'test'
         self.task.current_exploits = [self.exploit]
         self.task.config = {
@@ -157,4 +173,5 @@ class AucoteHttpHeadersTaskTest(AsyncTestCase):
         self.task.store_scan_end = MagicMock()
         self.assertEqual(await self.task(), [])
         del self.custom_headers['User-Agent']
-        mock_requests.head.assert_called_once_with(self.port.url, headers=self.custom_headers, verify=False)
+        http_client.instance().head.assert_called_once_with(url=self.port.url, headers=self.custom_headers,
+                                                            validate_cert=False)

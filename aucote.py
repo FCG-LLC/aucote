@@ -129,7 +129,7 @@ class Aucote(object):
             self._storage.init_schema()
 
             self._scan_task = ScanAsyncTask(aucote=self, as_service=as_service)
-            self._scan_task.run()
+            self.ioloop.add_callback(self._scan_task.run)
             web_server = WebServer(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
             self.ioloop.add_callback(web_server.run)
 

@@ -4,12 +4,12 @@ This module contains tasks related to Aucote HTTP Headers
 """
 import time
 import logging as log
-import requests
 
 from aucote_cfg import cfg
 from structs import Vulnerability
 from tools.aucote_http_headers.structs import AucoteHttpHeaderResult as Result
 from tools.common.port_task import PortTask
+from utils.http_client import HTTPClient
 
 
 class AucoteHttpHeadersTask(PortTask):
@@ -37,16 +37,16 @@ class AucoteHttpHeadersTask(PortTask):
             custom_headers['User-Agent'] = useragent
 
         try:
-            response = requests.head(self._port.url, headers=custom_headers, verify=False)
+            response = await HTTPClient.instance().head(url=self._port.url, headers=custom_headers, validate_cert=False)
 
-            if response.status_code != 200:
-                log.warning("Server replied with status code: %i", response.status_code)
+            if response.code != 200:
+                log.warning("Server replied with status code: %i", response.code)
 
         except ConnectionError:
             log.exception("Cannot connect to %s", self._port.url)
             return
         except OSError as exception:
-            log.warning(str(exception))
+            log.warning("%s for %s", str(exception), self._port.url)
             return
 
         headers = response.headers
