@@ -13,6 +13,7 @@ import netifaces
 from croniter import croniter
 from netaddr import IPSet
 from tornado.ioloop import IOLoop
+from tornado.locks import Event
 
 from aucote_cfg import cfg
 from scans.executor import Executor
@@ -34,6 +35,7 @@ class ScanAsyncTask(object):
         self._current_scan = []
         self.aucote = aucote
         self.scan_start = None
+        self._shutdown_condition = Event()
 
         if as_service:
             self.aucote.async_task_manager.add_crontab_task(self._scan, self._scan_cron)
@@ -41,6 +43,10 @@ class ScanAsyncTask(object):
 
     def _scan_cron(self):
         return cfg['portdetection.scan_cron']
+
+    @property
+    def shutdown_condition(self):
+        return self._shutdown_condition
 
     def _tools_cron(self):
         return cfg['portdetection.tools_cron']
@@ -56,7 +62,7 @@ class ScanAsyncTask(object):
         log.debug("Starting cron")
         self.aucote.async_task_manager.start()
         if not self.as_service:
-            IOLoop.current().add_callback(partial(self.run_scan, await self._get_nodes_for_scanning()))
+            await self.run_scan(await self._get_nodes_for_scanning())
 
     async def _scan(self):
         """
@@ -95,6 +101,7 @@ class ScanAsyncTask(object):
             None
 
         """
+        self._shutdown_condition.clear()
         self.scan_start = time.time()
         self.update_scan_status(ScanStatus.IN_PROGRESS)
 
@@ -104,7 +111,7 @@ class ScanAsyncTask(object):
 
         if not nodes:
             log.warning("List of nodes is empty")
-            self._clean_scan()
+            await self._clean_scan()
             return
 
         self.storage.save_nodes(nodes)
@@ -150,9 +157,9 @@ class ScanAsyncTask(object):
         self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
         self.current_scan = []
 
-        self._clean_scan()
+        await self._clean_scan()
 
-    def _clean_scan(self):
+    async def _clean_scan(self):
         """
         Clean scan and update scan status
 
@@ -161,9 +168,10 @@ class ScanAsyncTask(object):
 
         """
         self.update_scan_status(ScanStatus.IDLE)
+        self._shutdown_condition.set()
 
         if not self.as_service:
-            self.aucote.async_task_manager.stop()
+            await self.aucote.async_task_manager.stop()
 
     @classmethod
     async def _get_topdis_nodes(cls):

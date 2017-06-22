@@ -252,8 +252,13 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.http_client_response = MagicMock()
         self.http_client_response.body = self.TODIS_RESPONSE
         self.req_future = Future()
+        self.aucote = MagicMock(storage=MagicMock())
+        atm_stop_future = Future()
+        self.atm_stop = MagicMock()
+        atm_stop_future.set_result(self.atm_stop)
+        self.aucote.async_task_manager.stop.return_value = atm_stop_future
 
-        self.thread = ScanAsyncTask(aucote=MagicMock(storage=MagicMock()))
+        self.thread = ScanAsyncTask(aucote=self.aucote)
         self.thread._cron_tasks = {
             1: MagicMock(),
             2: MagicMock()
@@ -389,22 +394,21 @@ class ScanAsyncTaskTest(AsyncTestCase):
         await self.thread.run()
         self.thread.aucote.async_task_manager.start.assert_called_once_with()
 
-    @patch('scans.scan_async_task.IOLoop')
-    @patch('scans.scan_async_task.partial')
     @gen_test
-    async def test_run_as_non_service(self, mock_partial, mock_ioloop):
+    async def test_run_as_non_service(self):
         self.thread.as_service = False
         expected = MagicMock()
         future = Future()
         future.set_result(expected)
         self.thread._get_nodes_for_scanning = MagicMock(return_value=future)
         self.thread.scheduler = MagicMock()
-        self.thread.run_scan = MagicMock()
+        future_run_scan = Future()
+        future_run_scan.set_result(MagicMock())
+        self.thread.run_scan = MagicMock(return_value=future_run_scan)
 
         await self.thread.run()
+        self.thread.run_scan.assert_called_once_with(expected)
 
-        mock_partial.assert_called_once_with(self.thread.run_scan, expected)
-        mock_ioloop.current.return_value.add_callback.assert_called_once_with(mock_partial.return_value)
 
     @patch('scans.scan_async_task.IOLoop')
     @patch('scans.scan_async_task.netifaces')
@@ -499,7 +503,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread._get_nodes_for_scanning = MagicMock(return_value=[node_1])
         self.thread._get_networks_list = MagicMock(return_value=IPSet(['127.0.0.2/31']))
         self.thread.as_service = False
-        self.thread.aucote = MagicMock()
 
         port_masscan = Port(transport_protocol=TransportProtocol.UDP, number=17, node=node_1)
         port_nmap = Port(transport_protocol=TransportProtocol.UDP, number=17, node=node_1)
@@ -896,3 +899,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
         cfg['portdetection.tools_cron'] = expected
         result = self.thread._tools_cron()
         self.assertEqual(result, expected)
+
+    def test_shutdown_condition(self):
+        self.assertEqual(self.thread.shutdown_condition, self.thread._shutdown_condition)

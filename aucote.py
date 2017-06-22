@@ -12,6 +12,7 @@ import fcntl
 
 import signal
 from tornado.ioloop import IOLoop
+from tornado.locks import Event
 
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
@@ -30,7 +31,7 @@ APP_NAME = 'Automated Compliance Tests'
 
 
 # ============== main app ==============
-def main():
+async def main():
     """
     Main function of aucote project
     Returns:
@@ -75,10 +76,11 @@ def main():
         aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=EXECUTOR_CONFIG)
 
         if args.cmd == 'scan':
-            aucote.run_scan(as_service=False)
+            await aucote.run_scan(as_service=False)
+            IOLoop.current().stop()
         elif args.cmd == 'service':
             while True:
-                aucote.run_scan()
+                await aucote.run_scan()
                 cfg.reload(cfg.get('config_filename'))
         elif args.cmd == 'syncdb':
             aucote.run_syncdb()
@@ -106,6 +108,7 @@ class Aucote(object):
 
         self.ioloop = IOLoop.current()
         self.async_task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
+        self.web_server = WebServer(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
 
     @property
     def kudu_queue(self):
@@ -116,7 +119,7 @@ class Aucote(object):
         """
         return self._kudu_queue
 
-    def run_scan(self, as_service=True):
+    async def run_scan(self, as_service=True):
         """
         Start scanning ports.
 
@@ -124,22 +127,20 @@ class Aucote(object):
 
         """
         try:
-
+            self.async_task_manager.clear()
             self._storage.connect()
             self._storage.init_schema()
 
             self._scan_task = ScanAsyncTask(aucote=self, as_service=as_service)
-            self.ioloop.add_callback(self._scan_task.run)
-            web_server = WebServer(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
-            self.ioloop.add_callback(web_server.run)
+            self.ioloop.add_callback(self.web_server.run)
+            await self._scan_task.run()
+            await self.async_task_manager.shutdown_condition.wait()
 
-            self.ioloop.start()
-
-            web_server.stop()
-
+            self.web_server.stop()
             self._scan_task = None
-
             self._storage.close()
+
+            log.info("Closing loop")
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")
@@ -228,7 +229,11 @@ class Aucote(object):
 
         """
         log.debug("Stop gracefuly")
-        self.ioloop.add_callback(self.async_task_manager.stop)
+        self.ioloop.add_callback_from_signal(self._graceful_stop)
+
+    async def _graceful_stop(self):
+        await self.scan_task.shutdown_condition.wait()
+        await self.async_task_manager.stop()
 
     @classmethod
     def kill(cls):
@@ -256,5 +261,5 @@ class Aucote(object):
 
 if __name__ == "__main__":  # pragma: no cover
     chdir(dirname(realpath(__file__)))
-
-    main()
+    IOLoop.current().add_callback(main)
+    IOLoop.current().start()

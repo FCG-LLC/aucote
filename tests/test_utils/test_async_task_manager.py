@@ -2,10 +2,9 @@ from functools import partial
 from random import randint
 from unittest.mock import MagicMock, patch, call
 
-from tornado import gen
 from tornado.concurrent import Future
+from tornado.queues import Queue
 from tornado.testing import AsyncTestCase, gen_test
-from tornado_crontab import CronTabCallback
 
 from utils.async_crontab_task import AsyncCrontabTask
 from utils.async_task_manager import AsyncTaskManager
@@ -20,6 +19,7 @@ class TestAsyncTaskManager(AsyncTestCase):
         AsyncTaskManager._instance = None
         self.task_manager = AsyncTaskManager.instance(parallel_tasks=1)
         self.task_manager._shutdown_condition = MagicMock()
+        self.task_manager._stop_condition = MagicMock()
         self.task_manager._cron_tasks['task_1'] = self.task_1
         self.task_manager._cron_tasks['task_2'] = self.task_2
         self.task_manager.run_tasks['task_1'] = False
@@ -35,9 +35,9 @@ class TestAsyncTaskManager(AsyncTestCase):
 
         self.task_manager.run_tasks = {'task_1': False, 'task_2': False}
 
-        self.task_manager.prepare_ioloop_shutdown()
+        self.task_manager._prepare_shutdown()
 
-        self.task_manager._shutdown_condition.set.assert_called_once_with()
+        self.task_manager._stop_condition.set.assert_called_once_with()
 
     @patch('utils.async_task_manager.IOLoop')
     def test_monitor_ioloop_shutdown_failed_because_of_task(self, mock_ioloop):
@@ -46,7 +46,7 @@ class TestAsyncTaskManager(AsyncTestCase):
 
         self.task_manager.run_tasks = {'task_1': False, 'task_2': True}
 
-        self.task_manager.prepare_ioloop_shutdown()
+        self.task_manager._prepare_shutdown()
 
         self.assertFalse(self.task_manager._shutdown_condition.set.called)
 
@@ -57,7 +57,7 @@ class TestAsyncTaskManager(AsyncTestCase):
 
         self.task_manager.run_tasks = {'task_1': False, 'task_2': False}
 
-        self.task_manager.prepare_ioloop_shutdown()
+        self.task_manager._prepare_shutdown()
 
         self.assertFalse(self.task_manager._shutdown_condition.set.called)
 
@@ -90,14 +90,15 @@ class TestAsyncTaskManager(AsyncTestCase):
 
         future_wait = Future()
         future_wait.set_result(True)
-        self.task_manager._shutdown_condition.wait.return_value = future_wait
+        self.task_manager._stop_condition.wait.return_value = future_wait
 
         self.task_manager.stop()
         self.task_1.stop.assert_called_once_with()
         self.task_2.stop.assert_called_once_with()
-        mock_ioloop.current.return_value.add_callback.assert_called_once_with(self.task_manager.prepare_ioloop_shutdown)
-        self.task_manager._shutdown_condition.wait.assert_called_once_with()
+        mock_ioloop.current.return_value.add_callback.assert_called_once_with(self.task_manager._prepare_shutdown)
+        self.task_manager._stop_condition.wait.assert_called_once_with()
         self.task_manager._tasks.join.assert_called_once_with()
+        self.task_manager._shutdown_condition.set.assert_called_once_with()
 
     def test_add_crontab_task(self):
         task = MagicMock()
@@ -119,13 +120,34 @@ class TestAsyncTaskManager(AsyncTestCase):
 
     @gen_test
     def test_process_queue(self):
-        task = MagicMock(return_value=Future())
-        task.return_value.set_result(MagicMock())
+        future = Future()
+        future.set_result(MagicMock())
+        task = MagicMock(return_value=future)
 
-        self.task_manager.add_task(task)
+        class queue(MagicMock):
+            def __init__(self, task):
+                super(queue, self).__init__()
+                self._end = False
+                self._task = task
 
-        self.io_loop.add_callback(partial(self.task_manager.process_tasks, 0))
-        yield self.task_manager._tasks.join()
+            async def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                if not self._end:
+                    return self._task
+                raise StopAsyncIteration
+
+            def task_done(self):
+                self._end = True
+
+            @property
+            def _unfinished_tasks(self):
+                return 0
+
+        self.task_manager._tasks = queue(task)
+
+        yield self.task_manager.process_tasks(0)
         task.assert_called_once_with()
 
     @patch('utils.async_task_manager.log.exception')
@@ -144,3 +166,6 @@ class TestAsyncTaskManager(AsyncTestCase):
             self.task_manager.add_task(i)
 
         self.assertEqual(self.task_manager.unfinished_tasks, tasks)
+
+    def test_shutdown_condition(self):
+        self.assertEqual(self.task_manager.shutdown_condition, self.task_manager._shutdown_condition)

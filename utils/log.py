@@ -19,6 +19,8 @@ def config(cfg):
     Logging configuration
     """
     print("Logging to the file: %s"%cfg['file'])
+    for handler in reversed(log.getLogger().handlers):
+        log.getLogger().removeHandler(handler)
     err_handler = log.StreamHandler(sys.__stderr__)
     err_handler.setLevel(log.WARNING)
     log.getLogger().addHandler(err_handler)

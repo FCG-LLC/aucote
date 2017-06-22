@@ -25,6 +25,7 @@ class AsyncTaskManager(object):
 
     def __init__(self, parallel_tasks=10):
         self._shutdown_condition = Event()
+        self._stop_condition = Event()
         self._cron_tasks = {}
         self.run_tasks = {}
         self._parallel_tasks = parallel_tasks
@@ -43,6 +44,10 @@ class AsyncTaskManager(object):
         if cls._instance is None:
             cls._instance = AsyncTaskManager(*args, **kwargs)
         return cls._instance
+
+    @property
+    def shutdown_condition(self):
+        return self._shutdown_condition
 
     def start(self):
         """
@@ -85,11 +90,11 @@ class AsyncTaskManager(object):
         """
         for task in self._cron_tasks.values():
             task.stop()
-        IOLoop.current().add_callback(self.prepare_ioloop_shutdown)
-        yield [self._shutdown_condition.wait(), self._tasks.join()]
-        IOLoop.current().stop()
+        IOLoop.current().add_callback(self._prepare_shutdown)
+        yield [self._stop_condition.wait(), self._tasks.join()]
+        self._shutdown_condition.set()
 
-    def prepare_ioloop_shutdown(self):
+    def _prepare_shutdown(self):
         """
         Check if ioloop can be stopped
 
@@ -98,10 +103,10 @@ class AsyncTaskManager(object):
 
         """
         if any(task.is_running() for task in self._cron_tasks.values()) or any(self.run_tasks.values()):
-            IOLoop.current().add_callback(self.prepare_ioloop_shutdown)
+            IOLoop.current().add_callback(self._prepare_shutdown)
             return
 
-        self._shutdown_condition.set()
+        self._stop_condition.set()
 
     def clear(self):
         """
@@ -113,6 +118,8 @@ class AsyncTaskManager(object):
         """
         self._cron_tasks = {}
         self.run_tasks = {}
+        self._shutdown_condition.clear()
+        self._stop_condition.clear()
 
     async def process_tasks(self, number):
         """
@@ -133,6 +140,7 @@ class AsyncTaskManager(object):
                 log.debug("Worker %s: %s finished", number, item)
                 self._tasks.task_done()
                 log.debug("Tasks left in queue: %s", self.unfinished_tasks)
+        log.info("Closing worker %s", number)
 
     def add_task(self, task):
         """

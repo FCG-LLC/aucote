@@ -55,19 +55,33 @@ class AucoteTest(AsyncTestCase):
         self.aucote.ioloop = MagicMock()
         self.aucote._storage_thread = MagicMock()
 
+        future = Future()
+        future.set_result(MagicMock())
+        self.aucote.async_task_manager.shutdown_condition.wait.return_value = future
+
+        self.aucote._scan_task = MagicMock()
+        self.scan_task_run = MagicMock()
+        scan_task_future = Future()
+        scan_task_future.set_result(self.scan_task_run)
+        self.aucote._scan_task.run.return_value = scan_task_future
+
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl', MagicMock())
     @patch('aucote.Aucote')
     @patch('aucote.cfg_load', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
-    def test_main_scan(self, cfg, mock_aucote):
+    @gen_test
+    async def test_main_scan(self, cfg, mock_aucote):
         cfg._cfg = self.cfg._cfg
         args = PropertyMock()
         args.configure_mock(cmd='scan')
+        future = Future()
+        future.set_result(MagicMock())
+        mock_aucote().run_scan.return_value = future
 
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            main()
+            await main()
 
         self.assertEqual(mock_aucote.return_value.run_scan.call_count, 1)
 
@@ -75,13 +89,15 @@ class AucoteTest(AsyncTestCase):
     @patch('builtins.open', mock_open())
     @patch('aucote.fcntl', MagicMock())
     @patch('aucote.cfg_load', MagicMock())
-    def test_main_exploits_exception(self):
+    @gen_test
+    async def test_main_exploits_exception(self):
         args = PropertyMock()
         args.configure_mock(cmd='scan')
 
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
             with patch('aucote.Aucote.run_scan'):
-                self.assertRaises(SystemExit, main)
+                with self.assertRaises(SystemExit):
+                    await main()
 
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
@@ -89,12 +105,16 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.cfg')
     @patch('aucote.Aucote')
     @patch('aucote.cfg_load', MagicMock())
-    def test_main_service(self, mock_aucote, mock_cfg):
+    @gen_test
+    async def test_main_service(self, mock_aucote, mock_cfg):
         args = PropertyMock()
         args.configure_mock(cmd='service')
-        mock_aucote.return_value.run_scan.side_effect = (None, SystemExit(), )
+        future = Future()
+        future.set_result(MagicMock())
+        mock_aucote.return_value.run_scan.side_effect = (future, SystemExit(), )
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            self.assertRaises(SystemExit, main)
+            with self.assertRaises(SystemExit):
+                await main()
 
         mock_aucote.return_value.run_scan.assert_any_call()
         self.assertEqual(mock_aucote.return_value.run_scan.call_count, 2)
@@ -106,12 +126,13 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.Aucote')
     @patch('aucote.cfg_load', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
-    def test_main_syncdb(self, cfg, mock_aucote):
+    @gen_test
+    async def test_main_syncdb(self, cfg, mock_aucote):
         cfg._cfg = self.cfg._cfg
         args = PropertyMock()
         args.configure_mock(cmd='syncdb')
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            main()
+            await main()
 
         self.assertEqual(mock_aucote.return_value.run_syncdb.call_count, 1)
 
@@ -121,13 +142,22 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.WebServer', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
-    def test_scan(self, cfg, mock_scan_tasks, mock_storage_task):
+    @gen_test
+    async def test_scan(self, cfg, mock_scan_tasks, mock_storage_task):
         cfg._cfg = self.cfg._cfg
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
 
-        self.aucote.run_scan(as_service=False)
+        future = Future()
+        future.set_result(MagicMock())
+        mock_scan_tasks.return_value.run.return_value = future
+
+        future_wait = Future()
+        future_wait.set_result(MagicMock())
+        mock_scan_tasks.return_value.shutdown_condition.wait.return_value = future_wait
+
+        await self.aucote.run_scan(as_service=False)
         result = mock_scan_tasks.call_args[1]
         expected = {
             'aucote': self.aucote,
@@ -146,12 +176,21 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.WebServer', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
-    def test_service(self, cfg, mock_scan_tasks, mock_storage_task):
+    @gen_test
+    async def test_service(self, cfg, mock_scan_tasks, mock_storage_task):
         cfg._cfg = self.cfg._cfg
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
 
-        self.aucote.run_scan(as_service=True)
+        future = Future()
+        future.set_result(MagicMock())
+        mock_scan_tasks.return_value.run.return_value = future
+
+        future_wait = Future()
+        future_wait.set_result(MagicMock())
+        mock_scan_tasks.return_value.shutdown_condition.wait.return_value = future_wait
+
+        await self.aucote.run_scan(as_service=True)
         result = mock_scan_tasks.call_args[1]
         expected = {
             'aucote': self.aucote,
@@ -176,9 +215,10 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.Storage', MagicMock())
     @patch('scans.scan_async_task.Executor')
     @patch('aucote.cfg', new_callable=Config)
-    def test_scan_with_exception(self, cfg, mock_executor):
+    @gen_test
+    async def test_scan_with_exception(self, cfg, mock_executor):
         cfg._cfg = self.cfg._cfg
-        self.aucote.run_scan()
+        await self.aucote.run_scan()
         self.assertEqual(mock_executor.call_count, 0)
 
     def test_add_async_task(self):
@@ -192,13 +232,15 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl')
     @patch('aucote.cfg_load', MagicMock())
-    def test_aucote_run_already(self, mock_fcntl):
+    @gen_test
+    async def test_aucote_run_already(self, mock_fcntl):
         mock_fcntl.lockf = MagicMock(side_effect=IOError())
         args = PropertyMock()
         args.configure_mock(cmd='service')
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
             with patch('aucote.Aucote.run_scan'):
-                self.assertRaises(SystemExit, main)
+                with self.assertRaises(SystemExit):
+                    await main()
 
     @patch('aucote.Storage')
     @patch('aucote.Aucote.load_tools')
@@ -246,7 +288,7 @@ class AucoteTest(AsyncTestCase):
         config['apps']['app2']['loader'].assert_called_once_with(config['apps']['app2'], exploits)
 
     @gen_test
-    def test_graceful_stop(self):
+    def test_graceful_stop_signal(self):
         self.aucote._scan_task = MagicMock()
 
         future_1 = Future()
@@ -256,7 +298,21 @@ class AucoteTest(AsyncTestCase):
         self.aucote._watch_thread = MagicMock()
         self.aucote.graceful_stop(None, None)
 
-        self.aucote.ioloop.add_callback.assert_called_once_with(self.aucote.async_task_manager.stop)
+        self.aucote.ioloop.add_callback_from_signal.assert_called_once_with(self.aucote._graceful_stop)
+
+    @gen_test
+    async def test_graceful_stop(self):
+        future = Future()
+        future.set_result(MagicMock())
+        self.aucote.scan_task.shutdown_condition.wait.return_value = future
+
+        future_wait = Future()
+        future_wait.set_result(MagicMock())
+        self.aucote.async_task_manager.stop.return_value = future_wait
+
+        await self.aucote._graceful_stop()
+        self.aucote.scan_task.shutdown_condition.wait.assert_called_once_with()
+        self.aucote.async_task_manager.stop.assert_called_once_with()
 
     @patch('aucote.os._exit')
     def test_kill(self, mock_kill):
