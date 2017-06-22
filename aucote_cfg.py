@@ -47,7 +47,7 @@ _DEFAULT = {
 cfg = Config(_DEFAULT)
 
 
-def start_toucan(default_config):
+async def start_toucan(default_config):
     """
     Initialize Toucan
 
@@ -70,7 +70,7 @@ def start_toucan(default_config):
     cfg.toucan.push_config(config, overwrite=False)
 
 
-def load(file_name=None):
+async def load(file_name=None):
     '''
     Initializes this module.
     Needs to be called before other functions are used.
@@ -94,7 +94,7 @@ def load(file_name=None):
     default_config_filename = cfg['default_config']
 
     if cfg.get('toucan.enable'):
-        start_toucan(default_config_filename)
+        await start_toucan(default_config_filename)
     else:
         try:
             cfg.load(default_config_filename, cfg.cfg)

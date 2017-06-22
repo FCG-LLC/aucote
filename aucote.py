@@ -48,7 +48,7 @@ async def main():
     args = parser.parse_args()
 
     # read configuration
-    cfg_load(args.cfg)
+    await cfg_load(args.cfg)
 
     log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
 

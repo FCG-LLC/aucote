@@ -23,6 +23,7 @@ class AucoteTest(AsyncTestCase):
     def setUp(self, cfg, mock_storage):
         super(AucoteTest, self).setUp()
         self.cfg = cfg
+
         self.storage = mock_storage
         self.cfg._cfg = {
             'service': {
@@ -65,14 +66,16 @@ class AucoteTest(AsyncTestCase):
         scan_task_future.set_result(self.scan_task_run)
         self.aucote._scan_task.run.return_value = scan_task_future
 
+    @patch('aucote.cfg_load')
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl', MagicMock())
     @patch('aucote.Aucote')
-    @patch('aucote.cfg_load', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
     @gen_test
-    async def test_main_scan(self, cfg, mock_aucote):
+    async def test_main_scan(self, cfg, mock_aucote, mock_cfg_load):
+        mock_cfg_load.return_value = Future()
+        mock_cfg_load.return_value.set_result(True)
         cfg._cfg = self.cfg._cfg
         args = PropertyMock()
         args.configure_mock(cmd='scan')
@@ -85,12 +88,14 @@ class AucoteTest(AsyncTestCase):
 
         self.assertEqual(mock_aucote.return_value.run_scan.call_count, 1)
 
+    @patch('aucote.cfg_load')
     @patch('fixtures.exploits.Exploits.read', MagicMock(side_effect=NmapUnsupported))
     @patch('builtins.open', mock_open())
     @patch('aucote.fcntl', MagicMock())
-    @patch('aucote.cfg_load', MagicMock())
     @gen_test
-    async def test_main_exploits_exception(self):
+    async def test_main_exploits_exception(self, mock_cfg_load):
+        mock_cfg_load.return_value = Future()
+        mock_cfg_load.return_value.set_result(True)
         args = PropertyMock()
         args.configure_mock(cmd='scan')
 
@@ -99,14 +104,16 @@ class AucoteTest(AsyncTestCase):
                 with self.assertRaises(SystemExit):
                     await main()
 
+    @patch('aucote.cfg_load')
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl', MagicMock())
     @patch('aucote.cfg')
     @patch('aucote.Aucote')
-    @patch('aucote.cfg_load', MagicMock())
     @gen_test
-    async def test_main_service(self, mock_aucote, mock_cfg):
+    async def test_main_service(self, mock_aucote, mock_cfg, mock_cfg_load):
+        mock_cfg_load.return_value = Future()
+        mock_cfg_load.return_value.set_result(True)
         args = PropertyMock()
         args.configure_mock(cmd='service')
         future = Future()
@@ -120,14 +127,16 @@ class AucoteTest(AsyncTestCase):
         self.assertEqual(mock_aucote.return_value.run_scan.call_count, 2)
         mock_cfg.reload.assert_called_once_with(mock_cfg.get.return_value)
 
+    @patch('aucote.cfg_load')
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl', MagicMock())
     @patch('aucote.Aucote')
-    @patch('aucote.cfg_load', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
     @gen_test
-    async def test_main_syncdb(self, cfg, mock_aucote):
+    async def test_main_syncdb(self, cfg, mock_aucote, mock_cfg_load):
+        mock_cfg_load.return_value = Future()
+        mock_cfg_load.return_value.set_result(True)
         cfg._cfg = self.cfg._cfg
         args = PropertyMock()
         args.configure_mock(cmd='syncdb')
@@ -228,12 +237,14 @@ class AucoteTest(AsyncTestCase):
         self.aucote.add_async_task(data)
         self.aucote.async_task_manager.add_task.assert_called_once_with(data)
 
+    @patch('aucote.cfg_load')
     @patch('builtins.open', mock_open())
     @patch('aucote.KuduQueue', MagicMock())
     @patch('aucote.fcntl')
-    @patch('aucote.cfg_load', MagicMock())
     @gen_test
-    async def test_aucote_run_already(self, mock_fcntl):
+    async def test_aucote_run_already(self, mock_fcntl, mock_cfg_load):
+        mock_cfg_load.return_value = Future()
+        mock_cfg_load.return_value.set_result(True)
         mock_fcntl.lockf = MagicMock(side_effect=IOError())
         args = PropertyMock()
         args.configure_mock(cmd='service')
