@@ -243,12 +243,20 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def setUp(self, cfg):
         super(ScanAsyncTaskTest, self).setUp()
-        cfg._cfg = {
+        self.cfg = {
             'portdetection': {
                 'scan_cron': '* * * * *',
                 'tools_cron': '* * * * *'
+            },
+            'topdis': {
+                'api': {
+                    'host': '',
+                    'port': ''
+                }
             }
         }
+
+        cfg._cfg = self.cfg
         self.http_client_response = MagicMock()
         self.http_client_response.body = self.TODIS_RESPONSE
         self.req_future = Future()
@@ -273,9 +281,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
         AsyncTaskManager.instance().clear()
 
     @patch('scans.scan_async_task.HTTPClient')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    async def test_getting_nodes(self, http_client):
+    async def test_getting_nodes(self, cfg, http_client):
+        cfg._cfg = self.cfg
         self.req_future.set_result(self.http_client_response)
         http_client.instance().get.return_value = self.req_future
 
@@ -287,9 +296,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertEqual(nodes[0].name, 'EPSON1B0407')
 
     @patch('scans.scan_async_task.HTTPClient')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    async def test_getting_nodes_os_fingerprint(self, http_client):
+    async def test_getting_nodes_os_fingerprint(self, cfg, http_client):
+        cfg._cfg = self.cfg
         self.req_future.set_result(MagicMock(body=self.NODE_WITH_OS_FINGERPRINT))
         http_client.instance().get.return_value = self.req_future
 
@@ -301,10 +311,11 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertIsNone(result.os.version)
 
     @patch('scans.scan_async_task.HTTPClient')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.Service.build_cpe')
     @gen_test
-    async def test_getting_nodes_os_direct(self, mock_cpe, http_client):
+    async def test_getting_nodes_os_direct(self, mock_cpe, cfg, http_client):
+        cfg._cfg = self.cfg
         self.req_future.set_result(MagicMock(body=self.NODE_WITH_OS_DIRECT))
         http_client.instance().get.return_value = self.req_future
         mock_cpe.return_value = 'cpe:2.3:a:b:c:d:*:*:*:*:*:*:*'
@@ -319,10 +330,11 @@ class ScanAsyncTaskTest(AsyncTestCase):
         mock_cpe.assert_called_once_with(product='test_name', version='11', type=CPEType.OS)
 
     @patch('scans.scan_async_task.HTTPClient')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.Service.build_cpe')
     @gen_test
-    async def test_getting_nodes_os_direct_with_space_in_version(self, mock_cpe, http_client):
+    async def test_getting_nodes_os_direct_with_space_in_version(self, mock_cpe, cfg, http_client):
+        cfg._cfg = self.cfg
         self.req_future.set_result(MagicMock(body=self.NODE_WITH_OS_DIRECT_SPACES_VERSION))
         http_client.instance().get.return_value = self.req_future
         mock_cpe.return_value = 'cpe:2.3:a:b:c:d:*:*:*:*:*:*:*'
@@ -337,9 +349,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertFalse(mock_cpe.called)
 
     @patch('scans.scan_async_task.HTTPClient')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    async def test_getting_nodes_cannot_connect_to_topdis(self, http_client):
+    async def test_getting_nodes_cannot_connect_to_topdis(self, cfg, http_client):
+        cfg._cfg = self.cfg
         http_client.instance().get.side_effect = URLError('')
         result = await self.thread._get_topdis_nodes()
         expected = []
@@ -693,9 +706,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertRaises(SystemExit, self.thread._get_networks_list)
 
     @patch('scans.scan_async_task.HTTPClient')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    async def test_scan_time_init(self, http_client):
+    async def test_scan_time_init(self, cfg, http_client):
+        cfg._cfg = self.cfg
         self.req_future.set_result(self.http_client_response)
         http_client.instance().get.return_value = self.req_future
 

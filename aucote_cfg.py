@@ -93,7 +93,7 @@ async def load(file_name=None):
 
     default_config_filename = cfg['default_config']
 
-    if cfg.get('toucan.enable'):
+    if cfg['toucan.enable']:
         await start_toucan(default_config_filename)
     else:
         try:

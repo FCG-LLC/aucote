@@ -125,7 +125,7 @@ class AucoteTest(AsyncTestCase):
 
         mock_aucote.return_value.run_scan.assert_any_call()
         self.assertEqual(mock_aucote.return_value.run_scan.call_count, 2)
-        mock_cfg.reload.assert_called_once_with(mock_cfg.get.return_value)
+        mock_cfg.reload.assert_called_once_with(mock_cfg.__getitem__.return_value)
 
     @patch('aucote.cfg_load')
     @patch('builtins.open', mock_open())

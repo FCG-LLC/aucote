@@ -53,7 +53,7 @@ async def main():
     log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
 
     try:
-        lock = open(cfg.get('pid_file'), 'w')
+        lock = open(cfg['pid_file'], 'w')
         fcntl.lockf(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
         log.error("There is another Aucote instance running already")
@@ -81,7 +81,7 @@ async def main():
         elif args.cmd == 'service':
             while True:
                 await aucote.run_scan()
-                cfg.reload(cfg.get('config_filename'))
+                cfg.reload(cfg['config_filename'])
         elif args.cmd == 'syncdb':
             aucote.run_syncdb()
 
@@ -108,7 +108,7 @@ class Aucote(object):
 
         self.ioloop = IOLoop.current()
         self.async_task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
-        self.web_server = WebServer(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
+        self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'])
 
     @property
     def kudu_queue(self):
