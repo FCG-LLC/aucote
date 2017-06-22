@@ -14,11 +14,11 @@ _LOG_LEVEL = {
 }
 
 
-def config(cfg):
+async def config(cfg):
     """
     Logging configuration
     """
-    print("Logging to the file: %s"%cfg['file'])
+    print("Logging to the file: %s" % cfg['file'])
     for handler in reversed(log.getLogger().handlers):
         log.getLogger().removeHandler(handler)
     err_handler = log.StreamHandler(sys.__stderr__)

@@ -89,7 +89,7 @@ async def load(file_name=None):
         stderr.write("Cannot load configuration file {0}".format(file_name))
         exit()
 
-    log_cfg.config(cfg['logging'])
+    await log_cfg.config(cfg['logging'])
 
     default_config_filename = cfg['default_config']
 
