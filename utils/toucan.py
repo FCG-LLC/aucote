@@ -71,6 +71,16 @@ class Toucan(object):
         self.api = api.rstrip("/")
         self._http_client = HTTPClient.instance()
 
+    def _handle_exception(self, key, exception):
+        if exception.response.code in {404, 204}:
+            raise ToucanUnsetException(key)
+
+        if exception.response.code == 502:
+            data = ujson.loads(exception.response.body.decode())
+            raise ToucanConnectionException(data['message'])
+
+        raise ToucanException(key)
+
     @retry_if_fail
     async def get(self, key):
         """
@@ -102,14 +112,7 @@ class Toucan(object):
             return result
 
         except HTTPError as exception:
-            if exception.response.code in {404, 204}:
-                raise ToucanUnsetException(key)
-
-            if exception.response.code == 502:
-                data = ujson.loads(exception.response.body.decode())
-                raise ToucanConnectionException(data['message'])
-
-            raise ToucanException(key)
+            self._handle_exception(key, exception)
 
     @retry_if_fail
     async def put(self, key, values):
@@ -150,14 +153,7 @@ class Toucan(object):
             return self.proceed_response(key, response)
 
         except HTTPError as exception:
-            if exception.response.code in {404, 204}:
-                raise ToucanUnsetException(key)
-
-            if exception.response.code == 502:
-                data = ujson.loads(exception.response.body.decode())
-                raise ToucanConnectionException(data['message'])
-
-            raise ToucanException(key)
+            self._handle_exception(key, exception)
 
     def proceed_response(self, key, response):
         """
