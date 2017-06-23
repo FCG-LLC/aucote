@@ -423,14 +423,13 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread.run_scan.assert_called_once_with(expected)
 
 
-    @patch('scans.scan_async_task.IOLoop')
     @patch('scans.scan_async_task.netifaces')
     @patch('scans.scan_async_task.PortsScan')
     @patch('scans.scan_async_task.MasscanPorts')
     @patch('scans.scan_async_task.Executor')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    def test_run_scan_as_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface, mock_ioloop):
+    def test_run_scan_as_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface):
         cfg._cfg = {
             'service': {
                 'scans': {
@@ -484,16 +483,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=False)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
-        self.assertFalse(mock_ioloop.current.return_value.current.called)
 
-    @patch('scans.scan_async_task.IOLoop')
     @patch('scans.scan_async_task.netifaces')
     @patch('scans.scan_async_task.PortsScan')
     @patch('scans.scan_async_task.MasscanPorts')
     @patch('scans.scan_async_task.Executor')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    def test_run_scan_as_non_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface, mock_loop):
+    def test_run_scan_as_non_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface):
         cfg._cfg = {
             'service': {
                 'scans': {
@@ -667,9 +664,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertFalse(self.thread.storage.save_nodes.called)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
-    @patch('scans.scan_async_task.IOLoop')
     @gen_test
-    def test_run_scan_as_non_service_without_nodes(self, mock_loop, cfg):
+    def test_run_scan_as_non_service_without_nodes(self, cfg):
         cfg._cfg = {
             'portdetection': {
                 'nmap_udp': False
@@ -866,10 +862,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
     @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
     @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_update_scan_status_to_in_progress(self, cfg):
+    @gen_test
+    async def test_update_scan_status_to_in_progress(self, cfg):
         cfg.toucan = MagicMock()
+        cfg.toucan.put.return_value = Future()
+        cfg.toucan.put.return_value.set_result(MagicMock())
+
         self.thread.scan_start = 17
-        self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
+        await self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
 
         expected = {
             'previous_scan': 57,
@@ -885,10 +885,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
     @patch('scans.scan_async_task.time.time', MagicMock(return_value=300))
     @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_update_scan_status_to_idle(self, cfg):
+    @gen_test
+    async def test_update_scan_status_to_idle(self, cfg):
         cfg.toucan = MagicMock()
+        cfg.toucan.put.return_value = Future()
+        cfg.toucan.put.return_value.set_result(MagicMock())
+
         self.thread.scan_start = 17
-        self.thread.update_scan_status(ScanStatus.IDLE)
+        await self.thread.update_scan_status(ScanStatus.IDLE)
 
         expected = {
             'previous_scan': 57,

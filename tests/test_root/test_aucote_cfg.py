@@ -114,6 +114,9 @@ class AucoteCfgTest(AsyncTestCase):
             }
         }
 
+        toucan().push_config.return_value = Future()
+        toucan().push_config.return_value.set_result(MagicMock())
+
         await start_toucan('test_file')
         toucan.return_value.push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=False)
         self.assertEqual(cfg.toucan, toucan.return_value)

@@ -3,7 +3,6 @@ This module contains class responsible for scanning.
 
 """
 import ipaddress
-from functools import partial
 from urllib.error import URLError
 import logging as log
 import time
@@ -12,7 +11,6 @@ import netifaces
 
 from croniter import croniter
 from netaddr import IPSet
-from tornado.ioloop import IOLoop
 from tornado.locks import Event
 
 from aucote_cfg import cfg
@@ -46,6 +44,13 @@ class ScanAsyncTask(object):
 
     @property
     def shutdown_condition(self):
+        """
+        Event which is set when no scan in progress
+
+        Returns:
+            Event
+
+        """
         return self._shutdown_condition
 
     def _tools_cron(self):
@@ -103,7 +108,7 @@ class ScanAsyncTask(object):
         """
         self._shutdown_condition.clear()
         self.scan_start = time.time()
-        self.update_scan_status(ScanStatus.IN_PROGRESS)
+        await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
         nmap_udp = cfg['portdetection.nmap_udp']
 
@@ -167,7 +172,7 @@ class ScanAsyncTask(object):
             None
 
         """
-        self.update_scan_status(ScanStatus.IDLE)
+        await self.update_scan_status(ScanStatus.IDLE)
         self._shutdown_condition.set()
 
         if not self.as_service:
@@ -348,7 +353,7 @@ class ScanAsyncTask(object):
         """
         return croniter(cfg['portdetection.tools_cron'], time.time()).get_next()
 
-    def update_scan_status(self, status):
+    async def update_scan_status(self, status):
         """
         Update scan status base on status value
 
@@ -373,4 +378,4 @@ class ScanAsyncTask(object):
         if status is ScanStatus.IDLE:
             data['scan_duration'] = time.time() - self.scan_start
 
-        cfg.toucan.put('portdetection.status', data)
+        await cfg.toucan.put('portdetection.status', data)

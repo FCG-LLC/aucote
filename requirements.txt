@@ -3,7 +3,6 @@ nanomsg==1.0
 netaddr==0.7.18
 python-dateutil
 netifaces==0.10.5
-requests==2.14.2
 croniter==0.3.13
 pytz==2016.10
 inotify==0.2.8
