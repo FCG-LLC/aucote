@@ -24,20 +24,22 @@ class HTTPClientTest(AsyncTestCase):
     def tearDown(self):
         HTTPClient._instance = None
 
+    @patch('utils.http_client.AsyncHTTPClient')
     @patch('utils.http_client.HTTPRequest')
-    def test_request(self, request):
-        self.client._client.fetch = MagicMock()
+    def test_request(self, request, mock_client):
+        mock_client().fetch = MagicMock()
         self.client.request(method="TEST", a='1', b=5)
         request.assert_called_once_with(method="TEST", a='1', b=5)
-        self.client._client.fetch.assert_called_once_with(request(), self.client._handle_response)
+        mock_client().fetch.assert_called_once_with(request(), self.client._handle_response)
 
+    @patch('utils.http_client.AsyncHTTPClient')
     @patch('utils.http_client.HTTPRequest')
-    def test_request_with_json(self, request):
-        self.client._client.fetch = MagicMock()
+    def test_request_with_json(self, request, mock_client):
+        mock_client().fetch = MagicMock()
         self.client.request(method="TEST", a='1', b=5, json={'test': 'test2'}, headers={'test': 'test_2'})
         request.assert_called_once_with(method="TEST", a='1', b=5, body='{"test":"test2"}',
                                         headers={'test': 'test_2', 'Content-Type': 'application/json'})
-        self.client._client.fetch.assert_called_once_with(request(), self.client._handle_response)
+        mock_client().fetch.assert_called_once_with(request(), self.client._handle_response)
 
     def test_get(self):
         url = MagicMock()

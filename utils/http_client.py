@@ -15,9 +15,6 @@ class HTTPClient(object):
     """
     _instance = None
 
-    def __init__(self):
-        self._client = AsyncHTTPClient()
-
     @classmethod
     def instance(cls, *args, **kwargs):
         """
@@ -104,4 +101,4 @@ class HTTPClient(object):
             kwargs['body'] = ujson.dumps(json)
             kwargs.setdefault('headers', {})['Content-Type'] = 'application/json'
         request = HTTPRequest(**kwargs)
-        return self._client.fetch(request, self._handle_response)
+        return AsyncHTTPClient().fetch(request, self._handle_response)
