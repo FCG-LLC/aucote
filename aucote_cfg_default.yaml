@@ -97,7 +97,6 @@ portdetection:
             exclude: []
     port_scan_rate: 10
     network_scan_rate: 500
-    nmap_udp: True
     _internal:
         tools_cron: "0 22 * * *" # run every day at 22:00 UTC
         host_timeout: 600
