@@ -76,7 +76,11 @@ class Toucan(object):
             raise ToucanUnsetException(key)
 
         if exception.response.code == 502:
-            data = ujson.loads(exception.response.body.decode())
+            try:
+                data = ujson.loads(exception.response.body.decode())
+            except ValueError:
+                raise ToucanConnectionException("Cannot parse JSON response: '{0}'".
+                                                format(exception.response.body.decode()))
             raise ToucanConnectionException(data['message'])
 
         raise ToucanException(key)

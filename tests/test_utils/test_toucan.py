@@ -34,6 +34,15 @@ class TestToucan(AsyncTestCase):
         with self.assertRaises(ToucanConnectionException):
             await self.toucan.get("test.key")
 
+    @patch('utils.toucan.Toucan.min_retry_time', 0)
+    @gen_test
+    async def test_get_502_invalid_json(self):
+        self.response.code = 502
+        self.response._body = b'test_error'
+        self.toucan._http_client.get.side_effect = (HTTPError(code=502, response=self.response))
+        with self.assertRaises(ToucanConnectionException):
+            await self.toucan.get("test.key")
+
     @gen_test
     async def test_get_500(self):
         self.response.code = 500

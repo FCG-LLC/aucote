@@ -74,7 +74,7 @@ class HTTPClient(object):
 
     def put(self, url, **kwargs):
         """
-        Perform HEAD request
+        Perform PUT request
 
         Args:
             url (str):
