@@ -7,6 +7,7 @@ from tornado.testing import gen_test, AsyncTestCase
 
 from structs import Port, Scan
 from tools.common.command_task import CommandTask
+from utils.exceptions import StopCommandException
 
 
 class CommandTaskTest(AsyncTestCase):
@@ -71,3 +72,11 @@ class CommandTaskTest(AsyncTestCase):
         self.assertEqual(args_storage['port'].scan.end, 0)
         self.assertEqual(args_storage['port'].scan.start, 0)
         self.assertEqual(args_storage['exploits'], [self.exploit])
+
+    @gen_test
+    async def test_call_with_stop_task_exception(self):
+        self.task.prepare_args = MagicMock()
+        self.task.prepare_args.side_effect = StopCommandException
+
+        result = await self.task()
+        self.assertIsNone(result)

@@ -2,8 +2,9 @@
 Base class for scanners
 
 """
+import logging as log
 from tools.common import OpenPortsParser
-from utils.exceptions import NonXMLOutputException
+from utils.exceptions import NonXMLOutputException, StopCommandException
 
 
 class ScanTask(object):
@@ -43,7 +44,11 @@ class ScanTask(object):
         if not nodes:
             return []
 
-        args = self.prepare_args(nodes)
+        try:
+            args = self.prepare_args(nodes)
+        except StopCommandException:
+            log.exception("Cannot execute command")
+            return []
 
         try:
             xml = await self.command.async_call(args)

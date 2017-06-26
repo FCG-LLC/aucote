@@ -86,3 +86,10 @@ class ToucanConnectionException(Exception):
     Raises if cannot connect to Toucan
 
     """
+
+
+class StopCommandException(Exception):
+    """
+    Raises if command should be stopped
+
+    """

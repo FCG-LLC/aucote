@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 from structs import Node, Scan
 from tools.nmap.ports import PortsScan
 from utils import Config
+from utils.exceptions import StopCommandException
 
 
 class PortScanTest(TestCase):
@@ -66,6 +67,13 @@ class PortScanTest(TestCase):
         result = self.scanner.prepare_args(nodes=self.nodes)
         expected = ['-Pn', '--host-timeout', '600', '-6', '-sS', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
         self.assertEqual(result, expected)
+
+    @patch('tools.nmap.ports.cfg', new_callable=Config)
+    def test_no_scan_ports(self, cfg):
+        cfg._cfg = self.cfg
+        cfg['portdetection.ports.tcp.include'] = []
+
+        self.assertRaises(StopCommandException, self.scanner.prepare_args, nodes=self.nodes)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     def test_scan_ports_excluded(self, cfg):

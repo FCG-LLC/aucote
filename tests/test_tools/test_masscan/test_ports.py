@@ -5,6 +5,7 @@ from unittest.mock import patch
 from structs import Node, Scan
 from tools.masscan import MasscanPorts
 from utils import Config
+from utils.exceptions import StopCommandException
 
 
 class MasscanPortsTest(TestCase):
@@ -63,6 +64,13 @@ class MasscanPortsTest(TestCase):
                     '--ports', 'T:17-45', self.NODE_IP]
 
         self.assertEqual(result, expected)
+
+    @patch('tools.masscan.ports.cfg', new_callable=Config)
+    def test_no_scan_ports(self, cfg):
+        cfg._cfg = self.cfg
+        cfg['portdetection.ports.tcp.include'] = []
+
+        self.assertRaises(StopCommandException, self.masscanports.prepare_args, nodes=self.nodes)
 
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     def test_string_ports(self, mock_config):

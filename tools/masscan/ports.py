@@ -7,6 +7,7 @@ from tools.masscan.base import MasscanBase
 from aucote_cfg import cfg
 from tools.nmap.tool import NmapTool
 from utils.config import Config
+from utils.exceptions import StopCommandException
 
 
 class MasscanPorts(ScanTask):
@@ -39,8 +40,9 @@ class MasscanPorts(ScanTask):
         exclude_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.ports.tcp.exclude'],
                                                       udp=self.udp and cfg['portdetection.ports.udp.exclude'])
 
-        if include_ports:
-            args.extend(['--ports', include_ports])
+        if not include_ports:
+            raise StopCommandException("No ports for scan")
+        args.extend(['--ports', include_ports])
 
         if exclude_ports:
             args.extend(['--exclude-ports', exclude_ports])
