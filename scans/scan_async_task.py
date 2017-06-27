@@ -29,6 +29,8 @@ class ScanAsyncTask(object):
 
     """
     LIVE_SCAN_CRON = '* * * * *'
+    IPV4 = "ipv4"
+    IPV6 = "ipv6"
 
     def __init__(self, aucote, as_service=True):
         self.as_service = as_service
@@ -107,10 +109,10 @@ class ScanAsyncTask(object):
         """
         self._shutdown_condition.clear()
         self.scan_start = time.time()
+        ports = []
+        scanners = self._get_scanners()
+
         await self.update_scan_status(ScanStatus.IN_PROGRESS)
-
-        nmap_udp = cfg['portdetection._internal.nmap_udp']
-
         self.current_scan = nodes
 
         if not nodes:
@@ -120,34 +122,29 @@ class ScanAsyncTask(object):
 
         self.storage.save_nodes(nodes)
 
-        nodes_ipv4 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)]
-        nodes_ipv6 = [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
+        nodes = {
+            self.IPV4: [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)],
+            self.IPV6: [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
+        }
 
-        log.info('Scanning %i nodes (IPv4: %s, IPv6: %s)', len(nodes), len(nodes_ipv4), len(nodes_ipv6))
+        log.info('Scanning nodes (IPv4: %s, IPv6: %s)', len(nodes[self.IPV4]), len(nodes[self.IPV6]))
 
-        log.info("Scanning %i IPv4 nodes for open ports.", len(nodes_ipv4))
-        scanner_ipv4 = MasscanPorts(udp=not nmap_udp)
-        ports = await scanner_ipv4.scan_ports(nodes_ipv4)
+        for scanner in scanners[self.IPV4]:
+            log.info("Scanning %i IPv4 nodes for open ports with %s.", len(nodes[self.IPV4]), scanner)
+            ports.extend(await scanner.scan_ports(nodes[self.IPV4]))
 
-        log.info("Scanning %i IPv6 nodes for open ports.", len(nodes_ipv6))
-        scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
-        ports_ipv6 = await scanner_ipv6.scan_ports(nodes_ipv6)
-        ports.extend(ports_ipv6)
+        for scanner in scanners[self.IPV6]:
+            log.info("Scanning %i IPv6 nodes for open ports with %s.", len(nodes[self.IPV6]), scanner)
+            ports.extend(await scanner.scan_ports(nodes[self.IPV6]))
 
-        if nmap_udp:
-            log.info("Scanning %i IPv4 nodes for open UDP ports.", len(nodes_ipv4))
-            scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
-            ports_udp = await scanner_ipv4_udp.scan_ports(nodes_ipv4)
-            ports.extend(ports_udp)
+        ports = self._filter_out_ports(ports)
+        ports.extend(self._get_special_ports())
 
-        port_range_allow = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.include'],
-                                                    udp=cfg['portdetection.ports.tcp.include'])
+        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
+        await self._clean_scan()
 
-        port_range_deny = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.exclude'],
-                                                   udp=cfg['portdetection.ports.tcp.exclude'])
-
-        ports = [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
-
+    def _get_special_ports(self):
+        return_value = []
         if cfg['service.scans.physical']:
             interfaces = netifaces.interfaces()
 
@@ -159,12 +156,29 @@ class ScanAsyncTask(object):
                 port = PhysicalPort()
                 port.interface = interface
                 port.scan = Scan(start=time.time())
-                ports.append(port)
+                return_value.append(port)
 
-        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
-        self.current_scan = []
+        return return_value
 
-        await self._clean_scan()
+    def _filter_out_ports(self, ports):
+        port_range_allow = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.include'],
+                                                    udp=cfg['portdetection.ports.tcp.include'])
+
+        port_range_deny = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.exclude'],
+                                                   udp=cfg['portdetection.ports.tcp.exclude'])
+
+        return [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
+
+    def _get_scanners(self):
+        nmap_udp = cfg['portdetection._internal.nmap_udp']
+        scanners = {
+            self.IPV4: [MasscanPorts(udp=not nmap_udp)],
+            self.IPV6: [PortsScan(ipv6=True, tcp=True, udp=True)]
+        }
+
+        if nmap_udp:
+            scanners[self.IPV4].append(PortsScan(ipv6=False, tcp=False, udp=True))
+        return scanners
 
     async def _clean_scan(self):
         """
@@ -176,6 +190,7 @@ class ScanAsyncTask(object):
         """
         await self.update_scan_status(ScanStatus.IDLE)
         self._shutdown_condition.set()
+        self.current_scan = []
 
         if not self.as_service:
             await self.aucote.async_task_manager.stop()
@@ -230,7 +245,7 @@ class ScanAsyncTask(object):
             - Restrict nodes to allowed networks
 
         Args:
-            timestamp (float):
+            timestamp (float|None):
 
         Returns:
             list
