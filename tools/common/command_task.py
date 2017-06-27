@@ -8,6 +8,7 @@ import logging as log
 
 from structs import Scan, Vulnerability
 from tools.common.port_task import PortTask
+from utils.exceptions import StopCommandException
 
 
 class CommandTask(PortTask):
@@ -48,7 +49,11 @@ class CommandTask(PortTask):
         Returns:
 
         """
-        args = self.prepare_args()
+        try:
+            args = self.prepare_args()
+        except StopCommandException:
+            log.exception("Cannot execute command")
+            return None
 
         try:
             results = await self.command.async_call(args)

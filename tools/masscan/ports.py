@@ -5,7 +5,9 @@ Provides class for scanning ports
 from tools.common.scan_task import ScanTask
 from tools.masscan.base import MasscanBase
 from aucote_cfg import cfg
+from tools.nmap.tool import NmapTool
 from utils.config import Config
+from utils.exceptions import StopCommandException
 
 
 class MasscanPorts(ScanTask):
@@ -15,6 +17,7 @@ class MasscanPorts(ScanTask):
     """
 
     def __init__(self, udp=True):
+        self.tcp = True
         self.udp = udp
         super(MasscanPorts, self).__init__(MasscanBase())
 
@@ -31,21 +34,15 @@ class MasscanPorts(ScanTask):
         """
         args = ['--rate', str(cfg['portdetection.network_scan_rate'])]
 
-        if not self.udp:
-            args.extend(['--exclude-ports', 'U:0-65535'])
+        include_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.ports.tcp.include'],
+                                                      udp=self.udp and cfg['portdetection.ports.udp.include'])
 
-        include_ports = cfg['portdetection.ports.include']
+        exclude_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.ports.tcp.exclude'],
+                                                      udp=self.udp and cfg['portdetection.ports.udp.exclude'])
 
-        if isinstance(include_ports, Config):
-            include_ports = ",".join(include_ports)
-
-        if include_ports:
-            args.extend(['--ports', include_ports])
-
-        exclude_ports = cfg['portdetection.ports.exclude']
-
-        if isinstance(exclude_ports, Config):
-            exclude_ports = ",".join(exclude_ports)
+        if not include_ports:
+            raise StopCommandException("No ports for scan")
+        args.extend(['--ports', include_ports])
 
         if exclude_ports:
             args.extend(['--exclude-ports', exclude_ports])

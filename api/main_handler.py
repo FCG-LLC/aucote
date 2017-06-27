@@ -61,9 +61,6 @@ class MainHandler(Handler):
             dict
 
         """
-        ports_include = cfg['portdetection.ports.include']
-        ports_exlude = cfg['portdetection.ports.exclude']
-
         return {
             'nodes': [str(node.ip) for node in scan_task.current_scan],
             'networks': {
@@ -71,15 +68,26 @@ class MainHandler(Handler):
                 'exclude': list(cfg['portdetection.networks.exclude'])
             },
             'ports': {
-                'include': ports_include if isinstance(ports_include, str) else list(ports_include),
-                'exclude': ports_exlude if isinstance(ports_exlude, str) else list(ports_exlude),
+                'tcp': {
+                    'include': list(cfg['portdetection.ports.tcp.include']),
+                    'exclude': list(cfg['portdetection.ports.tcp.exclude']),
+                },
+                'udp': {
+                    'include': list(cfg['portdetection.ports.udp.include']),
+                    'exclude': list(cfg['portdetection.ports.udp.exclude']),
+                },
+                'sctp': {
+                    'include': list(cfg['portdetection.ports.sctp.include']),
+                    'exclude': list(cfg['portdetection.ports.sctp.exclude']),
+                },
             },
             'previous_scan': scan_task.previous_scan,
             'previous_tool_scan': scan_task.previous_tool_scan,
             'next_scan': scan_task.next_scan,
             'next_tool_scan': scan_task.next_tool_scan,
-            'scan_cron': cfg['portdetection.scan_cron'],
-            'tools_cron': cfg['portdetection.tools_cron']
+            'scan_cron': scan_task._scan_cron(),
+            'scan_interval': scan_task._scan_interval(),
+            'scan_type': cfg['portdetection.scan_type']
         }
 
     @classmethod

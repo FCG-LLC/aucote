@@ -15,7 +15,7 @@ from tornado.locks import Event
 
 from aucote_cfg import cfg
 from scans.executor import Executor
-from structs import Node, Scan, PhysicalPort, ScanStatus, TopisOSDiscoveryType, Service, CPEType
+from structs import Node, Scan, PhysicalPort, ScanStatus, ScanType, TopisOSDiscoveryType, Service, CPEType
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
@@ -28,6 +28,8 @@ class ScanAsyncTask(object):
     Class responsible for scanning
 
     """
+    LIVE_SCAN_CRON = '* * * * *'
+
     def __init__(self, aucote, as_service=True):
         self.as_service = as_service
         self._current_scan = []
@@ -38,9 +40,6 @@ class ScanAsyncTask(object):
         if as_service:
             self.aucote.async_task_manager.add_crontab_task(self._scan, self._scan_cron)
             self.aucote.async_task_manager.add_crontab_task(self._run_tools, self._tools_cron)
-
-    def _scan_cron(self):
-        return cfg['portdetection.scan_cron']
 
     @property
     def shutdown_condition(self):
@@ -54,7 +53,7 @@ class ScanAsyncTask(object):
         return self._shutdown_condition
 
     def _tools_cron(self):
-        return cfg['portdetection.tools_cron']
+        return cfg['portdetection._internal.tools_cron']
 
     async def run(self):
         """
@@ -77,7 +76,7 @@ class ScanAsyncTask(object):
             None
 
         """
-        if not cfg['portdetection.scan_enable']:
+        if not cfg['portdetection.scan_enabled']:
             return
         log.info("Starting port scan")
         nodes = await self._get_nodes_for_scanning(timestamp=None)
@@ -110,7 +109,7 @@ class ScanAsyncTask(object):
         self.scan_start = time.time()
         await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
-        nmap_udp = cfg['portdetection.nmap_udp']
+        nmap_udp = cfg['portdetection._internal.nmap_udp']
 
         self.current_scan = nodes
 
@@ -141,8 +140,11 @@ class ScanAsyncTask(object):
             ports_udp = await scanner_ipv4_udp.scan_ports(nodes_ipv4)
             ports.extend(ports_udp)
 
-        port_range_allow = NmapTool.parse_nmap_ports(cfg['portdetection.ports.include'])
-        port_range_deny = NmapTool.parse_nmap_ports(cfg['portdetection.ports.exclude'])
+        port_range_allow = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.include'],
+                                                    udp=cfg['portdetection.ports.tcp.include'])
+
+        port_range_deny = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.exclude'],
+                                                   udp=cfg['portdetection.ports.tcp.exclude'])
 
         ports = [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
 
@@ -233,7 +235,7 @@ class ScanAsyncTask(object):
         """
         topdis_nodes = await self._get_topdis_nodes()
 
-        storage_nodes = self.storage.get_nodes(parse_period(cfg['portdetection.scan_interval']), timestamp=timestamp)
+        storage_nodes = self.storage.get_nodes(self._scan_interval(), timestamp=timestamp)
 
         nodes = list(set(topdis_nodes) - set(storage_nodes))
 
@@ -308,7 +310,7 @@ class ScanAsyncTask(object):
 
         """
 
-        return croniter(cfg['portdetection.scan_cron'], time.time()).get_prev()
+        return croniter(self._scan_cron(), time.time()).get_prev()
 
     @property
     def previous_tool_scan(self):
@@ -319,7 +321,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg['portdetection.tools_cron'], time.time()).get_prev()
+        return croniter(cfg['portdetection._internal.tools_cron'], time.time()).get_prev()
 
     def get_ports_for_script_scan(self, nodes):
         """
@@ -340,7 +342,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg['portdetection.scan_cron'], time.time()).get_next()
+        return croniter(self._scan_cron(), time.time()).get_next()
 
     @property
     def next_tool_scan(self):
@@ -351,7 +353,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(cfg['portdetection.tools_cron'], time.time()).get_next()
+        return croniter(cfg['portdetection._internal.tools_cron'], time.time()).get_next()
 
     async def update_scan_status(self, status):
         """
@@ -368,14 +370,44 @@ class ScanAsyncTask(object):
             return
 
         data = {
-            'previous_scan': self.previous_scan,
-            'next_scan': self.next_scan,
-            'scan_start': self.scan_start,
-            'scan_duration': None,
-            'status': status.value
+            'portdetection': {
+                'status': {
+                    'previous_scan_start': self.previous_scan,
+                    'next_scan_start': self.next_scan,
+                    'scan_start': self.scan_start,
+                    'previous_scan_duration': 0,
+                    'code': status.value
+                }
+            }
         }
 
         if status is ScanStatus.IDLE:
-            data['scan_duration'] = time.time() - self.scan_start
+            data['portdetection']['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
 
-        await cfg.toucan.put('portdetection.status', data)
+        await cfg.toucan.push_config(data, overwrite=True)
+
+    def _scan_interval(self):
+        """
+        Get interval between particular node scan
+
+        Returns:
+            int
+
+        """
+        if cfg['portdetection.scan_type'] == ScanType.PERIODIC.value:
+            return 0
+
+        return parse_period(cfg['portdetection.live_scan.min_time_gap'])
+
+    def _scan_cron(self):
+        """
+        Get scan cron
+
+        Returns:
+            str
+
+        """
+        if cfg['portdetection.scan_type'] == ScanType.LIVE.value:
+            return self.LIVE_SCAN_CRON
+
+        return cfg['portdetection.periodic_scan.cron']

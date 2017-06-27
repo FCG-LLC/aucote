@@ -6,7 +6,7 @@ from tornado.testing import AsyncTestCase, gen_test
 
 from structs import Node
 from tools.common.scan_task import ScanTask
-from utils.exceptions import NonXMLOutputException
+from utils.exceptions import NonXMLOutputException, StopCommandException
 
 
 class ScanTaskTest(AsyncTestCase):
@@ -51,4 +51,14 @@ class ScanTaskTest(AsyncTestCase):
         result = yield self.task.scan_ports(nodes)
         expected = []
 
+        self.assertEqual(result, expected)
+
+    @gen_test
+    async def test_scan_ports_with_stop_task_exception(self):
+        nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))]
+        self.task.prepare_args = MagicMock()
+        self.task.prepare_args.side_effect = StopCommandException
+
+        result = await self.task.scan_ports(nodes=nodes)
+        expected = []
         self.assertEqual(result, expected)

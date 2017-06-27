@@ -182,7 +182,7 @@ class NmapTool(Tool):
             return cfg['tools.common.rate']
 
     @staticmethod
-    def parse_nmap_ports(sections):
+    def parse_nmap_ports(port_string):
         """
         Parses nmap ports argument and returns dictionary of sets
 
@@ -200,31 +200,100 @@ class NmapTool(Tool):
             "S": set()
         }
 
-        if isinstance(sections, str):
-            sections = sections.split(",")
-
-        if isinstance(sections, list):
-            sections = [element for section in sections for element in section.split(",")]
+        sections = port_string.split(",")
 
         protocol = "T"
 
         for section in sections:
-            if not section:
-                continue
-
             if ":" in section:
                 protocol = section[0]
                 section = section[2:]
 
-            if "-" in section:
-                range_args = [int(el) for el in section.split("-")]
-                return_value[protocol] |= set(range(range_args[0], range_args[1] + 1))
-                continue
-
-            return_value[protocol] |= {int(section)}
+            return_value[protocol] |= NmapTool.parse_ports_string(section)
 
         return {
             TransportProtocol.TCP: return_value["T"],
             TransportProtocol.UDP: return_value["U"],
             TransportProtocol.SCTP: return_value["S"]
         }
+
+    @staticmethod
+    def parse_ports_string(text):
+        """
+        Parses port string (standalone number or range) and returns as set
+
+        Args:
+            text (str):
+
+        Returns:
+            set
+
+        """
+        if "-" in text:
+            range_args = [int(el) for el in text.split("-")]
+            return set(range(range_args[0], range_args[1]+1))
+
+        return {int(text)}
+
+    @staticmethod
+    def ports_from_list(tcp=None, udp=None, sctp=None):
+        """
+        Returns dict of ports by protocol based on given lists of ports
+
+        Args:
+            tcp (list):
+            udp (list):
+            sctp (list):
+
+        Returns:
+            dict
+
+        """
+        return_value = {
+            TransportProtocol.TCP: set(),
+            TransportProtocol.UDP: set(),
+            TransportProtocol.SCTP: set()
+        }
+
+        tcp = map(str, tcp or [])
+        udp = map(str, udp or [])
+        sctp = map(str, sctp or [])
+
+        for port in tcp:
+            return_value[TransportProtocol.TCP] |= NmapTool.parse_ports_string(port)
+
+        for port in udp:
+            return_value[TransportProtocol.UDP] |= NmapTool.parse_ports_string(port)
+
+        for port in sctp:
+            return_value[TransportProtocol.SCTP] |= NmapTool.parse_ports_string(port)
+
+        return return_value
+
+    @staticmethod
+    def list_to_ports_string(tcp=None, udp=None, sctp=None):
+        """
+        Convert list of ports to Nmap format
+
+        Args:
+            self:
+            tcp (list|Config):
+            udp (list|Config):
+            sctp (list|Config):
+
+        Returns:
+            str
+
+        """
+        ports = []
+
+        if tcp:
+            ports.append("T:{0}".format(",".join(map(str, tcp))))
+
+        if udp:
+            ports.append("U:{0}".format(",".join(map(str, udp))))
+
+        if sctp:
+            ports.append("S:{0}".format(",".join(map(str, sctp))))
+
+        return ",".join(ports)

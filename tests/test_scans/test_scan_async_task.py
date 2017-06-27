@@ -245,14 +245,19 @@ class ScanAsyncTaskTest(AsyncTestCase):
         super(ScanAsyncTaskTest, self).setUp()
         self.cfg = {
             'portdetection': {
-                'scan_cron': '* * * * *',
-                'tools_cron': '* * * * *'
+                'scan_type': 'LIVE',
+                'live_scan': {
+                    'min_time_gap': 0,
+                },
+                '_internal': {
+                    'tools_cron': '* * * * *'
+                }
             },
             'topdis': {
                 'api': {
                     'host': '',
                     'port': ''
-                }
+                },
             }
         }
 
@@ -373,7 +378,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
     async def test_get_nodes_for_scanning(self, cfg, mock_get_nodes):
         cfg._cfg = {
             'portdetection': {
-                'scan_interval': '5s',
+                'live_scan': {
+                    'min_time_gap': '5s'
+                },
+                'scan_type': 'LIVE',
                 'networks': {
                     'include': ['127.0.0.2/31']
                 }
@@ -441,10 +449,22 @@ class ScanAsyncTaskTest(AsyncTestCase):
             },
             'portdetection': {
                 'ports': {
-                    'include': ['T:0-65535', 'U:0-65535', 'S:0-65535'],
-                    'exclude': ''
+                    'tcp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'udp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'sctp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
                 },
-                'nmap_udp': False
+                '_internal': {
+                    'nmap_udp': False
+                }
             }
         }
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
@@ -502,10 +522,22 @@ class ScanAsyncTaskTest(AsyncTestCase):
             },
             'portdetection': {
                 'ports': {
-                    'include': ['T:0-65535', 'U:0-65535', 'S:0-65535'],
-                    'exclude': ''
+                    'tcp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'udp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'sctp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
                 },
-                'nmap_udp': False
+                '_internal': {
+                    'nmap_udp': False
+                }
             }
         }
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
@@ -550,15 +582,27 @@ class ScanAsyncTaskTest(AsyncTestCase):
             },
             'portdetection': {
                 'ports': {
-                    'include': ['T:0-65535', 'U:0-65535', 'S:0-65535'],
-                    'exclude': ''
+                    'tcp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'udp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'sctp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
                 },
                 'networks': {
                     'exclude': [],
                     'include': '0.0.0.0/0'
                 },
                 'scan_enable': True,
-                'nmap_udp': False
+                '_internal': {
+                    'nmap_udp': False
+                }
             }
         }
         self.cfg = cfg
@@ -610,15 +654,27 @@ class ScanAsyncTaskTest(AsyncTestCase):
             },
             'portdetection': {
                 'ports': {
-                    'include': ['T:0-65535', 'U:0-65535', 'S:0-65535'],
-                    'exclude': ''
+                    'tcp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'udp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                    'sctp': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
                 },
                 'networks': {
                     'exclude': [],
                     'include': '0.0.0.0/0'
                 },
                 'scan_enable': True,
-                'nmap_udp': True
+                '_internal': {
+                    'nmap_udp': True
+                }
             }
         }
         self.cfg = cfg
@@ -654,7 +710,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_run_scan_without_nodes(self, cfg):
         cfg._cfg = {
             'portdetection': {
-                'nmap_udp': False
+                '_internal': {
+                    'nmap_udp': False
+                }
             }
         }
         self.thread._get_nodes_for_scanning = MagicMock(return_value=[])
@@ -668,7 +726,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_run_scan_as_non_service_without_nodes(self, cfg):
         cfg._cfg = {
             'portdetection': {
-                'nmap_udp': False
+                '_internal': {
+                    'nmap_udp': False
+                }
             }
         }
         self.thread.as_service = False
@@ -717,7 +777,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
     async def test_periodical_scan(self, cfg):
-        cfg._cfg = {'portdetection': {'scan_enable': True}}
+        cfg._cfg = {'portdetection': {'scan_enabled': True}}
         nodes = MagicMock()
         future = Future()
         future.set_result(nodes)
@@ -738,7 +798,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
     def test_disable_periodical_scan(self, cfg):
-        cfg._cfg = {'portdetection': {'scan_enable': False}}
+        cfg._cfg = {'portdetection': {'scan_enabled': False}}
         self.thread._get_nodes_for_scanning = MagicMock()
 
         yield self.thread._scan()
@@ -757,7 +817,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_previous_scan(self, mock_cfg):
         mock_cfg._cfg = {
             'portdetection': {
-                'scan_cron': '* * * * *',
+                'scan_type': 'PERIODIC',
+                'periodic_scan': {
+                    'cron': '* * * * *'
+                },
                 'tools_cron': '* * * * *',
             }
         }
@@ -773,7 +836,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
         mock_cfg._cfg = {
             'portdetection': {
                 'cron': '* * * * *',
-                'tools_cron': '*/8 * * * *',
+                '_internal': {
+                    'tools_cron': '*/8 * * * *',
+                }
             }
         }
 
@@ -787,7 +852,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_previous_scan_second_test(self, mock_cfg):
         mock_cfg._cfg = {
             'portdetection': {
-                'scan_cron': '*/12 * * * *',
+                'scan_type': 'PERIODIC',
+                'periodic_scan': {
+                    'cron': '*/12 * * * *'
+                },
                 'tools_cron': '*/12 * * * *'
             }
         }
@@ -834,7 +902,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_next_scan(self, mock_cfg):
         mock_cfg._cfg = {
             'portdetection': {
-                'scan_cron': '*/5 * * * *',
+                'scan_type': 'PERIODIC',
+                'periodic_scan': {
+                    'cron': '*/5 * * * *'
+                },
                 'tools_cron': '*/12 * * * *'
             }
         }
@@ -850,7 +921,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
         mock_cfg._cfg = {
             'portdetection': {
                 'cron': '*/12 * * * *',
-                'tools_cron': '*/12 * * * *'
+                '_internal': {
+                    'tools_cron': '*/12 * * * *'
+                }
             }
         }
 
@@ -865,21 +938,25 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @gen_test
     async def test_update_scan_status_to_in_progress(self, cfg):
         cfg.toucan = MagicMock()
-        cfg.toucan.put.return_value = Future()
-        cfg.toucan.put.return_value.set_result(MagicMock())
+        cfg.toucan.push_config.return_value = Future()
+        cfg.toucan.push_config.return_value.set_result(MagicMock())
 
         self.thread.scan_start = 17
         await self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
 
         expected = {
-            'previous_scan': 57,
-            'next_scan': 75,
-            'scan_start': 17,
-            'scan_duration': None,
-            'status': "IN PROGRESS"
+            'portdetection': {
+                'status': {
+                    'previous_scan_start': 57,
+                    'next_scan_start': 75,
+                    'scan_start': 17,
+                    'previous_scan_duration': 0,
+                    'code': "IN PROGRESS"
+                }
+            }
         }
 
-        cfg.toucan.put.assert_called_once_with('portdetection.status', expected)
+        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True)
 
     @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
     @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
@@ -888,35 +965,79 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @gen_test
     async def test_update_scan_status_to_idle(self, cfg):
         cfg.toucan = MagicMock()
-        cfg.toucan.put.return_value = Future()
-        cfg.toucan.put.return_value.set_result(MagicMock())
+        cfg.toucan.push_config.return_value = Future()
+        cfg.toucan.push_config.return_value.set_result(MagicMock())
 
         self.thread.scan_start = 17
         await self.thread.update_scan_status(ScanStatus.IDLE)
 
         expected = {
-            'previous_scan': 57,
-            'next_scan': 75,
-            'scan_start': 17,
-            'scan_duration': 283,
-            'status': "IDLE"
+            'portdetection': {
+                'status': {
+                    'previous_scan_start': 57,
+                    'next_scan_start': 75,
+                    'scan_start': 17,
+                    'previous_scan_duration': 283,
+                    'code': "IDLE"
+                }
+            }
         }
 
-        cfg.toucan.put.assert_called_once_with('portdetection.status', expected)
+        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_scan_cron(self, cfg):
         expected = "* * * * */45"
-        cfg['portdetection.scan_cron'] = expected
+        cfg['portdetection.scan_type'] = "PERIODIC"
+        cfg['portdetection.periodic_scan.cron'] = expected
         result = self.thread._scan_cron()
         self.assertEqual(result, expected)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_tools_cron(self, cfg):
         expected = "* * * * */45"
-        cfg['portdetection.tools_cron'] = expected
+        cfg['portdetection.scan_type'] = "PERIODIC"
+        cfg['portdetection._internal.tools_cron'] = expected
         result = self.thread._tools_cron()
         self.assertEqual(result, expected)
 
     def test_shutdown_condition(self):
         self.assertEqual(self.thread.shutdown_condition, self.thread._shutdown_condition)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_scan_interval_periodic(self, cfg):
+        cfg['portdetection.scan_type'] = "PERIODIC"
+
+        result = self.thread._scan_interval()
+        expected = 0
+
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_scan_interval_live(self, cfg):
+        cfg['portdetection.scan_type'] = "LIVE"
+        cfg['portdetection.live_scan.min_time_gap'] = "5m13s"
+
+        result = self.thread._scan_interval()
+        expected = 313
+
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_scan_cron_periodic(self, cfg):
+        cfg['portdetection.scan_type'] = "PERIODIC"
+        cfg['portdetection.periodic_scan.cron'] = "*/2 3 */5 * *"
+
+        result = self.thread._scan_cron()
+        expected = "*/2 3 */5 * *"
+
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_scan_cron_live(self, cfg):
+        cfg['portdetection.scan_type'] = "LIVE"
+
+        result = self.thread._scan_cron()
+        expected = '* * * * *'
+
+        self.assertEqual(result, expected)

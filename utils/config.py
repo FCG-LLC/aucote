@@ -19,14 +19,14 @@ class Config:
     Except for loading data, this class is read-only and therefore may be used from multiple threads.
     '''
 
-    def __init__(self, cfg=None):
+    def __init__(self, cfg=None, cache_time=60):
         self.timestamps = {}
         self._cfg = {}
         self._immutable = set()
         self.push_config(cfg, immutable=True)
         self.default = self._cfg.copy()
         self.toucan = None
-        self.cache_time = 60*5
+        self.cache_time = cache_time
 
     def __len__(self):
         return len(self._cfg)

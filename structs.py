@@ -508,3 +508,12 @@ class TopisOSDiscoveryType(Enum):
     """
     FINGERPRINT = "OSFINGERPRINT"
     DIRECT = "DIRECT"
+
+
+class ScanType(Enum):
+    """
+    Scan types
+
+    """
+    PERIODIC = "PERIODIC"
+    LIVE = "LIVE"
