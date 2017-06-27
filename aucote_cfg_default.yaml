@@ -3,7 +3,7 @@
 #   scans:
 #     useragent: <str> - User-Agent string used by Aucote scripts.
 #     storage: <str> - Path to local storage. Local storage is a SQLite3 database file.
-#     threads: <int> - Number of threads to be running
+#     parallel_tasks: <int> - Number of parallel task to be running
 #     port_period: <period> - Minimal port scanning period
 #     broadcast: (True|False) - Enable broadcast scanning if True (default)
 #     physical: (True|False) - Enable scanning of aucote's host physical interfaces (e.g. eth0) if True (default)
@@ -20,7 +20,7 @@ service:
     scans:
         useragent: "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
         storage: "tmp/storage.sqlite3"
-        threads: 30
+        parallel_tasks: 30
         port_period: 15m
         physical: False
         broadcast: False

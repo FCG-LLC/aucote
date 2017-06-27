@@ -6,7 +6,6 @@ import ipaddress
 import re
 from enum import Enum
 import time
-from threading import Semaphore
 
 from cpe import CPE
 
@@ -491,31 +490,6 @@ class Vulnerability(object):
         self.output = str(output)
         self.exploit = exploit
         self.port = port
-
-
-class StorageQuery(object):
-    """
-    Represents query to database which expects results
-
-    """
-    def __init__(self, query, args=None):
-        self._query = query
-        self._args = args
-        self.result = []
-        self.semaphore = Semaphore(value=0)
-
-    @property
-    def query(self):
-        """
-        Tuple of arguments for Sqlite3 execute function
-
-        Returns:
-            tuple
-
-        """
-        if self._args:
-            return self._query, self._args
-        return self._query,
 
 
 class ScanStatus(Enum):

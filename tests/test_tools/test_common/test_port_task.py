@@ -26,3 +26,6 @@ class PortTaskTest(TestCase):
 
     def test_get_vulnerabilities(self):
         self.assertRaises(NotImplementedError, self.task.get_vulnerabilities, [])
+
+    def test_port(self):
+        self.assertEqual(self.task.port, self.port)

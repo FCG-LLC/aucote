@@ -97,7 +97,7 @@ EXECUTOR_CONFIG = {
             'without-login': ['redis', 'cisco', 'oracle-listener', 's7-300', 'snmp', 'vnc']
         },
         'skipfish': {
-            'class': SkipfishTool
+            'class': SkipfishTool,
         },
         'aucote-http-headers': {
             'class': AucoteHttpHeadersTool,

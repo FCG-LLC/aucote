@@ -3,10 +3,12 @@ Configuration related module
 
 """
 import time
-from threading import Lock
 import logging as log
+from functools import partial
 
 import yaml
+from tornado.ioloop import IOLoop
+
 from utils.exceptions import ToucanException
 
 
@@ -18,7 +20,6 @@ class Config:
     '''
 
     def __init__(self, cfg=None):
-        self._lock = Lock()
         self.timestamps = {}
         self._cfg = {}
         self._immutable = set()
@@ -55,37 +56,36 @@ class Config:
             mixed
 
         """
-        with self._lock:
-            try:
-                if key in self._immutable:
+        try:
+            if key in self._immutable:
+                return_value = self._get(key)
+
+            elif self.toucan:
+                if key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
                     return_value = self._get(key)
 
-                elif self.toucan:
-                    if key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
-                        return_value = self._get(key)
+                elif self.toucan.is_special(key):
+                    result = IOLoop().run_sync(partial(self.toucan.get, key))
 
-                    elif self.toucan.is_special(key):
-                        result = self.toucan.get(key)
-
-                        for subkey, value in result.items():
-                            self._set(subkey, value)
-                        return_value = self._get(key)
-
-                    else:
-                        return_value = self.toucan.get(key)
-                        self._set(key, return_value)
-                else:
+                    for subkey, value in result.items():
+                        self._set(subkey, value)
                     return_value = self._get(key)
 
-                if isinstance(return_value, dict) or isinstance(return_value, list):
-                    return Config(return_value)
                 else:
-                    return return_value
-            except KeyError:
-                raise KeyError(key)
-            except ToucanException:
-                log.exception("Error while obtaining configuration: %s", key)
-                raise KeyError(key)
+                    return_value = IOLoop().run_sync(partial(self.toucan.get, key))
+                    self._set(key, return_value)
+            else:
+                return_value = self._get(key)
+
+            if isinstance(return_value, dict) or isinstance(return_value, list):
+                return Config(return_value)
+            else:
+                return return_value
+        except KeyError:
+            raise KeyError(key)
+        except ToucanException:
+            log.exception("Error while obtaining configuration: %s", key)
+            raise KeyError(key)
 
     def set(self, key, value):
         """
@@ -99,8 +99,7 @@ class Config:
             None
 
         """
-        with self._lock:
-            self._set(key, value)
+        self._set(key, value)
 
     def _set(self, key, value):
         self.timestamps[key] = time.time()

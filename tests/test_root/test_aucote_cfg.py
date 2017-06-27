@@ -1,19 +1,23 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock, call, mock_open
 
+from tornado.concurrent import Future
+from tornado.testing import AsyncTestCase, gen_test
+
 from aucote_cfg import load, _DEFAULT, start_toucan
 from utils import Config
 
 
-class AucoteCfgTest(TestCase):
+class AucoteCfgTest(AsyncTestCase):
     YAML = '''alice:
     has:
         a: dog'''
 
+    @patch('aucote_cfg.log_cfg')
     @patch('aucote_cfg.cfg', new_callable=Config)
-    @patch('aucote_cfg.log_cfg', MagicMock())
     @patch('os.path.join', MagicMock(return_value='test'))
-    def test_empty_load(self, cfg):
+    @gen_test
+    async def test_empty_load(self, cfg, log_cfg):
         cfg._cfg = {
             'logging': '',
             'default_config': 'test_default',
@@ -21,29 +25,37 @@ class AucoteCfgTest(TestCase):
                 'enable': False,
             }
         }
+        log_cfg.config.return_value = Future()
+        log_cfg.config.return_value.set_result(MagicMock())
+
         cfg.load = MagicMock()
         cfg.load_toucan = MagicMock()
-        load()
+        await load()
         cfg.load.assert_has_calls([call('test', _DEFAULT), call('test_default', cfg._cfg)], False)
 
     @patch('os.path.join', MagicMock(return_value='test'))
     @patch('aucote_cfg.cfg', new_callable=Config)
     @patch('aucote_cfg.log_cfg', MagicMock())
-    def test_nonexist_file_load(self, mock_cfg):
+    @gen_test
+    async def test_nonexist_file_load(self, mock_cfg):
         mock_cfg.load = MagicMock(side_effect=FileNotFoundError())
-        self.assertRaises(SystemExit, load, 'test')
+        with self.assertRaises(SystemExit):
+            await load('test')
 
     @patch('aucote_cfg.cfg', new_callable=Config)
     @patch('aucote_cfg.log_cfg', MagicMock())
     @patch('os.path.join', MagicMock(return_value='test'))
-    def test_invalid_file_load(self, mock_cfg):
+    @gen_test
+    async def test_invalid_file_load(self, mock_cfg):
         mock_cfg.load = MagicMock(side_effect=TypeError())
-        self.assertRaises(SystemExit, load, 'test')
+        with self.assertRaises(SystemExit):
+            await load('test')
 
+    @patch('aucote_cfg.log_cfg')
     @patch('aucote_cfg.cfg', new_callable=Config)
-    @patch('aucote_cfg.log_cfg', MagicMock())
     @patch('os.path.join', MagicMock(return_value='test'))
-    def test_invalid_default_file_load(self, cfg):
+    @gen_test
+    async def test_invalid_default_file_load(self, cfg, log_cfg):
         cfg._cfg = {
             'logging': '',
             'default_config': 'test_default',
@@ -51,14 +63,20 @@ class AucoteCfgTest(TestCase):
                 'enable': False,
             }
         }
-        cfg.load = MagicMock(side_effect=(None, TypeError()))
-        self.assertRaises(SystemExit, load, 'test')
 
+        log_cfg.config.return_value = Future()
+        log_cfg.config.return_value.set_result(MagicMock())
+
+        cfg.load = MagicMock(side_effect=(None, TypeError()))
+        with self.assertRaises(SystemExit):
+            await load('test')
+
+    @patch('aucote_cfg.log_cfg')
     @patch('aucote_cfg.cfg', new_callable=Config)
-    @patch('aucote_cfg.log_cfg', MagicMock())
     @patch('aucote_cfg.start_toucan')
     @patch('os.path.join', MagicMock(return_value='test'))
-    def test_toucan_enabled(self, start_toucan, cfg):
+    @gen_test
+    async def test_toucan_enabled(self, start_toucan, cfg, log_cfg):
         cfg._cfg = {
             'logging': '',
             'default_config': 'test_default',
@@ -67,14 +85,21 @@ class AucoteCfgTest(TestCase):
             }
         }
 
+        log_cfg.config.return_value = Future()
+        log_cfg.config.return_value.set_result(MagicMock())
+
+        start_toucan.return_value = Future()
+        start_toucan.return_value.set_result(MagicMock())
+
         cfg.load = MagicMock()
-        load()
+        await load()
         start_toucan.assert_called_once_with('test_default')
 
     @patch('builtins.open', mock_open(read_data=YAML))
     @patch('aucote_cfg.Toucan')
     @patch('aucote_cfg.cfg', new_callable=Config)
-    def test_load_toucan(self, cfg, toucan):
+    @gen_test
+    async def test_load_toucan(self, cfg, toucan):
         cfg._cfg = {
             'toucan': {
                 'enable': True,
@@ -89,7 +114,10 @@ class AucoteCfgTest(TestCase):
             }
         }
 
-        start_toucan('test_file')
+        toucan().push_config.return_value = Future()
+        toucan().push_config.return_value.set_result(MagicMock())
+
+        await start_toucan('test_file')
         toucan.return_value.push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=False)
         self.assertEqual(cfg.toucan, toucan.return_value)
         self.assertEqual(toucan.min_retry_time, 15)

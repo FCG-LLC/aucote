@@ -2,6 +2,8 @@ import ipaddress
 from unittest import TestCase
 from unittest.mock import patch, MagicMock, call
 
+from tornado.testing import gen_test, AsyncTestCase
+
 from fixtures.exploits import Exploit
 from structs import RiskLevel, Port, TransportProtocol, Node, Scan
 from tools.nmap.base import NmapScript
@@ -11,8 +13,9 @@ from utils import Config
 from utils.storage import Storage
 
 
-class NmapToolTest(TestCase):
+class NmapToolTest(AsyncTestCase):
     def setUp(self):
+        super(NmapToolTest, self).setUp()
         self.exploit = Exploit(exploit_id=1, name='test_name', risk_level=RiskLevel.NONE)
 
         self.exploit2 = Exploit(exploit_id=2, name='test_name', risk_level=RiskLevel.HIGH)
@@ -64,10 +67,11 @@ class NmapToolTest(TestCase):
     @patch('tools.nmap.tool.NmapScript')
     @patch('tools.nmap.tool.NmapPortScanTask')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_call(self, cfg, port_scan_mock, nmap_script, info_scan_script, vuln_scan_script):
+    @gen_test
+    async def test_call(self, cfg, port_scan_mock, nmap_script, info_scan_script, vuln_scan_script):
         cfg._cfg = self.cfg
 
-        self.nmap_tool()
+        await self.nmap_tool()
         nmap_script.has_calls((
             call(exploit=self.exploit, port=self.port, parser=info_scan_script(), name='test_name',args='test_args'),
             call(exploit=self.exploit2, port=self.port, parser=vuln_scan_script(), name='test_name', args='test_args')
@@ -79,24 +83,26 @@ class NmapToolTest(TestCase):
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_enable(self, cfg):
+    @gen_test
+    async def test_enable(self, cfg):
         cfg._cfg = self.cfg
         self.exploit2.name = 'test_name2'
-        self.nmap_tool()
+        await self.nmap_tool()
 
-        result = self.nmap_tool.aucote.add_task.call_count
+        result = self.nmap_tool.aucote.add_async_task.call_count
         expected = 1
 
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_single_mode(self, cfg):
+    @gen_test
+    async def test_single_mode(self, cfg):
         cfg._cfg = self.cfg
         self.nmap_tool.config['scripts']['test_name']['singular'] = True
         self.exploit2.name = 'test_name2'
-        self.nmap_tool()
+        await self.nmap_tool()
 
-        result = self.nmap_tool.aucote.add_task.call_count
+        result = self.nmap_tool.aucote.add_async_task.call_count
         expected = 2
 
         self.assertEqual(result, expected)
@@ -104,17 +110,19 @@ class NmapToolTest(TestCase):
     @patch('tools.nmap.tool.NmapVulnParser')
     @patch('tools.nmap.tool.NmapScript')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_configurable_args(self, cfg, nmap_script, vuln_parser):
+    @gen_test
+    async def test_configurable_args(self, cfg, nmap_script, vuln_parser):
         cfg._cfg = self.cfg
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.config['scripts']['test_name2']['args'].return_value = 'dynamic_conf_test'
-        self.nmap_tool()
+        await self.nmap_tool()
         nmap_script.assert_called_once_with(exploit=self.exploit_conf_args, port=self.port, parser=vuln_parser(),
                                                  name='test_name2', args='dynamic_conf_test')
 
     @patch('tools.nmap.tool.NmapPortScanTask')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_exploits_with_this_same_scripts_name(self, cfg, port_scan_mock):
+    @gen_test
+    async def test_exploits_with_this_same_scripts_name(self, cfg, port_scan_mock):
         """
         Test executing exploits with this same script name
         Args:
@@ -132,7 +140,7 @@ class NmapToolTest(TestCase):
             NmapScript(exploit=self.exploit, parser=NmapParser, port=self.port, name='test_name', args='test2')
         ]
 
-        self.nmap_tool()
+        await self.nmap_tool()
         self.assertEqual(port_scan_mock.call_count, 2)
 
     @patch('tools.nmap.tool.cfg', new_callable=Config)
@@ -153,32 +161,35 @@ class NmapToolTest(TestCase):
 
     @patch('tools.nmap.tool.NmapScript')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_improper_configure_args(self, cfg, nmap_script):
+    @gen_test
+    async def test_improper_configure_args(self, cfg, nmap_script):
         cfg._cfg = self.cfg
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.config['scripts']['test_name2']['args'].side_effect = KeyError('test.test2')
-        self.nmap_tool()
+        await self.nmap_tool()
 
         self.assertFalse(nmap_script.called)
 
     @patch('tools.nmap.tool.NmapScript')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_disable_script_by_cfg(self, cfg, nmap_script):
+    @gen_test
+    async def test_disable_script_by_cfg(self, cfg, nmap_script):
         cfg._cfg = self.cfg
         cfg._cfg['tools']['nmap']['disable_scripts'] = ['test_name', 'test_name2']
 
         self.nmap_tool.exploits = [self.exploit_conf_args]
-        self.nmap_tool()
+        await self.nmap_tool()
 
         self.assertFalse(nmap_script.called)
 
     @patch('tools.nmap.tool.NmapScript')
     @patch('tools.nmap.tool.cfg', new_callable=Config)
-    def test_disable_script_by_internal_cfg(self, cfg, nmap_script):
+    @gen_test
+    async def test_disable_script_by_internal_cfg(self, cfg, nmap_script):
         cfg._cfg = self.cfg
         self.nmap_tool.exploits = [self.exploit_conf_args]
         self.nmap_tool.config['disable_scripts'] = {'test_name', 'test_name2'}
-        self.nmap_tool()
+        await self.nmap_tool()
 
         self.assertFalse(nmap_script.called)
 
@@ -277,6 +288,7 @@ class NmapToolTest(TestCase):
         expected = 7331
 
         self.assertEqual(result, expected)
+
     def test_parse_nmap_ports_coma_separated_without_protocol(self):
         ports = ["22", "80", "90"]
 

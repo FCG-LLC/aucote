@@ -63,8 +63,5 @@ class CommandTest(AsyncTestCase):
         future_3.set_result("")
         mock_subprocess.return_value.stderr.read_until_close.return_value = future_3
 
-        try:
+        with self.assertRaises(subprocess.CalledProcessError):
             yield self.command.async_call()
-            self.fail()
-        except subprocess.CalledProcessError:
-            pass

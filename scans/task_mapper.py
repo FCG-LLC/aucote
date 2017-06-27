@@ -27,7 +27,7 @@ class TaskMapper:
         """
         self._aucote = aucote
 
-    def assign_tasks(self, port, storage):
+    async def assign_tasks(self, port, storage):
         """
         Assign tasks for a provided port
 
@@ -68,8 +68,7 @@ class TaskMapper:
             task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, port=port.copy(),
                                                          config=EXECUTOR_CONFIG['apps'][app])
 
-            self._aucote.add_task(task)
-
+            self._aucote.add_async_task(task)
     @property
     def exploits(self):
         """

@@ -11,33 +11,27 @@ import sys
 import fcntl
 
 import signal
-from threading import Lock
-
-from tornado import gen
 from tornado.ioloop import IOLoop
+from tornado.locks import Event
 
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
 from scans.scan_async_task import ScanAsyncTask
 from scans.task_mapper import TaskMapper
-from threads.storage_thread import StorageThread
-from threads.watchdog_thread import WatchdogThread
-from threads.web_server_thread import WebServerThread
 from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
-from utils.threads import ThreadPool
+from utils.storage import Storage
 from utils.kudu_queue import KuduQueue
 from database.serializer import Serializer
+from utils.web_server import WebServer
 from aucote_cfg import cfg, load as cfg_load
-
-#constants
 
 VERSION = (0, 1, 0)
 APP_NAME = 'Automated Compliance Tests'
 
 
 # ============== main app ==============
-def main():
+async def main():
     """
     Main function of aucote project
     Returns:
@@ -54,12 +48,12 @@ def main():
     args = parser.parse_args()
 
     # read configuration
-    cfg_load(args.cfg)
+    await cfg_load(args.cfg)
 
     log.info("%s, version: %s.%s.%s", APP_NAME, *VERSION)
 
     try:
-        lock = open(cfg.get('pid_file'), 'w')
+        lock = open(cfg['pid_file'], 'w')
         fcntl.lockf(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
         log.error("There is another Aucote instance running already")
@@ -82,11 +76,12 @@ def main():
         aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=EXECUTOR_CONFIG)
 
         if args.cmd == 'scan':
-            aucote.run_scan(as_service=False)
+            await aucote.run_scan(as_service=False)
+            IOLoop.current().stop()
         elif args.cmd == 'service':
             while True:
-                aucote.run_scan()
-                cfg.reload(cfg.get('config_filename'))
+                await aucote.run_scan()
+                cfg.reload(cfg['config_filename'])
         elif args.cmd == 'syncdb':
             aucote.run_syncdb()
 
@@ -100,19 +95,20 @@ class Aucote(object):
     """
 
     def __init__(self, exploits, kudu_queue, tools_config):
-        self._lock = Lock()
         self.exploits = exploits
-        self._thread_pool = ThreadPool(cfg.get('service.scans.threads'))
         self._kudu_queue = kudu_queue
         self.task_mapper = TaskMapper(self)
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
+        signal.signal(signal.SIGHUP, self.graceful_stop)
         self.load_tools(tools_config)
         self._scan_task = None
-        self._watch_thread = None
-        self._storage_thread = None
+
+        self._storage = Storage(filename=cfg['service.scans.storage'])
+
         self.ioloop = IOLoop.current()
-        self.async_task_manager = AsyncTaskManager.instance()
+        self.async_task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
+        self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'])
 
     @property
     def kudu_queue(self):
@@ -123,28 +119,7 @@ class Aucote(object):
         """
         return self._kudu_queue
 
-    @property
-    def storage(self):
-        """
-        Returns:
-            Storage
-
-        """
-        with self._lock:
-            return self._storage_thread
-
-    @property
-    def thread_pool(self):
-        """
-        Returns aucote thread pool
-
-        Returns:
-            ThreadPool
-
-        """
-        return self._thread_pool
-
-    def run_scan(self, as_service=True):
+    async def run_scan(self, as_service=True):
         """
         Start scanning ports.
 
@@ -152,34 +127,20 @@ class Aucote(object):
 
         """
         try:
-            self._storage_thread = StorageThread(filename=cfg.get('service.scans.storage'))
-            self._storage_thread.start()
-
-            if as_service:
-                self._watch_thread = WatchdogThread(file=cfg.get('config_filename'), action=self.graceful_stop)
-                self._watch_thread.start()
+            self.async_task_manager.clear()
+            self._storage.connect()
+            self._storage.init_schema()
 
             self._scan_task = ScanAsyncTask(aucote=self, as_service=as_service)
-            self._scan_task.run()
+            self.ioloop.add_callback(self.web_server.run)
+            await self._scan_task.run()
+            await self.async_task_manager.shutdown_condition.wait()
 
-            self.thread_pool.start()
-            web_server = WebServerThread(self, cfg.get('service.api.v1.host'), cfg.get('service.api.v1.port'))
-            web_server.start()
-
-            self.ioloop.start()
-
-            self.thread_pool.join()
-
-            web_server.stop()
-            web_server.join()
-
-            self.thread_pool.stop()
-            self.storage.stop()
-            self.storage.join()
-
+            self.web_server.stop()
             self._scan_task = None
-            self._watch_thread = None
-            self._storage_thread = None
+            self._storage.close()
+
+            log.info("Closing loop")
 
         except TopdisConnectionException:
             log.exception("Exception while connecting to Topdis")
@@ -196,9 +157,9 @@ class Aucote(object):
         for exploit in self.exploits:
             self.kudu_queue.send_msg(serializer.serialize_exploit(exploit))
 
-    def add_task(self, task):
+    def add_async_task(self, task):
         """
-        Add task for executing
+        Add async task for executing
 
         Args:
             task (Task):
@@ -208,7 +169,7 @@ class Aucote(object):
 
         """
         log.debug('Added task: %s', task)
-        self.thread_pool.add_task(task)
+        self.async_task_manager.add_task(task)
 
     def signal_handler(self, sig, frame):
         """
@@ -233,8 +194,7 @@ class Aucote(object):
             ScanAsyncTask
 
         """
-        with self._lock:
-            return self._scan_task
+        return self._scan_task
 
     @property
     def unfinished_tasks(self):
@@ -245,7 +205,7 @@ class Aucote(object):
             int
 
         """
-        return self.thread_pool.unfinished_tasks
+        return self.async_task_manager.unfinished_tasks
 
     def load_tools(self, config):
         """
@@ -260,8 +220,7 @@ class Aucote(object):
                 log.info('Loading %s', name)
                 app['loader'](app, self.exploits)
 
-    @gen.coroutine
-    def graceful_stop(self):
+    def graceful_stop(self, sig, frame):
         """
         Responsible for stopping the threads in graceful way.
 
@@ -270,9 +229,11 @@ class Aucote(object):
 
         """
         log.debug("Stop gracefuly")
-        self._watch_thread.stop()
-        yield self.async_task_manager.stop()
-        self.ioloop.stop()
+        self.ioloop.add_callback_from_signal(self._graceful_stop)
+
+    async def _graceful_stop(self):
+        await self.scan_task.shutdown_condition.wait()
+        await self.async_task_manager.stop()
 
     @classmethod
     def kill(cls):
@@ -285,10 +246,20 @@ class Aucote(object):
         """
         os._exit(1)
 
+    @property
+    def storage(self):
+        """
+        Aucote's storage
+
+        Returns:
+            Storage
+
+        """
+        return self._storage
 
 # =================== start app =================
 
 if __name__ == "__main__":  # pragma: no cover
     chdir(dirname(realpath(__file__)))
-
-    main()
+    IOLoop.current().add_callback(main)
+    IOLoop.current().start()

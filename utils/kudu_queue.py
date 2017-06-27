@@ -7,7 +7,7 @@ from ipaddress import IPv4Address, IPv6Address
 
 from utils.database_interface import DbInterface
 from utils.string import bytes_str
-from nanomsg import Socket, PUSH #pylint: disable=no-name-in-module
+from nanomsg import Socket, PUSH, DONTWAIT #pylint: disable=no-name-in-module
 
 
 class KuduMsg:
@@ -133,11 +133,12 @@ class KuduQueue(DbInterface):
         self._socket.close()
         self._socket = None
 
-    def send_msg(self, msg):
+    def send_msg(self, msg, dont_wait=False):
         """
         Send message to queue
         """
 
         assert isinstance(msg, KuduMsg)
         log.debug('sending bytes to kuduworker: %s', bytes_str(msg.data))
-        self._socket.send(msg.data)
+        flags = (dont_wait and DONTWAIT) or 0
+        self._socket.send(msg.data, flags)

@@ -3,13 +3,16 @@ import subprocess
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+from tornado.concurrent import Future
+from tornado.testing import gen_test, AsyncTestCase
+
 from fixtures.exploits import Exploit
 from structs import Port, TransportProtocol, Node, Scan
 from tools.skipfish.tasks import SkipfishScanTask
 from utils import Config
 
 
-class SkipfishScanTaskTest(TestCase):
+class SkipfishScanTaskTest(AsyncTestCase):
     OUTPUT = '''[*] Scan in progress, please stay tuned...
 
 [!] Scan aborted by user, bailing out!
@@ -25,6 +28,7 @@ class SkipfishScanTaskTest(TestCase):
 [+] This was a great day for science!'''
 
     def setUp(self):
+        super(SkipfishScanTaskTest, self).setUp()
         self.aucote = MagicMock()
 
         self.node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
@@ -38,7 +42,8 @@ class SkipfishScanTaskTest(TestCase):
 
     @patch('time.time', MagicMock(return_value=27.0))
     @patch('tools.skipfish.tasks.cfg', new_callable=Config)
-    def test_storage(self, cfg):
+    @gen_test
+    async def test_storage(self, cfg):
         cfg._cfg = {
             'tools': {
                 'skipfish': {
@@ -48,8 +53,10 @@ class SkipfishScanTaskTest(TestCase):
                 }
             }
         }
-        self.task.command.call = MagicMock(return_value=MagicMock())
-        self.task()
+        future = Future()
+        future.set_result(MagicMock())
+        self.task.command.async_call = MagicMock(return_value=future)
+        await self.task()
 
         result = self.task.store_scan_end.call_args[1]
         expected = {

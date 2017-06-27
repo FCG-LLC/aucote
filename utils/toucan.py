@@ -4,9 +4,11 @@ Toucan is centralized node manager. Aucote uses it to obtain user configuration.
 """
 import logging as log
 import time
-import requests
+import ujson
+from tornado.httpclient import HTTPError
 
 from utils.exceptions import ToucanException, ToucanUnsetException, ToucanConnectionException
+from utils.http_client import HTTPClient
 
 
 def retry_if_fail(function):
@@ -20,7 +22,7 @@ def retry_if_fail(function):
         function
 
     """
-    def function_wrapper(*args, **kwargs):
+    async def function_wrapper(*args, **kwargs):
         """
         Try to execute function. In case of fail double waiting time.
         Waiting time cannot exceed Toucan.max_retry_count.
@@ -41,7 +43,7 @@ def retry_if_fail(function):
         try_counter = 0
         while try_counter < Toucan.max_retry_count:
             try:
-                return function(*args, **kwargs)
+                return await function(*args, **kwargs)
             except ToucanConnectionException as exception:
                 log.warning("Cannot connect to Toucan: %s", str(exception))
                 log.warning("Retry in %s s", wait_time)
@@ -67,9 +69,24 @@ class Toucan(object):
 
     def __init__(self, api):
         self.api = api.rstrip("/")
+        self._http_client = HTTPClient.instance()
+
+    def _handle_exception(self, key, exception):
+        if exception.response.code in {404, 204}:
+            raise ToucanUnsetException(key)
+
+        if exception.response.code == 502:
+            try:
+                data = ujson.loads(exception.response.body.decode())
+            except ValueError:
+                raise ToucanConnectionException("Cannot parse JSON response: '{0}'".
+                                                format(exception.response.body.decode()))
+            raise ToucanConnectionException(data['message'])
+
+        raise ToucanException(key)
 
     @retry_if_fail
-    def get(self, key):
+    async def get(self, key):
         """
         Get config from toucan
 
@@ -86,8 +103,7 @@ class Toucan(object):
         toucan_key = self._get_slash_separated_key(key, strip_slashes=True)
 
         try:
-            response = requests.get(url="{api}/config/{key}"
-                                    .format(api=self.api, key=toucan_key))
+            response = await self._http_client.get(url="{api}/config/{key}".format(api=self.api, key=toucan_key))
 
             result = self.proceed_response(key, response)
 
@@ -98,11 +114,12 @@ class Toucan(object):
                     result[key.rstrip(".*")] = {}
 
             return result
-        except requests.exceptions.ConnectionError:
-            raise ToucanConnectionException("Cannot connect to Toucan")
+
+        except HTTPError as exception:
+            self._handle_exception(key, exception)
 
     @retry_if_fail
-    def put(self, key, values):
+    async def put(self, key, values):
         """
         Put config into toucan
 
@@ -134,12 +151,13 @@ class Toucan(object):
             raise ToucanException("Wrong value for special endpoint ({0})".format(key))
 
         try:
-            response = requests.put(url="{api}/config/{key}"
-                                    .format(api=self.api, key=toucan_key), json=data)
+            response = await self._http_client.put(url="{api}/config/{key}".format(api=self.api, key=toucan_key),
+                                                   json=data)
 
             return self.proceed_response(key, response)
-        except requests.exceptions.ConnectionError:
-            raise ToucanConnectionException("Cannot connect to Toucan")
+
+        except HTTPError as exception:
+            self._handle_exception(key, exception)
 
     def proceed_response(self, key, response):
         """
@@ -156,17 +174,7 @@ class Toucan(object):
             ToucanUnsetException|ToucanConnectionException|ToucanException
 
         """
-        if response.status_code in {404, 204}:
-            raise ToucanUnsetException(key)
-
-        if response.status_code == 502:
-            data = response.json()
-            raise ToucanConnectionException(data['message'])
-
-        if response.status_code != 200:
-            raise ToucanException(key)
-
-        data = response.json()
+        data = ujson.loads(response.body.decode())
 
         if isinstance(data, dict):
             if data['status'] != "OK":
@@ -189,7 +197,7 @@ class Toucan(object):
         else:
             raise ToucanException(key)
 
-    def push_config(self, config, prefix='', overwrite=False):
+    async def push_config(self, config, prefix='', overwrite=False):
         """
         Push dict config to the toucan
 
@@ -204,11 +212,11 @@ class Toucan(object):
         """
         parsed_config = self.prepare_config(config, prefix)
         if overwrite:
-            self.put("*", parsed_config)
+            await self.put("*", parsed_config)
             return
 
         try:
-            all_keys = self.get("*".format(prefix=self.PREFIX))
+            all_keys = await self.get("*".format(prefix=self.PREFIX))
         except ToucanUnsetException:
             all_keys = {}
 
@@ -217,7 +225,7 @@ class Toucan(object):
                 del parsed_config[key]
 
         if parsed_config:
-            self.put("*", parsed_config)
+            await self.put("*", parsed_config)
 
     def prepare_config(self, config, prefix=''):
         """

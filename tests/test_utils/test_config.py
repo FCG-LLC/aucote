@@ -1,5 +1,7 @@
-from unittest import TestCase
-from unittest.mock import MagicMock, patch, mock_open, call
+from unittest.mock import MagicMock, patch, mock_open
+
+from coverage.backunittest import TestCase
+from tornado.concurrent import Future
 
 from utils import Config
 from utils.exceptions import ToucanException
@@ -28,7 +30,7 @@ class ConfigTest(TestCase):
         a: dog'''
 
     def setUp(self):
-
+        super(ConfigTest, self).setUp()
         self.CONFIG = {
             'alice': {
                 'has': {
@@ -204,7 +206,8 @@ class ConfigTest(TestCase):
         self.config.toucan.is_special.return_value = False
         self.cache_time = 1
         expected = 'test_value'
-        self.config.toucan.get.return_value = expected
+        self.config.toucan.get.return_value = Future()
+        self.config.toucan.get.return_value.set_result(expected)
 
         result = self.config['non.exisists.key']
 
@@ -244,7 +247,9 @@ class ConfigTest(TestCase):
     def test_get_special_config_with_toucan(self):
         self.config.toucan = MagicMock()
         self.config.toucan.is_special.return_value = True
-        self.config.toucan.get.return_value = {'alice.has.a': 'cat', 'test.key': 'test_value'}
+        self.config.toucan.get.return_value = Future()
+        self.config.toucan.get.return_value.set_result({'alice.has.a': 'cat', 'test.key': 'test_value'})
+
         self.config.timestamps = {
             'alice.has.a': 15,
         }

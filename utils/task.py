@@ -4,7 +4,6 @@ Provide class for tasks
 """
 import logging as log
 import time
-from threading import Lock
 
 from database.serializer import Serializer
 
@@ -19,7 +18,6 @@ class Task(object):
         Assign executor
 
         """
-        self._lock = Lock()
         self.aucote = aucote
         self.creation_time = time.time()
         self.start_time = None
@@ -115,14 +113,3 @@ class Task(object):
 
         """
         return self.aucote.storage
-
-    @property
-    def name(self):
-        """
-        task name
-
-        Returns:
-            str
-
-        """
-        return self._name or type(self).__name__

@@ -55,18 +55,7 @@ class Executor(Task):
         """
         return self.aucote.kudu_queue
 
-    @property
-    def thread_pool(self):
-        """
-        Returns aucote's thread pool
-
-        Returns:
-            ThreadPool
-
-        """
-        return self.aucote.thread_pool
-
-    def run(self):
+    async def run(self):
         """
         Start tasks: scanning nodes and ports
 
@@ -80,7 +69,7 @@ class Executor(Task):
         self.storage.save_ports(ports)
 
         for port in ports:
-            self.add_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only))
+            self.add_async_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only))
 
     def __call__(self, *args, **kwargs):
         """
@@ -107,6 +96,19 @@ class Executor(Task):
 
         """
         return self.aucote.add_task(task)
+
+    def add_async_task(self, task):
+        """
+        Add async task to aucote pool
+
+        Args:
+            task (Task):
+
+        Returns:
+            None
+
+        """
+        return self.aucote.add_async_task(task)
 
     @property
     def exploits(self):
@@ -149,10 +151,8 @@ class Executor(Task):
             list - list of Ports
 
         """
-        with self._lock:
-            return self._ports[:]
+        return self._ports[:]
 
     @ports.setter
     def ports(self, val):
-        with self._lock:
-            self._ports = val
+        self._ports = val

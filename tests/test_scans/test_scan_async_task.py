@@ -1,14 +1,12 @@
 import ipaddress
 from unittest.mock import patch, MagicMock, PropertyMock, call
-from urllib.error import URLError
 
 import time
+from urllib.error import URLError
 
-import requests
 from cpe import CPE
 from croniter import croniter
 from netaddr import IPSet
-from requests import Response
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
@@ -245,17 +243,30 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def setUp(self, cfg):
         super(ScanAsyncTaskTest, self).setUp()
-        cfg._cfg = {
+        self.cfg = {
             'portdetection': {
                 'scan_cron': '* * * * *',
                 'tools_cron': '* * * * *'
+            },
+            'topdis': {
+                'api': {
+                    'host': '',
+                    'port': ''
+                }
             }
         }
-        self.urllib_response = MagicMock()
-        self.urllib_response.read = MagicMock()
-        self.urllib_response.read.return_value = self.TODIS_RESPONSE
-        self.urllib_response.headers.get_content_charset = MagicMock(return_value='utf-8')
-        self.thread = ScanAsyncTask(aucote=MagicMock(storage=MagicMock()))
+
+        cfg._cfg = self.cfg
+        self.http_client_response = MagicMock()
+        self.http_client_response.body = self.TODIS_RESPONSE
+        self.req_future = Future()
+        self.aucote = MagicMock(storage=MagicMock())
+        atm_stop_future = Future()
+        self.atm_stop = MagicMock()
+        atm_stop_future.set_result(self.atm_stop)
+        self.aucote.async_task_manager.stop.return_value = atm_stop_future
+
+        self.thread = ScanAsyncTask(aucote=self.aucote)
         self.thread._cron_tasks = {
             1: MagicMock(),
             2: MagicMock()
@@ -269,44 +280,47 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def tearDown(self):
         AsyncTaskManager.instance().clear()
 
-    @patch('scans.scan_async_task.cfg.get', MagicMock(side_effect=KeyError('test')))
-    def test_init_with_exception(self):
-        self.assertRaises(SystemExit, ScanAsyncTask, aucote=MagicMock())
+    @patch('scans.scan_async_task.HTTPClient')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_getting_nodes(self, cfg, http_client):
+        cfg._cfg = self.cfg
+        self.req_future.set_result(self.http_client_response)
+        http_client.instance().get.return_value = self.req_future
 
-    @patch('scans.scan_async_task.http.urlopen')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
-    def test_getting_nodes(self, urllib):
-        urllib.return_value = self.urllib_response
-
-        nodes = self.thread._get_topdis_nodes()
+        nodes = await self.thread._get_topdis_nodes()
 
         self.assertEqual(len(nodes), 9)
         self.assertEqual(nodes[0].id, 573)
         self.assertEqual(nodes[0].ip.exploded, '10.3.3.99')
         self.assertEqual(nodes[0].name, 'EPSON1B0407')
 
-    @patch('scans.scan_async_task.http.urlopen')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
-    def test_getting_nodes_os_fingerprint(self, urllib):
-        urllib.return_value = self.urllib_response
-        self.urllib_response.read.return_value = self.NODE_WITH_OS_FINGERPRINT
+    @patch('scans.scan_async_task.HTTPClient')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_getting_nodes_os_fingerprint(self, cfg, http_client):
+        cfg._cfg = self.cfg
+        self.req_future.set_result(MagicMock(body=self.NODE_WITH_OS_FINGERPRINT))
+        http_client.instance().get.return_value = self.req_future
 
-        nodes = self.thread._get_topdis_nodes()
+        nodes = await self.thread._get_topdis_nodes()
         self.assertEqual(len(nodes), 1)
         result = nodes[0]
 
         self.assertIsNone(result.os.name)
         self.assertIsNone(result.os.version)
 
-    @patch('scans.scan_async_task.http.urlopen')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.HTTPClient')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.Service.build_cpe')
-    def test_getting_nodes_os_direct(self, mock_cpe, urllib):
-        urllib.return_value = self.urllib_response
-        self.urllib_response.read.return_value = self.NODE_WITH_OS_DIRECT
+    @gen_test
+    async def test_getting_nodes_os_direct(self, mock_cpe, cfg, http_client):
+        cfg._cfg = self.cfg
+        self.req_future.set_result(MagicMock(body=self.NODE_WITH_OS_DIRECT))
+        http_client.instance().get.return_value = self.req_future
         mock_cpe.return_value = 'cpe:2.3:a:b:c:d:*:*:*:*:*:*:*'
 
-        nodes = self.thread._get_topdis_nodes()
+        nodes = await self.thread._get_topdis_nodes()
         self.assertEqual(len(nodes), 1)
         result = nodes[0]
 
@@ -315,15 +329,17 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertEqual(result.os.cpe, CPE(mock_cpe.return_value))
         mock_cpe.assert_called_once_with(product='test_name', version='11', type=CPEType.OS)
 
-    @patch('scans.scan_async_task.http.urlopen')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
+    @patch('scans.scan_async_task.HTTPClient')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.Service.build_cpe')
-    def test_getting_nodes_os_direct_with_space_in_version(self, mock_cpe, urllib):
-        urllib.return_value = self.urllib_response
-        self.urllib_response.read.return_value = self.NODE_WITH_OS_DIRECT_SPACES_VERSION
+    @gen_test
+    async def test_getting_nodes_os_direct_with_space_in_version(self, mock_cpe, cfg, http_client):
+        cfg._cfg = self.cfg
+        self.req_future.set_result(MagicMock(body=self.NODE_WITH_OS_DIRECT_SPACES_VERSION))
+        http_client.instance().get.return_value = self.req_future
         mock_cpe.return_value = 'cpe:2.3:a:b:c:d:*:*:*:*:*:*:*'
 
-        nodes = self.thread._get_topdis_nodes()
+        nodes = await self.thread._get_topdis_nodes()
         self.assertEqual(len(nodes), 1)
         result = nodes[0]
 
@@ -332,25 +348,29 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertIsNone(result.os.cpe)
         self.assertFalse(mock_cpe.called)
 
-    @patch('scans.scan_async_task.http.urlopen')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
-    def test_getting_nodes_cannot_connect_to_topdis(self, urllib):
-        urllib.side_effect = URLError('')
-        result = self.thread._get_topdis_nodes()
+    @patch('scans.scan_async_task.HTTPClient')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_getting_nodes_cannot_connect_to_topdis(self, cfg, http_client):
+        cfg._cfg = self.cfg
+        http_client.instance().get.side_effect = URLError('')
+        result = await self.thread._get_topdis_nodes()
         expected = []
 
         self.assertEqual(result, expected)
 
-    @patch('scans.scan_async_task.http.urlopen')
-    def test_getting_nodes_unknown_exception(self, urllib):
-        urllib.side_effect = Exception
-
-        self.assertRaises(Exception, ScanAsyncTask._get_topdis_nodes)
+    @patch('scans.scan_async_task.HTTPClient')
+    @gen_test
+    async def test_getting_nodes_unknown_exception(self, http_client):
+        http_client.instance().get.side_effect = Exception
+        with self.assertRaises(Exception):
+            await ScanAsyncTask._get_topdis_nodes
 
     @patch('scans.scan_async_task.ScanAsyncTask._get_topdis_nodes')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.parse_period', MagicMock(return_value=5))
-    def test_get_nodes_for_scanning(self, cfg, mock_get_nodes):
+    @gen_test
+    async def test_get_nodes_for_scanning(self, cfg, mock_get_nodes):
         cfg._cfg = {
             'portdetection': {
                 'scan_interval': '5s',
@@ -364,17 +384,19 @@ class ScanAsyncTaskTest(AsyncTestCase):
         node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
 
         nodes = [node_1, node_2, node_3]
-        mock_get_nodes.return_value=nodes
+        future = Future()
+        future.set_result(nodes)
+        mock_get_nodes.return_value = future
 
         self.thread.storage.get_nodes = MagicMock(return_value=[node_2])
 
-        result = self.thread._get_nodes_for_scanning()
+        result = await self.thread._get_nodes_for_scanning()
         expected = [node_3]
 
         self.assertListEqual(result, expected)
 
-    @patch('scans.scan_async_task.AsyncTaskManager.start')
-    def test_run_as_service(self, mock_start):
+    @gen_test
+    async def test_run_as_service(self):
         self.thread.scheduler = MagicMock()
         self.thread.as_service = True
 
@@ -382,32 +404,32 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread._periodical_scan_callback = MagicMock()
         self.thread._ioloop = MagicMock()
 
-        self.thread.run()
+        await self.thread.run()
+        self.thread.aucote.async_task_manager.start.assert_called_once_with()
 
-        mock_start.called_once_with()
-
-    @patch('scans.scan_async_task.IOLoop')
-    @patch('scans.scan_async_task.partial')
-    def test_run_as_non_service(self, mock_partial, mock_ioloop):
+    @gen_test
+    async def test_run_as_non_service(self):
         self.thread.as_service = False
-        self.thread._get_nodes_for_scanning = MagicMock()
+        expected = MagicMock()
+        future = Future()
+        future.set_result(expected)
+        self.thread._get_nodes_for_scanning = MagicMock(return_value=future)
         self.thread.scheduler = MagicMock()
-        self.thread.run_scan = MagicMock()
-        self.thread._get_nodes_for_scanning = MagicMock()
+        future_run_scan = Future()
+        future_run_scan.set_result(MagicMock())
+        self.thread.run_scan = MagicMock(return_value=future_run_scan)
 
-        self.thread.run()
+        await self.thread.run()
+        self.thread.run_scan.assert_called_once_with(expected)
 
-        mock_partial.assert_called_once_with(self.thread.run_scan, self.thread._get_nodes_for_scanning.return_value)
-        mock_ioloop.current.return_value.add_callback.assert_called_once_with(mock_partial.return_value)
 
-    @patch('scans.scan_async_task.IOLoop')
     @patch('scans.scan_async_task.netifaces')
     @patch('scans.scan_async_task.PortsScan')
     @patch('scans.scan_async_task.MasscanPorts')
     @patch('scans.scan_async_task.Executor')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    def test_run_scan_as_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface, mock_ioloop):
+    def test_run_scan_as_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface):
         cfg._cfg = {
             'service': {
                 'scans': {
@@ -461,16 +483,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=False)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
-        self.assertFalse(mock_ioloop.current.return_value.current.called)
 
-    @patch('scans.scan_async_task.IOLoop')
     @patch('scans.scan_async_task.netifaces')
     @patch('scans.scan_async_task.PortsScan')
     @patch('scans.scan_async_task.MasscanPorts')
     @patch('scans.scan_async_task.Executor')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    def test_run_scan_as_non_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface, mock_loop):
+    def test_run_scan_as_non_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface):
         cfg._cfg = {
             'service': {
                 'scans': {
@@ -493,7 +513,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread._get_nodes_for_scanning = MagicMock(return_value=[node_1])
         self.thread._get_networks_list = MagicMock(return_value=IPSet(['127.0.0.2/31']))
         self.thread.as_service = False
-        self.thread.aucote = MagicMock()
 
         port_masscan = Port(transport_protocol=TransportProtocol.UDP, number=17, node=node_1)
         port_nmap = Port(transport_protocol=TransportProtocol.UDP, number=17, node=node_1)
@@ -511,7 +530,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=[port_masscan, port_nmap],
                                               scan_only=False)
-        mock_loop.current.return_value.stop.assert_called_once_with()
+        self.thread.aucote.async_task_manager.stop.assert_called_once_with()
 
     @patch('scans.scan_async_task.netifaces')
     @patch('scans.scan_async_task.PortsScan')
@@ -645,9 +664,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertFalse(self.thread.storage.save_nodes.called)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
-    @patch('scans.scan_async_task.IOLoop')
     @gen_test
-    def test_run_scan_as_non_service_without_nodes(self, mock_loop, cfg):
+    def test_run_scan_as_non_service_without_nodes(self, cfg):
         cfg._cfg = {
             'portdetection': {
                 'nmap_udp': False
@@ -659,7 +677,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread._get_networks_list.return_value = ['0.0.0.0/0']
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
         self.assertFalse(self.thread.storage.save_nodes.called)
-        mock_loop.current.return_value.stop.assert_called_once_with()
+        self.thread.aucote.async_task_manager.stop.assert_called_once_with()
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_get_networks_list(self, cfg):
@@ -683,29 +701,37 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         self.assertRaises(SystemExit, self.thread._get_networks_list)
 
-    @patch('scans.scan_async_task.http.urlopen')
-    @patch('scans.scan_async_task.cfg.get', MagicMock())
-    def test_scan_time_init(self, urllib):
-        urllib.return_value = self.urllib_response
+    @patch('scans.scan_async_task.HTTPClient')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_scan_time_init(self, cfg, http_client):
+        cfg._cfg = self.cfg
+        self.req_future.set_result(self.http_client_response)
+        http_client.instance().get.return_value = self.req_future
 
-        result = self.thread._get_topdis_nodes()
+        result = await self.thread._get_topdis_nodes()
         expected = 1470915752.842891
 
         self.assertEqual(result[0].scan.start, expected)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    def test_periodical_scan(self, cfg):
+    async def test_periodical_scan(self, cfg):
         cfg._cfg = {'portdetection': {'scan_enable': True}}
         nodes = MagicMock()
-        self.thread._get_nodes_for_scanning = MagicMock(return_value=nodes)
-        self.thread.run_scan = MagicMock()
+        future = Future()
+        future.set_result(nodes)
+        self.thread._get_nodes_for_scanning = MagicMock(return_value=future)
+
+        future = Future()
+        future.set_result(MagicMock())
+        self.thread.run_scan = MagicMock(return_value=future)
 
         future_run_scan = Future()
         future_run_scan.set_result(MagicMock())
         self.thread.run_scan.return_value = future_run_scan
 
-        yield self.thread._scan()
+        await self.thread._scan()
         self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None)
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True)
 
@@ -794,12 +820,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
         nodes = [MagicMock(), MagicMock(), MagicMock()]
 
         self.thread.get_ports_for_script_scan = MagicMock(return_value=ports)
-        self.thread._get_topdis_nodes = MagicMock(return_value=nodes)
+        future_nodes = Future()
+        future_nodes.set_result(nodes)
+        self.thread._get_topdis_nodes = MagicMock(return_value=future_nodes)
 
         yield self.thread._run_tools()
 
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports)
-        self.thread.aucote.add_task.assert_called_once_with(mock_executor.return_value)
+        self.thread.aucote.add_async_task.assert_called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.time.time', MagicMock(return_value=595))
@@ -834,10 +862,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
     @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
     @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_update_scan_status_to_in_progress(self, cfg):
+    @gen_test
+    async def test_update_scan_status_to_in_progress(self, cfg):
         cfg.toucan = MagicMock()
+        cfg.toucan.put.return_value = Future()
+        cfg.toucan.put.return_value.set_result(MagicMock())
+
         self.thread.scan_start = 17
-        self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
+        await self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
 
         expected = {
             'previous_scan': 57,
@@ -853,10 +885,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
     @patch('scans.scan_async_task.time.time', MagicMock(return_value=300))
     @patch('scans.scan_async_task.cfg', new_callable=Config)
-    def test_update_scan_status_to_idle(self, cfg):
+    @gen_test
+    async def test_update_scan_status_to_idle(self, cfg):
         cfg.toucan = MagicMock()
+        cfg.toucan.put.return_value = Future()
+        cfg.toucan.put.return_value.set_result(MagicMock())
+
         self.thread.scan_start = 17
-        self.thread.update_scan_status(ScanStatus.IDLE)
+        await self.thread.update_scan_status(ScanStatus.IDLE)
 
         expected = {
             'previous_scan': 57,
@@ -867,3 +903,20 @@ class ScanAsyncTaskTest(AsyncTestCase):
         }
 
         cfg.toucan.put.assert_called_once_with('portdetection.status', expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_scan_cron(self, cfg):
+        expected = "* * * * */45"
+        cfg['portdetection.scan_cron'] = expected
+        result = self.thread._scan_cron()
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_tools_cron(self, cfg):
+        expected = "* * * * */45"
+        cfg['portdetection.tools_cron'] = expected
+        result = self.thread._tools_cron()
+        self.assertEqual(result, expected)
+
+    def test_shutdown_condition(self):
+        self.assertEqual(self.thread.shutdown_condition, self.thread._shutdown_condition)

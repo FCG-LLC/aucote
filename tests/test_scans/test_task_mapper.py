@@ -1,7 +1,8 @@
 import ipaddress
-import unittest
 from collections import OrderedDict
 from unittest.mock import Mock, patch, MagicMock
+
+from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
 from scans.task_mapper import TaskMapper
@@ -9,14 +10,16 @@ from structs import Port, TransportProtocol, Scan, Node
 from utils import Config
 
 
-class TaskMapperTest(unittest.TestCase):
+class TaskMapperTest(AsyncTestCase):
     EXECUTOR_CONFIG = {
         'apps': {
             'test': {
-                'class': MagicMock()
+                'class': MagicMock(),
+                'async': False
             },
             'test2': {
-                'class': MagicMock()
+                'class': MagicMock(),
+                'async': False
             }
         }
     }
@@ -27,11 +30,12 @@ class TaskMapperTest(unittest.TestCase):
     UDP.service_name = 'ftp'
     UDP.scan = Scan(start=19.0)
 
-    TCP = Port(transport_protocol=TransportProtocol.TCP, number = 22, node=NODE)
+    TCP = Port(transport_protocol=TransportProtocol.TCP, number=22, node=NODE)
     TCP.service_name = 'ssh'
     TCP.scan = Scan(start=19.0)
 
     def setUp(self):
+        super(TaskMapperTest, self).setUp()
         self.executor = Mock()
         self.exploits = OrderedDict({
             'test': [
@@ -55,7 +59,8 @@ class TaskMapperTest(unittest.TestCase):
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)
-    def test_app_running(self, cfg):
+    @gen_test
+    async def test_app_running(self, cfg):
         cfg._cfg = {
             'tools': {
                 'test': {
@@ -73,22 +78,50 @@ class TaskMapperTest(unittest.TestCase):
             }
         }
         self.executor.storage.get_scan_info.return_value = []
-        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
 
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 1)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 1)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
+    @patch('scans.task_mapper.cfg', new_callable=Config)
+    @gen_test
+    async def test_app_add_async(self, cfg):
+        self.EXECUTOR_CONFIG['apps']['test']['async'] = True
+        cfg._cfg = {
+            'tools': {
+                'test': {
+                    'enable': True,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
+                },
+                'test2': {
+                    'enable': False,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
+                }
+            }
+        }
+        self.executor.storage.get_scan_info.return_value = []
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        self.task_mapper._aucote.add_async_task.assert_called_once_with(
+            self.EXECUTOR_CONFIG['apps']['test']['class'].return_value)
+
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
-    def test_disable_all_app_running(self):
-        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+    @gen_test
+    async def test_disable_all_app_running(self):
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
 
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 0)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 0)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)
-    def test_disable_first_app_running(self, cfg):
+    @gen_test
+    async def test_disable_first_app_running(self, cfg):
         cfg._cfg = {
             'tools': {
                 'test': {
@@ -107,7 +140,7 @@ class TaskMapperTest(unittest.TestCase):
             }
         }
         self.executor.storage.get_scan_info.return_value = []
-        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
 
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 0)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 1)
@@ -115,7 +148,8 @@ class TaskMapperTest(unittest.TestCase):
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)
     @patch('time.time', MagicMock(return_value=25.0))
-    def test_storage_all_scanned_recently(self, cfg):
+    @gen_test
+    async def test_storage_all_scanned_recently(self, cfg):
         cfg._cfg = {
             'tools': {
                 'test': {
@@ -153,7 +187,7 @@ class TaskMapperTest(unittest.TestCase):
             },
         ]
 
-        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
 
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
         expected = []
@@ -163,7 +197,8 @@ class TaskMapperTest(unittest.TestCase):
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)
     @patch('time.time', MagicMock(return_value=25.0))
-    def test_storage_one_scanned_recently(self, cfg):
+    @gen_test
+    async def test_storage_one_scanned_recently(self, cfg):
         cfg._cfg = {
             'tools': {
                 'test': {
@@ -210,7 +245,7 @@ class TaskMapperTest(unittest.TestCase):
             'storage': self.executor.storage
         }
 
-        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
 
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
 
@@ -233,7 +268,8 @@ class TaskMapperTest(unittest.TestCase):
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)
-    def test_copying_port(self, cfg):
+    @gen_test
+    async def test_copying_port(self, cfg):
         cfg._cfg = {
             'tools': {
                 'test': {
@@ -253,14 +289,15 @@ class TaskMapperTest(unittest.TestCase):
             }
         }
         self.executor.storage.get_scan_info.return_value = []
-        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
 
         self.assertNotEqual(id(self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['port']), id(self.UDP))
         self.assertNotEqual(id(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_args[1]['port']), id(self.TCP))
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)
-    def test_restricted_script_network(self, cfg):
+    @gen_test
+    async def test_restricted_script_network(self, cfg):
         cfg._cfg = {
             'tools': {
                 'test': {
@@ -327,7 +364,7 @@ class TaskMapperTest(unittest.TestCase):
 
         expected = [self.exploits['test'][1]]
 
-        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
 
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
 
@@ -335,7 +372,8 @@ class TaskMapperTest(unittest.TestCase):
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)
-    def test_restricted_app_network(self, cfg):
+    @gen_test
+    async def test_restricted_app_network(self, cfg):
         cfg._cfg = {
             'tools': {
                 'test': {
@@ -377,7 +415,7 @@ class TaskMapperTest(unittest.TestCase):
 
         self.task_mapper.store_scan_details = MagicMock()
         expected = [self.exploits['test'][0], self.exploits['test'][1]]
-        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
 
         self.assertEqual(result, expected)
@@ -385,7 +423,8 @@ class TaskMapperTest(unittest.TestCase):
     @patch('scans.task_mapper.time.time', MagicMock(return_value=10))
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)
-    def test_scan_after_service_change(self, cfg):
+    @gen_test
+    async def test_scan_after_service_change(self, cfg):
         cfg._cfg = {
             'tools': {
                 'test': {
@@ -425,7 +464,7 @@ class TaskMapperTest(unittest.TestCase):
 
         self.EXECUTOR_CONFIG['apps']['test']['class'] = MagicMock()
 
-        self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
         expected = [self.exploits['test'][0]]
         self.assertEqual(result, expected)

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from cpe import CPE
 
-from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, StorageQuery, Service, CPEType
+from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType
 from structs import TransportProtocol
 
 
@@ -246,25 +246,6 @@ class BroadcastPortTest(TestCase):
         self.assertEqual(str(self.port), expected)
 
 
-class StorageQueryTest(TestCase):
-    def setUp(self):
-        self.test_query = "test_query"
-        self.args = ("test", "args")
-        self.only_query = StorageQuery(self.test_query)
-        self.query = StorageQuery(self.test_query, self.args)
-
-    def test_init(self):
-        self.assertEqual(self.query.semaphore._value, 0)
-
-    def test_args(self):
-        expected = (self.test_query, self.args)
-        self.assertEqual(self.query.query, expected)
-
-    def test_only_query(self):
-        expected = (self.test_query,)
-        self.assertEqual(self.only_query.query, expected)
-
-
 class ServiceTest(TestCase):
     def setUp(self):
         self.name = 'test_name'
@@ -298,7 +279,7 @@ class ServiceTest(TestCase):
     def test_product_without_cpe(self):
         self.service._cpe = None
         self.assertIsNone(self.service.cpe_product)
-    
+
     def test_escape_cpe(self):
         data = r""""!";#$%&'()+,/:<=>@test123[]^`{}~-"""
         expected = r"""\"\!\"\;\#\$\%\&\'\(\)\+\,\/\:\<\=\>\@test123\[\]\^\`\{\}\~\-"""

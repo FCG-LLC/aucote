@@ -14,4 +14,4 @@ class SkipfishBase(Command):
     COMMON_ARGS = ('-u',)
     NAME = 'skipfish'
 
-    parser = SkipfishOutputParser
+    parser = SkipfishOutputParser()

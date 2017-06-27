@@ -2,13 +2,15 @@
 This module contains class for managing async tasks.
 
 """
-from functools import wraps
+from functools import partial
 import logging as log
 
 from tornado import gen
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
-from tornado_crontab import CronTabCallback
+from tornado.queues import Queue
+
+from utils.async_crontab_task import AsyncCrontabTask
 
 
 class AsyncTaskManager(object):
@@ -21,13 +23,17 @@ class AsyncTaskManager(object):
     """
     _instance = None
 
-    def __init__(self):
+    def __init__(self, parallel_tasks=10):
         self._shutdown_condition = Event()
+        self._stop_condition = Event()
         self._cron_tasks = {}
         self.run_tasks = {}
+        self._parallel_tasks = parallel_tasks
+        self._tasks = Queue()
+        self._task_workers = []
 
     @classmethod
-    def instance(cls):
+    def instance(cls, *args, **kwargs):
         """
         Return instance of AsyncTaskManager
 
@@ -36,8 +42,12 @@ class AsyncTaskManager(object):
 
         """
         if cls._instance is None:
-            cls._instance = AsyncTaskManager()
+            cls._instance = AsyncTaskManager(*args, **kwargs)
         return cls._instance
+
+    @property
+    def shutdown_condition(self):
+        return self._shutdown_condition
 
     def start(self):
         """
@@ -49,6 +59,9 @@ class AsyncTaskManager(object):
         """
         for task in self._cron_tasks.values():
             task.start()
+
+        for number in range(self._parallel_tasks):
+            self._task_workers.append(IOLoop.current().add_callback(partial(self.process_tasks, number)))
 
     def add_crontab_task(self, task, cron):
         """
@@ -63,7 +76,7 @@ class AsyncTaskManager(object):
 
         """
 
-        self._cron_tasks[task.__name__] = CronTabCallback(task, cron, io_loop=IOLoop.current())
+        self._cron_tasks[task.__name__] = AsyncCrontabTask(cron, task)
         self.run_tasks[task.__name__] = False
 
     @gen.coroutine
@@ -77,49 +90,11 @@ class AsyncTaskManager(object):
         """
         for task in self._cron_tasks.values():
             task.stop()
-        IOLoop.current().add_callback(self.prepare_ioloop_shutdown)
-        yield [self._shutdown_condition.wait()]
+        IOLoop.current().add_callback(self._prepare_shutdown)
+        yield [self._stop_condition.wait(), self._tasks.join()]
+        self._shutdown_condition.set()
 
-    @classmethod
-    def unique_task(cls, function):
-        """
-        Decorator which allow execution only one instance of function this same time
-
-        Args:
-            function:
-
-        Returns:
-            function
-
-        """
-        @gen.coroutine
-        @wraps(function)
-        def return_function(*args, **kwargs):
-            """
-            Wrapper on original function
-
-            Args:
-                *args:
-                **kwargs:
-
-            Returns:
-                None
-
-            """
-            if cls._instance.run_tasks[function.__name__]:
-                return
-
-            cls._instance.run_tasks[function.__name__] = True
-            try:
-                yield function(*args, **kwargs)
-            except Exception:
-                log.exception("Exception while running %s", function.__name__)
-
-            cls._instance.run_tasks[function.__name__] = False
-
-        return return_function
-
-    def prepare_ioloop_shutdown(self):
+    def _prepare_shutdown(self):
         """
         Check if ioloop can be stopped
 
@@ -128,10 +103,10 @@ class AsyncTaskManager(object):
 
         """
         if any(task.is_running() for task in self._cron_tasks.values()) or any(self.run_tasks.values()):
-            IOLoop.current().add_callback(self.prepare_ioloop_shutdown)
+            IOLoop.current().add_callback(self._prepare_shutdown)
             return
 
-        self._shutdown_condition.set()
+        self._stop_condition.set()
 
     def clear(self):
         """
@@ -143,3 +118,50 @@ class AsyncTaskManager(object):
         """
         self._cron_tasks = {}
         self.run_tasks = {}
+        self._shutdown_condition.clear()
+        self._stop_condition.clear()
+
+    async def process_tasks(self, number):
+        """
+        Execute queue
+
+        Returns:
+            None
+
+        """
+        log.info("Starting worker %s", number)
+        async for item in self._tasks:
+            try:
+                log.debug("Worker %s: starting %s", number, item)
+                await item()
+            except:
+                log.exception("Worker %s: exception occurred", number)
+            finally:
+                log.debug("Worker %s: %s finished", number, item)
+                self._tasks.task_done()
+                log.debug("Tasks left in queue: %s", self.unfinished_tasks)
+        log.info("Closing worker %s", number)
+
+    def add_task(self, task):
+        """
+        Add task to the queue
+
+        Args:
+            task:
+
+        Returns:
+            None
+
+        """
+        self._tasks.put(task)
+
+    @property
+    def unfinished_tasks(self):
+        """
+        Task which are still processed or in queue
+
+        Returns:
+            int
+
+        """
+        return self._tasks._unfinished_tasks

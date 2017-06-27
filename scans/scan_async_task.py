@@ -3,19 +3,15 @@ This module contains class responsible for scanning.
 
 """
 import ipaddress
-from functools import partial
 from urllib.error import URLError
-import urllib.request as http
 import logging as log
 import time
-from threading import Lock
 import ujson as json
 import netifaces
 
 from croniter import croniter
 from netaddr import IPSet
-from tornado import gen
-from tornado.ioloop import IOLoop
+from tornado.locks import Event
 
 from aucote_cfg import cfg
 from scans.executor import Executor
@@ -23,7 +19,7 @@ from structs import Node, Scan, PhysicalPort, ScanStatus, TopisOSDiscoveryType, 
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
-from utils.async_task_manager import AsyncTaskManager
+from utils.http_client import HTTPClient
 from utils.time import parse_period, parse_time_to_timestamp
 
 
@@ -36,17 +32,31 @@ class ScanAsyncTask(object):
         self.as_service = as_service
         self._current_scan = []
         self.aucote = aucote
-        self._lock = Lock()
         self.scan_start = None
+        self._shutdown_condition = Event()
 
-        try:
-            self.aucote.async_task_manager.add_crontab_task(self._scan, cfg['portdetection.scan_cron'])
-            self.aucote.async_task_manager.add_crontab_task(self._run_tools, cfg['portdetection.tools_cron'])
-        except KeyError:
-            log.error("Please configure portdetection.scan_cron and portdetection.tools_cron")
-            exit(1)
+        if as_service:
+            self.aucote.async_task_manager.add_crontab_task(self._scan, self._scan_cron)
+            self.aucote.async_task_manager.add_crontab_task(self._run_tools, self._tools_cron)
 
-    def run(self):
+    def _scan_cron(self):
+        return cfg['portdetection.scan_cron']
+
+    @property
+    def shutdown_condition(self):
+        """
+        Event which is set when no scan in progress
+
+        Returns:
+            Event
+
+        """
+        return self._shutdown_condition
+
+    def _tools_cron(self):
+        return cfg['portdetection.tools_cron']
+
+    async def run(self):
         """
         Run tasks
 
@@ -55,14 +65,11 @@ class ScanAsyncTask(object):
 
         """
         log.debug("Starting cron")
-        if self.as_service:
-            self.aucote.async_task_manager.start()
-        else:
-            IOLoop.current().add_callback(partial(self.run_scan, self._get_nodes_for_scanning()))
+        self.aucote.async_task_manager.start()
+        if not self.as_service:
+            await self.run_scan(await self._get_nodes_for_scanning())
 
-    @AsyncTaskManager.unique_task
-    @gen.coroutine
-    def _scan(self):
+    async def _scan(self):
         """
         Scan nodes for open ports
 
@@ -73,13 +80,11 @@ class ScanAsyncTask(object):
         if not cfg['portdetection.scan_enable']:
             return
         log.info("Starting port scan")
-        nodes = self._get_nodes_for_scanning(timestamp=None)
+        nodes = await self._get_nodes_for_scanning(timestamp=None)
         log.debug("Found %i nodes for potential scanning", len(nodes))
-        yield self.run_scan(nodes, scan_only=True)
+        await self.run_scan(nodes, scan_only=True)
 
-    @AsyncTaskManager.unique_task
-    @gen.coroutine
-    def _run_tools(self):
+    async def _run_tools(self):
         """
         Run scan by using tools and historical port data
 
@@ -88,13 +93,12 @@ class ScanAsyncTask(object):
 
         """
         log.info("Starting security scan")
-        nodes = self._get_topdis_nodes()
+        nodes = await self._get_topdis_nodes()
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_task(Executor(aucote=self.aucote, ports=ports))
+        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports))
 
-    @gen.coroutine
-    def run_scan(self, nodes, scan_only=False):
+    async def run_scan(self, nodes, scan_only=False):
         """
         Run scanning.
 
@@ -102,8 +106,9 @@ class ScanAsyncTask(object):
             None
 
         """
+        self._shutdown_condition.clear()
         self.scan_start = time.time()
-        self.update_scan_status(ScanStatus.IN_PROGRESS)
+        await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
         nmap_udp = cfg['portdetection.nmap_udp']
 
@@ -111,7 +116,7 @@ class ScanAsyncTask(object):
 
         if not nodes:
             log.warning("List of nodes is empty")
-            self._clean_scan()
+            await self._clean_scan()
             return
 
         self.storage.save_nodes(nodes)
@@ -123,17 +128,17 @@ class ScanAsyncTask(object):
 
         log.info("Scanning %i IPv4 nodes for open ports.", len(nodes_ipv4))
         scanner_ipv4 = MasscanPorts(udp=not nmap_udp)
-        ports = yield scanner_ipv4.scan_ports(nodes_ipv4)
+        ports = await scanner_ipv4.scan_ports(nodes_ipv4)
 
         log.info("Scanning %i IPv6 nodes for open ports.", len(nodes_ipv6))
         scanner_ipv6 = PortsScan(ipv6=True, tcp=True, udp=True)
-        ports_ipv6 = yield scanner_ipv6.scan_ports(nodes_ipv6)
+        ports_ipv6 = await scanner_ipv6.scan_ports(nodes_ipv6)
         ports.extend(ports_ipv6)
 
         if nmap_udp:
             log.info("Scanning %i IPv4 nodes for open UDP ports.", len(nodes_ipv4))
             scanner_ipv4_udp = PortsScan(ipv6=False, tcp=False, udp=True)
-            ports_udp = yield scanner_ipv4_udp.scan_ports(nodes_ipv4)
+            ports_udp = await scanner_ipv4_udp.scan_ports(nodes_ipv4)
             ports.extend(ports_udp)
 
         port_range_allow = NmapTool.parse_nmap_ports(cfg['portdetection.ports.include'])
@@ -154,12 +159,12 @@ class ScanAsyncTask(object):
                 port.scan = Scan(start=time.time())
                 ports.append(port)
 
-        self.aucote.add_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
+        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
         self.current_scan = []
 
-        self._clean_scan()
+        await self._clean_scan()
 
-    def _clean_scan(self):
+    async def _clean_scan(self):
         """
         Clean scan and update scan status
 
@@ -167,27 +172,26 @@ class ScanAsyncTask(object):
             None
 
         """
-        self.update_scan_status(ScanStatus.IDLE)
+        await self.update_scan_status(ScanStatus.IDLE)
+        self._shutdown_condition.set()
 
         if not self.as_service:
-            IOLoop.current().stop()
+            await self.aucote.async_task_manager.stop()
 
     @classmethod
-    def _get_topdis_nodes(cls):
+    async def _get_topdis_nodes(cls):
         """
         Get nodes from todis application
 
         """
         url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg['topdis.api.host'], cfg['topdis.api.port'])
         try:
-            resource = http.urlopen(url)
+            resource = await HTTPClient.instance().get(url)
         except URLError:
             log.exception('Cannot connect to topdis: %s:%s', cfg['topdis.api.host'], cfg['topdis.api.port'])
             return []
 
-        charset = resource.headers.get_content_charset() or 'utf-8'
-        nodes_txt = resource.read().decode(charset)
-        nodes_cfg = json.loads(nodes_txt)
+        nodes_cfg = json.loads(resource.body)
 
         timestamp = parse_time_to_timestamp(nodes_cfg['meta']['requestTime'])
         nodes = []
@@ -204,16 +208,17 @@ class ScanAsyncTask(object):
                     node.os.name, node.os.version = os.get('name'), os.get('version')
 
                     if " " in node.os.version:
-                        log.warning("Currently doesn't support space in OS Version for cpe")
+                        log.warning("Currently doesn't support space in OS Version for cpe: '%s' for '%s'",
+                                    node.os.version, node.os.name)
                     else:
                         node.os.cpe = Service.build_cpe(product=node.os.name, version=node.os.version, type=CPEType.OS)
 
                 nodes.append(node)
 
-        log.debug('Got %i nodes from topdis: %s', len(nodes), nodes)
+        log.debug('Got %i nodes from topdis', len(nodes))
         return nodes
 
-    def _get_nodes_for_scanning(self, timestamp=None):
+    async def _get_nodes_for_scanning(self, timestamp=None):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -226,7 +231,7 @@ class ScanAsyncTask(object):
             list
 
         """
-        topdis_nodes = self._get_topdis_nodes()
+        topdis_nodes = await self._get_topdis_nodes()
 
         storage_nodes = self.storage.get_nodes(parse_period(cfg['portdetection.scan_interval']), timestamp=timestamp)
 
@@ -287,13 +292,11 @@ class ScanAsyncTask(object):
             list
 
         """
-        with self._lock:
-            return self._current_scan[:]
+        return self._current_scan[:]
 
     @current_scan.setter
     def current_scan(self, val):
-        with self._lock:
-            self._current_scan = val
+        self._current_scan = val
 
     @property
     def previous_scan(self):
@@ -350,7 +353,7 @@ class ScanAsyncTask(object):
         """
         return croniter(cfg['portdetection.tools_cron'], time.time()).get_next()
 
-    def update_scan_status(self, status):
+    async def update_scan_status(self, status):
         """
         Update scan status base on status value
 
@@ -375,4 +378,4 @@ class ScanAsyncTask(object):
         if status is ScanStatus.IDLE:
             data['scan_duration'] = time.time() - self.scan_start
 
-        cfg.toucan.put('portdetection.status', data)
+        await cfg.toucan.put('portdetection.status', data)

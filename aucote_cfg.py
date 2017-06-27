@@ -18,7 +18,7 @@ _DEFAULT = {
         'level': 'info',
         'max_file_size': 10 * 1024 * 1024,
         'max_files': 5,
-        'format': '%(levelname)s %(asctime)s %(threadName)s: %(message)s'
+        'format': '%(levelname)s %(asctime)s %(funcName)s: %(message)s'
     },
     'fixtures': {
         'exploits': {
@@ -47,7 +47,7 @@ _DEFAULT = {
 cfg = Config(_DEFAULT)
 
 
-def start_toucan(default_config):
+async def start_toucan(default_config):
     """
     Initialize Toucan
 
@@ -67,10 +67,10 @@ def start_toucan(default_config):
     with open(default_config, "r") as file:
         config = yaml.load(file)
 
-    cfg.toucan.push_config(config, overwrite=False)
+    await cfg.toucan.push_config(config, overwrite=False)
 
 
-def load(file_name=None):
+async def load(file_name=None):
     '''
     Initializes this module.
     Needs to be called before other functions are used.
@@ -89,12 +89,12 @@ def load(file_name=None):
         stderr.write("Cannot load configuration file {0}".format(file_name))
         exit()
 
-    log_cfg.config(cfg['logging'])
+    await log_cfg.config(cfg['logging'])
 
     default_config_filename = cfg['default_config']
 
-    if cfg.get('toucan.enable'):
-        start_toucan(default_config_filename)
+    if cfg['toucan.enable']:
+        await start_toucan(default_config_filename)
     else:
         try:
             cfg.load(default_config_filename, cfg.cfg)

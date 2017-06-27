@@ -41,7 +41,7 @@ class CommandTask(PortTask):
         """
         raise NotImplementedError
 
-    def __call__(self):
+    async def __call__(self):
         """
         Call command, parse output and stores vulnerabilities
 
@@ -51,7 +51,7 @@ class CommandTask(PortTask):
         args = self.prepare_args()
 
         try:
-            results = self.command.call(args)
+            results = await self.command.async_call(args)
         except subprocess.CalledProcessError as exception:
             self._port.scan = Scan(0, 0)
             self.aucote.storage.save_scans(exploits=self.current_exploits, port=self._port)

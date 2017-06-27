@@ -65,7 +65,7 @@ class NmapPortInfoTask(PortTask):
 
         return args
 
-    def __call__(self):
+    async def __call__(self):
         """
         Scans port, parses output for obtain information about service name and version and pass it to the task mapper
 
@@ -74,12 +74,12 @@ class NmapPortInfoTask(PortTask):
 
         """
         if isinstance(self._port, (BroadcastPort, PhysicalPort)):
-            self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)
+            await self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)
             return
 
         args = self.prepare_args()
 
-        xml = self.command.call(args=args)
+        xml = await self.command.async_call(args=args)
         banner = xml.find("host/ports/port/script[@id='banner']")
         if banner is None:
             log.warning('No banner for %s:%i', self._port.node.ip, self._port.number)
@@ -101,7 +101,7 @@ class NmapPortInfoTask(PortTask):
             if cpe is not None:
                 self._port.service.cpe = cpe.text
 
-        self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
+        self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None), dont_wait=True)
 
         if not self.scan_only:
-            self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)
+            await self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)

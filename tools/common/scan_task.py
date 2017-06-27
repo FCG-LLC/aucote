@@ -2,8 +2,6 @@
 Base class for scanners
 
 """
-from tornado import gen
-
 from tools.common import OpenPortsParser
 from utils.exceptions import NonXMLOutputException
 
@@ -30,8 +28,7 @@ class ScanTask(object):
         """
         raise NotImplementedError
 
-    @gen.coroutine
-    def scan_ports(self, nodes):
+    async def scan_ports(self, nodes):
         """
         Scan nodes for open ports. If ports are passed, scans only them. Returns list of open ports.
 
@@ -49,7 +46,7 @@ class ScanTask(object):
         args = self.prepare_args(nodes)
 
         try:
-            xml = yield self.command.async_call(args)
+            xml = await self.command.async_call(args)
         except NonXMLOutputException:
             return []
 

@@ -12,7 +12,8 @@ class HydraTool(Tool):
     This tool is responsible for managing task for Hydra.
 
     """
-    def call(self):
+
+    async def call(self, *args, **kwargs):
         """
         This function is executed by task manager. Based on configuration adds scan task to the tak manager.
 
@@ -32,5 +33,5 @@ class HydraTool(Tool):
 
         login = service_name not in self.config.get('without-login', [])
 
-        self.aucote.add_task(HydraScriptTask(aucote=self.aucote, port=self.port, service=service_name,
-                                             exploits=[self.aucote.exploits.find('hydra', 'hydra')], login=login))
+        self.aucote.add_async_task(HydraScriptTask(aucote=self.aucote, port=self.port, service=service_name,
+                                                   exploits=[self.aucote.exploits.find('hydra', 'hydra')], login=login))

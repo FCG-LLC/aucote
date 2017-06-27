@@ -2,13 +2,17 @@ from collections import KeysView
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+from tornado.concurrent import Future
+from tornado.httpclient import HTTPClient
+from tornado.testing import gen_test, AsyncTestCase
+
 from fixtures.exploits import Exploit
 from structs import Port, Scan
 from tools.aucote_http_headers.structs import HeaderDefinition, AucoteHttpHeaderResult
 from tools.aucote_http_headers.tasks import AucoteHttpHeadersTask
 
 
-class AucoteHttpHeadersTaskTest(TestCase):
+class AucoteHttpHeadersTaskTest(AsyncTestCase):
     SERVER_RETURN = MagicMock(headers={
             'ETag': '"29cd-53f60a1426169-gzip"',
             'Vary': 'Accept-Encoding',
@@ -38,6 +42,8 @@ class AucoteHttpHeadersTaskTest(TestCase):
             'X-XSS-Protection': '1',})
 
     def setUp(self):
+        super(AucoteHttpHeadersTaskTest, self).setUp()
+        HTTPClient._instance = MagicMock()
         self.port = Port(node=MagicMock(), transport_protocol=None, number=None)
         self.port.scan = Scan()
         self.aucote = MagicMock()
@@ -52,10 +58,17 @@ class AucoteHttpHeadersTaskTest(TestCase):
         self.task = AucoteHttpHeadersTask(port=self.port, aucote=self.aucote, exploits=[self.exploit],
                                           config=self.config)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    def tearDown(self):
+        HTTPClient._instance = None
+
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
-    def test_call(self, mock_requests):
-        mock_requests.head.return_value = self.SERVER_RETURN
+    @gen_test
+    async def test_call(self, http_client):
+        future = Future()
+        future.set_result(self.SERVER_RETURN)
+        http_client.instance().head.return_value = future
+
         self.exploit.name = 'test'
         self.task.current_exploits = [self.exploit]
         self.task.config = {
@@ -65,12 +78,14 @@ class AucoteHttpHeadersTaskTest(TestCase):
         }
         self.task.store_vulnerability = MagicMock()
         self.task.store_scan_end = MagicMock()
-        self.assertEqual(self.task(), [])
-        mock_requests.head.assert_called_once_with(self.port.url, headers=self.custom_headers, verify=False)
+        self.assertEqual(await self.task(), [])
+        http_client.instance().head.assert_called_once_with(url=self.port.url, headers=self.custom_headers,
+                                                            validate_cert=False)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
-    def test_call_errors(self, mock_requests):
+    @gen_test
+    async def test_call_errors(self, http_client):
 
         exploit_1 = MagicMock()
         exploit_1.title = 'X-Frame-Options'
@@ -90,11 +105,13 @@ class AucoteHttpHeadersTaskTest(TestCase):
                 'exploit_3': HeaderDefinition(pattern='^((?!\*).)*$', obligatory=False)
             }
         }
-        mock_requests.head.return_value = self.SERVER_RETURN
+        future = Future()
+        future.set_result(self.SERVER_RETURN)
+        http_client.instance().head.return_value = future
         self.task.store_vulnerability = MagicMock()
         self.task.store_scan_end = MagicMock()
 
-        result = self.task()
+        result = await self.task()
         expected = [
             AucoteHttpHeaderResult(output="Missing header: Access-Control-Non-Existing", exploit=exploit_2),
             AucoteHttpHeaderResult(output="Suspicious header value: X-Frame-Options: 'deny'", exploit=exploit_1),
@@ -102,41 +119,49 @@ class AucoteHttpHeadersTaskTest(TestCase):
 
         self.assertCountEqual(result, expected)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
-    def test_with_requests_connection_error(self, mock_requests):
-        mock_requests.head.side_effect = ConnectionError
+    @gen_test
+    async def test_with_requests_connection_error(self, http_client):
+        http_client.instance().head.side_effect = ConnectionError
 
-        result = self.task()
+        result = await self.task()
         expected = None
 
         self.assertEqual(result, expected)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
-    def test_with_requests_os_error(self, mock_requests):
-        mock_requests.head.side_effect = OSError
+    @gen_test
+    async def test_with_requests_os_error(self, http_client):
+        http_client.instance().head.side_effect = OSError
 
-        result = self.task()
+        result = await self.task()
         expected = None
 
         self.assertEqual(result, expected)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.log')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
-    def test_server_reponse_403_logging(self, mock_log, mock_requests):
-        mock_requests.head.return_value.status_code = 403
+    @gen_test
+    async def test_server_reponse_403_logging(self, mock_log, http_client):
+        future = Future()
+        future.set_result(MagicMock(code=403))
+        http_client.instance().head.return_value = future
         self.task.store_vulnerability = MagicMock()
 
-        self.task()
+        await self.task()
 
         self.assertTrue(mock_log.warning.called)
 
-    @patch('tools.aucote_http_headers.tasks.requests')
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(side_effect=(None, 'test')))
-    def test_call_config_without_user_agent(self, mock_requests):
-        mock_requests.head.return_value = self.SERVER_RETURN
+    @gen_test
+    async def test_call_config_without_user_agent(self, http_client):
+        future = Future()
+        future.set_result(self.SERVER_RETURN)
+        http_client.instance().head.return_value = future
         self.exploit.name = 'test'
         self.task.current_exploits = [self.exploit]
         self.task.config = {
@@ -146,6 +171,7 @@ class AucoteHttpHeadersTaskTest(TestCase):
         }
         self.task.store_vulnerability = MagicMock()
         self.task.store_scan_end = MagicMock()
-        self.assertEqual(self.task(), [])
+        self.assertEqual(await self.task(), [])
         del self.custom_headers['User-Agent']
-        mock_requests.head.assert_called_once_with(self.port.url, headers=self.custom_headers, verify=False)
+        http_client.instance().head.assert_called_once_with(url=self.port.url, headers=self.custom_headers,
+                                                            validate_cert=False)

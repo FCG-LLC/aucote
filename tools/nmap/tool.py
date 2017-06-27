@@ -20,8 +20,7 @@ class NmapTool(Tool):
     It's responsible for managing and executing nmap tasks
 
     """
-
-    def call(self):
+    async def call(self, *args, **kwargs):
         """
         Prepares nmap args, executes and manages nmap scripts.
 
@@ -43,9 +42,9 @@ class NmapTool(Tool):
         packs = itertools.zip_longest(*by_name.values())
 
         for pack in packs:
-            self.aucote.add_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
-                                                  script_classes=[val for val in pack if val is not None],
-                                                  rate=self.rate))
+            self.aucote.add_async_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
+                                                        script_classes=[val for val in pack if val is not None],
+                                                        rate=self.rate))
 
     def _get_tasks(self):
         """
@@ -98,8 +97,8 @@ class NmapTool(Tool):
                 task = NmapScript(exploit=exploit, port=self.port, parser=parser(), name=name, args=arg)
 
                 if singular:
-                    self.aucote.add_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
-                                                          script_classes=[task], rate=self.rate))
+                    self.aucote.add_async_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
+                                                                script_classes=[task], rate=self.rate))
                     continue
                 tasks.append(task)
 
@@ -219,7 +218,7 @@ class NmapTool(Tool):
 
             if "-" in section:
                 range_args = [int(el) for el in section.split("-")]
-                return_value[protocol] |= set(range(range_args[0], range_args[1]+1))
+                return_value[protocol] |= set(range(range_args[0], range_args[1] + 1))
                 continue
 
             return_value[protocol] |= {int(section)}
