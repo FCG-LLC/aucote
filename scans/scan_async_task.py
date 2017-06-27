@@ -4,6 +4,7 @@ This module contains class responsible for scanning.
 """
 import ipaddress
 from tornado.httpclient import HTTPError
+from functools import partial
 import logging as log
 import time
 import ujson as json
@@ -32,7 +33,7 @@ class ScanAsyncTask(object):
     IPV4 = "ipv4"
     IPV6 = "ipv6"
 
-    def __init__(self, aucote, as_service=True):
+    def __init__(self, aucote, as_service=True, separate_udp=False):
         self.as_service = as_service
         self._current_scan = []
         self.aucote = aucote
@@ -40,7 +41,14 @@ class ScanAsyncTask(object):
         self._shutdown_condition = Event()
 
         if as_service:
-            self.aucote.async_task_manager.add_crontab_task(self._scan, self._scan_cron)
+            if separate_udp:
+                self.aucote.async_task_manager.add_crontab_task(partial(self._scan, tcp=True, udp=False),
+                                                                self._scan_cron)
+                self.aucote.async_task_manager.add_crontab_task(partial(self._scan, tcp=False, udp=True),
+                                                                self._scan_cron)
+            else:
+                self.aucote.async_task_manager.add_crontab_task(partial(self._scan, tcp=True, udp=True),
+                                                                self._scan_cron)
             self.aucote.async_task_manager.add_crontab_task(self._run_tools, self._tools_cron)
 
     @property
@@ -70,12 +78,15 @@ class ScanAsyncTask(object):
         if not self.as_service:
             await self.run_scan(await self._get_nodes_for_scanning(), scan_only=False, scanners=self._get_scanners())
 
-    async def _scan(self):
+    async def _scan(self, tcp=True, udp=True):
         """
         Scan nodes for open ports
 
+        Args:
+            tcp (bool): If True, TCP is scanned
+            udp (bool): If True, UDP is scanned
+
         Returns:
-            None
 
         """
         if not cfg['portdetection.scan_enabled']:
@@ -83,7 +94,7 @@ class ScanAsyncTask(object):
         log.info("Starting port scan")
         nodes = await self._get_nodes_for_scanning(timestamp=None)
         log.debug("Found %i nodes for potential scanning", len(nodes))
-        await self.run_scan(nodes, scan_only=True, scanners=self._get_scanners())
+        await self.run_scan(nodes, scan_only=True, scanners=self._get_scanners(udp=udp, tcp=tcp))
 
     async def _run_tools(self):
         """
@@ -168,14 +179,17 @@ class ScanAsyncTask(object):
 
         return [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
 
-    def _get_scanners(self):
+    def _get_scanners(self, udp=True, tcp=True):
         nmap_udp = cfg['portdetection._internal.nmap_udp']
         scanners = {
-            self.IPV4: [MasscanPorts(udp=not nmap_udp)],
-            self.IPV6: [PortsScan(ipv6=True, tcp=True, udp=True)]
+            self.IPV4: [],
+            self.IPV6: [PortsScan(ipv6=True, tcp=tcp, udp=udp)]
         }
 
-        if nmap_udp:
+        if tcp:
+            scanners[self.IPV4].append(MasscanPorts(udp=udp and not nmap_udp))
+
+        if nmap_udp and udp:
             scanners[self.IPV4].append(PortsScan(ipv6=False, tcp=False, udp=True))
         return scanners
 

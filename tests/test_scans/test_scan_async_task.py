@@ -906,3 +906,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
         }
 
         self.assertCountEqual(result, expected)
+
+    @patch('scans.scan_async_task.partial')
+    def test_init_with_separate_udp(self, partial):
+        result = ScanAsyncTask(self.aucote, separate_udp=True)
+        partial.assert_has_calls((call(result._scan, tcp=True, udp=False), call(result._scan, tcp=False, udp=True)))

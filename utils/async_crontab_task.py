@@ -4,6 +4,8 @@ Asynchronous Task controller. Executes task on given cron time
 """
 import time
 import logging as log
+from functools import partial
+
 from croniter import croniter
 from tornado.ioloop import IOLoop
 
@@ -24,6 +26,10 @@ class AsyncCrontabTask(object):
         self._stop = False
         self.func = func
         self._loop = IOLoop.current().instance()
+
+    @property
+    def name(self):
+        return str(self.func)
 
     @property
     def cron(self):
@@ -63,11 +69,11 @@ class AsyncCrontabTask(object):
 
             self._last_execute = current_cron_time
 
-            log.debug("AsyncCrontabTask[%s]: Executing", self.func.__name__)
+            log.debug("AsyncCrontabTask[%s]: Executing", self.name)
             await self.func()
             log.debug("AsyncCrontabTask[%s]: Finished", self.func.__name__)
         except Exception:
-            log.exception("AsyncCrontabTask[%s]: Exception", self.func.__name__)
+            log.exception("AsyncCrontabTask[%s]: Exception", self.name)
         finally:
             self._prepare_next_iteration()
 
