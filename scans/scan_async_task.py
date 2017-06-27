@@ -68,7 +68,7 @@ class ScanAsyncTask(object):
         log.debug("Starting cron")
         self.aucote.async_task_manager.start()
         if not self.as_service:
-            await self.run_scan(await self._get_nodes_for_scanning())
+            await self.run_scan(await self._get_nodes_for_scanning(), scan_only=False, scanners=self._get_scanners())
 
     async def _scan(self):
         """
@@ -83,7 +83,7 @@ class ScanAsyncTask(object):
         log.info("Starting port scan")
         nodes = await self._get_nodes_for_scanning(timestamp=None)
         log.debug("Found %i nodes for potential scanning", len(nodes))
-        await self.run_scan(nodes, scan_only=True)
+        await self.run_scan(nodes, scan_only=True, scanners=self._get_scanners())
 
     async def _run_tools(self):
         """
@@ -99,7 +99,7 @@ class ScanAsyncTask(object):
         log.debug("Ports for security scan: %s", ports)
         self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports))
 
-    async def run_scan(self, nodes, scan_only=False):
+    async def run_scan(self, nodes, scanners, scan_only):
         """
         Run scanning.
 
@@ -110,7 +110,6 @@ class ScanAsyncTask(object):
         self._shutdown_condition.clear()
         self.scan_start = time.time()
         ports = []
-        scanners = self._get_scanners()
 
         await self.update_scan_status(ScanStatus.IN_PROGRESS)
         self.current_scan = nodes
