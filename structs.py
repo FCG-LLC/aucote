@@ -517,3 +517,16 @@ class ScanType(Enum):
     """
     PERIODIC = "PERIODIC"
     LIVE = "LIVE"
+
+
+class PortState(Enum):
+    """
+    Port state
+
+    """
+    OPEN = "open"
+    CLOSED = "closed"
+    FILTERED = "filtered"
+    UNFILTERED = "unfiltered"
+    OPEN_FILTERED = "open|filtered"
+    CLOSED_FILTERED = "closed|filtered"

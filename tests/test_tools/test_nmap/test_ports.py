@@ -114,11 +114,13 @@ class PortScanTest(TestCase):
         self.scanner.ipv6 = False
         cfg._cfg = self.cfg
         cfg['portdetection.ports.udp.include'] = ['12-16']
+        cfg['portdetection._internal.defeat_icmp'] = True
+        cfg['portdetection.udp_network_scan_rate'] = 3000
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-sU', '--min-rate', '1030', '--max-retries', '2',
-                    '--defeat-icmp-ratelimit', '-p', 'U:12-16', '--max-rate', '1030', '192.168.1.5']
-        self.assertEqual(result, expected)
+        expected = ['-Pn', '--host-timeout', '600', '-sU', '--min-rate', '3000', '--max-retries', '2',
+                    '--defeat-icmp-ratelimit', '-p', 'U:12-16', '--max-rate', '3000', '192.168.1.5']
+        self.assertCountEqual(result, expected)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     def test_string_ports(self, cfg):

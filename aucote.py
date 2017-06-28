@@ -131,7 +131,8 @@ class Aucote(object):
             self._storage.connect()
             self._storage.init_schema()
 
-            self._scan_task = ScanAsyncTask(aucote=self, as_service=as_service)
+            self._scan_task = ScanAsyncTask(aucote=self, as_service=as_service,
+                                            separate_udp=cfg['portdetection.separate_udp_scan'])
             self.ioloop.add_callback(self.web_server.run)
             await self._scan_task.run()
             await self.async_task_manager.shutdown_condition.wait()
