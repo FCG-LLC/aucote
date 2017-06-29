@@ -11,15 +11,18 @@ import sys
 import fcntl
 
 import signal
+
+from tornado import gen
 from tornado.ioloop import IOLoop
-from tornado.locks import Event
 
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
-from scans.scan_async_task import ScanAsyncTask
 from scans.task_mapper import TaskMapper
+from scans.tcp_scanner import TCPScanner
+from scans.tools_scanner import ToolsScanner
+from scans.udp_scanner import UDPScanner
 from utils.async_task_manager import AsyncTaskManager
-from utils.exceptions import NmapUnsupported, TopdisConnectionException
+from utils.exceptions import NmapUnsupported
 from utils.storage import Storage
 from utils.kudu_queue import KuduQueue
 from database.serializer import Serializer
@@ -102,13 +105,13 @@ class Aucote(object):
         signal.signal(signal.SIGTERM, self.signal_handler)
         signal.signal(signal.SIGHUP, self.graceful_stop)
         self.load_tools(tools_config)
-        self._scan_task = None
 
         self._storage = Storage(filename=cfg['service.scans.storage'])
 
         self.ioloop = IOLoop.current()
-        self.async_task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
+        self.task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
         self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'])
+        self.scanners = []
 
     @property
     def kudu_queue(self):
@@ -126,25 +129,32 @@ class Aucote(object):
         Returns: None
 
         """
-        try:
-            self.async_task_manager.clear()
-            self._storage.connect()
-            self._storage.init_schema()
+        self.task_manager.clear()
+        self._storage.connect()
+        self._storage.init_schema()
 
-            self._scan_task = ScanAsyncTask(aucote=self, as_service=as_service,
-                                            separate_udp=cfg['portdetection.separate_udp_scan'])
-            self.ioloop.add_callback(self.web_server.run)
-            await self._scan_task.run()
-            await self.async_task_manager.shutdown_condition.wait()
+        self.scanners = [
+            TCPScanner(aucote=self, scan_only=as_service),
+            UDPScanner(aucote=self, scan_only=as_service),
+        ]
 
-            self.web_server.stop()
-            self._scan_task = None
-            self._storage.close()
+        if as_service:
+            self.scanners.append(ToolsScanner(aucote=self, scan_only=as_service))
+            for scanner in self.scanners:
+                self.task_manager.add_crontab_task(scanner, scanner._scan_cron)
+            self.task_manager.start()
+        else:
+            self.task_manager.start()
+            await gen.multi(scanner() for scanner in self.scanners)
+            await self.task_manager.stop()
 
-            log.info("Closing loop")
+        self.ioloop.add_callback(self.web_server.run)
+        await self.task_manager.shutdown_condition.wait()
 
-        except TopdisConnectionException:
-            log.exception("Exception while connecting to Topdis")
+        self.web_server.stop()
+        self._storage.close()
+
+        log.info("Closing loop")
 
     def run_syncdb(self):
         """
@@ -170,7 +180,7 @@ class Aucote(object):
 
         """
         log.debug('Added task: %s', task)
-        self.async_task_manager.add_task(task)
+        self.task_manager.add_task(task)
 
     def signal_handler(self, sig, frame):
         """
@@ -187,17 +197,6 @@ class Aucote(object):
         self.kill()
 
     @property
-    def scan_task(self):
-        """
-        Scan thread
-
-        Returns:
-            ScanAsyncTask
-
-        """
-        return self._scan_task
-
-    @property
     def unfinished_tasks(self):
         """
         Get number of unfinished tasks.
@@ -206,7 +205,7 @@ class Aucote(object):
             int
 
         """
-        return self.async_task_manager.unfinished_tasks
+        return self.task_manager.unfinished_tasks
 
     def load_tools(self, config):
         """
@@ -233,8 +232,8 @@ class Aucote(object):
         self.ioloop.add_callback_from_signal(self._graceful_stop)
 
     async def _graceful_stop(self):
-        await self.scan_task.shutdown_condition.wait()
-        await self.async_task_manager.stop()
+        await gen.multi(scanner.shutdown_condition.wait() for scanner in self.scanners)
+        await self.task_manager.stop()
 
     @classmethod
     def kill(cls):
