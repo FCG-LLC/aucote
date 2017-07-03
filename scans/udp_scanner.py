@@ -1,9 +1,11 @@
 from scans.scanner import Scanner
+from structs import TransportProtocol
 from tools.nmap.ports import PortsScan
 
 
 class UDPScanner(Scanner):
     NAME = "udp"
+    PROTOCOL = TransportProtocol.UDP
 
     @property
     def scanners(self):

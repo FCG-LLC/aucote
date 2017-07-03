@@ -530,3 +530,7 @@ class PortState(Enum):
     UNFILTERED = "unfiltered"
     OPEN_FILTERED = "open|filtered"
     CLOSED_FILTERED = "closed|filtered"
+
+    @classmethod
+    def from_string(cls, text):
+        return cls[text.replace('|', '_').upper()]

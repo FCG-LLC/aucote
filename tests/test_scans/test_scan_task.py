@@ -421,7 +421,7 @@ class ScanTaskTest(AsyncTestCase):
 
         self.task.storage.get_nodes = MagicMock(return_value=[node_2])
 
-        result = await self.task._get_nodes_for_scanning()
+        result = await self.task._get_nodes_for_scanning(protocol=TransportProtocol.UDP)
         expected = [node_3]
 
         self.assertListEqual(result, expected)
@@ -491,7 +491,7 @@ class ScanTaskTest(AsyncTestCase):
         result = self.task.get_ports_for_scan(nodes)
 
         self.assertEqual(result, ports)
-        self.task.storage.get_ports_by_nodes.assert_has_calls([call(nodes=nodes, timestamp=100)])
+        self.task.storage.get_ports_by_nodes.assert_called_once_with(nodes=nodes, protocol=None, timestamp=100)
 
     @patch('scans.scan_task.cfg', new_callable=Config)
     @patch('scans.scan_task.time.time', MagicMock(return_value=595))

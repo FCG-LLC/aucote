@@ -26,7 +26,7 @@ class Scanner(ScanTask):
         if not cfg['portdetection.{0}.scan_enabled'.format(self.NAME)]:
             return
         log.info("Starting scanner: %s", self.NAME)
-        nodes = await self._get_nodes_for_scanning(timestamp=None)
+        nodes = await self._get_nodes_for_scanning(timestamp=None, protocol=self.PROTOCOL)
         log.debug("Found %i nodes for potential scanning", len(nodes))
         await self.run_scan(nodes=nodes, scan_only=self._scan_only)
 
@@ -50,7 +50,7 @@ class Scanner(ScanTask):
             await self._clean_scan()
             return
 
-        self.storage.save_nodes(nodes)
+        self.storage.save_nodes(nodes, protocol=self.PROTOCOL)
 
         nodes = {
             self.IPV4: [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)],

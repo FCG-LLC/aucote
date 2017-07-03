@@ -37,8 +37,8 @@ class StorageTest(TestCase):
     @patch("time.time", MagicMock(return_value=7))
     def test__save_node(self):
         node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        result = self.storage._save_node(node)
-        expected = ("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)", (1, '127.0.0.1', 7))
+        result = self.storage._save_node(node, protocol=TransportProtocol.TCP)
+        expected = ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (1, '127.0.0.1', 7, 6))
 
         self.assertCountEqual(result, expected)
 
@@ -48,11 +48,11 @@ class StorageTest(TestCase):
                  Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2')),
                  Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))]
 
-        result = self.storage._save_nodes(nodes)
+        result = self.storage._save_nodes(nodes, protocol=TransportProtocol.TCP)
         expected = (
-            ("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)", (1, '127.0.0.1', 17)),
-            ("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)", (2, '127.0.0.2', 17)),
-            ("INSERT OR REPLACE INTO nodes (id, ip, time) VALUES (?, ?, ?)", (3, '127.0.0.3', 17)),
+            ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (1, '127.0.0.1', 17, 6)),
+            ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (2, '127.0.0.2', 17, 6)),
+            ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (3, '127.0.0.3', 17, 6)),
         )
 
         self.assertCountEqual(result, expected)
@@ -60,8 +60,8 @@ class StorageTest(TestCase):
 
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
     def test__get_nodes(self):
-        result = self.storage._get_nodes(pasttime=700, timestamp=None)
-        expected = 'SELECT id, ip, time FROM nodes where time > ?', (139300,)
+        result = self.storage._get_nodes(pasttime=700, timestamp=None, protocol=TransportProtocol.UDP)
+        expected = 'SELECT id, ip, time FROM nodes where time > ? AND protocol=?', (139300, 17)
         self.assertEqual(result, expected)
 
     @patch('time.time', MagicMock(return_value=13))
@@ -227,7 +227,7 @@ class StorageTest(TestCase):
             ("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
               "primary key (id, ip, port, protocol))",),
 
-            ("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, primary key (id, ip))",),
+            ("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, protocol int, primary key (id, ip, protocol))",),
         ]
 
         self.assertCountEqual(result, expected)
@@ -237,8 +237,8 @@ class StorageTest(TestCase):
 
     def test__get_ports_by_node(self):
         node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
-        result = self.storage._get_ports_by_node(node, 1200)
-        expected = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ?", (3, '127.0.0.1', 1200,)
+        result = self.storage._get_ports_by_node(node, 1200, protocol=TransportProtocol.TCP)
+        expected = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND protocol=?", (3, '127.0.0.1', 1200, 6)
 
         self.assertEqual(result, expected)
 
@@ -248,10 +248,10 @@ class StorageTest(TestCase):
             Node(node_id=7, ip=ipaddress.ip_address('::1'))
         ]
 
-        result = self.storage._get_ports_by_nodes(nodes, 1200)
+        result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=TransportProtocol.UDP)
         expected = (
-            "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ?",
-            [3, '127.0.0.1', 7, '::1', 1200]
+            "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ? AND protocol=?",
+            [3, '127.0.0.1', 7, '::1', 1200, 17]
         )
 
         self.assertEqual(result, expected)
@@ -277,16 +277,16 @@ class StorageTest(TestCase):
         node = MagicMock()
         self.storage._save_node = MagicMock()
         self.storage.execute = MagicMock()
-        self.storage.save_node(node=node)
-        self.storage._save_node.assert_called_once_with(node=node)
+        self.storage.save_node(node=node, protocol=TransportProtocol.UDP)
+        self.storage._save_node.assert_called_once_with(node=node, protocol=TransportProtocol.UDP)
         self.storage.execute.assert_called_once_with(self.storage._save_node())
 
     def test_save_nodes(self):
         nodes = MagicMock()
         self.storage._save_nodes = MagicMock()
         self.storage.execute = MagicMock()
-        self.storage.save_nodes(nodes=nodes)
-        self.storage._save_nodes.assert_called_once_with(nodes=nodes)
+        self.storage.save_nodes(nodes=nodes, protocol=TransportProtocol.UDP)
+        self.storage._save_nodes.assert_called_once_with(nodes=nodes, protocol=TransportProtocol.UDP)
         self.storage.execute.assert_called_once_with(self.storage._save_nodes())
 
     def test_get_nodes(self):
@@ -298,9 +298,10 @@ class StorageTest(TestCase):
             (2, '::1'),
         ))
 
-        result = self.storage.get_nodes(pasttime=pasttime, timestamp=timestamp)
+        result = self.storage.get_nodes(pasttime=pasttime, timestamp=timestamp, protocol=TransportProtocol.UDP)
 
-        self.storage._get_nodes.assert_called_once_with(pasttime=pasttime, timestamp=timestamp)
+        self.storage._get_nodes.assert_called_once_with(pasttime=pasttime, timestamp=timestamp,
+                                                        protocol=TransportProtocol.UDP)
         self.storage.execute.assert_called_once_with(self.storage._get_nodes())
 
         self.assertEqual(result[0].id, 1)
@@ -429,9 +430,10 @@ class StorageTest(TestCase):
             (1, '127.0.0.1', 23, 17),
         ))
 
-        result = self.storage.get_ports_by_node(node=node, timestamp=timestamp)
+        result = self.storage.get_ports_by_node(node=node, timestamp=timestamp, protocol=TransportProtocol.UDP)
 
-        self.storage._get_ports_by_node.assert_called_once_with(node=node, timestamp=timestamp)
+        self.storage._get_ports_by_node.assert_called_once_with(node=node, timestamp=timestamp,
+                                                                protocol=TransportProtocol.UDP)
         self.storage.execute.assert_called_once_with(self.storage._get_ports_by_node())
 
         self.assertEqual(result[0].node, node)
@@ -450,8 +452,8 @@ class StorageTest(TestCase):
         pasttime = 30
         self.storage._get_ports_by_node = MagicMock()
         self.storage.execute = MagicMock()
-        self.storage.get_ports_by_node(node=node, pasttime=pasttime)
-        self.storage._get_ports_by_node.assert_called_once_with(node=node, timestamp=7)
+        self.storage.get_ports_by_node(node=node, pasttime=pasttime, protocol=TransportProtocol.UDP)
+        self.storage._get_ports_by_node.assert_called_once_with(node=node, timestamp=7, protocol=TransportProtocol.UDP)
         self.storage.execute.assert_called_once_with(self.storage._get_ports_by_node())
 
     @patch('utils.storage.time.time', MagicMock(return_value=108))
@@ -472,8 +474,9 @@ class StorageTest(TestCase):
         node_2.name = 'test'
 
         nodes = [node_1, node_2]
-        result = self.storage.get_ports_by_nodes(nodes, pasttime=pasttime)
-        self.storage._get_ports_by_nodes.assert_called_once_with(nodes=nodes, timestamp=78)
+        result = self.storage.get_ports_by_nodes(nodes, pasttime=pasttime, protocol=TransportProtocol.UDP)
+        self.storage._get_ports_by_nodes.assert_called_once_with(nodes=nodes, timestamp=78,
+                                                                 protocol=TransportProtocol.UDP)
         self.storage.execute.assert_called_once_with(self.storage._get_ports_by_nodes())
 
         self.assertEqual(result[0].node, node_1)

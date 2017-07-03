@@ -32,7 +32,7 @@ class OpenPortsParser:
             if ports is None:
                 continue
             for xml_port in ports.findall('port'):
-                state = PortState[xml_port.find('state').get('state').upper()]
+                state = PortState.from_string(xml_port.find('state').get('state'))
                 if state not in (PortState.OPEN, PortState.FILTERED, PortState.OPEN_FILTERED):
                     continue
 

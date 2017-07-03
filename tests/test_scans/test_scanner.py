@@ -198,7 +198,7 @@ class ScannerTest(AsyncTestCase):
 
         await self.task()
 
-        self.task._get_nodes_for_scanning.assert_called_once_with(timestamp=None)
+        self.task._get_nodes_for_scanning.assert_called_once_with(protocol=None, timestamp=None)
         self.task.run_scan.assert_called_once_with(nodes=nodes, scan_only=self.task._scan_only)
 
     @patch('scans.scanner.cfg', new_callable=Config)

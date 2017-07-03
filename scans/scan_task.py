@@ -20,6 +20,7 @@ class ScanTask(object):
     IPV4 = "ipv4"
     IPV6 = "ipv6"
     NAME = None
+    PROTOCOL = None
 
     def __init__(self, aucote, scan_only=True):
         self.aucote = aucote
@@ -30,7 +31,7 @@ class ScanTask(object):
     async def __call__(self):
         raise NotImplementedError
 
-    async def _get_nodes_for_scanning(self, timestamp=None):
+    async def _get_nodes_for_scanning(self, protocol, timestamp=None):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -45,7 +46,7 @@ class ScanTask(object):
         """
         topdis_nodes = await self._get_topdis_nodes()
 
-        storage_nodes = self.storage.get_nodes(self._scan_interval(), timestamp=timestamp)
+        storage_nodes = self.storage.get_nodes(pasttime=self._scan_interval(), timestamp=timestamp, protocol=protocol)
 
         nodes = list(set(topdis_nodes) - set(storage_nodes))
 
@@ -192,7 +193,7 @@ class ScanTask(object):
             list
 
         """
-        return self.storage.get_ports_by_nodes(nodes=nodes, timestamp=self.previous_scan)
+        return self.storage.get_ports_by_nodes(nodes=nodes, timestamp=self.previous_scan, protocol=self.PROTOCOL)
 
     def _get_special_ports(self):
         return_value = []
