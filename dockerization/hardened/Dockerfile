@@ -11,7 +11,7 @@ Pin-Priority: 1600 \
 " > /etc/apt/preferences
 RUN apt-get update
 
-RUN apt-get install -y mq-broker aucote=*$destEnv
+RUN apt-get install -y mq-broker aucote
 
 RUN setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap
 RUN setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/masscan
