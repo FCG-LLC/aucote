@@ -2,10 +2,12 @@ import logging as log
 
 from scans.executor import Executor
 from scans.scan_task import ScanTask
+from structs import TransportProtocol
 
 
 class ToolsScanner(ScanTask):
     NAME = "tools"
+    PROTOCOL = TransportProtocol.ALL
 
     async def __call__(self):
         """

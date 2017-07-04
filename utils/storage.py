@@ -31,7 +31,9 @@ class Storage(DbInterface):
                    "AND port_protocol = ? AND port_number = ?"
     SELECT_PORTS_BY_NODE = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND "\
                            "protocol=?"
+    SELECT_PORTS_BY_NODE_ALL_PROTS = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ?"
     SELECT_PORTS_BY_NODES = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ? AND protocol=?"
+    SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ?"
     CLEAR_SCANS = "DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL OR SCAN_END IS NULL"
     CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, " \
                          "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, " \
@@ -295,6 +297,8 @@ class Storage(DbInterface):
             tuple
 
         """
+        if protocol in (TransportProtocol.ALL, ):
+            return self.SELECT_PORTS_BY_NODE_ALL_PROTS, (node.id, str(node.ip), timestamp)
 
         return self.SELECT_PORTS_BY_NODE, (node.id, str(node.ip), timestamp, protocol.iana)
 
@@ -315,11 +319,16 @@ class Storage(DbInterface):
         for node in nodes:
             parameters.extend((node.id, str(node.ip)))
 
-        parameters.extend((timestamp, protocol.iana))
+        parameters.append(timestamp)
+        query = self.SELECT_PORTS_BY_NODES_ALL_PROTS
+
+        if protocol not in (TransportProtocol.ALL, ):
+            parameters.append(protocol.iana)
+            query = self.SELECT_PORTS_BY_NODES
 
         where = 'OR'.join([' (id=? AND ip=?) '] * len(nodes))
 
-        return self.SELECT_PORTS_BY_NODES.format(where=where), parameters
+        return query.format(where=where), parameters
 
     def execute(self, query):
         """

@@ -106,6 +106,7 @@ class TransportProtocol(Enum):
         self.db_val = db_val
         self.iana = iana
 
+    ALL = ('ALL', 0)
     ICMP = ('ICMP', 1)
     TCP = ('TCP', 6)
     UDP = ('UDP', 17)

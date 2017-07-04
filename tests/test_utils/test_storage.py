@@ -242,6 +242,13 @@ class StorageTest(TestCase):
 
         self.assertEqual(result, expected)
 
+    def test__get_ports_by_node_all_protocols(self):
+        node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
+        result = self.storage._get_ports_by_node(node, 1200, protocol=TransportProtocol.ALL)
+        expected = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ?", (3, '127.0.0.1', 1200)
+
+        self.assertEqual(result, expected)
+
     def test__get_ports_by_nodes(self):
         nodes = [
             Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1')),
@@ -252,6 +259,20 @@ class StorageTest(TestCase):
         expected = (
             "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ? AND protocol=?",
             [3, '127.0.0.1', 7, '::1', 1200, 17]
+        )
+
+        self.assertEqual(result, expected)
+
+    def test__get_ports_by_nodes_all_protocols(self):
+        nodes = [
+            Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1')),
+            Node(node_id=7, ip=ipaddress.ip_address('::1'))
+        ]
+
+        result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=TransportProtocol.ALL)
+        expected = (
+            "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ?",
+            [3, '127.0.0.1', 7, '::1', 1200]
         )
 
         self.assertEqual(result, expected)
