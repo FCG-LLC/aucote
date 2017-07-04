@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -ex
+
 cd $WORKSPACE/source
 
 docker build --build-arg destEnv=$destEnv -t cs/aucote .
