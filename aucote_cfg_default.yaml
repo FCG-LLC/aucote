@@ -32,7 +32,7 @@ service:
 
 # This section contains port detection configuration
 # portdetection:
-#   (tcp|udp|sctp): - Type of scan
+#   (tcp|udp|sctp|tools): - Type of scan
 #     scan_enabled: - Defines if scan is enable or not
 #     scan_type: <LIVE | PERIODIC> - Type of scan:
 #                                    - LIVE - scan host no more than live_scan.min_time_gap. New hosts will be scan when
@@ -65,6 +65,9 @@ service:
 #         - <NMAP ports format>
 #         - ...
 #
+#   tcp: - Additional options which are related only to TCP scan
+#     host_timeout: <int> - Number of seconds after which scanning particular host should be give up
+#
 #   udp: - Additional options which are related only to UDP scan
 #     nmap_udp: <bool> - Should UDP scan be performed by Nmap. Otherwise aucote will use Masscan
 #     retries: <int> - How many UDP scan retries is allowed by port detection
@@ -73,9 +76,6 @@ service:
 #   udp_network_scan_rate: <int> - Rate in packets per seconds for UDP network scan (should be low)
 #   _internal: - more advanced  configuration
 #     port_scan_rate: <int> - Rate in packets per seconds for port scanning (banner scan, service detection, etc)
-#     separate_udp_scan: <bool> - If True, UDP scan is performed parallel with TCP scan
-#     tools_cron: <cron-like format> - This options defines how often aucote should run tools scan (nmap, hydra, etc)
-#     host_timeout: <int> - Number of seconds after which scanning particular host should be give up
 #     port_period: <period> - Minimal port scanning interval
 
 portdetection:
@@ -84,7 +84,7 @@ portdetection:
         scan_type: "PERIODIC"
         scan_rate: 500
         periodic_scan:
-            cron: "*/2 * * * *"
+            cron: "0 */2 * * *" # Run TCP scan every 2 hours
         live_scan:
              min_time_gap: 2h
         networks:
@@ -100,7 +100,7 @@ portdetection:
         scan_type: "PERIODIC"
         scan_rate: 50
         periodic_scan:
-            cron: "0 0 * * *"
+            cron: "0 0 * * *" # Run UDP scan every 24 hours (at midnight)
         live_scan:
              min_time_gap: 24h
         networks:
@@ -120,10 +120,11 @@ portdetection:
         scan_enabled: True
         scan_type: "PERIODIC"
         periodic_scan:
-            cron: "0 22 * * *"
+            cron: "0 22 * * *" # Run tools scan every day at 22:00
+        live_scan:
+             min_time_gap: 24h
     _internal:
         port_scan_rate: 10
-        separate_udp_scan: False
         port_period: 0s
 
 

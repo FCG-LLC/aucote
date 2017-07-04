@@ -23,9 +23,6 @@ class AucoteTest(AsyncTestCase):
         super(AucoteTest, self).setUp()
         self.storage = mock_storage
         self.cfg = {
-            'portdetection': {
-                'separate_udp_scan': False
-            },
             'service': {
                 'scans': {
                     'threads': 30,
