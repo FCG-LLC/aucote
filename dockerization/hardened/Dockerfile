@@ -3,10 +3,10 @@ FROM portus.cs.int:5000/prod/cs-base
 ARG destEnv
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-add-repository ppa:pi-rho/security
-RUN echo "deb http://10.12.1.225/public trusty main" >> /etc/apt/sources.list
+
 RUN echo "deb http://10.12.1.225/public xenial $destEnv" >> /etc/apt/sources.list
 RUN printf "Package: * \nPin: release a=xenial \nPin-Priority: 1600 \n" > /etc/apt/preferences
+RUN apt-add-repository ppa:pi-rho/security
 RUN apt-get update
 
 RUN apt-get install -y mq-broker aucote
