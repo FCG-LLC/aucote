@@ -35,7 +35,8 @@ class PortScanTest(TestCase):
                         'include': ['55'],
                         'exclude': [],
                     },
-                    'scan_rate': 1030
+                    'scan_rate': 1030,
+                    'host_timeout': 600,
                 },
                 'udp': {
                     'ports': {
@@ -45,9 +46,6 @@ class PortScanTest(TestCase):
                     'scan_rate': 1030,
                     'retries': 2
                 },
-                '_internal': {
-                    'host_timeout': 600,
-                }
             },
             'tools': {
                 'nmap': {
@@ -68,7 +66,7 @@ class PortScanTest(TestCase):
         cfg._cfg = self.cfg
 
         result = self.scanner.prepare_args(nodes=self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-6', '-sS', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
+        expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)
@@ -84,7 +82,7 @@ class PortScanTest(TestCase):
         cfg['portdetection.tcp.ports.exclude'] = ['45-89']
 
         result = self.scanner.prepare_args(nodes=self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-6', '-sS', '-p', 'T:55', '--exclude-ports', 'T:45-89',
+        expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '-p', 'T:55', '--exclude-ports', 'T:45-89',
                     '--max-rate', '1030', '192.168.1.5']
         self.assertEqual(result, expected)
 
@@ -94,7 +92,7 @@ class PortScanTest(TestCase):
         cfg['tools.nmap.scripts_dir'] = 'test'
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-6', '-sS', '--datadir', 'test', '-p', 'T:55',
+        expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '--datadir', 'test', '-p', 'T:55',
                     '--max-rate', '1030', '192.168.1.5']
 
         self.assertEqual(result, expected)
@@ -106,7 +104,7 @@ class PortScanTest(TestCase):
         cfg._cfg = self.cfg
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-sS', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
+        expected = ['-Pn', '-sS', '--host-timeout', '600', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
 
         self.assertEqual(result, expected)
 
@@ -121,7 +119,7 @@ class PortScanTest(TestCase):
         cfg['portdetection.udp.scan_rate'] = 3000
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-sU', '--min-rate', '3000', '--max-retries', '2',
+        expected = ['-Pn', '-sU', '--min-rate', '3000', '--max-retries', '2',
                     '--defeat-icmp-ratelimit', '-p', 'U:12-16', '--max-rate', '3000', '192.168.1.5']
         self.assertCountEqual(result, expected)
 
@@ -130,5 +128,5 @@ class PortScanTest(TestCase):
         cfg._cfg = self.cfg
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-6', '-sS', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
+        expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
         self.assertEqual(result, expected)

@@ -5,16 +5,16 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from structs import Node
-from tools.common.scan_task import ScanTask
+from tools.common.scan_task import PortScanTask
 from utils.exceptions import NonXMLOutputException, StopCommandException
 
 
-class ScanTaskTest(AsyncTestCase):
+class PortScanTaskTest(AsyncTestCase):
     
     def setUp(self):
-        super(ScanTaskTest, self).setUp()
+        super(PortScanTaskTest, self).setUp()
         self.command = MagicMock()
-        self.task = ScanTask(self.command)
+        self.task = PortScanTask(self.command)
     
     def test_prepare_args(self):
         self.assertRaises(NotImplementedError, self.task.prepare_args, [])

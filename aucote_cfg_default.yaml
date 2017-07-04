@@ -81,10 +81,10 @@ service:
 portdetection:
     tcp:
         scan_enabled: True
-        scan_type: "LIVE"
+        scan_type: "PERIODIC"
         scan_rate: 500
         periodic_scan:
-            cron: "* * * * *"
+            cron: "*/2 * * * *"
         live_scan:
              min_time_gap: 2h
         networks:
@@ -94,14 +94,15 @@ portdetection:
             include:
                 - 0-65535
             exclude: []
+        host_timeout: 600
     udp:
         scan_enabled: True
-        scan_type: "LIVE"
+        scan_type: "PERIODIC"
         scan_rate: 50
         periodic_scan:
-            cron: "* * * * *"
+            cron: "0 0 * * *"
         live_scan:
-             min_time_gap: 2h
+             min_time_gap: 24h
         networks:
             include: []
             exclude: []
@@ -109,8 +110,8 @@ portdetection:
             include:
                 - 0-65535
             exclude: []
-        retries: 2
-        defeat_icmp: True
+        retries: 3
+        defeat_icmp: False
     sctp:
         ports:
             include: []
@@ -119,12 +120,10 @@ portdetection:
         scan_enabled: True
         scan_type: "PERIODIC"
         periodic_scan:
-            cron: "*/4 * * * *"
+            cron: "0 22 * * *"
     _internal:
         port_scan_rate: 10
         separate_udp_scan: False
-        tools_cron: "0 22 * * *" # run every day at 22:00 UTC
-        host_timeout: 600
         port_period: 0s
 
 
