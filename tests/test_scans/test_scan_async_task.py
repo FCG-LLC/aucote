@@ -2,7 +2,7 @@ import ipaddress
 from unittest.mock import patch, MagicMock, PropertyMock, call
 
 import time
-from urllib.error import URLError
+from tornado.httpclient import HTTPError
 
 from cpe import CPE
 from croniter import croniter
@@ -358,7 +358,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @gen_test
     async def test_getting_nodes_cannot_connect_to_topdis(self, cfg, http_client):
         cfg._cfg = self.cfg
-        http_client.instance().get.side_effect = URLError('')
+        http_client.instance().get.side_effect = HTTPError('')
         result = await self.thread._get_topdis_nodes()
         expected = []
 

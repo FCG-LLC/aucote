@@ -72,6 +72,8 @@ class Toucan(object):
         self._http_client = HTTPClient.instance()
 
     def _handle_exception(self, key, exception):
+        if not exception.response:
+            raise ToucanConnectionException(str(exception))
         if exception.response.code in {404, 204}:
             raise ToucanUnsetException(key)
 
