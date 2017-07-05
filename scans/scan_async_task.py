@@ -3,7 +3,7 @@ This module contains class responsible for scanning.
 
 """
 import ipaddress
-from urllib.error import URLError
+from tornado.httpclient import HTTPError
 import logging as log
 import time
 import ujson as json
@@ -189,7 +189,10 @@ class ScanAsyncTask(object):
         url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg['topdis.api.host'], cfg['topdis.api.port'])
         try:
             resource = await HTTPClient.instance().get(url)
-        except URLError:
+        except HTTPError:
+            log.exception('Cannot connect to topdis: %s:%s', cfg['topdis.api.host'], cfg['topdis.api.port'])
+            return []
+        except ConnectionError:
             log.exception('Cannot connect to topdis: %s:%s', cfg['topdis.api.host'], cfg['topdis.api.port'])
             return []
 

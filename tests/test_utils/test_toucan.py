@@ -50,6 +50,24 @@ class TestToucan(AsyncTestCase):
         with self.assertRaises(ToucanException):
             await self.toucan.get("test.key")
 
+    @patch('utils.toucan.Toucan.min_retry_time', 0)
+    @gen_test
+    async def test_get_599(self):
+        self.response.code = 500
+        self.response._body = b'test_error'
+        self.toucan._http_client.get.side_effect = (HTTPError(code=599, response=None))
+        with self.assertRaises(ToucanConnectionException):
+            await self.toucan.get("test.key")
+
+    @patch('utils.toucan.Toucan.min_retry_time', 0)
+    @gen_test
+    async def test_connection_exception(self):
+        self.response.code = 500
+        self.response._body = b'test_error'
+        self.toucan._http_client.get.side_effect = (ConnectionError())
+        with self.assertRaises(ToucanConnectionException):
+            await self.toucan.get("test.key")
+
     @patch('utils.toucan.ujson.loads')
     @gen_test
     async def test_get_toucan_error(self, mock_json):
@@ -222,6 +240,17 @@ class TestToucan(AsyncTestCase):
         mock_json.return_value = {
             'message': 'test'
         }
+
+        with self.assertRaises(ToucanConnectionException):
+            await self.toucan.put("test.key", "test_value")
+        self.assertEqual(self.toucan._http_client.put.call_count, 1)
+
+    @patch('utils.toucan.Toucan.min_retry_time', 0)
+    @patch('utils.toucan.Toucan.max_retry_count', 1)
+    @gen_test
+    async def test_put_with_connection_exception(self):
+        self.response.code = 404
+        self.toucan._http_client.put.side_effect = (ConnectionError())
 
         with self.assertRaises(ToucanConnectionException):
             await self.toucan.put("test.key", "test_value")

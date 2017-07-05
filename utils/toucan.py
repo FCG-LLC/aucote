@@ -72,6 +72,8 @@ class Toucan(object):
         self._http_client = HTTPClient.instance()
 
     def _handle_exception(self, key, exception):
+        if not exception.response:
+            raise ToucanConnectionException(str(exception))
         if exception.response.code in {404, 204}:
             raise ToucanUnsetException(key)
 
@@ -117,6 +119,9 @@ class Toucan(object):
 
         except HTTPError as exception:
             self._handle_exception(key, exception)
+        except ConnectionError as exception:
+            raise ToucanConnectionException(str(exception))
+
 
     @retry_if_fail
     async def put(self, key, values):
@@ -158,6 +163,8 @@ class Toucan(object):
 
         except HTTPError as exception:
             self._handle_exception(key, exception)
+        except ConnectionError as exception:
+            raise ToucanConnectionException(str(exception))
 
     def proceed_response(self, key, response):
         """
