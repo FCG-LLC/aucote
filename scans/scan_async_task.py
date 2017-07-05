@@ -192,6 +192,9 @@ class ScanAsyncTask(object):
         except HTTPError:
             log.exception('Cannot connect to topdis: %s:%s', cfg['topdis.api.host'], cfg['topdis.api.port'])
             return []
+        except ConnectionError:
+            log.exception('Cannot connect to topdis: %s:%s', cfg['topdis.api.host'], cfg['topdis.api.port'])
+            return []
 
         nodes_cfg = json.loads(resource.body)
 

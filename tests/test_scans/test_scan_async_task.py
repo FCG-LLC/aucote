@@ -365,6 +365,17 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertEqual(result, expected)
 
     @patch('scans.scan_async_task.HTTPClient')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_getting_nodes_connection_error_to_topdis(self, cfg, http_client):
+        cfg._cfg = self.cfg
+        http_client.instance().get.side_effect = ConnectionError('')
+        result = await self.thread._get_topdis_nodes()
+        expected = []
+
+        self.assertEqual(result, expected)
+
+    @patch('scans.scan_async_task.HTTPClient')
     @gen_test
     async def test_getting_nodes_unknown_exception(self, http_client):
         http_client.instance().get.side_effect = Exception
