@@ -7,10 +7,7 @@ RUN apt-get install wget -y
 RUN echo "deb http://10.12.1.225/public trusty main" >> /etc/apt/sources.list
 RUN wget http://10.12.1.225/public/cs-repo.key -O /tmp/cs-repo.key && apt-key add /tmp/cs-repo.key && rm -f /tmp/cs-repo.key
 RUN echo "deb http://10.12.1.225/public xenial $destEnv" >> /etc/apt/sources.list
-RUN echo "Package: * \
-Pin: release a=xenial \
-Pin-Priority: 1600 \
-" > /etc/apt/preferences
+RUN printf "Package: * \nPin: release a=xenial, o=10.12.1.225 \nPin-Priority: 1600 \n" > /etc/apt/preferences
 
 
 
