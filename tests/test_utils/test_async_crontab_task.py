@@ -104,3 +104,11 @@ class AsyncCrontabTaskTest(AsyncTestCase):
     def test_cron_callable(self):
         self.task._cron = MagicMock()
         self.assertEqual(self.task.cron, self.task._cron.return_value)
+
+    @gen_test
+    async def test_invalid_cron_value(self):
+        self.task._cron = ''
+        self.task._prepare_next_iteration = MagicMock()
+        await self.task()
+        self.assertFalse(self.func.called)
+        self.task._prepare_next_iteration.assert_called_once_with()

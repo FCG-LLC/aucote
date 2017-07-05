@@ -53,24 +53,22 @@ class AsyncCrontabTask(object):
 
         self._is_running = True
 
-        current_time = time.time()
-        current_cron_time = int(current_time / 60) * 60
-        current_cron = croniter(self.cron, current_time - 60).next()
-
-        if current_cron != current_cron_time or current_cron_time == self._last_execute:
-            self._prepare_next_iteration()
-            return
-
-        self._last_execute = current_cron_time
-
-
         try:
+            current_time = time.time()
+            current_cron_time = int(current_time / 60) * 60
+            current_cron = croniter(self.cron, current_time - 60).next()
+
+            if current_cron != current_cron_time or current_cron_time == self._last_execute:
+                return
+
+            self._last_execute = current_cron_time
+
             log.debug("AsyncCrontabTask[%s]: Executing", self.func.__name__)
             await self.func()
+            log.debug("AsyncCrontabTask[%s]: Finished", self.func.__name__)
         except Exception:
             log.exception("AsyncCrontabTask[%s]: Exception", self.func.__name__)
         finally:
-            log.debug("AsyncCrontabTask[%s]: Finished", self.func.__name__)
             self._prepare_next_iteration()
 
     def is_running(self):
