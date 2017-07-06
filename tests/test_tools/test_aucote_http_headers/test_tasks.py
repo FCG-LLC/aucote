@@ -1,12 +1,9 @@
-from collections import KeysView
-from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from tornado.concurrent import Future
-from tornado.httpclient import HTTPClient
+from tornado.httpclient import HTTPClient, HTTPError, HTTPResponse, HTTPRequest
 from tornado.testing import gen_test, AsyncTestCase
 
-from fixtures.exploits import Exploit
 from structs import Port, Scan
 from tools.aucote_http_headers.structs import HeaderDefinition, AucoteHttpHeaderResult
 from tools.aucote_http_headers.tasks import AucoteHttpHeadersTask
@@ -146,14 +143,27 @@ class AucoteHttpHeadersTaskTest(AsyncTestCase):
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
     @gen_test
     async def test_server_reponse_403_logging(self, mock_log, http_client):
-        future = Future()
-        future.set_result(MagicMock(code=403))
-        http_client.instance().head.return_value = future
+        request = HTTPRequest(url='url')
+        response = HTTPResponse(code=403, request=request)
+        http_client.instance().head.side_effect = HTTPError(code=403, response=response)
         self.task.store_vulnerability = MagicMock()
 
         await self.task()
 
         self.assertTrue(mock_log.warning.called)
+
+    @patch('tools.aucote_http_headers.tasks.HTTPClient')
+    @patch('tools.aucote_http_headers.tasks.log')
+    @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(return_value='test'))
+    @gen_test
+    async def test_server_reponse_599(self, mock_log, http_client):
+        http_client.instance().head.side_effect = HTTPError(code=403, response=None)
+        self.task.store_vulnerability = MagicMock()
+
+        result = await self.task()
+        expected = None
+
+        self.assertEqual(result, expected)
 
     @patch('tools.aucote_http_headers.tasks.HTTPClient')
     @patch('tools.aucote_http_headers.tasks.cfg.get', MagicMock(side_effect=(None, 'test')))

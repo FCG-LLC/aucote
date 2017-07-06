@@ -5,6 +5,8 @@ This module contains tasks related to Aucote HTTP Headers
 import time
 import logging as log
 
+from tornado.httpclient import HTTPError
+
 from aucote_cfg import cfg
 from structs import Vulnerability
 from tools.aucote_http_headers.structs import AucoteHttpHeaderResult as Result
@@ -38,10 +40,10 @@ class AucoteHttpHeadersTask(PortTask):
 
         try:
             response = await HTTPClient.instance().head(url=self._port.url, headers=custom_headers, validate_cert=False)
-
-            if response.code != 200:
-                log.warning("Server replied with status code: %i", response.code)
-
+        except HTTPError as exception:
+            if exception.response is None:
+                return
+            response = exception.response
         except ConnectionError:
             log.exception("Cannot connect to %s", self._port.url)
             return
@@ -49,6 +51,8 @@ class AucoteHttpHeadersTask(PortTask):
             log.warning("%s for %s", str(exception), self._port.url)
             return
 
+        if response.code != 200:
+            log.warning("Server replied with status code: %i", response.code)
         headers = response.headers
 
         results = []
