@@ -31,11 +31,42 @@ class MainHandler(Handler):
             dict
 
         """
+        scanners = self._scanners_status()
+        unfinished_tasks = self.aucote.task_manager.unfinished_tasks
         stats = {
-            'scanner': self.scanning_status(self.aucote.scan_task),
+            'scanners': scanners,
+            'unfinished_tasks': unfinished_tasks,
             'meta': self.metadata()
         }
         return stats
+
+    def _scanners_status(self):
+        return_value = {}
+        for scanner in self.aucote.task_manager.cron_tasks:
+            return_value[scanner.NAME] = {
+                'current_scan': self._format_nodes(scanner.current_scan),
+                'next_scan': scanner.next_scan,
+                'previous_scan': scanner.previous_scan,
+                'protocol': scanner.PROTOCOL.db_val,
+                'scan_start': scanner.scan_start,
+                'scan_type': cfg['portdetection.{0}.scan_type'.format(scanner.NAME)],
+                'ports': {
+                    'included': list(cfg['portdetection.{0}.ports.include'.format(scanner.NAME)]),
+                    'excluded': list(cfg['portdetection.{0}.ports.exclude'.format(scanner.NAME)])
+                },
+                'networks': {
+                    'included': list(cfg['portdetection.{0}.networks.include'.format(scanner.NAME)]),
+                    'excluded': list(cfg['portdetection.{0}.networks.exclude'.format(scanner.NAME)])
+                },
+                'cron': scanner.scan_cron,
+                'min_time_gap': scanner.scan_interval
+            }
+
+        return return_value
+
+    @classmethod
+    def _format_nodes(cls, nodes):
+        return [str(node) for node in nodes]
 
     @classmethod
     def metadata(cls):
@@ -47,62 +78,4 @@ class MainHandler(Handler):
         """
         return {
             'timestamp': time.time()
-        }
-
-    @classmethod
-    def scanning_status(cls, scan_task):
-        """
-        Information about scan
-
-        Args:
-            scan_task (ScanAsyncTask):
-
-        Returns:
-            dict
-
-        """
-        return {
-            'nodes': [str(node.ip) for node in scan_task.current_scan],
-            'networks': {
-                'include': list(cfg['portdetection.networks.include']),
-                'exclude': list(cfg['portdetection.networks.exclude'])
-            },
-            'ports': {
-                'tcp': {
-                    'include': list(cfg['portdetection.ports.tcp.include']),
-                    'exclude': list(cfg['portdetection.ports.tcp.exclude']),
-                },
-                'udp': {
-                    'include': list(cfg['portdetection.ports.udp.include']),
-                    'exclude': list(cfg['portdetection.ports.udp.exclude']),
-                },
-                'sctp': {
-                    'include': list(cfg['portdetection.ports.sctp.include']),
-                    'exclude': list(cfg['portdetection.ports.sctp.exclude']),
-                },
-            },
-            'previous_scan': scan_task.previous_scan,
-            'previous_tool_scan': scan_task.previous_tool_scan,
-            'next_scan': scan_task.next_scan,
-            'next_tool_scan': scan_task.next_tool_scan,
-            'scan_cron': scan_task._scan_cron(),
-            'scan_interval': scan_task._scan_interval(),
-            'scan_type': cfg['portdetection.scan_type']
-        }
-
-    @classmethod
-    def scheduler_task_status(cls, task):
-        """
-        Returns information about schedulers task
-
-        Args:
-            task : named tuple representing scheduler task
-
-        Returns:
-            dict
-
-        """
-        return {
-            'action': task.action.__name__,
-            'time': task.time
         }

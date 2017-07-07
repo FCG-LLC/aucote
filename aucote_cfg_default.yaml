@@ -123,6 +123,13 @@ portdetection:
             cron: "0 22 * * *" # Run tools scan every day at 22:00
         live_scan:
              min_time_gap: 24h
+        networks:
+            include: [0.0.0.0/0] # all found by UDP and TCP scanners
+            exclude: []
+        ports:
+            include:
+                - 0-65535
+            exclude: []
     _internal:
         port_scan_rate: 10
         port_period: 0s

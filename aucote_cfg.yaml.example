@@ -63,4 +63,4 @@ toucan:
     max_retry_time: 300
     max_retry_count: 20
     api: http://toucan:3000
-    force: False
+    force: Fals

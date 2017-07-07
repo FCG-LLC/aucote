@@ -26,7 +26,9 @@ class ScanTask(object):
         self.aucote = aucote
         self._shutdown_condition = Event()
         self.start = None
+        self.scan_start = 0
         self._scan_only = scan_only
+        self._current_scan = []
 
     async def __call__(self):
         raise NotImplementedError
@@ -149,6 +151,17 @@ class ScanTask(object):
 
         return parse_period(cfg['portdetection.{0}.live_scan.min_time_gap'.format(self.NAME)])
 
+    @property
+    def scan_interval(self):
+        """
+        Scan interval value
+
+        Returns:
+            int
+
+        """
+        return self._scan_interval()
+
     def _scan_cron(self):
         """
         Get scan cron
@@ -161,6 +174,17 @@ class ScanTask(object):
             return self.LIVE_SCAN_CRON
 
         return cfg['portdetection.{0}.periodic_scan.cron'.format(self.NAME)]
+
+    @property
+    def scan_cron(self):
+        """
+        Scan cron value
+
+        Returns:
+            str
+
+        """
+        return self._scan_cron()
 
     @property
     def previous_scan(self):
@@ -220,3 +244,14 @@ class ScanTask(object):
                                                    udp=cfg['portdetection.udp.ports.exclude'])
 
         return [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
+
+    @property
+    def current_scan(self):
+        """
+        List of currently scan nodes
+
+        Returns:
+            list
+
+        """
+        return self._current_scan[:]

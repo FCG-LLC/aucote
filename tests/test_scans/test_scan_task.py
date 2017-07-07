@@ -506,7 +506,7 @@ class ScanTaskTest(AsyncTestCase):
         self.assertEqual(result, expected)
 
     @patch('scans.scan_task.cfg', new_callable=Config)
-    def test_scan_cron(self, cfg):
+    def test__scan_cron(self, cfg):
         expected = "* * * * */45"
         cfg['portdetection.test_name.scan_type'] = "PERIODIC"
         cfg['portdetection.test_name.periodic_scan.cron'] = expected
@@ -592,3 +592,15 @@ class ScanTaskTest(AsyncTestCase):
     async def test_call(self):
         with self.assertRaises(NotImplementedError):
             await self.task()
+
+    def test_scan_interval(self):
+        self.task._scan_interval = MagicMock(return_value=435)
+        expected = 435
+        result = self.task.scan_interval
+        self.assertEqual(result, expected)
+
+    def test_scan_cron(self):
+        self.task._scan_cron = MagicMock(return_value='*/2 3 5 *')
+        expected = '*/2 3 5 *'
+        result = self.task.scan_cron
+        self.assertEqual(result, expected)

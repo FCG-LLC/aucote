@@ -16,7 +16,6 @@ class Scanner(ScanTask):
         super(Scanner, self).__init__(*args, **kwargs)
         self._shutdown_condition = Event()
         self.scan_start = None
-        self._current_scan = []
 
     @property
     def scanners(self):
@@ -118,13 +117,3 @@ class Scanner(ScanTask):
 
         await cfg.toucan.push_config(data, overwrite=True)
 
-    @property
-    def current_scan(self):
-        """
-        List of currently scan nodes
-
-        Returns:
-            list
-
-        """
-        return self._current_scan[:]

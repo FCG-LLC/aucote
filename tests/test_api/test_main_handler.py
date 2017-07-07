@@ -6,7 +6,8 @@ from tornado.web import Application
 from api.main_handler import MainHandler
 from fixtures.exploits import Exploit
 from scans.executor import Executor
-from structs import Port, Node
+from scans.scanner import Scanner
+from structs import Port, Node, TransportProtocol
 from tools.base import Tool
 from tools.common.port_task import PortTask
 from utils import Config
@@ -15,7 +16,11 @@ from utils import Config
 class UserAPITest(AsyncHTTPTestCase):
     def setUp(self):
         super(UserAPITest, self).setUp()
+        self.aucote = MagicMock()
         self.handler = MainHandler(self.app, MagicMock(), aucote=self.aucote)
+        self.scanner = Scanner(aucote=self.aucote)
+        self.scanner.NAME = 'test_name'
+        self.scanner.PROTOCOL = TransportProtocol.ALL
 
     def get_app(self):
         self.aucote = MagicMock()
@@ -32,13 +37,15 @@ class UserAPITest(AsyncHTTPTestCase):
         self.assertEqual(json.loads(response.body.decode()), expected)
 
     @patch('api.main_handler.MainHandler.metadata')
-    @patch('api.main_handler.MainHandler.scanning_status')
+    @patch('api.main_handler.MainHandler._scanners_status')
     def test_aucote_status(self, mock_scan_info, metadata):
         metadata.return_value = 'test_meta'
+        self.aucote.task_manager.unfinished_tasks = 13
 
         result = self.handler.aucote_status()
-        expected = {'scanner': mock_scan_info.return_value,
-                    'meta': 'test_meta'}
+        expected = {'scanners': mock_scan_info.return_value,
+                    'meta': 'test_meta',
+                    'unfinished_tasks': 13}
 
         self.assertEqual(result, expected)
 
@@ -51,84 +58,50 @@ class UserAPITest(AsyncHTTPTestCase):
 
         self.assertEqual(result, expected)
 
+    def test_format_nodes(self):
+        node_1 = Node(node_id=13, ip=ipaddress.ip_address('127.0.0.5'))
+        node_2 = Node(node_id=45, ip=ipaddress.ip_address('45.0.0.5'))
+
+        expected = ['127.0.0.5[13]', '45.0.0.5[45]']
+        result = self.handler._format_nodes([node_1, node_2])
+
+        self.assertCountEqual(result, expected)
+
     @patch('api.main_handler.cfg', new_callable=Config)
-    @patch('api.main_handler.MainHandler.scheduler_task_status')
-    def test_scanning_info(self, task_status, mock_cfg):
-        mock_cfg._cfg = {
-            'portdetection': {
-                'networks': {
-                    'include': ['test_cfg1.in'],
-                    'exclude': ['test_cfg1.ex'],
-                },
+    @patch('scans.scan_task.cfg', new_callable=Config)
+    @patch('scans.scan_task.time.time', MagicMock(return_value=147))
+    def test_scanner_status(self, cfg, cfg_scan_task):
+        cfg['portdetection.test_name.scan_type'] = 'LIVE'
+        cfg['portdetection.test_name.live_scan.min_time_gap'] = '45s'
+        cfg['portdetection.test_name.ports.include'] = ['23']
+        cfg['portdetection.test_name.ports.exclude'] = ['89']
+        cfg['portdetection.test_name.networks.include'] = ['127.0.0.1/24']
+        cfg['portdetection.test_name.networks.exclude'] = ['127.0.0.1/8']
+        cfg_scan_task._cfg = cfg._cfg
+        self.scanner.scan_start = 67.
+        self.aucote.task_manager.cron_tasks = [self.scanner]
+        self.scanner._current_scan = [Node(node_id=34, ip=ipaddress.ip_address('127.0.0.1'))]
+
+        result = self.handler._scanners_status()
+        expected = {
+            'test_name': {
+                'current_scan': ['127.0.0.1[34]'],
+                'next_scan': 180.,
+                'previous_scan': 60.,
+                'protocol': 'ALL',
+                'scan_start': 67.,
+                'scan_type': 'LIVE',
                 'ports': {
-                    'tcp': {
-                        'include': ['test_cfg2.in'],
-                        'exclude': ['test_cfg2.ex'],
-                    },
-                    'udp': {
-                        'include': ['udp_1'],
-                        'exclude': ['udp_2']
-                    },
-                    'sctp': {
-                        'include': ['sctp_1'],
-                        'exclude': ['sctp_2']
-                    }
+                    'included': ['23'],
+                    'excluded': ['89']
                 },
-                'scan_type': 'PERIODIC'
+                'networks': {
+                    'included': ['127.0.0.1/24'],
+                    'excluded': ['127.0.0.1/8']
+                },
+                'cron': '* * * * *',
+                'min_time_gap': 45.
             }
         }
-        scan_thread = MagicMock()
-        scan_thread.current_scan = [
-            MagicMock(ip='127.0.0.1'),
-            MagicMock(ip='::1'),
-        ]
-        scan_thread.tasks = (1, 2)
-        task_status.return_value = 'test'
 
-        result = self.handler.scanning_status(scan_thread)
-        expected = {
-            'nodes': [
-                '127.0.0.1',
-                '::1'
-            ],
-            'networks': {
-                'include': ['test_cfg1.in'],
-                'exclude': ['test_cfg1.ex'],
-            },
-            'ports': {
-                'tcp': {
-                    'include': ['test_cfg2.in'],
-                    'exclude': ['test_cfg2.ex'],
-                },
-                'udp': {
-                    'include': ['udp_1'],
-                    'exclude': ['udp_2']
-                },
-                'sctp': {
-                    'include': ['sctp_1'],
-                    'exclude': ['sctp_2']
-                }
-            },
-            'previous_scan': scan_thread.previous_scan,
-            'previous_tool_scan': scan_thread.previous_tool_scan,
-            'next_scan': scan_thread.next_scan,
-            'next_tool_scan': scan_thread.next_tool_scan,
-            'scan_cron': scan_thread._scan_cron(),
-            'scan_interval': scan_thread._scan_interval(),
-            'scan_type': 'PERIODIC'
-        }
-
-        self.assertCountEqual(result, expected)
-
-    def test_scheduler_task_status(self):
-        task = MagicMock()
-        task.action.__name__ = 'test_name'
-        task.time = 17
-
-        expected = {
-            'action': 'test_name',
-            'time': 17
-        }
-        result = MainHandler.scheduler_task_status(task)
-
-        self.assertCountEqual(result, expected)
+        self.assertEqual(result, expected)

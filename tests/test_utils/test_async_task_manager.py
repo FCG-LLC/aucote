@@ -169,3 +169,17 @@ class TestAsyncTaskManager(AsyncTestCase):
 
     def test_shutdown_condition(self):
         self.assertEqual(self.task_manager.shutdown_condition, self.task_manager._shutdown_condition)
+
+    def test_cron_tasks(self):
+        self.task_manager._cron_tasks = {
+            MagicMock(): 'a',
+            MagicMock(): 'b',
+            MagicMock(): 'c',
+            MagicMock(): 'd',
+        }
+
+        expected = self.task_manager._cron_tasks.keys()
+        result = self.task_manager.cron_tasks
+
+        self.assertEqual(result, expected)
+

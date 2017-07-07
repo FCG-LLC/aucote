@@ -165,3 +165,7 @@ class AsyncTaskManager(object):
 
         """
         return self._tasks._unfinished_tasks
+
+    @property
+    def cron_tasks(self):
+        return self._cron_tasks.keys()
