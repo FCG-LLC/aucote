@@ -71,7 +71,7 @@ class AsyncCrontabTask(object):
 
             log.debug("AsyncCrontabTask[%s]: Executing", self.name)
             await self.func()
-            log.debug("AsyncCrontabTask[%s]: Finished", self.func.__name__)
+            log.debug("AsyncCrontabTask[%s]: Finished", self.name)
         except Exception:
             log.exception("AsyncCrontabTask[%s]: Exception", self.name)
         finally:
