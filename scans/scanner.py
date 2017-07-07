@@ -100,8 +100,8 @@ class Scanner(ScanTask):
 
         data = {
             'portdetection': {
-                'status': {
-                    self.NAME: {
+                self.NAME: {
+                    'status': {
                         'previous_scan_start': self.previous_scan,
                         'next_scan_start': self.next_scan,
                         'scan_start': self.scan_start,
@@ -113,7 +113,7 @@ class Scanner(ScanTask):
         }
 
         if status is ScanStatus.IDLE:
-            data['portdetection']['status'][self.NAME]['previous_scan_duration'] = int(time.time() - self.scan_start)
+            data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
 
         await cfg.toucan.push_config(data, overwrite=True)
 

@@ -139,8 +139,8 @@ class ScannerTest(AsyncTestCase):
 
         expected = {
             'portdetection': {
-                'status': {
-                    'test_name': {
+                'test_name': {
+                    'status': {
                         'previous_scan_start': 57,
                         'next_scan_start': 75,
                         'scan_start': 17,
@@ -168,8 +168,8 @@ class ScannerTest(AsyncTestCase):
 
         expected = {
             'portdetection': {
-                'status': {
-                    'test_name': {
+                'test_name': {
+                    'status': {
                         'previous_scan_start': 57,
                         'next_scan_start': 75,
                         'scan_start': 17,

@@ -94,7 +94,7 @@ portdetection:
             include:
                 - 0-65535
             exclude: []
-        host_timeout: 600
+        host_timeout: 3600
     udp:
         scan_enabled: True
         scan_type: "PERIODIC"

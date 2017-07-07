@@ -346,7 +346,7 @@ class Storage(DbInterface):
             for row in query:
                 self.cursor.execute(*row)
         else:
-            log.debug("executing query: %s", query[0])
+            log.debug("executing query: %s", query)
             return self.cursor.execute(*query).fetchall()
 
         self.conn.commit()
