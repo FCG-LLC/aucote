@@ -327,6 +327,7 @@ class ServiceTest(TestCase):
 
         result = Service.validate_cpe_arguments(version=version, product=product, vendor=vendor)
         expected = "cisco", "ios", "12.04e"
+        self.assertEqual(result, expected)
 
 class PortStateTest(TestCase):
 
