@@ -6,6 +6,7 @@ import logging as log
 import time
 
 from aucote_cfg import cfg
+from scans.task_mapper import TaskMapper
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.task import Task
 from utils.time import parse_period
@@ -28,7 +29,7 @@ class Executor(Task):
         self.nodes = nodes or []
 
         self.scan_only = scan_only
-        if cfg['service.scans.broadcast']:
+        if cfg['portdetection._internal.broadcast']:
             broadcast_port = BroadcastPort()
             broadcast_port.scan = Scan(start=time.time())
             self._ports.append(broadcast_port)
@@ -60,16 +61,29 @@ class Executor(Task):
         Start tasks: scanning nodes and ports
 
         """
-        ports = self.ports
+        if self.ports:
+            self._execute_ports()
+
+        if self.scan_only:
+            return
+
+        if self.nodes:
+            await self._execute_nodes()
+
+    def _execute_ports(self):
         storage_ports = self.storage.get_ports(parse_period(cfg['portdetection._internal.port_period']))
 
-        ports = self._get_ports_for_scanning(ports, storage_ports)
+        ports = self._get_ports_for_scanning(self.ports, storage_ports)
         log.info("Found %i recently not scanned ports", len(ports))
 
         self.storage.save_ports(ports)
 
         for port in ports:
             self.add_async_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only))
+
+    async def _execute_nodes(self):
+        for node in self.nodes:
+            await TaskMapper(aucote=self.aucote).assign_tasks_for_node(node)
 
     def __call__(self, *args, **kwargs):
         """

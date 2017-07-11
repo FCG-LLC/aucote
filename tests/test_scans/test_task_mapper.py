@@ -21,7 +21,8 @@ class TaskMapperTest(AsyncTestCase):
                 'class': MagicMock(),
                 'async': False
             }
-        }
+        },
+        'node_scan': ['test']
     }
 
     NODE = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
@@ -468,3 +469,23 @@ class TaskMapperTest(AsyncTestCase):
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
         expected = [self.exploits['test'][0]]
         self.assertEqual(result, expected)
+
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
+    @gen_test
+    async def test_assign_task_for_node(self):
+        self.task_mapper._filter_exploits = MagicMock()
+        class_mock = self.EXECUTOR_CONFIG['apps']['test']['class']
+        self.task_mapper._aucote.exploits.find_by_apps = MagicMock()
+        mock_apps = self.task_mapper._aucote.exploits.find_by_apps
+        exploit = Exploit(exploit_id=3, name='test_3')
+
+        mock_apps.return_value = {
+            'test': [exploit]
+        }
+
+        node = Node(1, ipaddress.ip_address('127.0.0.1'))
+
+        await self.task_mapper.assign_tasks_for_node(node)
+
+        class_mock.assert_called_once_with(aucote=self.task_mapper._aucote, exploits=[exploit], node=node,
+                                           config=self.EXECUTOR_CONFIG['apps']['test'])

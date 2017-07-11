@@ -472,7 +472,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=False)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=False, nodes=[node_1])
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.netifaces')
@@ -532,7 +532,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=[port_masscan, port_nmap],
-                                              scan_only=False)
+                                              nodes=[node_1], scan_only=False)
         self.thread.aucote.async_task_manager.stop.assert_called_once_with()
 
     @patch('scans.scan_async_task.netifaces')
@@ -607,7 +607,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning(), scan_only=scan_only)
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=scan_only)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=scan_only,
+                                              nodes=[node_1])
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.netifaces')
@@ -673,7 +674,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning(), scan_only=scan_only)
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=scan_only)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=scan_only,
+                                              nodes=[node_1])
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
@@ -865,7 +867,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread._run_tools()
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, nodes=nodes)
         self.thread.aucote.add_async_task.assert_called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)

@@ -51,17 +51,7 @@ class TaskMapper:
                     exploits.remove(scan['exploit'])
 
             if not isinstance(port, SpecialPort):
-                script_networks = cfg.get('tools.{0}.script_networks.*'.format(app)).cfg
-                app_networks = cfg.get('tools.{0}.networks'.format(app)).cfg or None
-
-                for exploit in reversed(exploits):
-                    networks = script_networks.get(exploit.name, None)
-
-                    if networks is None:
-                        networks = app_networks
-
-                    if networks is not None and port.node.ip.exploded not in IPSet(networks):
-                        exploits.remove(exploit)
+                self._filter_exploits(app, exploits, port.node)
 
             log.info("Using %i exploits against %s", len(exploits), port)
             self.store_scan_details(port=port, exploits=exploits, storage=storage)
@@ -69,6 +59,42 @@ class TaskMapper:
                                                          config=EXECUTOR_CONFIG['apps'][app])
 
             self._aucote.add_async_task(task)
+
+    async def assign_tasks_for_node(self, node):
+        """
+        Assign tasks for provided node
+        Args:
+            node:
+        Returns:
+            None
+        """
+        apps = EXECUTOR_CONFIG['node_scan']
+        scripts = self._aucote.exploits.find_by_apps(apps)
+
+        for app, exploits in scripts.items():
+            self._filter_exploits(app, exploits, node)
+
+            log.info("Using %i exploits against %s", len(exploits), node)
+
+            task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, node=node,
+                                                         config=EXECUTOR_CONFIG['apps'][app])
+
+            self._aucote.add_async_task(task)
+
+    @staticmethod
+    def _filter_exploits(app, exploits, node):
+        script_networks = cfg.get('tools.{0}.script_networks.*'.format(app)).cfg
+        app_networks = cfg.get('tools.{0}.networks'.format(app)).cfg or None
+
+        for exploit in reversed(exploits):
+            networks = script_networks.get(exploit.name, None)
+
+            if networks is None:
+                networks = app_networks
+
+            if networks is not None and node.ip.exploded not in IPSet(networks):
+                exploits.remove(exploit)
+
     @property
     def exploits(self):
         """

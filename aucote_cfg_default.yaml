@@ -4,8 +4,6 @@
 #     useragent: <str> - User-Agent string used by Aucote scripts.
 #     storage: <str> - Path to local storage. Local storage is a SQLite3 database file.
 #     parallel_tasks: <int> - Number of parallel task to be running
-#     port_period: <period> - Minimal port scanning period
-#     broadcast: (True|False) - Enable broadcast scanning if True (default)
 #     physical: (True|False) - Enable scanning of aucote's host physical interfaces (e.g. eth0) if True (default)
 #
 #   api:
@@ -22,7 +20,6 @@ service:
         storage: "tmp/storage.sqlite3"
         parallel_tasks: 30
         physical: False
-        broadcast: False
     api:
         v1:
             host: 0.0.0.0
@@ -71,6 +68,7 @@ service:
 #     host_timeout: <int> - Number of seconds after which scanning particular host should be give up
 #     udp_retries: <int> - How many UDP scan retries is allowed by port detection
 #     port_period: <period> - Minimal port scanning interval
+#     broadcast: <bool> - Enable broadcast scanning if True (default is False)
 
 portdetection:
     scan_enabled: True
@@ -102,6 +100,7 @@ portdetection:
         udp_retries: 2
         nmap_udp: True
         port_period: 0s
+        broadcast: False
 
 
 # In this section there is configuration related to the tools used by the aucote

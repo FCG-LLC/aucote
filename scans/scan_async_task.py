@@ -95,7 +95,7 @@ class ScanAsyncTask(object):
         nodes = await self._get_topdis_nodes()
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports))
+        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports))
 
     async def run_scan(self, nodes, scan_only=False):
         """
@@ -161,7 +161,7 @@ class ScanAsyncTask(object):
                 port.scan = Scan(start=time.time())
                 ports.append(port)
 
-        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
+        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan_only=scan_only))
         self.current_scan = []
 
         await self._clean_scan()
