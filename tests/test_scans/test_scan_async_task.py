@@ -119,45 +119,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
       ]
     }"""
 
-    NODE_DETAILS_FOR_CPE = rb"""{
-      "meta": {
-        "apiVersion": "1.0.0",
-        "requestTime": "2017-05-08T12:50:20.139895+00:00",
-        "url": "http://dev03.cs.int:1234/api/v1/node?id=24"
-      },
-      "nodes": [
-        {
-          "description": "Cisco IOS Software, C181X Software (C181X-ADVIPSERVICESK9-M), Version 12.4(11)XW, RELEASE SOFTWARE (fc1)\r\nSynched to technology version 12.4(12.12)T\r\nTechnical Support: http://www.cisco.com/techsupport\r\nCopyright (c) 1986-2007 by Cisco Systems, Inc.\r\nComp",
-          "deviceType": "L3 Switch",
-          "deviceTypeDiscoveryType": "DIRECT",
-          "displayName": "fishconnectVPN.fcg.com",
-          "hardware": {
-            "model": "CISCO1811W-AG-B/K9",
-            "sysObjId": "1.3.6.1.4.1.9.1.641",
-            "vendor": "ciscoSystems"
-          },
-          "id": 24,
-          "isCloud": false,
-          "isHost": false,
-          "managementIp": "10.80.80.2",
-          "name": "fishconnectVPN.fcg.com",
-          "serialNumber": "FHK113515FT",
-          "snmp": {
-            "communityString": "public",
-            "port": 161,
-            "version": "2c"
-          },
-          "software": {
-            "os": "IOS",
-            "osDiscoveryType": "DIRECT",
-            "osVersion": "12.4(11)XW"
-          },
-          "stateId": 6597,
-          "supportsNat": false
-        }
-      ]
-    }"""
-
     NODE_WITH_OS_FINGERPRINT = rb"""{
   "meta": {
     "apiVersion": "1.0.0",
@@ -332,7 +293,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertEqual(result.os.name, 'test_name')
         self.assertEqual(result.os.version, '11')
         self.assertEqual(result.os.cpe, CPE(mock_cpe.return_value))
-        mock_cpe.assert_called_once_with(product='test_name', version='11', type=CPEType.OS)
+        mock_cpe.assert_called_once_with(product='test_name', version='11', part=CPEType.OS)
 
     @patch('scans.scan_async_task.HTTPClient')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
@@ -342,7 +303,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         cfg._cfg = self.cfg
         self.req_future.set_result(MagicMock(body=self.NODE_WITH_OS_DIRECT_SPACES_VERSION))
         http_client.instance().get.return_value = self.req_future
-        mock_cpe.return_value = 'cpe:2.3:a:b:c:d:*:*:*:*:*:*:*'
+        mock_cpe.side_effect = KeyError()
 
         nodes = await self.thread._get_topdis_nodes()
         self.assertEqual(len(nodes), 1)
@@ -351,7 +312,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertEqual(result.os.name, 'test_name')
         self.assertEqual(result.os.version, '11 abcde')
         self.assertIsNone(result.os.cpe)
-        self.assertFalse(mock_cpe.called)
 
     @patch('scans.scan_async_task.HTTPClient')
     @patch('scans.scan_async_task.cfg', new_callable=Config)

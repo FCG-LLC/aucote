@@ -212,11 +212,10 @@ class ScanAsyncTask(object):
                 if os.get('discoveryType') in (TopisOSDiscoveryType.DIRECT.value,):
                     node.os.name, node.os.version = os.get('name'), os.get('version')
 
-                    if " " in node.os.version:
-                        log.warning("Currently doesn't support space in OS Version for cpe: '%s' for '%s'",
-                                    node.os.version, node.os.name)
-                    else:
-                        node.os.cpe = Service.build_cpe(product=node.os.name, version=node.os.version, type=CPEType.OS)
+                    try:
+                        node.os.cpe = Service.build_cpe(product=node.os.name, version=node.os.version, part=CPEType.OS)
+                    except:
+                        node.os.cpe = None
 
                 nodes.append(node)
 
