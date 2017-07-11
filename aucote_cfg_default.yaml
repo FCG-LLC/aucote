@@ -172,6 +172,7 @@ tools:
         script_networks: {}
     masscan:
         cmd: masscan
+        args: []
     hydra:
         cmd: hydra
         loginfile: static/logins.hydra.txt
