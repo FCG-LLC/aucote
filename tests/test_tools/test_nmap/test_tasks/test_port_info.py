@@ -111,7 +111,9 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         self.cfg = {
             'portdetection': {
-                'port_scan_rate': 1337
+                '_internal': {
+                    'port_scan_rate': 1337
+                },
             },
             'tools': {
                 'nmap': {
@@ -134,16 +136,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     def test_tcp_scan(self, cfg):
-        cfg._cfg = {
-            'portdetection': {
-                'port_scan_rate': 1337
-            },
-            'tools': {
-                'nmap': {
-                    'scripts_dir': 'test'
-                }
-            }
-        }
+        cfg._cfg = self.cfg
         self.port_info._port.transport_protocol = TransportProtocol.TCP
         result = self.port_info.prepare_args()
         expected = ['-p', '22', '-sV', '-Pn', '--version-all', '--max-rate', '1337', '-sS', '--datadir', 'test',
@@ -154,22 +147,13 @@ class NmapPortInfoTaskTest(AsyncTestCase):
     def test_init(self):
         self.assertEqual(self.port_info.aucote, self.aucote)
 
-
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     def test_udp_scan(self, cfg):
         self.port_info._port.transport_protocol = TransportProtocol.UDP
 
-        cfg._cfg = {
-            'portdetection': {
-                'port_scan_rate': 1337
-            },
-            'tools': {
-                'nmap': {
-                    'scripts_dir': ''
-                }
-            }
-        }
+        cfg._cfg = self.cfg
+        cfg['tools.nmap.scripts_dir'] = ''
         result = self.port_info.prepare_args()
         expected = ['-p', '22', '-sV', '-Pn', '--version-all', '--max-rate', '1337', '-sU', '--script', 'banner',
                     '127.0.0.1']

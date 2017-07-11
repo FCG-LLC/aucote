@@ -53,13 +53,6 @@ class PortRangeUnsupported(NmapUnsupported):
     """
 
 
-class TopdisConnectionException(Exception):
-    """
-    Raises if topdis connection error occurred
-
-    """
-
-
 class FinishThread(Exception):
     """
     Raises if thread should be finished

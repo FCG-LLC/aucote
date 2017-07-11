@@ -32,75 +32,106 @@ service:
 
 # This section contains port detection configuration
 # portdetection:
-#   scan_enabled: - Defines if scan is enable or not
-#   scan_type: <LIVE | PERIODIC> - Type of scan:
-#                                  - LIVE - scan host no more than live_scan.min_time_gap. New hosts will be scan when
-#                                           they appear in network, and next scan will be after at least
-#                                           live_scan.min_time_gap from previous scan
-#                                  - PERIODIC - scan all host at given periodic_scan.cron
-#   periodic_scan:
-#     cron: <cron-like format> - This options defines how often aucote should run scans. This time is in UTC!
-#                                Examples:
-#                                  "*/5 * * * *" - run every 5 minutes
-#                                  "1 2 3 4 5" - run every 3rd march at 2:01, if it is friday(5)
-#                                More information: http://www.nncron.ru/help/EN/working/cron-format.htm
-#                                                     https://en.wikipedia.org/wiki/Cron#CRON_expression
-#   live_scan:
-#     min_time_gap: <period> - minimum number of seconds between particular host scan. eg. 2d3g4m5s or 5m where:
-#                              - d - days
-#                              - h - hours
-#                              - m - minutes
-#                              - s - seconds
-#   networks: - list of networks in CIDR format (eg. 127.0.0.1/32), which should be or shouldn't be scanned
-#     include:
-#       - <network in CIDR format>
-#       - ...
-#     exclude:
-#       - <network in CIDR format>
-#       - ...
-#   ports: - Defines list of ports which should be or shouldn't be scanned
-#     tcp|udp|sctp:
+#   (tcp|udp|sctp|tools): - Type of scan
+#     scan_enabled: - Defines if scan is enable or not
+#     scan_type: <LIVE | PERIODIC> - Type of scan:
+#                                    - LIVE - scan host no more than live_scan.min_time_gap. New hosts will be scan when
+#                                             they appear in network, and next scan will be after at least
+#                                             live_scan.min_time_gap from previous scan
+#                                    - PERIODIC - scan all host at given periodic_scan.cron
+#     scan_rate: <int> - Rate in packets per seconds for networks scan (mostly SynScan)
+#     periodic_scan:
+#       cron: <cron-like format> - This options defines how often aucote should run scans. This time is in UTC!
+#                                  Examples:
+#                                    "*/5 * * * *" - run every 5 minutes
+#                                    "1 2 3 4 5" - run every 3rd march at 2:01, if it is friday(5)
+#                                  More information: http://www.nncron.ru/help/EN/working/cron-format.htm
+#                                                    https://en.wikipedia.org/wiki/Cron#CRON_expression
+#     live_scan:
+#       min_time_gap: <period> - minimum number of seconds between particular host scan. eg. 2d3g4m5s or 5m where:
+#                                - d - days
+#                                - h - hours
+#                                - m - minutes
+#                                - s - seconds
+#     networks: - list of networks in CIDR format (eg. 127.0.0.1/32), which should be or shouldn't be scanned
+#       include:
+#         - <network in CIDR format>
+#         - ...
+#       exclude:
+#         - <network in CIDR format>
+#         - ...
+#     ports: - Defines list of ports which should be or shouldn't be scanned
 #       include|exclude: - Port range in NMAP ports format eg. T:0-65535 or list of ports this same format
 #         - <NMAP ports format>
 #         - ...
-#   port_scan_rate: <int> - Rate in packets per seconds for port scanning (banner scan, service detection, etc)
-#   network_scan_rate: <int> - Rate in packets per seconds for networks scan (mostly SynScan)
-#   _internal: - more advanced  configuration
-#     tools_cron: <cron-like format> - This options defines how often aucote should run tools scan (nmap, hydra, etc)
-#     nmap_udp: <bool> - Should UDP scan be performed by Nmap. Otherwise aucote will use Masscan
+#
+#   tcp: - Additional options which are related only to TCP scan
 #     host_timeout: <int> - Number of seconds after which scanning particular host should be give up
-#     udp_retries: <int> - How many UDP scan retries is allowed by port detection
+#
+#   udp: - Additional options which are related only to UDP scan
+#     nmap_udp: <bool> - Should UDP scan be performed by Nmap. Otherwise aucote will use Masscan
+#     retries: <int> - How many UDP scan retries is allowed by port detection
+#     defeat_icmp: <bool> - If True, Nmap won't be waiting on ICMP Port Unreachable
+#
+#   udp_network_scan_rate: <int> - Rate in packets per seconds for UDP network scan (should be low)
+#   _internal: - more advanced  configuration
+#     port_scan_rate: <int> - Rate in packets per seconds for port scanning (banner scan, service detection, etc)
 #     port_period: <period> - Minimal port scanning interval
 
 portdetection:
-    scan_enabled: True
-    scan_type: "LIVE"
-    periodic_scan:
-        cron: "0 */2 * * *" # run every 2 hours
-    live_scan:
-         min_time_gap: 2h
-    networks: # Change it to proper values and uncomment
-        include: []
-        exclude: []
-    ports:
-        tcp:
-            include:
-                - 0-65535 # TCP: full range
-            exclude: []
-        udp:
-            include:
-                - 0-65535 # UDP: full range
-            exclude: []
-        sctp:
+    tcp:
+        scan_enabled: True
+        scan_type: "PERIODIC"
+        scan_rate: 500
+        periodic_scan:
+            cron: "0 */2 * * *" # Run TCP scan every 2 hours
+        live_scan:
+             min_time_gap: 2h
+        networks:
             include: []
             exclude: []
-    port_scan_rate: 10
-    network_scan_rate: 500
+        ports:
+            include:
+                - 0-65535
+            exclude: []
+        host_timeout: 3600
+    udp:
+        scan_enabled: True
+        scan_type: "PERIODIC"
+        scan_rate: 50
+        periodic_scan:
+            cron: "0 0 * * *" # Run UDP scan every 24 hours (at midnight)
+        live_scan:
+             min_time_gap: 24h
+        networks:
+            include: []
+            exclude: []
+        ports:
+            include:
+                - 0-65535
+            exclude: []
+        retries: 3
+        defeat_icmp: False
+    sctp:
+        ports:
+            include: []
+            exclude: []
+    tools:
+        scan_enabled: True
+        scan_type: "PERIODIC"
+        periodic_scan:
+            cron: "0 22 * * *" # Run tools scan every day at 22:00
+        live_scan:
+             min_time_gap: 24h
+        networks:
+            include: [0.0.0.0/0] # all found by UDP and TCP scanners
+            exclude: []
+        ports:
+            include:
+                - 0-65535
+            exclude: []
     _internal:
-        tools_cron: "0 22 * * *" # run every day at 22:00 UTC
-        host_timeout: 600
-        udp_retries: 2
-        nmap_udp: True
+        port_scan_rate: 10
         port_period: 0s
 
 
@@ -215,5 +246,7 @@ tools:
         periods: {}
         networks: []
         script_networks: {}
+    cve-search:
+        enable: False
     common:
         rate: 50

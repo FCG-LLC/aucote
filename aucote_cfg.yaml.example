@@ -55,7 +55,7 @@ topdis:
 #   max_retry_time: <int> - maximum time: after failed connection to Toucan waiting time is double up to maximum
 #   max_retry_count: <int> - maximum number of retries
 #   api: <str(prot://host:port) - REST api address
-#   force: <bool> - Overwrite configuration on start
+#   overwrite: <bool> - Overwrite configuration on start
 
 toucan:
     enable: True
@@ -63,4 +63,4 @@ toucan:
     max_retry_time: 300
     max_retry_count: 20
     api: http://toucan:3000
-    force: False
+    overwrite: False

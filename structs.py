@@ -106,6 +106,7 @@ class TransportProtocol(Enum):
         self.db_val = db_val
         self.iana = iana
 
+    ALL = ('ALL', 0)
     ICMP = ('ICMP', 1)
     TCP = ('TCP', 6)
     UDP = ('UDP', 17)
@@ -517,3 +518,20 @@ class ScanType(Enum):
     """
     PERIODIC = "PERIODIC"
     LIVE = "LIVE"
+
+
+class PortState(Enum):
+    """
+    Port state
+
+    """
+    OPEN = "open"
+    CLOSED = "closed"
+    FILTERED = "filtered"
+    UNFILTERED = "unfiltered"
+    OPEN_FILTERED = "open|filtered"
+    CLOSED_FILTERED = "closed|filtered"
+
+    @classmethod
+    def from_string(cls, text):
+        return cls[text.replace('|', '_').upper()]

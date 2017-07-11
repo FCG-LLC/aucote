@@ -18,15 +18,18 @@ class MasscanPortsTest(TestCase):
     def setUp(self):
         self.cfg = {
             'portdetection': {
-                'network_scan_rate': 1000,
-                'ports': {
-                    'tcp': {
+                'tcp': {
+                    'scan_rate': 1000,
+                    'ports': {
                         'include': ['9'],
                         'exclude': [],
-                    },
-                    'udp': {
+                    }
+                },
+                'udp': {
+                    'scan_rate': 1000,
+                    'ports': {
                         'include': [],
-                        'exclude': []
+                        'exclude': [],
                     }
                 }
             },
@@ -42,22 +45,9 @@ class MasscanPortsTest(TestCase):
         self.nodes = [node]
 
     @patch('tools.masscan.ports.cfg', new_callable=Config)
-    def test_arguments(self, mock_config):
-        mock_config._cfg = {
-            'portdetection': {
-                'network_scan_rate': 1000,
-                'ports': {
-                    'tcp': {
-                        'include': ['17-45'],
-                        'exclude': [],
-                    },
-                    'udp': {
-                        'include': [],
-                        'exclude': []
-                    }
-                }
-            }
-        }
+    def test_arguments(self, cfg):
+        cfg._cfg = self.cfg
+        cfg['portdetection.tcp.ports.include'] = ['17-45']
 
         result = self.masscanports.prepare_args(self.nodes)
         expected = ['--rate', '1000',
@@ -68,27 +58,14 @@ class MasscanPortsTest(TestCase):
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     def test_no_scan_ports(self, cfg):
         cfg._cfg = self.cfg
-        cfg['portdetection.ports.tcp.include'] = []
+        cfg['portdetection.tcp.ports.include'] = []
 
         self.assertRaises(StopCommandException, self.masscanports.prepare_args, nodes=self.nodes)
 
     @patch('tools.masscan.ports.cfg', new_callable=Config)
-    def test_string_ports(self, mock_config):
-        mock_config._cfg = {
-            'portdetection': {
-                'network_scan_rate': 1000,
-                'ports': {
-                    'tcp': {
-                        'include': ['17-45'],
-                        'exclude': [],
-                    },
-                    'udp': {
-                        'include': [],
-                        'exclude': []
-                    }
-                }
-            }
-        }
+    def test_string_ports(self, cfg):
+        cfg._cfg = self.cfg
+        cfg['portdetection.tcp.ports.include'] = ['17-45']
 
         result = self.masscanports.prepare_args(self.nodes)
         expected = ['--rate', '1000',
@@ -99,7 +76,7 @@ class MasscanPortsTest(TestCase):
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     def test_scan_ports_excluded(self, cfg):
         cfg._cfg = self.cfg
-        cfg['portdetection.ports.tcp.exclude'] = ['45-89']
+        cfg['portdetection.tcp.ports.exclude'] = ['45-89']
 
         result = self.masscanports.prepare_args(nodes=self.nodes)
         expected = ['--rate', '1000',
@@ -110,8 +87,8 @@ class MasscanPortsTest(TestCase):
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     def test_scan_without_udp(self, cfg):
         cfg._cfg = self.cfg
-        cfg['portdetection.ports.udp.include'] = ['15']
-        cfg['portdetection.ports.udp.exclude'] = ['34']
+        cfg['portdetection.udp.ports.include'] = ['15']
+        cfg['portdetection.udp.ports.exclude'] = ['34']
         masscanports = MasscanPorts(udp=False)
 
         result = masscanports.prepare_args(nodes=self.nodes)

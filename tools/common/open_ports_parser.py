@@ -4,7 +4,7 @@ Provides parser for open ports
 """
 import ipaddress
 import logging as log
-from structs import TransportProtocol, Port, Scan
+from structs import TransportProtocol, Port, Scan, PortState
 
 
 class OpenPortsParser:
@@ -32,8 +32,8 @@ class OpenPortsParser:
             if ports is None:
                 continue
             for xml_port in ports.findall('port'):
-                state = xml_port.find('state').get('state')
-                if state not in ('open', 'filtered'):
+                state = PortState.from_string(xml_port.find('state').get('state'))
+                if state not in (PortState.OPEN, PortState.FILTERED, PortState.OPEN_FILTERED):
                     continue
 
                 number = int(xml_port.get('portid'))

@@ -30,21 +30,22 @@ class PortScanTest(TestCase):
     def setUp(self):
         cfg = {
             'portdetection': {
-                'ports': {
-                    'tcp': {
+                'tcp': {
+                    'ports': {
                         'include': ['55'],
                         'exclude': [],
                     },
-                    'udp': {
+                    'scan_rate': 1030,
+                    'host_timeout': 600,
+                },
+                'udp': {
+                    'ports': {
                         'include': [],
                         'exclude': []
-                    }
+                    },
+                    'scan_rate': 1030,
+                    'retries': 2
                 },
-                'network_scan_rate': 1030,
-                '_internal': {
-                    'host_timeout': 600,
-                    'udp_retries': 2
-                }
             },
             'tools': {
                 'nmap': {
@@ -65,23 +66,23 @@ class PortScanTest(TestCase):
         cfg._cfg = self.cfg
 
         result = self.scanner.prepare_args(nodes=self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-6', '-sS', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
+        expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     def test_no_scan_ports(self, cfg):
         cfg._cfg = self.cfg
-        cfg['portdetection.ports.tcp.include'] = []
+        cfg['portdetection.tcp.ports.include'] = []
 
         self.assertRaises(StopCommandException, self.scanner.prepare_args, nodes=self.nodes)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     def test_scan_ports_excluded(self, cfg):
         cfg._cfg = self.cfg
-        cfg['portdetection.ports.tcp.exclude'] = ['45-89']
+        cfg['portdetection.tcp.ports.exclude'] = ['45-89']
 
         result = self.scanner.prepare_args(nodes=self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-6', '-sS', '-p', 'T:55', '--exclude-ports', 'T:45-89',
+        expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '-p', 'T:55', '--exclude-ports', 'T:45-89',
                     '--max-rate', '1030', '192.168.1.5']
         self.assertEqual(result, expected)
 
@@ -91,7 +92,7 @@ class PortScanTest(TestCase):
         cfg['tools.nmap.scripts_dir'] = 'test'
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-6', '-sS', '--datadir', 'test', '-p', 'T:55',
+        expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '--datadir', 'test', '-p', 'T:55',
                     '--max-rate', '1030', '192.168.1.5']
 
         self.assertEqual(result, expected)
@@ -103,7 +104,7 @@ class PortScanTest(TestCase):
         cfg._cfg = self.cfg
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-sS', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
+        expected = ['-Pn', '-sS', '--host-timeout', '600', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
 
         self.assertEqual(result, expected)
 
@@ -113,17 +114,19 @@ class PortScanTest(TestCase):
         self.scanner.tcp = False
         self.scanner.ipv6 = False
         cfg._cfg = self.cfg
-        cfg['portdetection.ports.udp.include'] = ['12-16']
+        cfg['portdetection.udp.ports.include'] = ['12-16']
+        cfg['portdetection.udp.defeat_icmp'] = True
+        cfg['portdetection.udp.scan_rate'] = 3000
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-sU', '--min-rate', '1030', '--max-retries', '2',
-                    '--defeat-icmp-ratelimit', '-p', 'U:12-16', '--max-rate', '1030', '192.168.1.5']
-        self.assertEqual(result, expected)
+        expected = ['-Pn', '-sU', '--min-rate', '3000', '--max-retries', '2',
+                    '--defeat-icmp-ratelimit', '-p', 'U:12-16', '--max-rate', '3000', '192.168.1.5']
+        self.assertCountEqual(result, expected)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     def test_string_ports(self, cfg):
         cfg._cfg = self.cfg
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '--host-timeout', '600', '-6', '-sS', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
+        expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
         self.assertEqual(result, expected)

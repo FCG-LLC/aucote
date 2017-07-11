@@ -1,3 +1,4 @@
+from functools import partial
 from unittest.mock import MagicMock, patch
 
 from tornado.concurrent import Future

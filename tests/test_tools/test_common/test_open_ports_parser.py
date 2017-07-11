@@ -16,7 +16,7 @@ class OpenPortsParserTest(unittest.TestCase):
 <scaninfo type="syn" protocol="tcp" />
 <host endtime="1470387319"><address addr="127.0.0.1" addrtype="ipv4"/><ports><port protocol="tcp" portid="514"><state state="open" reason="syn-ack" reason_ttl="62"/></port></ports></host>
 <host endtime="1470387319"><address addr="127.0.0.1" addrtype="ipv4"/><ports><port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="62"/></port></ports></host>
-<host endtime="1470387319"><address addr="127.0.0.1" addrtype="ipv4"/><ports><port protocol="tcp" portid="800"><state state="other" reason="syn-ack" reason_ttl="62"/></port></ports></host>
+<host endtime="1470387319"><address addr="127.0.0.1" addrtype="ipv4"/><ports><port protocol="tcp" portid="800"><state state="closed" reason="syn-ack" reason_ttl="62"/></port></ports></host>
 <runstats>
 <finished time="1470387330" timestr="2016-08-05 10:55:30" elapsed="13" />
 <hosts up="2" down="0" total="2" />

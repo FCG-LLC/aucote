@@ -76,8 +76,8 @@ class AsyncTaskManager(object):
 
         """
 
-        self._cron_tasks[task.__name__] = AsyncCrontabTask(cron, task)
-        self.run_tasks[task.__name__] = False
+        self._cron_tasks[task] = AsyncCrontabTask(cron, task)
+        self.run_tasks[task] = False
 
     @gen.coroutine
     def stop(self):
@@ -165,3 +165,7 @@ class AsyncTaskManager(object):
 
         """
         return self._tasks._unfinished_tasks
+
+    @property
+    def cron_tasks(self):
+        return self._cron_tasks.keys()
