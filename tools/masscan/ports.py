@@ -2,15 +2,14 @@
 Provides class for scanning ports
 
 """
-from tools.common.scan_task import ScanTask
+from tools.common.port_scan_task import PortScanTask
 from tools.masscan.base import MasscanBase
 from aucote_cfg import cfg
 from tools.nmap.tool import NmapTool
-from utils.config import Config
 from utils.exceptions import StopCommandException
 
 
-class MasscanPorts(ScanTask):
+class MasscanPorts(PortScanTask):
     """
     Scans for open ports using masscan application
 
