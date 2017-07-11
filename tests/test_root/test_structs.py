@@ -329,6 +329,7 @@ class ServiceTest(TestCase):
         expected = "cisco", "ios", "12.04e"
         self.assertEqual(result, expected)
 
+
 class PortStateTest(TestCase):
 
     def test_from_string(self):
