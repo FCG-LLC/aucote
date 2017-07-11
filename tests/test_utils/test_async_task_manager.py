@@ -105,10 +105,10 @@ class TestAsyncTaskManager(AsyncTestCase):
         task.__name__ = 'test_name'
         self.task_manager.add_crontab_task(task, '* * * * *')
 
-        self.assertIn('test_name', self.task_manager._cron_tasks.keys())
-        self.assertIn('test_name', self.task_manager.run_tasks.keys())
-        self.assertIsInstance(self.task_manager._cron_tasks.get('test_name'), AsyncCrontabTask)
-        self.assertFalse(self.task_manager.run_tasks.get('test_name'))
+        self.assertIn(task, self.task_manager._cron_tasks.keys())
+        self.assertIn(task, self.task_manager.run_tasks.keys())
+        self.assertIsInstance(self.task_manager._cron_tasks.get(task), AsyncCrontabTask)
+        self.assertFalse(self.task_manager.run_tasks.get(task))
 
     @gen_test
     def test_add_task(self):
@@ -169,3 +169,16 @@ class TestAsyncTaskManager(AsyncTestCase):
 
     def test_shutdown_condition(self):
         self.assertEqual(self.task_manager.shutdown_condition, self.task_manager._shutdown_condition)
+
+    def test_cron_tasks(self):
+        self.task_manager._cron_tasks = {
+            MagicMock(): 'a',
+            MagicMock(): 'b',
+            MagicMock(): 'c',
+            MagicMock(): 'd',
+        }
+
+        expected = self.task_manager._cron_tasks.keys()
+        result = self.task_manager.cron_tasks
+
+        self.assertEqual(result, expected)
