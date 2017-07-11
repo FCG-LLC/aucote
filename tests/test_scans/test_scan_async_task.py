@@ -765,7 +765,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread.run_scan.return_value = future_run_scan
 
         await self.thread._scan()
-        self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None)
+        self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None, filter_out_storage=True)
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
@@ -863,7 +863,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread.get_ports_for_script_scan = MagicMock(return_value=ports)
         future_nodes = Future()
         future_nodes.set_result(nodes)
-        self.thread._get_topdis_nodes = MagicMock(return_value=future_nodes)
+        self.thread._get_nodes_for_scanning = MagicMock(return_value=future_nodes)
 
         yield self.thread._run_tools()
 

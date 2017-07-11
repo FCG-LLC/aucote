@@ -79,7 +79,7 @@ class ScanAsyncTask(object):
         if not cfg['portdetection.scan_enabled']:
             return
         log.info("Starting port scan")
-        nodes = await self._get_nodes_for_scanning(timestamp=None)
+        nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True)
         log.debug("Found %i nodes for potential scanning", len(nodes))
         await self.run_scan(nodes, scan_only=True)
 
@@ -92,7 +92,7 @@ class ScanAsyncTask(object):
 
         """
         log.info("Starting security scan")
-        nodes = await self._get_topdis_nodes()
+        nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=False)
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
         self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports))
@@ -222,7 +222,7 @@ class ScanAsyncTask(object):
         log.debug('Got %i nodes from topdis', len(nodes))
         return nodes
 
-    async def _get_nodes_for_scanning(self, timestamp=None):
+    async def _get_nodes_for_scanning(self, timestamp=None, filter_out_storage=True):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -235,11 +235,11 @@ class ScanAsyncTask(object):
             list
 
         """
-        topdis_nodes = await self._get_topdis_nodes()
+        nodes = await self._get_topdis_nodes()
 
-        storage_nodes = self.storage.get_nodes(self._scan_interval(), timestamp=timestamp)
-
-        nodes = list(set(topdis_nodes) - set(storage_nodes))
+        if filter_out_storage:
+            storage_nodes = self.storage.get_nodes(self._scan_interval(), timestamp=timestamp)
+            nodes = list(set(nodes) - set(storage_nodes))
 
         include_networks = self._get_networks_list()
         exclude_networks = self._get_excluded_networks_list()
