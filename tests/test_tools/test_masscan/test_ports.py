@@ -32,7 +32,8 @@ class MasscanPortsTest(TestCase):
             },
             'tools': {
                 'masscan': {
-                    'cmd': 'test'
+                    'cmd': 'test',
+                    'args': []
                 }
             }
         }
@@ -56,11 +57,16 @@ class MasscanPortsTest(TestCase):
                         'exclude': []
                     }
                 }
+            },
+            'tools': {
+                'masscan': {
+                    'args': ['test_additional_arg1', 'test_additional_arg2']
+                }
             }
         }
 
         result = self.masscanports.prepare_args(self.nodes)
-        expected = ['--rate', '1000',
+        expected = ['test_additional_arg1', 'test_additional_arg2', '--rate', '1000',
                     '--ports', 'T:17-45', self.NODE_IP]
 
         self.assertEqual(result, expected)
@@ -86,6 +92,11 @@ class MasscanPortsTest(TestCase):
                         'include': [],
                         'exclude': []
                     }
+                }
+            },
+            'tools': {
+                'masscan': {
+                    'args': []
                 }
             }
         }
