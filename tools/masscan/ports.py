@@ -15,8 +15,8 @@ class MasscanPorts(PortScanTask):
 
     """
 
-    def __init__(self, udp=True):
-        self.tcp = True
+    def __init__(self, tcp=True, udp=True):
+        self.tcp = tcp
         self.udp = udp
         super(MasscanPorts, self).__init__(MasscanBase())
 
