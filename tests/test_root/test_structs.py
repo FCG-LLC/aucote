@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from cpe import CPE
 
-from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType
+from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState
 from structs import TransportProtocol
 
 
@@ -327,5 +327,12 @@ class ServiceTest(TestCase):
 
         result = Service.validate_cpe_arguments(version=version, product=product, vendor=vendor)
         expected = "cisco", "ios", "12.04e"
+
+class PortStateTest(TestCase):
+
+    def test_from_string(self):
+        data = 'open|filtered'
+        result = PortState.from_string(data)
+        expected = PortState.OPEN_FILTERED
 
         self.assertEqual(result, expected)
