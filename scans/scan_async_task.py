@@ -34,6 +34,11 @@ class ScanAsyncTask(object):
         self._shutdown_condition = Event()
 
     async def __call__(self, *args, **kwargs):
+        if not cfg['portdetection.{name}.scan_enabled'.format(name=self.NAME)]:
+            log.info("Scanner %s is disabled", self.NAME)
+            return
+        log.info("Starting %s scanner", self.NAME)
+
         return await self.run()
 
     async def run(self):

@@ -524,3 +524,26 @@ class ScanAsyncTaskTest(AsyncTestCase):
     async def test_run(self):
         with self.assertRaises(NotImplementedError):
             await self.thread.run()
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_call(self, cfg):
+        self.thread.NAME = 'test_name'
+        cfg['portdetection.test_name.scan_enabled'] = True
+        self.thread.run = MagicMock(return_value=Future())
+        self.thread.run.return_value.set_result(True)
+
+        await self.thread()
+
+        self.thread.run.assert_called_once_with()
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_call_disabled(self, cfg):
+        self.thread.NAME = 'test_name'
+        cfg['portdetection.test_name.scan_enabled'] = False
+        self.thread.run = MagicMock()
+
+        await self.thread()
+
+        self.assertFalse(self.thread.run.called)

@@ -43,10 +43,6 @@ class Scanner(ScanAsyncTask):
             None
 
         """
-        if not cfg['portdetection.scan_enabled']:
-            return
-        log.info("Starting port scan")
-
         self._shutdown_condition.clear()
         self.scan_start = time.time()
         log.info("Starting port scan")

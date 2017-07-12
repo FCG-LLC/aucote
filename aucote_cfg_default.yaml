@@ -29,7 +29,8 @@ service:
 
 # This section contains port detection configuration
 # portdetection:
-#   scan_enabled: - Defines if scan is enable or not
+#   (tcp|udp|sctp|tools): - Type of scan
+#     scan_enabled: - Defines if scan is enable or not
 #   scan_type: <LIVE | PERIODIC> - Type of scan:
 #                                  - LIVE - scan host no more than live_scan.min_time_gap. New hosts will be scan when
 #                                           they appear in network, and next scan will be after at least
@@ -85,7 +86,14 @@ service:
 #                    - other - scripts which aren't in any categories
 
 portdetection:
-    scan_enabled: True
+    tcp:
+        scan_enabled: True
+    udp:
+        scan_enabled: True
+    tools:
+        scan_enabled: True
+    sctp:
+        scan_enabled: False
     scan_type: "LIVE"
     periodic_scan:
         cron: "0 */2 * * *" # run every 2 hours

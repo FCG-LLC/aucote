@@ -134,7 +134,6 @@ class ScannerTest(AsyncTestCase):
     @gen_test
     async def test_periodical_scan(self, cfg, scanners, scan):
         self.thread.PROTOCOL = TransportProtocol.UDP
-        cfg._cfg = {'portdetection': {'scan_enabled': True}}
         nodes = MagicMock()
         future = Future()
         future.set_result(nodes)
@@ -152,20 +151,11 @@ class ScannerTest(AsyncTestCase):
         future_run_scan.set_result(MagicMock())
         self.thread.run_scan.return_value = future_run_scan
 
-        await self.thread()
+        await self.thread.run()
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True, protocol=TransportProtocol.UDP,
                                                      scanners=udp_scanner, scan=scan())
         self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True, scan=scan(),
                                                                     timestamp=None)
-
-    @patch('scans.scanner.cfg', new_callable=Config)
-    @gen_test
-    def test_disable_periodical_scan(self, cfg):
-        cfg._cfg = {'portdetection': {'scan_enabled': False}}
-        self.thread._get_nodes_for_scanning = MagicMock()
-
-        yield self.thread()
-        self.assertFalse(self.thread._get_nodes_for_scanning.called)
 
     @patch('scans.scanner.Scanner.next_scan', 75)
     @patch('scans.scanner.Scanner.previous_scan', 57)
@@ -251,7 +241,6 @@ class ScannerTest(AsyncTestCase):
     @patch('scans.scanner.cfg', new_callable=Config)
     @gen_test
     async def test_call_without_nodes(self, cfg, scanners):
-        cfg._cfg = {'portdetection': {'scan_enabled': True}}
         nodes = []
         future = Future()
         future.set_result(nodes)
@@ -273,7 +262,7 @@ class ScannerTest(AsyncTestCase):
         future_run_scan.set_result(MagicMock())
         self.thread.run_scan.return_value = future_run_scan
 
-        await self.thread()
+        await self.thread.run()
         self.assertFalse(self.thread.run_scan.called)
 
     @patch('scans.scanner.Serializer.serialize_vulnerability_change')

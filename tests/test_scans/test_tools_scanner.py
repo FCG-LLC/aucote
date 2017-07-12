@@ -26,7 +26,7 @@ class ToolsScannerTest(AsyncTestCase):
 
         self.task.get_ports_for_scan = MagicMock(return_value=ports)
 
-        await self.task()
+        await self.task.run()
 
         mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=nodes, ports=ports, scan=scan())
         self.task.get_ports_for_scan.assert_called_once_with(nodes)
