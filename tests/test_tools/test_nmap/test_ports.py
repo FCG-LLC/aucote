@@ -36,6 +36,7 @@ class PortScanTest(TestCase):
                         'exclude': [],
                     },
                     'scan_rate': 1030,
+                    'host_timeout': 600
                 },
                 'udp': {
                     'ports': {
@@ -45,7 +46,6 @@ class PortScanTest(TestCase):
                     'scan_rate': 30,
                 },
                 '_internal': {
-                    'host_timeout': 600,
                     'udp_retries': 2
                 }
             },

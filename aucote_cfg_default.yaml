@@ -66,9 +66,11 @@ service:
 #           - <NMAP ports format>
 #           - ...
 #
+#   tcp: - Additional options which are related only to TCP scan
+#     host_timeout: <int> - Number of seconds after which scanning particular host should be give up
+#
 #   _internal: - more advanced  configuration
 #     nmap_udp: <bool> - Should UDP scan be performed by Nmap. Otherwise aucote will use Masscan
-#     host_timeout: <int> - Number of seconds after which scanning particular host should be give up
 #     udp_retries: <int> - How many UDP scan retries is allowed by port detection
 #     port_period: <period> - Minimal port scanning interval
 #     broadcast: <bool> - Enable broadcast scanning if True (default is False)
@@ -103,6 +105,7 @@ portdetection:
                 - 0-65535 # TCP: full range
             exclude: []
         scan_rate: 500
+        host_timeout: 3600
     udp:
         scan_enabled: True
         scan_type: "LIVE"
@@ -146,7 +149,6 @@ portdetection:
             exclude: []
         scan_rate: 500
     _internal:
-        host_timeout: 600
         udp_retries: 2
         nmap_udp: True
         port_period: 0s

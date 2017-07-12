@@ -29,7 +29,7 @@ class PortsScan(PortScanTask):
             args.append('-6')
 
         if self.tcp:
-            args.extend(['-sS', '--host-timeout', str(cfg['portdetection._internal.host_timeout'])])
+            args.extend(['-sS', '--host-timeout', str(cfg['portdetection.tcp.host_timeout'])])
 
         if self.udp:
             args.extend(('-sU', '--min-rate', rate, '--max-retries', str(cfg['portdetection._internal.udp_retries']),
