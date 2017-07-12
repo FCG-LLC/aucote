@@ -49,13 +49,13 @@ service:
 #                                - h - hours
 #                                - m - minutes
 #                                - s - seconds
-#   networks: - list of networks in CIDR format (eg. 127.0.0.1/32), which should be or shouldn't be scanned
-#     include:
-#       - <network in CIDR format>
-#       - ...
-#     exclude:
-#       - <network in CIDR format>
-#       - ...
+#     networks: - list of networks in CIDR format (eg. 127.0.0.1/32), which should be or shouldn't be scanned
+#       include:
+#         - <network in CIDR format>
+#         - ...
+#       exclude:
+#         - <network in CIDR format>
+#         - ...
 #   ports: - Defines list of ports which should be or shouldn't be scanned
 #     tcp|udp|sctp:
 #       include|exclude: - Port range in NMAP ports format eg. T:0-65535 or list of ports this same format
@@ -92,6 +92,9 @@ portdetection:
             cron: "0 */2 * * *" # run every 2 hours
         live_scan:
              min_time_gap: 2h
+        networks:
+            include: []
+            exclude: []
     udp:
         scan_enabled: True
         scan_type: "LIVE"
@@ -99,6 +102,9 @@ portdetection:
             cron: "0 0 * * *" # run every 2 hours
         live_scan:
              min_time_gap: 20h
+        networks:
+            include: []
+            exclude: []
     tools:
         scan_enabled: True
         scan_type: "LIVE"
@@ -106,6 +112,9 @@ portdetection:
             cron: "0 22 * * *" # run every day at 22:00 UTC
         live_scan:
              min_time_gap: 24h
+        networks:
+            include: [0.0.0.0/0] # all hosts found by other scans
+            exclude: []
     sctp:
         scan_enabled: False
         scan_type: "LIVE"
@@ -113,9 +122,9 @@ portdetection:
             cron: "0 */2 * * *" # run every 2 hours
         live_scan:
              min_time_gap: 2h
-    networks: # Change it to proper values and uncomment
-        include: []
-        exclude: []
+        networks:
+            include: []
+            exclude: []
     ports:
         tcp:
             include:

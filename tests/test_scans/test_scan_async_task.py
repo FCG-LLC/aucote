@@ -352,7 +352,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @gen_test
     async def test_get_nodes_for_scanning(self, cfg, mock_get_nodes):
         cfg._cfg = self.cfg
-        cfg['portdetection.networks.include'] = ['127.0.0.2/31']
+        cfg['portdetection.test_name.networks.include'] = ['127.0.0.2/31']
 
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
@@ -376,11 +376,13 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_get_networks_list(self, cfg):
         cfg._cfg = {
             'portdetection': {
-                'networks': {
-                    'include': [
-                        '127.0.0.1/24',
-                        '128.0.0.1/13'
-                    ]
+                'test_name': {
+                    'networks': {
+                        'include': [
+                            '127.0.0.1/24',
+                            '128.0.0.1/13'
+                        ]
+                    }
                 }
             }
         }
