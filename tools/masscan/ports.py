@@ -34,11 +34,11 @@ class MasscanPorts(PortScanTask):
         args = list(cfg['tools.masscan.args'])
         args.extend(['--rate', str(cfg['portdetection.network_scan_rate'])])
 
-        include_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.ports.tcp.include'],
-                                                      udp=self.udp and cfg['portdetection.ports.udp.include'])
+        include_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.tcp.ports.include'],
+                                                      udp=self.udp and cfg['portdetection.udp.ports.include'])
 
-        exclude_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.ports.tcp.exclude'],
-                                                      udp=self.udp and cfg['portdetection.ports.udp.exclude'])
+        exclude_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.tcp.ports.exclude'],
+                                                      udp=self.udp and cfg['portdetection.udp.ports.exclude'])
 
         if not include_ports:
             raise StopCommandException("No ports for scan")

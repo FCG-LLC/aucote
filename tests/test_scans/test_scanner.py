@@ -68,16 +68,20 @@ class ScannerTest(AsyncTestCase):
                 'fetch_os': False
             },
             'portdetection': {
-                'ports': {
-                    'tcp': {
+                'tcp': {
+                    'ports': {
                         'include': ['0-65535'],
                         'exclude': []
                     },
-                    'udp': {
+                },
+                'udp': {
+                    'ports': {
                         'include': ['0-65535'],
                         'exclude': []
                     },
-                    'sctp': {
+                },
+                'sctp': {
+                    'ports': {
                         'include': ['0-65535'],
                         'exclude': []
                     },

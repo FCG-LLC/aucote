@@ -56,11 +56,14 @@ service:
 #       exclude:
 #         - <network in CIDR format>
 #         - ...
-#   ports: - Defines list of ports which should be or shouldn't be scanned
-#     tcp|udp|sctp:
-#       include|exclude: - Port range in NMAP ports format eg. T:0-65535 or list of ports this same format
-#         - <NMAP ports format>
-#         - ...
+#
+#   (tcp|udp|sctp):  Options related only to tcp, udp and sctp scans
+#     ports: - Defines list of ports which should be or shouldn't be scanned
+#       tcp|udp|sctp:
+#         include|exclude: - Port range in NMAP ports format eg. T:0-65535 or list of ports this same format
+#           - <NMAP ports format>
+#           - ...
+#
 #   port_scan_rate: <int> - Rate in packets per seconds for port scanning (banner scan, service detection, etc)
 #   network_scan_rate: <int> - Rate in packets per seconds for networks scan (mostly SynScan)
 #   _internal: - more advanced  configuration
@@ -95,6 +98,10 @@ portdetection:
         networks:
             include: []
             exclude: []
+        ports:
+            include:
+                - 0-65535 # TCP: full range
+            exclude: [9100]
     udp:
         scan_enabled: True
         scan_type: "LIVE"
@@ -104,6 +111,10 @@ portdetection:
              min_time_gap: 20h
         networks:
             include: []
+            exclude: []
+        ports:
+            include:
+                - 0-65535 # TCP: full range
             exclude: []
     tools:
         scan_enabled: True
@@ -125,17 +136,10 @@ portdetection:
         networks:
             include: []
             exclude: []
-    ports:
-        tcp:
+        ports:
             include:
                 - 0-65535 # TCP: full range
-            exclude: [9100]
-        udp:
-            include:
-                - 0-65535 # UDP: full range
             exclude: []
-        sctp:
-            include: []
             exclude: []
     port_scan_rate: 10
     network_scan_rate: 500

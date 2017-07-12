@@ -93,11 +93,11 @@ class Scanner(ScanAsyncTask):
                          ip_protocol)
                 ports.extend(await scanner.scan_ports(dict_nodes[ip_protocol]))
 
-        port_range_allow = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.include'],
-                                                    udp=cfg['portdetection.ports.udp.include'])
+        port_range_allow = NmapTool.ports_from_list(tcp=cfg['portdetection.tcp.ports.include'],
+                                                    udp=cfg['portdetection.udp.ports.include'])
 
-        port_range_deny = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.exclude'],
-                                                   udp=cfg['portdetection.ports.udp.exclude'])
+        port_range_deny = NmapTool.ports_from_list(tcp=cfg['portdetection.tcp.ports.exclude'],
+                                                   udp=cfg['portdetection.udp.ports.exclude'])
 
         ports = [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
 
