@@ -17,7 +17,7 @@ from tornado.ioloop import IOLoop
 
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
-from scans.scan_async_task import ScanAsyncTask
+from scans.scanner import Scanner
 from scans.task_mapper import TaskMapper
 from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
@@ -137,7 +137,7 @@ class Aucote(object):
             self._storage.connect()
             self._storage.init_schema()
 
-            self._scan_task = ScanAsyncTask(aucote=self, as_service=as_service)
+            self._scan_task = Scanner(aucote=self, as_service=as_service)
             self.ioloop.add_callback(self.web_server.run)
             await self._scan_task.run()
             await self.async_task_manager.shutdown_condition.wait()

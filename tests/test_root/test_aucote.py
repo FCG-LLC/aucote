@@ -169,7 +169,7 @@ class AucoteTest(AsyncTestCase):
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.Storage')
-    @patch('aucote.ScanAsyncTask')
+    @patch('aucote.Scanner')
     @patch('aucote.WebServer', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
@@ -203,7 +203,7 @@ class AucoteTest(AsyncTestCase):
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.Storage')
-    @patch('aucote.ScanAsyncTask')
+    @patch('aucote.Scanner')
     @patch('aucote.WebServer', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
@@ -242,9 +242,9 @@ class AucoteTest(AsyncTestCase):
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=False))
-    @patch('aucote.ScanAsyncTask.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
+    @patch('aucote.Scanner.__init__', MagicMock(side_effect=TopdisConnectionException, return_value=None))
     @patch('aucote.Storage', MagicMock())
-    @patch('scans.scan_async_task.Executor')
+    @patch('scans.scanner.Executor')
     @patch('aucote.cfg', new_callable=Config)
     @gen_test
     async def test_scan_with_exception(self, cfg, mock_executor):
