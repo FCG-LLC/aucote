@@ -55,13 +55,12 @@ class ScannerTest(AsyncTestCase):
     def tearDown(self):
         AsyncTaskManager.instance().clear()
 
+    @patch('scans.scanner.PhysicalPort')
     @patch('scans.scanner.netifaces')
-    @patch('scans.scanner.PortsScan')
-    @patch('scans.scanner.MasscanPorts')
     @patch('scans.scanner.Executor')
     @patch('scans.scanner.cfg', new_callable=Config)
     @gen_test
-    def test_run_scan_as_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface):
+    def test_run_scan_as_service(self, cfg, mock_executor, mock_netiface, physical_port):
         cfg._cfg = {
             'service': {
                 'scans': {
@@ -91,286 +90,59 @@ class ScannerTest(AsyncTestCase):
                 }
             }
         }
-        node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
+        node_ipv4 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
+        node_ipv6 = Node(ip=ipaddress.ip_address('::6'), node_id=2)
+        nodes = [node_ipv4, node_ipv6]
 
-        self.thread._get_nodes_for_scanning = MagicMock(return_value=[node_1])
-        self.thread._get_networks_list = MagicMock(return_value=IPSet(['127.0.0.2/31']))
-        self.thread.aucote = MagicMock()
+        ipv4_scanner = MagicMock()
+        ipv6_scanner = MagicMock()
+        scanners = {
+            self.thread.IPV4: [ipv4_scanner],
+            self.thread.IPV6: [ipv6_scanner]
+        }
 
-        ports_masscan = [Port(node=MagicMock(), transport_protocol=TransportProtocol.TCP, number=80)]
-        ports_nmap = [Port(node=MagicMock(), transport_protocol=TransportProtocol.TCP, number=80)]
-        ports_nmap_udp = [Port(node=MagicMock(), transport_protocol=TransportProtocol.UDP, number=80)]
+        ports_ipv4 = [Port(node=node_ipv4, transport_protocol=TransportProtocol.TCP, number=80)]
+        ports_ipv6 = [Port(node=node_ipv6, transport_protocol=TransportProtocol.TCP, number=80)]
+
+        ipv4_scanner.scan_ports.return_value = Future()
+        ipv4_scanner.scan_ports.return_value.set_result(ports_ipv4)
+
+        ipv6_scanner.scan_ports.return_value = Future()
+        ipv6_scanner.scan_ports.return_value.set_result(ports_ipv6)
+
 
         mock_netiface.interfaces.return_value = ['test', 'test2']
         mock_netiface.ifaddresses.side_effect = ([mock_netiface.AF_INET], [''])
 
-        future_masscan = Future()
-        future_masscan.set_result(ports_masscan)
-        mock_masscan.return_value.scan_ports.return_value = future_masscan
-
-        future_nmap = Future()
-        future_nmap.set_result(ports_nmap)
-
-        future_nmap_udp = Future()
-        future_nmap_udp.set_result(ports_nmap_udp)
-
-        mock_nmap.return_value.scan_ports.side_effect = (future_nmap, future_nmap_udp)
-
-        port = PhysicalPort()
+        port = physical_port()
         port.interface = 'test'
 
-        ports = [ports_masscan[0], ports_nmap[0],
-                 # ports_nmap_udp[0],
-                 port]
+        ports = [ports_ipv4[0], ports_ipv6[0], port]
 
-        yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
+        yield self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock())
+        result = mock_executor.call_args_list[0][1]['ports']
+        self.assertCountEqual(result, ports)
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=False, nodes=[node_1])
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=nodes, ports=result, scan_only=False)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
-    @patch('scans.scanner.netifaces')
-    @patch('scans.scanner.PortsScan')
-    @patch('scans.scanner.MasscanPorts')
-    @patch('scans.scanner.Executor')
+    @patch('scans.scanner.Scanner.scanners', new_callable=PropertyMock)
     @patch('scans.scanner.cfg', new_callable=Config)
     @gen_test
-    def test_run_scan_as_non_service(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface):
-        cfg._cfg = {
-            'service': {
-                'scans': {
-                    'physical': False,
-                }
-            },
-            'topdis': {
-                'fetch_os': False
-            },
-            'portdetection': {
-                'ports': {
-                    'tcp': {
-                        'include': ['0-65535'],
-                        'exclude': []
-                    },
-                    'udp': {
-                        'include': ['0-65535'],
-                        'exclude': []
-                    },
-                    'sctp': {
-                        'include': ['0-65535'],
-                        'exclude': []
-                    },
-                },
-                '_internal': {
-                    'nmap_udp': False
-                }
-            }
-        }
-        node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
-
-        self.thread._get_nodes_for_scanning = MagicMock(return_value=[node_1])
-        self.thread._get_networks_list = MagicMock(return_value=IPSet(['127.0.0.2/31']))
-        self.thread.as_service = False
-
-        port_masscan = Port(transport_protocol=TransportProtocol.UDP, number=17, node=node_1)
-        port_nmap = Port(transport_protocol=TransportProtocol.UDP, number=17, node=node_1)
-        mock_netiface.interfaces.return_value = ['test', 'test2']
-        mock_netiface.ifaddresses.side_effect = ([mock_netiface.AF_INET], [''])
-
-        future_masscan = Future()
-        future_masscan.set_result([port_masscan])
-        mock_masscan.return_value.scan_ports.return_value = future_masscan
-
-        future_nmap = Future()
-        future_nmap.set_result([port_nmap])
-        mock_nmap.return_value.scan_ports.return_value = future_nmap
-
-        yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=[port_masscan, port_nmap],
-                                              nodes=[node_1], scan_only=False)
-        self.thread.aucote.async_task_manager.stop.assert_called_once_with()
-
-    @patch('scans.scanner.netifaces')
-    @patch('scans.scanner.PortsScan')
-    @patch('scans.scanner.MasscanPorts')
-    @patch('scans.scanner.Executor')
-    @patch('scans.scanner.cfg', new_callable=Config)
-    @gen_test
-    def test_run_scan_scan_only(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface):
-        cfg._cfg = {
-            'service': {
-                'scans': {
-                    'physical': True,
-                }
-            },
-            'topdis': {
-                'fetch_os': False
-            },
-            'portdetection': {
-                'ports': {
-                    'tcp': {
-                        'include': ['0-65535'],
-                        'exclude': []
-                    },
-                    'udp': {
-                        'include': ['0-65535'],
-                        'exclude': []
-                    },
-                    'sctp': {
-                        'include': ['0-65535'],
-                        'exclude': []
-                    },
-                },
-                'networks': {
-                    'exclude': [],
-                    'include': '0.0.0.0/0'
-                },
-                'scan_enable': True,
-                '_internal': {
-                    'nmap_udp': False
-                }
-            }
-        }
-        self.cfg = cfg
-        node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
-
-        self.thread._get_nodes_for_scanning = MagicMock(return_value=[node_1])
-        self.thread._get_networks_list = MagicMock(return_value=IPSet(['0.0.0.0/0']))
-        self.thread.aucote = MagicMock()
-
-        ports_masscan = [Port(node=MagicMock(), transport_protocol=TransportProtocol.TCP, number=80)]
-        ports_nmap = [Port(node=MagicMock(), transport_protocol=TransportProtocol.TCP, number=80)]
-        mock_netiface.interfaces.return_value = ['test', 'test2']
-        mock_netiface.ifaddresses.side_effect = ([mock_netiface.AF_INET], [''])
-
-        future_masscan = Future()
-        future_masscan.set_result(ports_masscan)
-        mock_masscan.return_value.scan_ports.return_value = future_masscan
-
-        future_nmap = Future()
-        future_nmap.set_result(ports_nmap)
-        mock_nmap.return_value.scan_ports.return_value = future_nmap
-
-        port = PhysicalPort()
-        port.interface = 'test'
-
-        ports = [ports_masscan[0], ports_nmap[0],
-                 # ports_nmap[0],
-                 port]
-
-        scan_only = MagicMock()
-
-        yield self.thread.run_scan(self.thread._get_nodes_for_scanning(), scan_only=scan_only)
-
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, nodes=[node_1], scan_only=scan_only)
-        self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
-
-    @patch('scans.scanner.netifaces')
-    @patch('scans.scanner.PortsScan')
-    @patch('scans.scanner.MasscanPorts')
-    @patch('scans.scanner.Executor')
-    @patch('scans.scanner.cfg', new_callable=Config)
-    @gen_test
-    def test_run_scan_scan_only_with_udp(self, cfg, mock_executor, mock_masscan, mock_nmap, mock_netiface):
-        cfg._cfg = {
-            'service': {
-                'scans': {
-                    'physical': False,
-                }
-            },
-            'portdetection': {
-                'ports': {
-                    'tcp': {
-                        'include': ['0-65535'],
-                        'exclude': []
-                    },
-                    'udp': {
-                        'include': ['0-65535'],
-                        'exclude': []
-                    },
-                    'sctp': {
-                        'include': ['0-65535'],
-                        'exclude': []
-                    },
-                },
-                'networks': {
-                    'exclude': [],
-                    'include': '0.0.0.0/0'
-                },
-                'scan_enable': True,
-                '_internal': {
-                    'nmap_udp': True
-                }
-            }
-        }
-        self.cfg = cfg
-        node_1 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
-
-        self.thread._get_nodes_for_scanning = MagicMock(return_value=[node_1])
-        self.thread._get_networks_list = MagicMock(return_value=IPSet(['0.0.0.0/0']))
-        self.thread.aucote = MagicMock()
-
-        ports_masscan = [Port(node=MagicMock(), transport_protocol=TransportProtocol.TCP, number=80)]
-        ports_nmap = [Port(node=MagicMock(), transport_protocol=TransportProtocol.TCP, number=80)]
-        mock_netiface.interfaces.return_value = ['test', 'test2']
-        mock_netiface.ifaddresses.side_effect = ([mock_netiface.AF_INET], [''])
-
-        future_masscan = Future()
-        future_masscan.set_result(ports_masscan)
-        mock_masscan.return_value.scan_ports.return_value = future_masscan
-
-        future_nmap = Future()
-        future_nmap.set_result(ports_nmap)
-        mock_nmap.return_value.scan_ports.return_value = future_nmap
-
-        ports = [ports_masscan[0], ports_nmap[0],ports_nmap[0]]
-        scan_only = MagicMock()
-
-        yield self.thread.run_scan(self.thread._get_nodes_for_scanning(), scan_only=scan_only)
-
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, nodes=[node_1], scan_only=scan_only)
-        self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
-
-    @patch('scans.scanner.cfg', new_callable=Config)
-    @gen_test
-    def test_run_scan_without_nodes(self, cfg):
-        cfg._cfg = {
-            'portdetection': {
-                '_internal': {
-                    'nmap_udp': False
-                }
-            }
-        }
-        self.thread._get_nodes_for_scanning = MagicMock(return_value=[])
-        self.thread._get_networks_list = MagicMock()
-        self.thread._get_networks_list.return_value = ['0.0.0.0/0']
-        yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
-        self.assertFalse(self.thread.storage.save_nodes.called)
-
-    @patch('scans.scanner.cfg', new_callable=Config)
-    @gen_test
-    def test_run_scan_as_non_service_without_nodes(self, cfg):
-        cfg._cfg = {
-            'portdetection': {
-                '_internal': {
-                    'nmap_udp': False
-                }
-            }
-        }
-        self.thread.as_service = False
-        self.thread._get_nodes_for_scanning = MagicMock(return_value=[])
-        self.thread._get_networks_list = MagicMock()
-        self.thread._get_networks_list.return_value = ['0.0.0.0/0']
-        yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
-        self.assertFalse(self.thread.storage.save_nodes.called)
-        self.thread.aucote.async_task_manager.stop.assert_called_once_with()
-
-    @patch('scans.scanner.cfg', new_callable=Config)
-    @gen_test
-    async def test_periodical_scan(self, cfg):
+    async def test_periodical_scan(self, cfg, scanners):
         cfg._cfg = {'portdetection': {'scan_enabled': True}}
         nodes = MagicMock()
         future = Future()
         future.set_result(nodes)
         self.thread._get_nodes_for_scanning = MagicMock(return_value=future)
+
+        tcp_scanner = MagicMock()
+        udp_scanner = MagicMock()
+
+        scanners.return_value = {
+            TransportProtocol.TCP: tcp_scanner,
+            TransportProtocol.UDP: udp_scanner
+        }
 
         future = Future()
         future.set_result(MagicMock())
@@ -381,9 +153,10 @@ class ScannerTest(AsyncTestCase):
         self.thread.run_scan.return_value = future_run_scan
 
         await self.thread()
-
-        self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True, timestamp=None, protocol=TransportProtocol.TCP)
-        self.thread.run_scan.assert_called_once_with(nodes, scan_only=True)
+        self.thread.run_scan.assert_has_calls(
+            [call(nodes, scan_only=True, protocol=TransportProtocol.TCP, scanners=tcp_scanner),
+             call(nodes, scan_only=True, protocol=TransportProtocol.UDP, scanners=udp_scanner)],
+            any_order=True)
 
     @patch('scans.scanner.cfg', new_callable=Config)
     @gen_test
@@ -449,3 +222,90 @@ class ScannerTest(AsyncTestCase):
 
     def test_shutdown_condition(self):
         self.assertEqual(self.thread.shutdown_condition, self.thread._shutdown_condition)
+
+    @gen_test
+    async def test_clean_scan(self):
+        self.thread.update_scan_status = MagicMock(return_value=Future())
+        self.thread.update_scan_status.return_value.set_result(True)
+
+        self.thread._shutdown_condition = MagicMock()
+
+        await self.thread._clean_scan()
+
+        self.thread.update_scan_status.assert_called_once_with(ScanStatus.IDLE)
+        self.thread._shutdown_condition.set.assert_called_once_with()
+
+    @patch('scans.scanner.Scanner.previous_scan', new_callable=PropertyMock())
+    @patch('scans.scanner.cfg', new_callable=Config)
+    @gen_test
+    async def test_update_scan_status_without_toucan(self, cfg, prev_scan):
+        cfg.toucan = None
+        await self.thread.update_scan_status(ScanStatus.IDLE)
+        self.assertFalse(prev_scan.called)
+
+    @patch('scans.scanner.MasscanPorts')
+    @patch('scans.scanner.PortsScan')
+    def test_tcp_scanners(self, scan, masscan):
+        result = self.thread._tcp_scanners
+        expected = {
+            self.thread.IPV4: [masscan.return_value],
+            self.thread.IPV6: [scan.return_value]
+        }
+
+        self.assertEqual(result, expected)
+        scan.assert_called_once_with(ipv6=True, tcp=True, udp=False)
+        masscan.assert_called_once_with(udp=False)
+
+    @patch('scans.scanner.PortsScan')
+    def test_udp_scanners(self, scan):
+        result = self.thread._udp_scanners
+        expected = {
+            self.thread.IPV4: [scan.return_value],
+            self.thread.IPV6: [scan.return_value]
+        }
+
+        self.assertEqual(result, expected)
+        scan.assert_has_calls((
+            call(ipv6=False, tcp=False, udp=True),
+            call(ipv6=True, tcp=False, udp=True)))
+
+    @patch('scans.scanner.Scanner._udp_scanners', new_callable=PropertyMock)
+    @patch('scans.scanner.Scanner._tcp_scanners', new_callable=PropertyMock)
+    def test_scanners(self, tcp_scanners, udp_scanners):
+        result = self.thread.scanners
+
+        expected = {
+            TransportProtocol.UDP: udp_scanners.return_value,
+            TransportProtocol.TCP: tcp_scanners.return_value
+        }
+
+        self.assertEqual(result, expected)
+
+    @patch('scans.scanner.Scanner.scanners', new_callable=PropertyMock)
+    @patch('scans.scanner.cfg', new_callable=Config)
+    @gen_test
+    async def test_call_without_nodes(self, cfg, scanners):
+        cfg._cfg = {'portdetection': {'scan_enabled': True}}
+        nodes = []
+        future = Future()
+        future.set_result(nodes)
+        self.thread._get_nodes_for_scanning = MagicMock(return_value=future)
+
+        tcp_scanner = MagicMock()
+        udp_scanner = MagicMock()
+
+        scanners.return_value = {
+            TransportProtocol.TCP: tcp_scanner,
+            TransportProtocol.UDP: udp_scanner
+        }
+
+        future = Future()
+        future.set_result(MagicMock())
+        self.thread.run_scan = MagicMock(return_value=future)
+
+        future_run_scan = Future()
+        future_run_scan.set_result(MagicMock())
+        self.thread.run_scan.return_value = future_run_scan
+
+        await self.thread()
+        self.assertFalse(self.thread.run_scan.called)

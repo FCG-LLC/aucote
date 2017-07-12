@@ -137,6 +137,7 @@ class Aucote(object):
             self.async_task_manager.clear()
             self._storage.connect()
             self._storage.init_schema()
+            self.ioloop.add_callback(self.web_server.run)
 
             self.scanners = [Scanner(aucote=self, as_service=as_service)]
 
@@ -149,8 +150,8 @@ class Aucote(object):
             else:
                 self.async_task_manager.start()
                 await gen.multi(scanner() for scanner in self.scanners)
+                self.async_task_manager.stop()
 
-            self.ioloop.add_callback(self.web_server.run)
             await self.async_task_manager.shutdown_condition.wait()
 
             self.web_server.stop()
