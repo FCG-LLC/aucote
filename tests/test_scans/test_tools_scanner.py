@@ -78,19 +78,3 @@ class ToolsScannerTest(AsyncTestCase):
         result = self.task.previous_scan
 
         self.assertEqual(result, expected)
-
-    @patch('scans.tools_scanner.cfg', new_callable=Config)
-    @patch('scans.tools_scanner.time.time', MagicMock(return_value=1595))
-    def test_scan_cron(self, mock_cfg):
-        mock_cfg._cfg = {
-            'portdetection': {
-                '_internal': {
-                    'tools_cron': '*/8 * * * *',
-                }
-            }
-        }
-
-        expected = '*/8 * * * *'
-        result = self.task._scan_cron()
-
-        self.assertEqual(result, expected)

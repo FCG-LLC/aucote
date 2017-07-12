@@ -206,10 +206,10 @@ class ScanAsyncTask(object):
             int
 
         """
-        if cfg['portdetection.scan_type'] == ScanType.PERIODIC.value:
+        if cfg['portdetection.{name}.scan_type'.format(name=self.NAME)] == ScanType.PERIODIC.value:
             return 0
 
-        return parse_period(cfg['portdetection.live_scan.min_time_gap'])
+        return parse_period(cfg['portdetection.{name}.live_scan.min_time_gap'.format(name=self.NAME)])
 
     def _scan_cron(self):
         """
@@ -219,7 +219,7 @@ class ScanAsyncTask(object):
             str
 
         """
-        if cfg['portdetection.scan_type'] == ScanType.LIVE.value:
+        if cfg['portdetection.{name}.scan_type'.format(name=self.NAME)] == ScanType.LIVE.value:
             return self.LIVE_SCAN_CRON
 
-        return cfg['portdetection.periodic_scan.cron']
+        return cfg['portdetection.{name}.periodic_scan.cron'.format(name=self.NAME)]

@@ -77,13 +77,3 @@ class ToolsScanner(ScanAsyncTask):
 
         """
         return croniter(cfg['portdetection._internal.tools_cron'], time.time()).get_prev()
-
-    def _scan_cron(self):
-        """
-        Get scan cron
-
-        Returns:
-            str
-
-        """
-        return cfg['portdetection._internal.tools_cron']
