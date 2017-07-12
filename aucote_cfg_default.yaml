@@ -69,9 +69,11 @@ service:
 #   tcp: - Additional options which are related only to TCP scan
 #     host_timeout: <int> - Number of seconds after which scanning particular host should be give up
 #
+#   udp: - Additional options which are related only to UDP scan
+#     max_retries: <int> - How many UDP scan retries is allowed by port detection
+#     defeat_icmp_ratelimit: <bool> - If True, Nmap won't be waiting on ICMP Port Unreachable
+#
 #   _internal: - more advanced  configuration
-#     nmap_udp: <bool> - Should UDP scan be performed by Nmap. Otherwise aucote will use Masscan
-#     udp_retries: <int> - How many UDP scan retries is allowed by port detection
 #     port_period: <period> - Minimal port scanning interval
 #     broadcast: <bool> - Enable broadcast scanning if True (default is False)
 #     categories: - List of allowed script categories
@@ -121,6 +123,8 @@ portdetection:
                 - 0-65535 # TCP: full range
             exclude: []
         scan_rate: 50
+        defeat_icmp_ratelimit: False
+        max_retries: 5
     tools:
         scan_enabled: True
         scan_type: "LIVE"
@@ -149,8 +153,6 @@ portdetection:
             exclude: []
         scan_rate: 500
     _internal:
-        udp_retries: 2
-        nmap_udp: True
         port_period: 0s
         broadcast: False
         categories: ['auth', 'exploit', 'fuzzer', 'intrusive', 'malware', 'safe', 'version', 'vuln']

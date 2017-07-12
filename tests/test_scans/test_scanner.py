@@ -85,9 +85,6 @@ class ScannerTest(AsyncTestCase):
                         'include': ['0-65535'],
                         'exclude': []
                     },
-                },
-                '_internal': {
-                    'nmap_udp': False
                 }
             }
         }

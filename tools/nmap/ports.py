@@ -32,8 +32,10 @@ class PortsScan(PortScanTask):
             args.extend(['-sS', '--host-timeout', str(cfg['portdetection.tcp.host_timeout'])])
 
         if self.udp:
-            args.extend(('-sU', '--min-rate', rate, '--max-retries', str(cfg['portdetection._internal.udp_retries']),
-                         '--defeat-icmp-ratelimit'))
+            if cfg['portdetection.udp.defeat_icmp_ratelimit']:
+                args.extend(('--min-rate', rate, '--defeat-icmp-ratelimit'))
+
+            args.extend(('-sU', '--max-retries', str(cfg['portdetection.udp.max_retries'])))
 
         scripts_dir = cfg['tools.nmap.scripts_dir']
 
