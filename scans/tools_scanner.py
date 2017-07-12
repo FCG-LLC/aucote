@@ -23,7 +23,7 @@ class ToolsScanner(ScanAsyncTask):
     PROTOCOL = None
     NAME = 'tools'
 
-    async def __call__(self):
+    async def run(self):
         """
         Run scan by using tools and historical port data
 

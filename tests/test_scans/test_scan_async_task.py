@@ -519,3 +519,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
         expected = '* * * * *'
 
         self.assertEqual(result, expected)
+
+    @gen_test
+    async def test_run(self):
+        with self.assertRaises(NotImplementedError):
+            await self.thread.run()

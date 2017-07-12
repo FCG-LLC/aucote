@@ -25,12 +25,19 @@ class ScanAsyncTask(object):
     """
     LIVE_SCAN_CRON = '* * * * *'
     PROTOCOL = None
+    NAME = None
 
     def __init__(self, aucote):
         self._current_scan = []
         self.aucote = aucote
         self.scan_start = None
         self._shutdown_condition = Event()
+
+    async def __call__(self, *args, **kwargs):
+        return await self.run()
+
+    async def run(self):
+        raise NotImplementedError()
 
     @property
     def shutdown_condition(self):

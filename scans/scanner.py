@@ -29,14 +29,13 @@ class Scanner(ScanAsyncTask):
     PROTOCOL = TransportProtocol.TCP
     IPV4 = "IPv4"
     IPV6 = "IPv6"
-    NAME = None
 
     def __init__(self, as_service=True, *args, **kwargs):
         super(Scanner, self).__init__(*args, **kwargs)
 
         self.as_service = as_service
 
-    async def __call__(self):
+    async def run(self):
         """
         Scan nodes for open ports
 
