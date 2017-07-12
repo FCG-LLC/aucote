@@ -32,7 +32,8 @@ class MasscanPorts(PortScanTask):
 
         """
         args = list(cfg['tools.masscan.args'])
-        args.extend(['--rate', str(cfg['portdetection.network_scan_rate'])])
+        args.extend(['--rate', str(cfg['portdetection.tcp.scan_rate'] if self.tcp
+                                   else cfg['portdetection.udp.scan_rate'])])
 
         include_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.tcp.ports.include'],
                                                       udp=self.udp and cfg['portdetection.udp.ports.include'])

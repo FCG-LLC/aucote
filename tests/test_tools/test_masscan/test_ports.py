@@ -18,18 +18,19 @@ class MasscanPortsTest(TestCase):
     def setUp(self):
         self.cfg = {
             'portdetection': {
-                'network_scan_rate': 1000,
                 'tcp': {
                     'ports': {
                         'include': ['9'],
                         'exclude': [],
                     },
+                    'scan_rate': 1000
                 },
                 'udp': {
                     'ports': {
                         'include': [],
                         'exclude': []
-                    }
+                    },
+                    'scan_rate': 30
                 }
             },
             'tools': {

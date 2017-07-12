@@ -35,14 +35,15 @@ class PortScanTest(TestCase):
                         'include': ['55'],
                         'exclude': [],
                     },
+                    'scan_rate': 1030,
                 },
                 'udp': {
                     'ports': {
                         'include': [],
                         'exclude': []
-                    }
+                    },
+                    'scan_rate': 30,
                 },
-                'network_scan_rate': 1030,
                 '_internal': {
                     'host_timeout': 600,
                     'udp_retries': 2
@@ -118,8 +119,8 @@ class PortScanTest(TestCase):
         cfg['portdetection.udp.ports.include'] = ['12-16']
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '-sU', '--min-rate', '1030', '--max-retries', '2',
-                    '--defeat-icmp-ratelimit', '-p', 'U:12-16', '--max-rate', '1030', '192.168.1.5']
+        expected = ['-Pn', '-sU', '--min-rate', '30', '--max-retries', '2',
+                    '--defeat-icmp-ratelimit', '-p', 'U:12-16', '--max-rate', '30', '192.168.1.5']
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)

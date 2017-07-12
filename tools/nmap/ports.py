@@ -23,7 +23,7 @@ class PortsScan(PortScanTask):
 
     def prepare_args(self, nodes):
         args = ['-Pn']
-        rate = str(cfg['portdetection.network_scan_rate'])
+        rate = str(cfg['portdetection.tcp.scan_rate'] if self.tcp else cfg['portdetection.udp.scan_rate'])
 
         if self.ipv6:
             args.append('-6')
