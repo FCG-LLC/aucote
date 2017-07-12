@@ -6,6 +6,7 @@ from tools.nmap.ports import PortsScan
 
 class TCPScanner(Scanner):
     PROTOCOL = TransportProtocol.TCP
+    NAME = 'tcp'
 
     @property
     def scanners(self):

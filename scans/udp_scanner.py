@@ -5,6 +5,7 @@ from tools.nmap.ports import PortsScan
 
 class UDPScanner(Scanner):
     PROTOCOL = TransportProtocol.UDP
+    NAME = 'udp'
 
     @property
     def scanners(self):

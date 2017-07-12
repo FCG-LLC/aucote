@@ -29,6 +29,7 @@ class Scanner(ScanAsyncTask):
     PROTOCOL = TransportProtocol.TCP
     IPV4 = "IPv4"
     IPV6 = "IPv6"
+    NAME = None
 
     def __init__(self, as_service=True, *args, **kwargs):
         super(Scanner, self).__init__(*args, **kwargs)

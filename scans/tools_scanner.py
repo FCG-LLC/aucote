@@ -21,6 +21,7 @@ class ToolsScanner(ScanAsyncTask):
 
     """
     PROTOCOL = None
+    NAME = 'tools'
 
     async def __call__(self):
         """
