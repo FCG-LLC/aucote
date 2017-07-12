@@ -5,44 +5,24 @@ import time
 
 import netifaces
 
-from croniter import croniter
-
 from aucote_cfg import cfg
 from scans.executor import Executor
 from scans.scan_async_task import ScanAsyncTask
-from structs import ScanStatus, PhysicalPort, Scan
+from structs import ScanStatus, PhysicalPort, Scan, TransportProtocol
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
 
 
 class Scanner(ScanAsyncTask):
+    PROTOCOL = TransportProtocol.TCP
+
     def __init__(self, as_service=True, *args, **kwargs):
         super(Scanner, self).__init__(*args, **kwargs)
 
         self.as_service = as_service
 
-        if as_service:
-            self.aucote.async_task_manager.add_crontab_task(self._scan, self._scan_cron)
-            self.aucote.async_task_manager.add_crontab_task(self._run_tools, self._tools_cron)
-
-    def _tools_cron(self):
-        return cfg['portdetection._internal.tools_cron']
-
-    async def run(self):
-        """
-        Run tasks
-
-        Returns:
-            None
-
-        """
-        log.debug("Starting cron")
-        self.aucote.async_task_manager.start()
-        if not self.as_service:
-            await self.run_scan(await self._get_nodes_for_scanning())
-
-    async def _scan(self):
+    async def __call__(self):
         """
         Scan nodes for open ports
 
@@ -55,21 +35,8 @@ class Scanner(ScanAsyncTask):
         log.info("Starting port scan")
         nodes = await self._get_nodes_for_scanning(timestamp=None, protocol=self.PROTOCOL, filter_out_storage=True)
         log.debug("Found %i nodes for potential scanning", len(nodes))
-        await self.run_scan(nodes, scan_only=True)
 
-    async def _run_tools(self):
-        """
-        Run scan by using tools and historical port data
-
-        Returns:
-            None
-
-        """
-        log.info("Starting security scan")
-        nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=False)
-        ports = self.get_ports_for_script_scan(nodes)
-        log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports))
+        await self.run_scan(nodes, scan_only=self.as_service)
 
     async def run_scan(self, nodes, scan_only=False):
         """
@@ -154,17 +121,6 @@ class Scanner(ScanAsyncTask):
         if not self.as_service:
             await self.aucote.async_task_manager.stop()
 
-    @property
-    def next_tool_scan(self):
-        """
-        Time of next regular scan
-
-        Returns:
-            float
-
-        """
-        return croniter(cfg['portdetection._internal.tools_cron'], time.time()).get_next()
-
     async def update_scan_status(self, status):
         """
         Update scan status base on status value
@@ -195,14 +151,3 @@ class Scanner(ScanAsyncTask):
             data['portdetection']['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
 
         await cfg.toucan.push_config(data, overwrite=True)
-
-    @property
-    def previous_tool_scan(self):
-        """
-        Previous tool scan timestamp
-
-        Returns:
-            float
-
-        """
-        return croniter(cfg['portdetection._internal.tools_cron'], time.time()).get_prev()

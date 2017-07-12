@@ -1,7 +1,7 @@
 """
 Test main aucote file
 """
-from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
+from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open, call
 
 import sys
 from tornado.concurrent import Future
@@ -169,67 +169,61 @@ class AucoteTest(AsyncTestCase):
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.Storage')
+    @patch('aucote.ToolsScanner')
     @patch('aucote.Scanner')
     @patch('aucote.WebServer', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
     @gen_test
-    async def test_scan(self, cfg, mock_scan_tasks, mock_storage_task):
+    async def test_scan(self, cfg, scanner, tools_scanner, mock_storage_task):
         cfg._cfg = self.cfg._cfg
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
 
-        future = Future()
-        future.set_result(MagicMock())
-        mock_scan_tasks.return_value.run.return_value = future
+        self.aucote.async_task_manager = MagicMock()
+        self.aucote.async_task_manager.shutdown_condition.wait.return_value = Future()
+        self.aucote.async_task_manager.shutdown_condition.wait.return_value.set_result(True)
+        self.aucote.async_task_manager.stop = MagicMock(return_value=Future())
+        self.aucote.async_task_manager.stop.return_value.set_result(True)
 
-        future_wait = Future()
-        future_wait.set_result(MagicMock())
-        mock_scan_tasks.return_value.shutdown_condition.wait.return_value = future_wait
+        scanner.return_value.return_value = Future()
+        scanner.return_value.return_value.set_result(True)
 
         await self.aucote.run_scan(as_service=False)
-        result = mock_scan_tasks.call_args[1]
-        expected = {
-            'aucote': self.aucote,
-            'as_service': False
-        }
 
-        self.assertEqual(mock_scan_tasks.call_count, 1)
-        self.aucote._storage.connect.assert_called_once_with()
-        self.aucote._storage.init_schema.assert_called_once_with()
-        self.aucote._storage.close.assert_called_once_with()
-        self.assertDictEqual(result, expected)
+        scanner.assert_called_once_with(aucote=self.aucote, as_service=False)
+        self.assertFalse(tools_scanner.called)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
     @patch('aucote.Storage')
+    @patch('aucote.ToolsScanner')
     @patch('aucote.Scanner')
     @patch('aucote.WebServer', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
     @gen_test
-    async def test_service(self, cfg, mock_scan_tasks, mock_storage_task):
+    async def test_service(self, cfg, scanner, tools_scanner, mock_storage_task):
         cfg._cfg = self.cfg._cfg
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
 
-        future = Future()
-        future.set_result(MagicMock())
-        mock_scan_tasks.return_value.run.return_value = future
+        self.aucote.async_task_manager = MagicMock()
+        self.aucote.async_task_manager.shutdown_condition.wait.return_value = Future()
+        self.aucote.async_task_manager.shutdown_condition.wait.return_value.set_result(True)
 
-        future_wait = Future()
-        future_wait.set_result(MagicMock())
-        mock_scan_tasks.return_value.shutdown_condition.wait.return_value = future_wait
+        scanner.return_value.return_value = Future()
+        scanner.return_value.return_value.set_result(True)
+
+        tools_scanner.return_value.return_value = Future()
+        tools_scanner.return_value.return_value.set_result(True)
 
         await self.aucote.run_scan(as_service=True)
-        result = mock_scan_tasks.call_args[1]
-        expected = {
-            'aucote': self.aucote,
-            'as_service': True
-        }
 
-        self.assertEqual(mock_scan_tasks.call_count, 1)
-        self.assertDictEqual(result, expected)
+        scanner.assert_called_once_with(aucote=self.aucote, as_service=True)
+        tools_scanner.assert_called_once_with(aucote=self.aucote)
+        self.aucote.async_task_manager.add_crontab_task.assert_has_calls((call(scanner(), scanner()._scan_cron),
+                                                                    call(tools_scanner(), tools_scanner()._scan_cron)))
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))

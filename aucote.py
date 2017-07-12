@@ -12,13 +12,14 @@ import fcntl
 
 import signal
 from unittest.mock import MagicMock
-
+from tornado import gen
 from tornado.ioloop import IOLoop
 
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
 from scans.scanner import Scanner
 from scans.task_mapper import TaskMapper
+from scans.tools_scanner import ToolsScanner
 from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
@@ -108,13 +109,13 @@ class Aucote(object):
         signal.signal(signal.SIGTERM, self.signal_handler)
         signal.signal(signal.SIGHUP, self.graceful_stop)
         self.load_tools(tools_config)
-        self._scan_task = None
 
         self._storage = Storage(filename=cfg['service.scans.storage'])
 
         self.ioloop = IOLoop.current()
         self.async_task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
         self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'])
+        self.scanners = []
 
     @property
     def kudu_queue(self):
@@ -137,13 +138,22 @@ class Aucote(object):
             self._storage.connect()
             self._storage.init_schema()
 
-            self._scan_task = Scanner(aucote=self, as_service=as_service)
+            self.scanners = [Scanner(aucote=self, as_service=as_service)]
+
+            if as_service:
+                self.scanners.append(ToolsScanner(aucote=self))
+
+                for scanner in self.scanners:
+                    self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron)
+                self.async_task_manager.start()
+            else:
+                self.async_task_manager.start()
+                await gen.multi(scanner() for scanner in self.scanners)
+
             self.ioloop.add_callback(self.web_server.run)
-            await self._scan_task.run()
             await self.async_task_manager.shutdown_condition.wait()
 
             self.web_server.stop()
-            self._scan_task = None
             self._storage.close()
 
             log.info("Closing loop")

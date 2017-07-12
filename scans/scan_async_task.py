@@ -177,16 +177,6 @@ class ScanAsyncTask(object):
 
         return croniter(self._scan_cron(), time.time()).get_prev()
 
-    def get_ports_for_script_scan(self, nodes):
-        """
-        Get ports for scanning. Topdis node data combined with stored open ports data.
-
-        Returns:
-            list
-
-        """
-        return self.storage.get_ports_by_nodes(nodes=nodes, timestamp=self.previous_tool_scan)
-
     @property
     def next_scan(self):
         """

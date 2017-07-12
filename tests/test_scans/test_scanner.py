@@ -13,7 +13,6 @@ from utils.async_task_manager import AsyncTaskManager
 
 class ScannerTest(AsyncTestCase):
     @patch('scans.scanner.Scanner._get_topdis_nodes', MagicMock(return_value=[]))
-    @patch('scans.scanner.croniter', MagicMock(return_value=croniter('* * * * *', time.time())))
     @patch('scans.scanner.cfg', new_callable=Config)
     def setUp(self, cfg):
         super(ScannerTest, self).setUp()
@@ -55,33 +54,6 @@ class ScannerTest(AsyncTestCase):
 
     def tearDown(self):
         AsyncTaskManager.instance().clear()
-
-    @gen_test
-    async def test_run_as_service(self):
-        self.thread.scheduler = MagicMock()
-        self.thread.as_service = True
-
-        self.thread._periodical_tools_scan = MagicMock()
-        self.thread._periodical_scan_callback = MagicMock()
-        self.thread._ioloop = MagicMock()
-
-        await self.thread.run()
-        self.thread.aucote.async_task_manager.start.assert_called_once_with()
-
-    @gen_test
-    async def test_run_as_non_service(self):
-        self.thread.as_service = False
-        expected = MagicMock()
-        future = Future()
-        future.set_result(expected)
-        self.thread._get_nodes_for_scanning = MagicMock(return_value=future)
-        self.thread.scheduler = MagicMock()
-        future_run_scan = Future()
-        future_run_scan.set_result(MagicMock())
-        self.thread.run_scan = MagicMock(return_value=future_run_scan)
-
-        await self.thread.run()
-        self.thread.run_scan.assert_called_once_with(expected)
 
     @patch('scans.scanner.netifaces')
     @patch('scans.scanner.PortsScan')
@@ -408,12 +380,9 @@ class ScannerTest(AsyncTestCase):
         future_run_scan.set_result(MagicMock())
         self.thread.run_scan.return_value = future_run_scan
 
-        self.thread.PROTOCOL = TransportProtocol.TCP
+        await self.thread()
 
-        await self.thread._scan()
-
-        self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None, protocol=TransportProtocol.TCP,
-                                                                    filter_out_storage=True)
+        self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True, timestamp=None, protocol=TransportProtocol.TCP)
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True)
 
     @patch('scans.scanner.cfg', new_callable=Config)
@@ -422,74 +391,8 @@ class ScannerTest(AsyncTestCase):
         cfg._cfg = {'portdetection': {'scan_enabled': False}}
         self.thread._get_nodes_for_scanning = MagicMock()
 
-        yield self.thread._scan()
+        yield self.thread()
         self.assertFalse(self.thread._get_nodes_for_scanning.called)
-
-    @patch('scans.scanner.cfg', new_callable=Config)
-    @patch('scans.scanner.time.time', MagicMock(return_value=1595))
-    def test_previous_tools_scan(self, mock_cfg):
-        mock_cfg._cfg = {
-            'portdetection': {
-                'cron': '* * * * *',
-                '_internal': {
-                    'tools_cron': '*/8 * * * *',
-                }
-            }
-        }
-
-        expected = 1440
-        result = self.thread.previous_tool_scan
-
-        self.assertEqual(result, expected)
-
-    @patch('scans.scanner.Scanner.previous_tool_scan', new_callable=PropertyMock)
-    def test_get_ports_for_script_scan(self, mock_previous):
-        nodes = [MagicMock(), MagicMock(), MagicMock()]
-        mock_previous.return_value = 100
-        ports = [
-            MagicMock(),
-            MagicMock(),
-            MagicMock()
-        ]
-        self.thread.storage.get_ports_by_nodes.return_value = ports
-
-        result = self.thread.get_ports_for_script_scan(nodes)
-
-        self.assertEqual(result, ports)
-        self.thread.storage.get_ports_by_nodes.assert_has_calls([call(nodes=nodes, timestamp=100)])
-
-    @patch('scans.scanner.Executor')
-    @gen_test
-    def test_run_scripts(self, mock_executor):
-        ports = MagicMock()
-        nodes = [MagicMock(), MagicMock(), MagicMock()]
-
-        self.thread.get_ports_for_script_scan = MagicMock(return_value=ports)
-        future_nodes = Future()
-        future_nodes.set_result(nodes)
-        self.thread._get_nodes_for_scanning = MagicMock(return_value=future_nodes)
-
-        yield self.thread._run_tools()
-
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, nodes=nodes)
-        self.thread.aucote.add_async_task.assert_called_once_with(mock_executor.return_value)
-
-    @patch('scans.scanner.cfg', new_callable=Config)
-    @patch('scans.scanner.time.time', MagicMock(return_value=595))
-    def test_next_tool_scan(self, mock_cfg):
-        mock_cfg._cfg = {
-            'portdetection': {
-                'cron': '*/12 * * * *',
-                '_internal': {
-                    'tools_cron': '*/12 * * * *'
-                }
-            }
-        }
-
-        expected = 720
-        result = self.thread.next_tool_scan
-
-        self.assertEqual(result, expected)
 
     @patch('scans.scanner.Scanner.next_scan', 75)
     @patch('scans.scanner.Scanner.previous_scan', 57)
@@ -543,14 +446,6 @@ class ScannerTest(AsyncTestCase):
         }
 
         cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True)
-
-    @patch('scans.scanner.cfg', new_callable=Config)
-    def test_tools_cron(self, cfg):
-        expected = "* * * * */45"
-        cfg['portdetection.scan_type'] = "PERIODIC"
-        cfg['portdetection._internal.tools_cron'] = expected
-        result = self.thread._tools_cron()
-        self.assertEqual(result, expected)
 
     def test_shutdown_condition(self):
         self.assertEqual(self.thread.shutdown_condition, self.thread._shutdown_condition)
