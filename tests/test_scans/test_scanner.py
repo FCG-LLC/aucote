@@ -1,13 +1,9 @@
 import ipaddress
 from unittest.mock import patch, MagicMock, PropertyMock, call
-import time
-from croniter import croniter
-from netaddr import IPSet
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 from scans.scanner import Scanner
-from structs import Node, PhysicalPort, Port, TransportProtocol, ScanStatus, Scan, VulnerabilityChangeType, \
-    VulnerabilityChange, PortDetectionChange
+from structs import Node, Port, TransportProtocol, ScanStatus, Scan, PortDetectionChange
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -137,19 +133,16 @@ class ScannerTest(AsyncTestCase):
     @patch('scans.scanner.cfg', new_callable=Config)
     @gen_test
     async def test_periodical_scan(self, cfg, scanners, scan):
+        self.thread.PROTOCOL = TransportProtocol.UDP
         cfg._cfg = {'portdetection': {'scan_enabled': True}}
         nodes = MagicMock()
         future = Future()
         future.set_result(nodes)
         self.thread._get_nodes_for_scanning = MagicMock(return_value=future)
 
-        tcp_scanner = MagicMock()
         udp_scanner = MagicMock()
 
-        scanners.return_value = {
-            TransportProtocol.TCP: tcp_scanner,
-            TransportProtocol.UDP: udp_scanner
-        }
+        scanners.return_value = udp_scanner
 
         future = Future()
         future.set_result(MagicMock())
@@ -160,10 +153,10 @@ class ScannerTest(AsyncTestCase):
         self.thread.run_scan.return_value = future_run_scan
 
         await self.thread()
-        self.thread.run_scan.assert_has_calls(
-            [call(nodes, scan_only=True, protocol=TransportProtocol.TCP, scanners=tcp_scanner, scan=scan()),
-             call(nodes, scan_only=True, protocol=TransportProtocol.UDP, scanners=udp_scanner, scan=scan())],
-            any_order=True)
+        self.thread.run_scan.assert_called_once_with(nodes, scan_only=True, protocol=TransportProtocol.UDP,
+                                                     scanners=udp_scanner, scan=scan())
+        self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True, scan=scan(),
+                                                                    timestamp=None)
 
     @patch('scans.scanner.cfg', new_callable=Config)
     @gen_test
@@ -250,43 +243,9 @@ class ScannerTest(AsyncTestCase):
         await self.thread.update_scan_status(ScanStatus.IDLE)
         self.assertFalse(prev_scan.called)
 
-    @patch('scans.scanner.MasscanPorts')
-    @patch('scans.scanner.PortsScan')
-    def test_tcp_scanners(self, scan, masscan):
-        result = self.thread._tcp_scanners
-        expected = {
-            self.thread.IPV4: [masscan.return_value],
-            self.thread.IPV6: [scan.return_value]
-        }
-
-        self.assertEqual(result, expected)
-        scan.assert_called_once_with(ipv6=True, tcp=True, udp=False)
-        masscan.assert_called_once_with(udp=False)
-
-    @patch('scans.scanner.PortsScan')
-    def test_udp_scanners(self, scan):
-        result = self.thread._udp_scanners
-        expected = {
-            self.thread.IPV4: [scan.return_value],
-            self.thread.IPV6: [scan.return_value]
-        }
-
-        self.assertEqual(result, expected)
-        scan.assert_has_calls((
-            call(ipv6=False, tcp=False, udp=True),
-            call(ipv6=True, tcp=False, udp=True)))
-
-    @patch('scans.scanner.Scanner._udp_scanners', new_callable=PropertyMock)
-    @patch('scans.scanner.Scanner._tcp_scanners', new_callable=PropertyMock)
-    def test_scanners(self, tcp_scanners, udp_scanners):
-        result = self.thread.scanners
-
-        expected = {
-            TransportProtocol.UDP: udp_scanners.return_value,
-            TransportProtocol.TCP: tcp_scanners.return_value
-        }
-
-        self.assertEqual(result, expected)
+    def test_scanners(self):
+        with self.assertRaises(NotImplementedError):
+            self.assertIs(self.thread.scanners)
 
     @patch('scans.scanner.Scanner.scanners', new_callable=PropertyMock)
     @patch('scans.scanner.cfg', new_callable=Config)
