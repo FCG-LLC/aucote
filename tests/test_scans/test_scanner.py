@@ -408,8 +408,12 @@ class ScannerTest(AsyncTestCase):
         future_run_scan.set_result(MagicMock())
         self.thread.run_scan.return_value = future_run_scan
 
+        self.thread.PROTOCOL = TransportProtocol.TCP
+
         await self.thread._scan()
-        self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None, filter_out_storage=True)
+
+        self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None, protocol=TransportProtocol.TCP,
+                                                                    filter_out_storage=True)
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True)
 
     @patch('scans.scanner.cfg', new_callable=Config)

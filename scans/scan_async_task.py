@@ -13,7 +13,7 @@ from netaddr import IPSet
 from tornado.locks import Event
 
 from aucote_cfg import cfg
-from structs import Node, Scan, ScanType, TopisOSDiscoveryType, Service, CPEType
+from structs import Node, Scan, ScanType, TopisOSDiscoveryType, Service, CPEType, TransportProtocol
 from utils.http_client import HTTPClient
 from utils.time import parse_period, parse_time_to_timestamp
 
@@ -24,6 +24,7 @@ class ScanAsyncTask(object):
 
     """
     LIVE_SCAN_CRON = '* * * * *'
+    PROTOCOL = None
 
     def __init__(self, aucote):
         self._current_scan = []
@@ -84,7 +85,7 @@ class ScanAsyncTask(object):
         log.debug('Got %i nodes from topdis', len(nodes))
         return nodes
 
-    async def _get_nodes_for_scanning(self, timestamp=None, filter_out_storage=True):
+    async def _get_nodes_for_scanning(self, timestamp=None, protocol=None, filter_out_storage=True):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -100,7 +101,7 @@ class ScanAsyncTask(object):
         nodes = await self._get_topdis_nodes()
 
         if filter_out_storage:
-            storage_nodes = self.storage.get_nodes(self._scan_interval(), timestamp=timestamp)
+            storage_nodes = self.storage.get_nodes(self._scan_interval(), protocol=protocol, timestamp=timestamp)
             nodes = list(set(nodes) - set(storage_nodes))
 
         include_networks = self._get_networks_list()
