@@ -44,6 +44,8 @@ class NmapInfoParser(NmapParser):
     """
     def _parse(self, script):
         output = script.get('output').strip()
+        if not output:
+            return None
         if output.startswith("ERROR: "):
             log.warning(output)
             return None
