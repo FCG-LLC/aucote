@@ -287,7 +287,7 @@ class Storage(DbInterface):
         queries = [(self.CREATE_SCANS_TABLE,),
                    (self.CREATE_SECURITY_SCANS_TABLE,),
                    (self.CREATE_PORTS_TABLE,),
-                   (self.CREATE_NODES_TABLE,),]
+                   (self.CREATE_NODES_TABLE,)]
 
         return queries
 
