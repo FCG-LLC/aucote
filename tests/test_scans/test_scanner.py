@@ -6,7 +6,7 @@ from netaddr import IPSet
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 from scans.scanner import Scanner
-from structs import Node, PhysicalPort, Port, TransportProtocol, ScanStatus
+from structs import Node, PhysicalPort, Port, TransportProtocol, ScanStatus, Scan
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -119,17 +119,21 @@ class ScannerTest(AsyncTestCase):
 
         ports = [ports_ipv4[0], ports_ipv6[0], port]
 
-        yield self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock())
+        scan = Scan()
+
+        yield self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock(), scan=scan)
         result = mock_executor.call_args_list[0][1]['ports']
         self.assertCountEqual(result, ports)
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=nodes, ports=result, scan_only=False)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=nodes, ports=result, scan_only=False,
+                                              scan=scan)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
+    @patch('scans.scanner.Scan')
     @patch('scans.scanner.Scanner.scanners', new_callable=PropertyMock)
     @patch('scans.scanner.cfg', new_callable=Config)
     @gen_test
-    async def test_periodical_scan(self, cfg, scanners):
+    async def test_periodical_scan(self, cfg, scanners, scan):
         cfg._cfg = {'portdetection': {'scan_enabled': True}}
         nodes = MagicMock()
         future = Future()
@@ -154,8 +158,8 @@ class ScannerTest(AsyncTestCase):
 
         await self.thread()
         self.thread.run_scan.assert_has_calls(
-            [call(nodes, scan_only=True, protocol=TransportProtocol.TCP, scanners=tcp_scanner),
-             call(nodes, scan_only=True, protocol=TransportProtocol.UDP, scanners=udp_scanner)],
+            [call(nodes, scan_only=True, protocol=TransportProtocol.TCP, scanners=tcp_scanner, scan=scan()),
+             call(nodes, scan_only=True, protocol=TransportProtocol.UDP, scanners=udp_scanner, scan=scan())],
             any_order=True)
 
     @patch('scans.scanner.cfg', new_callable=Config)

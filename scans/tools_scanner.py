@@ -25,10 +25,12 @@ class ToolsScanner(ScanAsyncTask):
         scan = Scan(time.time(), protocol=self.PROTOCOL, scanner='tools scan')
         self.storage.save_scan(scan)
 
-        nodes = await self._get_topdis_nodes()
+        nodes = await self._get_nodes_for_scanning(timestamp=None, scan=scan, filter_out_storage=False)
+        self.storage.save_nodes(nodes, scan=scan)
+
         ports = self.get_ports_for_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports))
+        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan=scan))
 
         scan.end = time.time()
         self.storage.update_scan(scan)
