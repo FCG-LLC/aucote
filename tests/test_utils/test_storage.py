@@ -35,9 +35,13 @@ class StorageTest(TestCase):
 
     @patch("time.time", MagicMock(return_value=7))
     def test__save_node(self):
+        scan = Scan()
         node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        result = self.storage._save_node(node, protocol=TransportProtocol.TCP)
-        expected = ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (1, '127.0.0.1', 7, 6))
+        node.scan = scan
+
+        result = self.storage._save_node(node)
+        expected = ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)",
+                    (0, 1, '127.0.0.1', 7))
 
         self.assertCountEqual(result, expected)
 
@@ -46,21 +50,22 @@ class StorageTest(TestCase):
         nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')),
                  Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2')),
                  Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))]
-
-        result = self.storage._save_nodes(nodes, protocol=TransportProtocol.TCP)
+        result = self.storage._save_nodes(nodes)
         expected = (
-            ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (1, '127.0.0.1', 17, 6)),
-            ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (2, '127.0.0.2', 17, 6)),
-            ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (3, '127.0.0.3', 17, 6)),
+            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (0, 1, '127.0.0.1', 17)),
+            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (0, 2, '127.0.0.2', 17)),
+            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (0, 3, '127.0.0.3', 17)),
         )
 
         self.assertCountEqual(result, expected)
         self.assertIsInstance(result, list)
 
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
+
     def test__get_nodes(self):
-        result = self.storage._get_nodes(pasttime=700, timestamp=None, protocol=TransportProtocol.UDP)
-        expected = 'SELECT id, ip, time FROM nodes where time > ? AND (protocol=? OR (? IS NULL AND protocol IS NULL))', (139300, 17, 17)
+        result = self.storage._get_nodes(pasttime=700, timestamp=None, protocol=TransportProtocol.UDP, scanner_name='test_name')
+        expected = 'SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? '\
+                   'AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?', (139300, 17, 17, 'test_name')
         self.assertEqual(result, expected)
 
     @patch('time.time', MagicMock(return_value=13))
@@ -219,7 +224,7 @@ class StorageTest(TestCase):
             ("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
               "primary key (id, ip, port, protocol))",),
 
-            ("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, protocol int, primary key (id, ip, protocol))",),
+            ('CREATE TABLE IF NOT EXISTS nodes(scan_id int, node_id int, node_ip text, time int, primary key (scan_id, node_id, node_ip))',),
 
             (
             'CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, scan_end int, UNIQUE '\

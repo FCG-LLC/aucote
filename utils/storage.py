@@ -16,7 +16,7 @@ class Storage(DbInterface):
     This class provides local storage funxtionality
 
     """
-    SAVE_NODE_QUERY = "INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)"
+    SAVE_NODE_QUERY = "INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)"
     SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)"
     SAVE_SCAN_QUERY = "INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)"
     UPDATE_SCAN_END_QUERY = "UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) "\
@@ -29,7 +29,8 @@ class Storage(DbInterface):
     SAVE_SECURITY_SCAN_DETAIL_END = "UPDATE security_scans SET scan_end=? WHERE exploit_id=? AND exploit_app=? AND " \
                                     "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL "\
                                     "AND port_protocol IS NULL)) AND port_number=?"
-    SELECT_NODES = "SELECT id, ip, time FROM nodes where time > ? AND (protocol=? OR (? IS NULL AND protocol IS NULL))"
+    SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? " \
+                   "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
     SELECT_PORTS = "SELECT id, ip, port, protocol, time FROM ports where time > ?"
     SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
                    "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
@@ -54,8 +55,8 @@ class Storage(DbInterface):
                                   "port_protocol, port_number))"
     CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int," \
                          "primary key (id, ip, port, protocol))"
-    CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, protocol int, primary key " \
-                         "(id, ip, protocol))"
+    CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes(scan_id int, node_id int, node_ip text, time int, " \
+                         "primary key (scan_id, node_id, node_ip))"
     CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
                          "scan_end int, UNIQUE (protocol, scanner_name, scan_start))"
 
@@ -102,21 +103,20 @@ class Storage(DbInterface):
         """
         return self._cursor
 
-    def _save_node(self, node, protocol=None):
+    def _save_node(self, node):
         """
         Saves node into to the storage
 
         Args:
             node (Node): node to save into storage
-            protocol (int):
 
         Returns:
             tuple
 
         """
-        return self.SAVE_NODE_QUERY, (node.id, str(node.ip), time.time(), self._protocol_to_iana(protocol))
+        return self.SAVE_NODE_QUERY, (0, node.id, str(node.ip), time.time())
 
-    def _save_nodes(self, nodes, protocol=None):
+    def _save_nodes(self, nodes):
         """
         Saves nodes into local storage
 
@@ -128,13 +128,12 @@ class Storage(DbInterface):
             list
 
         """
-        queries = [(self.SAVE_NODE_QUERY, (node.id, str(node.ip), time.time(), self._protocol_to_iana(protocol)))
-                   for node in nodes]
+        queries = [(self.SAVE_NODE_QUERY, (0, node.id, str(node.ip), time.time())) for node in nodes]
 
         log.debug("Saving nodes")
         return queries
 
-    def _get_nodes(self, pasttime, timestamp, protocol=None):
+    def _get_nodes(self, pasttime, timestamp, protocol=None, scanner_name=''):
         """
         Returns all nodes from local storage
 
@@ -142,6 +141,7 @@ class Storage(DbInterface):
             pasttime (int):
             timestamp (int):
             protocol (int):
+            scanner_name (str):
 
         Returns:
             tuple
@@ -150,7 +150,7 @@ class Storage(DbInterface):
         if timestamp is None:
             timestamp = time.time() - pasttime
         iana = self._protocol_to_iana(protocol)
-        return self.SELECT_NODES, (timestamp, iana, iana)
+        return self.SELECT_NODES, (timestamp, iana, iana, scanner_name)
 
     def _save_port(self, port):
         """
