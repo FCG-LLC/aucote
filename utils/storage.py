@@ -103,7 +103,7 @@ class Storage(DbInterface):
         """
         return self._cursor
 
-    def _save_node(self, node):
+    def _save_node(self, node, scan):
         """
         Saves node into to the storage
 
@@ -114,34 +114,35 @@ class Storage(DbInterface):
             tuple
 
         """
-        return self.SAVE_NODE_QUERY, (0, node.id, str(node.ip), time.time())
+        scan_id = self.get_scan_id(scan)
+        return self.SAVE_NODE_QUERY, (scan_id, node.id, str(node.ip), time.time())
 
-    def _save_nodes(self, nodes):
+    def _save_nodes(self, nodes, scan):
         """
         Saves nodes into local storage
 
         Args:
             nodes (list):
-            protocol (int):
+            scan (Scan):
 
         Returns:
             list
 
         """
-        queries = [(self.SAVE_NODE_QUERY, (0, node.id, str(node.ip), time.time())) for node in nodes]
+        scan_id = self.get_scan_id(scan)
+        queries = [(self.SAVE_NODE_QUERY, (scan_id, node.id, str(node.ip), time.time())) for node in nodes]
 
         log.debug("Saving nodes")
         return queries
 
-    def _get_nodes(self, pasttime, timestamp, protocol=None, scanner_name=''):
+    def _get_nodes(self, pasttime, timestamp, scan):
         """
         Returns all nodes from local storage
 
         Args:
             pasttime (int):
             timestamp (int):
-            protocol (int):
-            scanner_name (str):
+            scan (Scan):
 
         Returns:
             tuple
@@ -149,8 +150,8 @@ class Storage(DbInterface):
         """
         if timestamp is None:
             timestamp = time.time() - pasttime
-        iana = self._protocol_to_iana(protocol)
-        return self.SELECT_NODES, (timestamp, iana, iana, scanner_name)
+        iana = self._protocol_to_iana(scan.protocol)
+        return self.SELECT_NODES, (timestamp, iana, iana, scan.scanner)
 
     def _save_port(self, port):
         """
@@ -158,8 +159,6 @@ class Storage(DbInterface):
 
         Args:
             port (Port): port to save into storage
-            commit (bool): commit to database switch
-            lock (bool): define if thread should be locked
 
         Returns:
             tuple
@@ -190,8 +189,7 @@ class Storage(DbInterface):
         Query for port scan detail from scans from pasttime ago
 
         Args:
-            port (Port):
-            app (str): app name
+            pasttime(int)
 
         Returns:
             tuple
@@ -208,8 +206,6 @@ class Storage(DbInterface):
         Args:
             exploit (Exploit): needs some exploit details to save into storage
             port (Port): needs some port details to save into storage
-            commit (bool): commit changes
-            lock (bool): define if thread should be locked
 
         Returns:
             list
@@ -298,7 +294,7 @@ class Storage(DbInterface):
         Args:
             port (Port):
             app (str): app name
-            protocol (int):
+            protocol (TransportProtocol):
 
         Returns:
             tuple
@@ -373,7 +369,7 @@ class Storage(DbInterface):
         """
         return self.execute(self._save_node(node=node, protocol=protocol))
 
-    def save_nodes(self, nodes, protocol=None):
+    def save_nodes(self, nodes, scan):
         """
         Save nodes to database
 
@@ -384,9 +380,9 @@ class Storage(DbInterface):
             None
 
         """
-        return self.execute(self._save_nodes(nodes=nodes, protocol=protocol))
+        return self.execute(self._save_nodes(nodes=nodes, scan=scan))
 
-    def get_nodes(self, pasttime=0, timestamp=None, protocol=None):
+    def get_nodes(self, scan, pasttime=0, timestamp=None):
         """
         Get nodes from database since timestamp. If timestamp is not given, it's computed basing on pastime.
 
@@ -399,7 +395,7 @@ class Storage(DbInterface):
         """
         nodes = []
 
-        for node in self.execute(self._get_nodes(pasttime=pasttime, timestamp=timestamp, protocol=protocol)):
+        for node in self.execute(self._get_nodes(pasttime=pasttime, timestamp=timestamp, scan=scan)):
             nodes.append(Node(node_id=node[0], ip=ipaddress.ip_address(node[1])))
         return nodes
 

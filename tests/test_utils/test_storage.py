@@ -35,26 +35,29 @@ class StorageTest(TestCase):
 
     @patch("time.time", MagicMock(return_value=7))
     def test__save_node(self):
-        scan = Scan()
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
         node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         node.scan = scan
+        self.storage.get_scan_id = MagicMock(return_value=16)
 
-        result = self.storage._save_node(node)
+        result = self.storage._save_node(node, scan=scan)
         expected = ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)",
-                    (0, 1, '127.0.0.1', 7))
+                    (16, 1, '127.0.0.1', 7))
 
         self.assertCountEqual(result, expected)
 
     @patch("time.time", MagicMock(return_value=17))
     def test__save_nodes(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
+        self.storage.get_scan_id = MagicMock(return_value=16)
         nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1')),
                  Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2')),
                  Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))]
-        result = self.storage._save_nodes(nodes)
+        result = self.storage._save_nodes(nodes, scan=scan)
         expected = (
-            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (0, 1, '127.0.0.1', 17)),
-            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (0, 2, '127.0.0.2', 17)),
-            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (0, 3, '127.0.0.3', 17)),
+            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 1, '127.0.0.1', 17)),
+            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 2, '127.0.0.2', 17)),
+            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 3, '127.0.0.3', 17)),
         )
 
         self.assertCountEqual(result, expected)
@@ -63,7 +66,9 @@ class StorageTest(TestCase):
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
 
     def test__get_nodes(self):
-        result = self.storage._get_nodes(pasttime=700, timestamp=None, protocol=TransportProtocol.UDP, scanner_name='test_name')
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
+        result = self.storage._get_nodes(pasttime=700, timestamp=None, scan=scan)
+
         expected = 'SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? '\
                    'AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?', (139300, 17, 17, 'test_name')
         self.assertEqual(result, expected)
@@ -304,14 +309,16 @@ class StorageTest(TestCase):
         self.storage.execute.assert_called_once_with(self.storage._save_node())
 
     def test_save_nodes(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
         nodes = MagicMock()
         self.storage._save_nodes = MagicMock()
         self.storage.execute = MagicMock()
-        self.storage.save_nodes(nodes=nodes, protocol=TransportProtocol.UDP)
-        self.storage._save_nodes.assert_called_once_with(nodes=nodes, protocol=TransportProtocol.UDP)
+        self.storage.save_nodes(nodes=nodes, scan=scan)
+        self.storage._save_nodes.assert_called_once_with(nodes=nodes, scan=scan)
         self.storage.execute.assert_called_once_with(self.storage._save_nodes())
 
     def test_get_nodes(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
         self.storage._get_nodes = MagicMock()
         timestamp = MagicMock()
         pasttime = MagicMock()
@@ -320,10 +327,9 @@ class StorageTest(TestCase):
             (2, '::1'),
         ))
 
-        result = self.storage.get_nodes(pasttime=pasttime, timestamp=timestamp, protocol=TransportProtocol.UDP)
+        result = self.storage.get_nodes(pasttime=pasttime, timestamp=timestamp, scan=scan)
 
-        self.storage._get_nodes.assert_called_once_with(pasttime=pasttime, timestamp=timestamp,
-                                                        protocol=TransportProtocol.UDP)
+        self.storage._get_nodes.assert_called_once_with(pasttime=pasttime, timestamp=timestamp, scan=scan)
         self.storage.execute.assert_called_once_with(self.storage._get_nodes())
 
         self.assertEqual(result[0].id, 1)
