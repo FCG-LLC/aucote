@@ -18,6 +18,9 @@ class Storage(DbInterface):
     """
     SAVE_NODE_QUERY = "INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)"
     SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)"
+    SAVE_SCAN_QUERY = "INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)"
+    UPDATE_SCAN_END_QUERY = "UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) "\
+                            "AND scanner_name=? and scan_start=?"
     SAVE_SECURITY_SCAN_DETAIL = "INSERT OR IGNORE INTO security_scans (exploit_id, exploit_app, exploit_name, " \
                                 "node_id, node_ip, port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)"
     SAVE_SECURITY_SCAN_DETAIL_START = "UPDATE security_scans SET scan_start=? WHERE exploit_id=? AND exploit_app=? AND"\
@@ -28,9 +31,15 @@ class Storage(DbInterface):
                                     "AND port_protocol IS NULL)) AND port_number=?"
     SELECT_NODES = "SELECT id, ip, time FROM nodes where time > ? AND (protocol=? OR (? IS NULL AND protocol IS NULL))"
     SELECT_PORTS = "SELECT id, ip, port, protocol, time FROM ports where time > ?"
-    SELECT_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, port_number, " \
-                   "scan_start, scan_end FROM security_scans WHERE exploit_app=? AND node_id=? AND node_ip=? " \
-                   "AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=?"
+    SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
+                   "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
+                   "LIMIT {limit} OFFSET {offset}"
+    SELECT_SCAN = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
+                  "(? IS NULL AND protocol IS NULL)) AND scanner_name=? AND scan_start=? LIMIT 1"
+    SELECT_SECURITY_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, " \
+                            "port_number, scan_start, scan_end FROM security_scans WHERE exploit_app=? AND node_id=? " \
+                            "AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) "\
+                            "AND port_number=?"
     SELECT_PORTS_BY_NODE = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND "\
                            "(protocol=? OR (? IS NULL AND protocol IS NULL))"
     SELECT_PORTS_BY_NODE_ALL_PROTS = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ?"
@@ -47,6 +56,8 @@ class Storage(DbInterface):
                          "primary key (id, ip, port, protocol))"
     CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, protocol int, primary key " \
                          "(id, ip, protocol))"
+    CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
+                         "scan_end int, UNIQUE (protocol, scanner_name, scan_start))"
 
     def __init__(self, filename="storage.sqlite3"):
 
@@ -252,7 +263,8 @@ class Storage(DbInterface):
 
         """
         iana = self._protocol_to_iana(port.transport_protocol)
-        return self.SELECT_SCANS, (app, port.node.id, str(port.node.ip), iana, iana, port.number)
+        return self.SELECT_SECURITY_SCANS, (app, port.node.id, str(port.node.ip), iana, iana, port.number)
+
     def _clear_security_scans(self):
         """
         Query for cleaning table
@@ -272,9 +284,10 @@ class Storage(DbInterface):
             list
 
         """
-        queries = [(self.CREATE_SECURITY_SCANS_TABLE,),
+        queries = [(self.CREATE_SCANS_TABLE,),
+                   (self.CREATE_SECURITY_SCANS_TABLE,),
                    (self.CREATE_PORTS_TABLE,),
-                   (self.CREATE_NODES_TABLE,)]
+                   (self.CREATE_NODES_TABLE,),]
 
         return queries
 
@@ -302,9 +315,9 @@ class Storage(DbInterface):
         Query for port scan detail from scans from pasttime ago
 
         Args:
-            port (Port):
-            app (str): app name
-            protocol (int):
+            nodes (list):
+            timestamp (int):
+            protocol (TransportProtocol):
 
         Returns:
             tuple
@@ -594,3 +607,90 @@ class Storage(DbInterface):
             return None
 
         return protocol.iana
+
+    def _save_scan(self, scan):
+        """
+        Queries for saving scan into database
+
+        Args:
+            scan (Scan):
+
+        Returns:
+            list
+
+        """
+        return self.SAVE_SCAN_QUERY, (self._protocol_to_iana(scan.protocol), scan.scanner, scan.start, scan.end)
+
+    def _update_scan(self, scan):
+        iana = self._protocol_to_iana(scan.protocol)
+        return self.UPDATE_SCAN_END_QUERY, (scan.end, iana, iana, scan.scanner, scan.start)
+
+    def _get_scans(self, protocol, scanner_name, limit=2, offset=0):
+        iana = self._protocol_to_iana(protocol)
+        return self.SELECT_SCANS.format(limit=limit, offset=offset), (iana, iana, scanner_name)
+
+    def _get_scan(self, scan):
+        iana = self._protocol_to_iana(scan.protocol)
+        return self.SELECT_SCAN, (iana, iana, scan.scanner, scan.start)
+
+    def save_scan(self, scan):
+        """
+        Save scan into storage
+
+        Args:
+            scan (Scan):
+
+        Returns:
+
+        """
+        return self.execute(self._save_scan(scan=scan))
+
+    def update_scan(self, scan):
+        """
+        Update scan in storage
+
+        Args:
+            scan (Scan):
+
+        Returns:
+
+        """
+        return self.execute(self._update_scan(scan=scan))
+
+    def get_scan_id(self, scan):
+        """
+        Get scan_id
+
+        Args:
+            scan (Scan):
+
+        Returns:
+            int
+
+        """
+        data = self.execute(self._get_scan(scan=scan))
+        if not data:
+            return None
+
+        return data[0][0]
+
+    def get_scans(self, protocol, scanner_name, amount=2):
+        """
+        Obtain scans from storage. Scans are taken from newest to oldest
+
+        Args:
+            protocol (TransportProtocol):
+            scanner_name (str):
+            amount (int):
+
+        Returns:
+            list - list of scans
+
+        """
+        scans = []
+
+        for row in self.execute(self._get_scans(protocol=protocol, scanner_name=scanner_name, limit=amount, offset=0)):
+            scan = Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]))
+            scans.append(scan)
+
+        return scans

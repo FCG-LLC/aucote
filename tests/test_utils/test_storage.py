@@ -220,6 +220,10 @@ class StorageTest(TestCase):
               "primary key (id, ip, port, protocol))",),
 
             ("CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, protocol int, primary key (id, ip, protocol))",),
+
+            (
+            'CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, scan_end int, UNIQUE '\
+            '(protocol, scanner_name, scan_start))',)
         ]
 
         self.assertCountEqual(result, expected)
@@ -550,3 +554,87 @@ class StorageTest(TestCase):
         protocol = None
         result = self.storage._protocol_to_iana(protocol)
         self.assertIsNone(result)
+
+    def test__save_scan(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
+        result = self.storage._save_scan(scan=scan)
+        expected = 'INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)', (6, 'test_name', 1, 17)
+        self.assertCountEqual(result, expected)
+
+    def test__update_scan(self):
+        scan = Scan(start=1, end=42, protocol=TransportProtocol.TCP, scanner='test_name')
+        result = self.storage._update_scan(scan=scan)
+        expected = 'UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND scanner_name=? and scan_start=?', (42, 6, 6, 'test_name', 1)
+        self.assertCountEqual(result, expected)
+
+    def test__get_scans(self):
+        result = self.storage._get_scans(protocol=TransportProtocol.ICMP, scanner_name='test_name', limit=3, offset=17)
+        expected = 'SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND '\
+                   'scanner_name=? ORDER BY scan_end DESC, scan_start ASC LIMIT 3 OFFSET 17', (1, 1, 'test_name')
+        self.assertCountEqual(result, expected)
+
+    def test__get_scan(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
+        result = self.storage._get_scan(scan)
+        expected = 'SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND '\
+                   'scanner_name=? AND scan_start=? LIMIT 1', (6, 6, 'test_name', 1)
+        self.assertCountEqual(result, expected)
+
+    def test_save_scan(self):
+        scan = MagicMock()
+        self.storage._save_scan = MagicMock()
+        self.storage.execute = MagicMock()
+        self.storage.save_scan(scan=scan)
+        self.storage._save_scan.assert_called_once_with(scan=scan)
+        self.storage.execute.assert_called_once_with(self.storage._save_scan())
+
+    def test_update_scan(self):
+        scan = MagicMock()
+        self.storage._update_scan = MagicMock()
+        self.storage.execute = MagicMock()
+        self.storage.update_scan(scan=scan)
+        self.storage._update_scan.assert_called_once_with(scan=scan)
+        self.storage.execute.assert_called_once_with(self.storage._update_scan())
+
+    def test_get_scan_id(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
+        self.storage.execute = MagicMock(return_value=((1, 17, 'test_name', 13, 19),))
+        self.storage._get_scan = MagicMock()
+
+        result = self.storage.get_scan_id(scan=scan)
+
+        self.storage._get_scan.assert_called_once_with(scan=scan)
+        self.storage.execute.assert_called_once_with(self.storage._get_scan())
+        self.assertEqual(result, 1)
+
+    def test_get_scan_id_without_results(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
+        self.storage.execute = MagicMock(return_value=tuple())
+        self.storage._get_scan = MagicMock()
+
+        result = self.storage.get_scan_id(scan=scan)
+
+        self.storage._get_scan.assert_called_once_with(scan=scan)
+        self.storage.execute.assert_called_once_with(self.storage._get_scan())
+        self.assertIsNone(result)
+
+    def test_get_scans(self):
+        self.storage._get_scans = MagicMock()
+        self.storage.execute = MagicMock(return_value=(
+            (1, 17, 'test_name', 13, 19),
+            (2, 6, 'test_name', 2, 18),
+        ))
+
+        result = self.storage.get_scans(scanner_name='test_name', protocol=TransportProtocol.UDP, amount=2)
+
+        self.storage._get_scans.assert_called_once_with(scanner_name='test_name', protocol=TransportProtocol.UDP,
+                                                        limit=2, offset=0)
+        self.storage.execute.assert_called_once_with(self.storage._get_scans())
+
+        self.assertEqual(result[0].protocol, TransportProtocol.UDP)
+        self.assertEqual(result[0].start, 13)
+        self.assertEqual(result[0].end, 19)
+
+        self.assertEqual(result[1].protocol, TransportProtocol.TCP)
+        self.assertEqual(result[1].start, 2)
+        self.assertEqual(result[1].end, 18)

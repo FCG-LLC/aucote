@@ -44,6 +44,9 @@ class Scanner(ScanAsyncTask):
         await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
         for protocol, scanners in self.scanners.items():
+            scan = Scan(self.scan_start, protocol=protocol, scanner='scan')
+            self.storage.save_scan(scan)
+
             nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, protocol=protocol)
             if not nodes:
                 log.warning("List of nodes is empty")
@@ -56,6 +59,9 @@ class Scanner(ScanAsyncTask):
             await self.run_scan(nodes, scan_only=self.as_service, scanners=scanners, protocol=protocol)
 
             self.current_scan = []
+
+            scan.end = time.time()
+            self.storage.update_scan(scan)
 
         await self._clean_scan()
 
