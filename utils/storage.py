@@ -18,18 +18,18 @@ class Storage(DbInterface):
     """
     SAVE_NODE_QUERY = "INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)"
     SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)"
-    SAVE_SCAN_DETAIL = "INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip," \
-                       "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    SAVE_SCAN_DETAIL_START = "UPDATE scans SET scan_start=? WHERE exploit_id=? AND exploit_app=? AND " \
-                             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND "\
-                             "port_protocol IS NULL)) AND port_number=?"
-    SAVE_SCAN_DETAIL_END = "UPDATE scans SET scan_end=? WHERE exploit_id=? AND exploit_app=? AND " \
-                           "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND "\
-                           "port_protocol IS NULL)) AND port_number=?"
+    SAVE_SECURITY_SCAN_DETAIL = "INSERT OR IGNORE INTO security_scans (exploit_id, exploit_app, exploit_name, " \
+                                "node_id, node_ip, port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    SAVE_SECURITY_SCAN_DETAIL_START = "UPDATE security_scans SET scan_start=? WHERE exploit_id=? AND exploit_app=? AND"\
+                                      " exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL "\
+                                      "AND port_protocol IS NULL)) AND port_number=?"
+    SAVE_SECURITY_SCAN_DETAIL_END = "UPDATE security_scans SET scan_end=? WHERE exploit_id=? AND exploit_app=? AND " \
+                                    "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL "\
+                                    "AND port_protocol IS NULL)) AND port_number=?"
     SELECT_NODES = "SELECT id, ip, time FROM nodes where time > ? AND (protocol=? OR (? IS NULL AND protocol IS NULL))"
     SELECT_PORTS = "SELECT id, ip, port, protocol, time FROM ports where time > ?"
     SELECT_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, port_number, " \
-                   "scan_start, scan_end FROM scans WHERE exploit_app=? AND node_id=? AND node_ip=? " \
+                   "scan_start, scan_end FROM security_scans WHERE exploit_app=? AND node_id=? AND node_ip=? " \
                    "AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=?"
     SELECT_PORTS_BY_NODE = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND "\
                            "(protocol=? OR (? IS NULL AND protocol IS NULL))"
@@ -37,10 +37,12 @@ class Storage(DbInterface):
     SELECT_PORTS_BY_NODES = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ? AND " \
                             "(protocol=? OR (? IS NULL AND protocol IS NULL))"
     SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ?"
-    CLEAR_SCANS = "DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL OR SCAN_END IS NULL"
-    CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, " \
-                         "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, " \
-                         "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, port_number))"
+    CLEAR_SECURITY_SCANS = "DELETE FROM security_scans WHERE scan_start >= scan_end OR scan_start IS NULL "\
+                           "OR SCAN_END IS NULL"
+    CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (exploit_id int, exploit_app text, " \
+                                  "exploit_name text, node_id int, node_ip text, port_protocol int, port_number int, " \
+                                  "scan_start float, scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, "\
+                                  "port_protocol, port_number))"
     CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int," \
                          "primary key (id, ip, port, protocol))"
     CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes(id int, ip text, time int, protocol int, primary key " \
@@ -68,7 +70,7 @@ class Storage(DbInterface):
 
         """
         self.execute(self._create_tables())
-        self.execute(self._clear_scan_details())
+        self.execute(self._clear_security_scans())
 
     def connect(self):
         self.conn = sqlite3.connect(self.filename, check_same_thread=True)
@@ -188,7 +190,7 @@ class Storage(DbInterface):
 
         return self.SELECT_PORTS, (timestamp,)
 
-    def _save_scan(self, exploit, port):
+    def _save_security_scan(self, exploit, port):
         """
         Queries for saving scan into database
 
@@ -208,19 +210,21 @@ class Storage(DbInterface):
         queries = []
         iana = self._protocol_to_iana(port.transport_protocol)
 
-        queries.append((self.SAVE_SCAN_DETAIL, (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
-                                                iana, port.number)))
+        queries.append((self.SAVE_SECURITY_SCAN_DETAIL, (exploit.id, exploit.app, exploit.name, port.node.id,
+                                                         str(port.node.ip), iana, port.number)))
 
         if port.scan.start:
-            queries.append((self.SAVE_SCAN_DETAIL_START, (port.scan.start, exploit.id, exploit.app, exploit.name,
-                                                          port.node.id, str(port.node.ip), iana, iana, port.number)))
+            queries.append((self.SAVE_SECURITY_SCAN_DETAIL_START, (port.scan.start, exploit.id, exploit.app,
+                                                                   exploit.name, port.node.id, str(port.node.ip), iana,
+                                                                   iana, port.number)))
 
         if port.scan.end:
-            queries.append((self.SAVE_SCAN_DETAIL_END, (port.scan.end, exploit.id, exploit.app, exploit.name,
-                                                        port.node.id, str(port.node.ip), iana, iana, port.number)))
+            queries.append((self.SAVE_SECURITY_SCAN_DETAIL_END, (port.scan.end, exploit.id, exploit.app, exploit.name,
+                                                                 port.node.id, str(port.node.ip), iana, iana,
+                                                                 port.number)))
         return queries
 
-    def _save_scans(self, exploits, port):
+    def _save_security_scans(self, exploits, port):
         """
         Queries for saving scans into database
 
@@ -230,11 +234,12 @@ class Storage(DbInterface):
 
         Returns:
             list
+ .
 
         """
-        return list(query for exploit in exploits for query in self._save_scan(exploit=exploit, port=port))
+        return list(query for exploit in exploits for query in self._save_security_scan(exploit=exploit, port=port))
 
-    def _get_scan_info(self, port, app):
+    def _get_security_scan_info(self, port, app):
         """
         Query for scan detail for provided port and app
 
@@ -248,8 +253,7 @@ class Storage(DbInterface):
         """
         iana = self._protocol_to_iana(port.transport_protocol)
         return self.SELECT_SCANS, (app, port.node.id, str(port.node.ip), iana, iana, port.number)
-
-    def _clear_scan_details(self):
+    def _clear_security_scans(self):
         """
         Query for cleaning table
 
@@ -258,7 +262,7 @@ class Storage(DbInterface):
 
         """
         log.debug('Cleaning scan details')
-        return self.CLEAR_SCANS,
+        return self.CLEAR_SECURITY_SCANS,
 
     def _create_tables(self):
         """
@@ -268,7 +272,7 @@ class Storage(DbInterface):
             list
 
         """
-        queries = [(self.CREATE_SCANS_TABLE,),
+        queries = [(self.CREATE_SECURITY_SCANS_TABLE,),
                    (self.CREATE_PORTS_TABLE,),
                    (self.CREATE_NODES_TABLE,)]
 
@@ -430,7 +434,7 @@ class Storage(DbInterface):
                               transport_protocol=self._transport_protocol(port[3])))
         return ports
 
-    def save_scan(self, exploit, port):
+    def save_security_scan(self, exploit, port):
         """
         Save scan of port by exploit to database
 
@@ -442,9 +446,9 @@ class Storage(DbInterface):
             None
 
         """
-        return self.execute(self._save_scan(exploit=exploit, port=port))
+        return self.execute(self._save_security_scan(exploit=exploit, port=port))
 
-    def save_scans(self, exploits, port):
+    def save_security_scans(self, exploits, port):
         """
         Save scans of port to database basing on given exploits
 
@@ -456,9 +460,9 @@ class Storage(DbInterface):
             None
 
         """
-        return self.execute(self._save_scans(exploits=exploits, port=port))
+        return self.execute(self._save_security_scans(exploits=exploits, port=port))
 
-    def get_scan_info(self, port, app):
+    def get_security_scan_info(self, port, app):
         """
         Get scan info from database
 
@@ -472,7 +476,7 @@ class Storage(DbInterface):
         """
         return_value = []
 
-        for row in self.execute(self._get_scan_info(port=port, app=app)):
+        for row in self.execute(self._get_security_scan_info(port=port, app=app)):
             return_value.append({
                 "exploit": Exploit(exploit_id=row[0]),
                 "port": Port(node=Node(node_id=row[3], ip=ipaddress.ip_address(row[4])), number=row[6],
@@ -484,7 +488,7 @@ class Storage(DbInterface):
 
         return return_value
 
-    def clear_scan_details(self):
+    def clear_security_scans(self):
         """
         Clear broken scan details
 
@@ -492,7 +496,7 @@ class Storage(DbInterface):
             None
 
         """
-        return self.execute(self._clear_scan_details())
+        return self.execute(self._clear_security_scans())
 
     def create_tables(self):
         """
