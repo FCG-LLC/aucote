@@ -33,6 +33,8 @@ class Storage(DbInterface):
     SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
                    "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
                    "LIMIT {limit} OFFSET {offset}"
+    SELECT_SCAN = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
+                  "(? IS NULL AND protocol IS NULL)) AND scanner_name=? AND scan_start=? LIMIT 1"
     SELECT_SECURITY_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, " \
                             "port_number, scan_start, scan_end FROM security_scans WHERE exploit_app=? AND node_id=? " \
                             "AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) "\
@@ -631,6 +633,9 @@ class Storage(DbInterface):
         iana = self._protocol_to_iana(protocol)
         return self.SELECT_SCANS.format(limit=limit, offset=offset), (iana, iana, scanner_name)
 
+    def _get_scan(self, scan):
+        return self.SELECT_SCAN, (scan.protocol.iana, scan.scanner, scan.start)
+
     def save_scan(self, scan):
         """
         Save scan into storage
@@ -654,6 +659,23 @@ class Storage(DbInterface):
 
         """
         return self.execute(self._update_scan(scan=scan))
+
+    def get_scan_id(self, scan):
+        """
+        Get scan_id
+
+        Args:
+            scan (Scan):
+
+        Returns:
+            int
+
+        """
+        data = self.execute(self._get_scan(scan=scan))
+        if not data:
+            return None
+
+        return data[0][0]
 
     def get_scans(self, protocol, scanner_name, amount=2):
         """

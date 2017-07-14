@@ -573,6 +573,13 @@ class StorageTest(TestCase):
                    'scanner_name=? ORDER BY scan_end DESC, scan_start ASC LIMIT 3 OFFSET 17', (1, 1, 'test_name')
         self.assertCountEqual(result, expected)
 
+    def test__get_scan(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
+        result = self.storage._get_scan(scan)
+        expected = 'SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND '\
+                   'scanner_name=? AND scan_start=? LIMIT 1', (6, 'test_name', 1)
+        self.assertCountEqual(result, expected)
+
     def test_save_scan(self):
         scan = MagicMock()
         self.storage._save_scan = MagicMock()
@@ -588,6 +595,28 @@ class StorageTest(TestCase):
         self.storage.update_scan(scan=scan)
         self.storage._update_scan.assert_called_once_with(scan=scan)
         self.storage.execute.assert_called_once_with(self.storage._update_scan())
+
+    def test_get_scan_id(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
+        self.storage.execute = MagicMock(return_value=((1, 17, 'test_name', 13, 19),))
+        self.storage._get_scan = MagicMock()
+
+        result = self.storage.get_scan_id(scan=scan)
+
+        self.storage._get_scan.assert_called_once_with(scan=scan)
+        self.storage.execute.assert_called_once_with(self.storage._get_scan())
+        self.assertEqual(result, 1)
+
+    def test_get_scan_id_without_results(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
+        self.storage.execute = MagicMock(return_value=tuple())
+        self.storage._get_scan = MagicMock()
+
+        result = self.storage.get_scan_id(scan=scan)
+
+        self.storage._get_scan.assert_called_once_with(scan=scan)
+        self.storage.execute.assert_called_once_with(self.storage._get_scan())
+        self.assertIsNone(result)
 
     def test_get_scans(self):
         self.storage._get_scans = MagicMock()
