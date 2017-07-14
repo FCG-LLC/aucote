@@ -67,7 +67,7 @@ class CommandTaskTest(AsyncTestCase):
         self.command.async_call.side_effect = CalledProcessError(returncode=127, cmd='test')
 
         result = await self.task()
-        args_storage = self.aucote.storage.save_scans.call_args[1]
+        args_storage = self.aucote.storage.save_security_scans.call_args[1]
         self.assertEqual(result, None)
         self.assertEqual(args_storage['port'].scan.end, 0)
         self.assertEqual(args_storage['port'].scan.start, 5)
