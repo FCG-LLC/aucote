@@ -208,11 +208,13 @@ class ScanTest(TestCase):
     def setUp(self):
         self.start = 13
         self.end = 14.6
-        self.scan = Scan(start=self.start, end=self.end)
+        self.protocol = TransportProtocol.ICMP
+        self.scan = Scan(start=self.start, end=self.end, protocol=self.protocol)
 
     def test_init(self):
         self.assertEqual(self.scan.start, self.start)
         self.assertEqual(self.scan.end, self.end)
+        self.assertEqual(self.scan.protocol, self.protocol)
 
 
 class SpecialPortTest(TestCase):

@@ -16,15 +16,17 @@ class Scan(object):
 
     """
 
-    def __init__(self, start=None, end=None):
+    def __init__(self, start=None, end=None, protocol=None):
         """
         Args:
+            protocol TransportProtocol: scan protocol
             start (int|float): start scan time
             end (int|float): end scan time
 
         """
         self._start = start or time.time()
         self.end = end
+        self._protocol = protocol or TransportProtocol.ALL
 
     @property
     def start(self):
@@ -35,6 +37,17 @@ class Scan(object):
             int - timestamp
         """
         return self._start
+
+    @property
+    def protocol(self):
+        """
+        Scan protocol
+
+        Returns:
+            TransportProtocol
+
+        """
+        return self._protocol
 
 
 class Node:
