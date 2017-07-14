@@ -556,14 +556,14 @@ class StorageTest(TestCase):
         self.assertIsNone(result)
 
     def test__save_scan(self):
-        scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP)
-        result = self.storage._save_scan(scan=scan, scanner_name='test_name')
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
+        result = self.storage._save_scan(scan=scan)
         expected = 'INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)', (6, 'test_name', 1, 17)
         self.assertCountEqual(result, expected)
 
     def test__update_scan(self):
-        scan = Scan(start=1, end=42, protocol=TransportProtocol.TCP)
-        result = self.storage._update_scan(scan=scan, scanner_name='test_name')
+        scan = Scan(start=1, end=42, protocol=TransportProtocol.TCP, scanner='test_name')
+        result = self.storage._update_scan(scan=scan)
         expected = 'UPDATE scans set scan_end = ? WHERE protocol=? AND scanner_name=? and scan_start=?', (42, 6, 'test_name', 1)
         self.assertCountEqual(result, expected)
 
@@ -577,16 +577,16 @@ class StorageTest(TestCase):
         scan = MagicMock()
         self.storage._save_scan = MagicMock()
         self.storage.execute = MagicMock()
-        self.storage.save_scan(scan=scan, scanner_name='')
-        self.storage._save_scan.assert_called_once_with(scan=scan, scanner_name='')
+        self.storage.save_scan(scan=scan)
+        self.storage._save_scan.assert_called_once_with(scan=scan)
         self.storage.execute.assert_called_once_with(self.storage._save_scan())
 
     def test_update_scan(self):
         scan = MagicMock()
         self.storage._update_scan = MagicMock()
         self.storage.execute = MagicMock()
-        self.storage.update_scan(scan=scan, scanner_name='')
-        self.storage._update_scan.assert_called_once_with(scan=scan, scanner_name='')
+        self.storage.update_scan(scan=scan)
+        self.storage._update_scan.assert_called_once_with(scan=scan)
         self.storage.execute.assert_called_once_with(self.storage._update_scan())
 
     def test_get_scans(self):

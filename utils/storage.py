@@ -611,53 +611,49 @@ class Storage(DbInterface):
 
         return protocol.iana
 
-    def _save_scan(self, scan, scanner_name):
+    def _save_scan(self, scan):
         """
         Queries for saving scan into database
 
         Args:
             scan (Scan):
-            scanner_name (str):
 
         Returns:
             list
 
         """
+        return self.SAVE_SCAN_QUERY, (self._protocol_to_iana(scan.protocol), scan.scanner, scan.start, scan.end)
 
-        return self.SAVE_SCAN_QUERY, (self._protocol_to_iana(scan.protocol), scanner_name, scan.start, scan.end)
-
-    def _update_scan(self, scan, scanner_name):
-        return self.UPDATE_SCAN_END_QUERY, (scan.end, self._protocol_to_iana(scan.protocol), scanner_name, scan.start)
+    def _update_scan(self, scan):
+        return self.UPDATE_SCAN_END_QUERY, (scan.end, self._protocol_to_iana(scan.protocol), scan.scanner, scan.start)
 
     def _get_scans(self, protocol, scanner_name, limit=2, offset=0):
         iana = self._protocol_to_iana(protocol)
         return self.SELECT_SCANS.format(limit=limit, offset=offset), (iana, iana, scanner_name)
 
-    def save_scan(self, scan, scanner_name=""):
+    def save_scan(self, scan):
         """
         Save scan into storage
 
         Args:
             scan (Scan):
-            scanner_name (str):
 
         Returns:
 
         """
-        return self.execute(self._save_scan(scan=scan, scanner_name=scanner_name))
+        return self.execute(self._save_scan(scan=scan))
 
-    def update_scan(self, scan, scanner_name=""):
+    def update_scan(self, scan):
         """
         Update scan in storage
 
         Args:
             scan (Scan):
-            scanner_name (str):
 
         Returns:
 
         """
-        return self.execute(self._update_scan(scan=scan, scanner_name=scanner_name))
+        return self.execute(self._update_scan(scan=scan))
 
     def get_scans(self, protocol, scanner_name, amount=2):
         """
