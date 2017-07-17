@@ -478,6 +478,7 @@ class TaskMapperTest(AsyncTestCase):
         self.task_mapper._aucote.exploits.find_by_apps = MagicMock()
         mock_apps = self.task_mapper._aucote.exploits.find_by_apps
         exploit = Exploit(exploit_id=3, name='test_3')
+        self.task_mapper._filter_exploits.return_value = [exploit]
 
         mock_apps.return_value = {
             'test': [exploit]

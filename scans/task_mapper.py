@@ -51,7 +51,7 @@ class TaskMapper:
                     exploits.remove(scan['exploit'])
 
             if not isinstance(port, SpecialPort):
-                self._filter_exploits(app, exploits, port.node)
+                exploits = self._filter_exploits(app, exploits, port.node)
 
             log.info("Using %i exploits against %s", len(exploits), port)
             self.store_scan_details(port=port, exploits=exploits, storage=storage)
@@ -72,7 +72,7 @@ class TaskMapper:
         scripts = self._aucote.exploits.find_by_apps(apps)
 
         for app, exploits in scripts.items():
-            self._filter_exploits(app, exploits, node)
+            exploits = self._filter_exploits(app, exploits, node)
 
             log.info("Using %i exploits against %s", len(exploits), node)
 
@@ -81,19 +81,22 @@ class TaskMapper:
 
             self._aucote.add_async_task(task)
 
+    def _filter_exploits(self, app, exploits, node):
+        return [exploit for exploit in exploits if self._is_exploit_allowed(exploit=exploit, app=app, node=node)]
+
     @staticmethod
-    def _filter_exploits(app, exploits, node):
+    def _is_exploit_allowed(exploit, app, node):
         script_networks = cfg.get('tools.{0}.script_networks.*'.format(app)).cfg
         app_networks = cfg.get('tools.{0}.networks'.format(app)).cfg or None
 
-        for exploit in reversed(exploits):
-            networks = script_networks.get(exploit.name, None)
+        networks = script_networks.get(exploit.name, None)
 
-            if networks is None:
-                networks = app_networks
+        if networks is None:
+            networks = app_networks
 
-            if networks is not None and node.ip.exploded not in IPSet(networks):
-                exploits.remove(exploit)
+        if networks is not None and node.ip.exploded not in IPSet(networks):
+            return False
+        return True
 
     @property
     def exploits(self):
