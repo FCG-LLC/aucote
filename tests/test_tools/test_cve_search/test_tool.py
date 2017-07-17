@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from tornado.testing import gen_test, AsyncTestCase
-from structs import PhysicalPort
+from structs import PhysicalPort, Scan
 from tools.cve_search.tool import CVESearchTool
 
 
@@ -32,4 +32,5 @@ class CVESearchToolTest(AsyncTestCase):
         self.tool.port = None
         await self.tool()
         self.assertIsInstance(mock_task.call_args_list[0][1]['port'], PhysicalPort)
+        self.assertIsInstance(mock_task.call_args_list[0][1]['port'].scan, Scan)
         self.assertEqual(mock_task.call_args_list[0][1]['port'].node, self.node)

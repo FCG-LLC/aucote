@@ -60,7 +60,8 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         result = await self.task.api_cvefor(service.cpe)
 
         self.assertEqual(result, expected)
-        mock_get.assert_called_once_with('localhost:200/cvefor/cpe:2.3:a:microsoft:internet_explorer:8.0.6001:beta:*:*:*:*:*:*')
+        mock_get.assert_called_once_with('localhost:200/cvefor/cpe%3A2.3%3Aa%3Amicrosoft%3Ainternet_explorer%3A8.0.6001%3Abeta%3A%2A%3A%2A%3A%2A%3A%2A%3A%2A%3A%2A',
+                                         connect_timeout=120, request_timeout=300)
 
     @patch('tools.cve_search.tasks.HTTPClient')
     @gen_test
@@ -176,3 +177,21 @@ class CVESearchServiceTaskTest(AsyncTestCase):
                     CPE('cpe:2.3:a:apache:httpd:2.4.18:*:*:*:*:*:*:*')]
         result = self.task.get_cpes()
         self.assertEqual(result, expected)
+
+    @patch('tools.cve_search.tasks.HTTPClient')
+    @gen_test
+    async def test_get_cisco_with_brackets(self, mock_http):
+        self.task.api = ''
+        json_data = '{"test_key": "test_value"}'
+        response = HTTPResponse(code=200, buffer='', request=HTTPRequest('test_url'))
+        mock_get = mock_http.instance.return_value.get
+        mock_get.return_value = Future()
+        mock_get.return_value.set_result(response)
+        response._body = json_data.encode()
+
+        cpe = CPE('cpe:2.3:o:cisco:ios:12.2\(52\)se:*:*:*:*:*:*:*')
+        expected = '/cvefor/cpe%3A2.3%3Ao%3Acisco%3Aios%3A12.2%25252852%252529se%3A%2A%3A%2A%3A%2A%3A%2A%3A%2A%3A%2A%3A%2A'
+
+        await self.task.api_cvefor(cpe)
+
+        mock_get.assert_called_once_with(expected, connect_timeout=120, request_timeout=300)

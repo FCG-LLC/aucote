@@ -3,8 +3,10 @@ Tasks related to cve-search module
 
 """
 import logging as log
+import re
 
 import ujson
+from urllib.parse import urlencode, quote
 
 from cpe import CPE
 from tornado.httpclient import HTTPError
@@ -14,7 +16,6 @@ from structs import Vulnerability, Port, PhysicalPort
 from tools.common.port_task import PortTask
 from tools.cve_search.exceptions import CVESearchAPIException, CVESearchAPIConnectionException
 from tools.cve_search.parsers import CVESearchParser
-from tools.cve_search.structs import CVESearchVulnerabilityResults
 from utils.http_client import HTTPClient
 
 
@@ -80,6 +81,8 @@ class CVESearchServiceTask(PortTask):
         """
         Get list of CVES from cve-search API
 
+        to be suit with cve-search, we need to strip slashes and replace %28 to %252528 (%28 -> %2528 -> %252528)
+
         Args:
             cpe (CPE):
 
@@ -87,10 +90,10 @@ class CVESearchServiceTask(PortTask):
             list
 
         """
-        cpe_encoded = cpe.as_fs().replace('%', '%2525')
+        cpe_encoded = re.sub('%2([89])', r'%25252\1', quote(cpe.as_fs().replace('\\', '')))
         url = "{api}/cvefor/{cpe}".format(api=self.api, cpe=cpe_encoded)
         try:
-            response = await HTTPClient.instance().get(url)
+            response = await HTTPClient.instance().get(url, connect_timeout=120, request_timeout=300)
         except HTTPError as exception:
             raise CVESearchAPIConnectionException(str(exception))
         except ConnectionError as exception:

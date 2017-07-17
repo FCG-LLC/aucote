@@ -1,4 +1,4 @@
-from tools.cve_search.structs import CVESearchVulnerabilityResult
+from tools.cve_search.structs import CVESearchVulnerabilityResult, CVESearchVulnerabilityResults
 
 
 class CVESearchParser(object):
@@ -41,6 +41,6 @@ class CVESearchParser(object):
             CVESearchVulnerabilityResults
 
         """
-        return_value = CVESearchVulnerabilityResult()
+        return_value = CVESearchVulnerabilityResults()
         return_value.vulnerabilities = tuple(cls.dict_to_result(row) for row in data)
         return return_value
