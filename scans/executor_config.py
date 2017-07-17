@@ -161,5 +161,6 @@ EXECUTOR_CONFIG = {
         'testssl': {
             'class': SSLTool,
         }
-    }
+    },
+    'node_scan': []
 }

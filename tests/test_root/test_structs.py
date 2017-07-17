@@ -308,7 +308,7 @@ class ServiceTest(TestCase):
         product = 'aucote'
         version = '0.0.1(test)'
 
-        result = self.service.build_cpe(product=product, vendor=vendor, version=version, type=CPEType.APPLICATION)
+        result = self.service.build_cpe(product=product, vendor=vendor, version=version, part=CPEType.APPLICATION)
         expected = "cpe:2.3:a:collective\-sense:aucote:0.0.1\(test\):*:*:*:*:*:*:*"
 
         self.assertEqual(result, expected)
@@ -319,3 +319,13 @@ class ServiceTest(TestCase):
         self.assertEqual(self.service._cpe, service_copy._cpe)
         self.assertEqual(self.service.name, service_copy.name)
         self.assertEqual(self.service.version, service_copy.version)
+
+    def test_validate_cpe_arguments_ios(self):
+        version = "12.04e test"
+        vendor = "*"
+        product = "IOS"
+
+        result = Service.validate_cpe_arguments(version=version, product=product, vendor=vendor)
+        expected = "cisco", "ios", "12.04e"
+
+        self.assertEqual(result, expected)

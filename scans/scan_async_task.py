@@ -79,7 +79,7 @@ class ScanAsyncTask(object):
         if not cfg['portdetection.scan_enabled']:
             return
         log.info("Starting port scan")
-        nodes = await self._get_nodes_for_scanning(timestamp=None)
+        nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True)
         log.debug("Found %i nodes for potential scanning", len(nodes))
         await self.run_scan(nodes, scan_only=True)
 
@@ -92,10 +92,10 @@ class ScanAsyncTask(object):
 
         """
         log.info("Starting security scan")
-        nodes = await self._get_topdis_nodes()
+        nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=False)
         ports = self.get_ports_for_script_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports))
+        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports))
 
     async def run_scan(self, nodes, scan_only=False):
         """
@@ -161,7 +161,7 @@ class ScanAsyncTask(object):
                 port.scan = Scan(start=time.time())
                 ports.append(port)
 
-        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports, scan_only=scan_only))
+        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan_only=scan_only))
         self.current_scan = []
 
         await self._clean_scan()
@@ -212,18 +212,17 @@ class ScanAsyncTask(object):
                 if os.get('discoveryType') in (TopisOSDiscoveryType.DIRECT.value,):
                     node.os.name, node.os.version = os.get('name'), os.get('version')
 
-                    if " " in node.os.version:
-                        log.warning("Currently doesn't support space in OS Version for cpe: '%s' for '%s'",
-                                    node.os.version, node.os.name)
-                    else:
-                        node.os.cpe = Service.build_cpe(product=node.os.name, version=node.os.version, type=CPEType.OS)
+                    try:
+                        node.os.cpe = Service.build_cpe(product=node.os.name, version=node.os.version, part=CPEType.OS)
+                    except:
+                        node.os.cpe = None
 
                 nodes.append(node)
 
         log.debug('Got %i nodes from topdis', len(nodes))
         return nodes
 
-    async def _get_nodes_for_scanning(self, timestamp=None):
+    async def _get_nodes_for_scanning(self, timestamp=None, filter_out_storage=True):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -236,11 +235,11 @@ class ScanAsyncTask(object):
             list
 
         """
-        topdis_nodes = await self._get_topdis_nodes()
+        nodes = await self._get_topdis_nodes()
 
-        storage_nodes = self.storage.get_nodes(self._scan_interval(), timestamp=timestamp)
-
-        nodes = list(set(topdis_nodes) - set(storage_nodes))
+        if filter_out_storage:
+            storage_nodes = self.storage.get_nodes(self._scan_interval(), timestamp=timestamp)
+            nodes = list(set(nodes) - set(storage_nodes))
 
         include_networks = self._get_networks_list()
         exclude_networks = self._get_excluded_networks_list()

@@ -70,7 +70,7 @@ class CommandTaskTest(AsyncTestCase):
         args_storage = self.aucote.storage.save_scans.call_args[1]
         self.assertEqual(result, None)
         self.assertEqual(args_storage['port'].scan.end, 0)
-        self.assertEqual(args_storage['port'].scan.start, 0)
+        self.assertEqual(args_storage['port'].scan.start, 5)
         self.assertEqual(args_storage['exploits'], [self.exploit])
 
     @gen_test

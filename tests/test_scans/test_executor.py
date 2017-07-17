@@ -1,5 +1,5 @@
 import ipaddress
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
@@ -14,14 +14,10 @@ class ExecutorTest(AsyncTestCase):
     def setUp(self, cfg):
         super(ExecutorTest, self).setUp()
         cfg._cfg = {
-            'service': {
-                'scans': {
-                    'broadcast': True
-                }
-            },
             'portdetection': {
                 '_internal': {
-                    'port_period': None
+                    'port_period': None,
+                    'broadcast': True
                 }
             }
         }
@@ -107,3 +103,18 @@ class ExecutorTest(AsyncTestCase):
         expected = self.executor.scan_only
 
         self.assertEqual(result, expected)
+
+    @patch('scans.executor.TaskMapper')
+    @gen_test
+    async def test_nodes(self, mock_task):
+        self.executor._ports = []
+        node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
+        node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
+        self.executor.nodes = [node_1, node_2, node_3]
+        mock_task.return_value.assign_tasks_for_node = MagicMock(return_value=Future())
+        mock_task.return_value.assign_tasks_for_node.return_value.set_result(True)
+        self.executor.scan_only = False
+
+        await self.executor.run()
+        mock_task.return_value.assign_tasks_for_node.assert_has_calls((call(node_1), call(node_2), call(node_3)))

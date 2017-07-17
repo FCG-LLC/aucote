@@ -119,45 +119,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
       ]
     }"""
 
-    NODE_DETAILS_FOR_CPE = rb"""{
-      "meta": {
-        "apiVersion": "1.0.0",
-        "requestTime": "2017-05-08T12:50:20.139895+00:00",
-        "url": "http://dev03.cs.int:1234/api/v1/node?id=24"
-      },
-      "nodes": [
-        {
-          "description": "Cisco IOS Software, C181X Software (C181X-ADVIPSERVICESK9-M), Version 12.4(11)XW, RELEASE SOFTWARE (fc1)\r\nSynched to technology version 12.4(12.12)T\r\nTechnical Support: http://www.cisco.com/techsupport\r\nCopyright (c) 1986-2007 by Cisco Systems, Inc.\r\nComp",
-          "deviceType": "L3 Switch",
-          "deviceTypeDiscoveryType": "DIRECT",
-          "displayName": "fishconnectVPN.fcg.com",
-          "hardware": {
-            "model": "CISCO1811W-AG-B/K9",
-            "sysObjId": "1.3.6.1.4.1.9.1.641",
-            "vendor": "ciscoSystems"
-          },
-          "id": 24,
-          "isCloud": false,
-          "isHost": false,
-          "managementIp": "10.80.80.2",
-          "name": "fishconnectVPN.fcg.com",
-          "serialNumber": "FHK113515FT",
-          "snmp": {
-            "communityString": "public",
-            "port": 161,
-            "version": "2c"
-          },
-          "software": {
-            "os": "IOS",
-            "osDiscoveryType": "DIRECT",
-            "osVersion": "12.4(11)XW"
-          },
-          "stateId": 6597,
-          "supportsNat": false
-        }
-      ]
-    }"""
-
     NODE_WITH_OS_FINGERPRINT = rb"""{
   "meta": {
     "apiVersion": "1.0.0",
@@ -332,7 +293,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertEqual(result.os.name, 'test_name')
         self.assertEqual(result.os.version, '11')
         self.assertEqual(result.os.cpe, CPE(mock_cpe.return_value))
-        mock_cpe.assert_called_once_with(product='test_name', version='11', type=CPEType.OS)
+        mock_cpe.assert_called_once_with(product='test_name', version='11', part=CPEType.OS)
 
     @patch('scans.scan_async_task.HTTPClient')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
@@ -342,7 +303,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         cfg._cfg = self.cfg
         self.req_future.set_result(MagicMock(body=self.NODE_WITH_OS_DIRECT_SPACES_VERSION))
         http_client.instance().get.return_value = self.req_future
-        mock_cpe.return_value = 'cpe:2.3:a:b:c:d:*:*:*:*:*:*:*'
+        mock_cpe.side_effect = KeyError()
 
         nodes = await self.thread._get_topdis_nodes()
         self.assertEqual(len(nodes), 1)
@@ -351,7 +312,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertEqual(result.os.name, 'test_name')
         self.assertEqual(result.os.version, '11 abcde')
         self.assertIsNone(result.os.cpe)
-        self.assertFalse(mock_cpe.called)
 
     @patch('scans.scan_async_task.HTTPClient')
     @patch('scans.scan_async_task.cfg', new_callable=Config)
@@ -512,7 +472,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=False)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=False, nodes=[node_1])
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.netifaces')
@@ -572,7 +532,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning())
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=[port_masscan, port_nmap],
-                                              scan_only=False)
+                                              nodes=[node_1], scan_only=False)
         self.thread.aucote.async_task_manager.stop.assert_called_once_with()
 
     @patch('scans.scan_async_task.netifaces')
@@ -647,7 +607,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning(), scan_only=scan_only)
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=scan_only)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=scan_only,
+                                              nodes=[node_1])
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.netifaces')
@@ -713,7 +674,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         yield self.thread.run_scan(self.thread._get_nodes_for_scanning(), scan_only=scan_only)
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=scan_only)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, scan_only=scan_only,
+                                              nodes=[node_1])
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
@@ -803,7 +765,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread.run_scan.return_value = future_run_scan
 
         await self.thread._scan()
-        self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None)
+        self.thread._get_nodes_for_scanning.assert_called_once_with(timestamp=None, filter_out_storage=True)
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
@@ -901,11 +863,11 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread.get_ports_for_script_scan = MagicMock(return_value=ports)
         future_nodes = Future()
         future_nodes.set_result(nodes)
-        self.thread._get_topdis_nodes = MagicMock(return_value=future_nodes)
+        self.thread._get_nodes_for_scanning = MagicMock(return_value=future_nodes)
 
         yield self.thread._run_tools()
 
-        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports)
+        mock_executor.assert_called_once_with(aucote=self.thread.aucote, ports=ports, nodes=nodes)
         self.thread.aucote.add_async_task.assert_called_once_with(mock_executor.return_value)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)

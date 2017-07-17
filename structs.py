@@ -23,7 +23,7 @@ class Scan(object):
             end (int|float): end scan time
 
         """
-        self._start = start
+        self._start = start or time.time()
         self.end = end
 
     @property
@@ -300,30 +300,41 @@ class Service(object):
         return cls._UNESCAPE_CPE.sub(_replace, text)
 
     @classmethod
-    def build_cpe(cls, type, vendor='*', product='*', version='*'):
+    def validate_cpe_arguments(cls, vendor, product, version):
         """
-        Build cpe basing on vendor, product and version
-
+        Validate cpe arguments, and fix as much as possible
         Args:
-            type (CPEType:
             vendor (str):
             product (str):
             version (str):
-
         Returns:
-            str
-
+            tuple
         """
-        if vendor:
-            vendor = cls._escape_cpe(vendor)
+        if " " in version:
+            if product.lower() == "ios":
+                version = version.split(" ")[0].strip(",")
 
-        if product:
-            product = cls._escape_cpe(product)
+        if vendor == "*":
+            if product.lower() == "ios":
+                vendor = "cisco"
 
-        if version:
-            version = cls._escape_cpe(version)
+        return cls._escape_cpe(vendor), cls._escape_cpe(product), cls._escape_cpe(version)
 
-        return "cpe:2.3:{part}:{vendor}:{product}:{version}:*:*:*:*:*:*:*".format(part=str(type.value), vendor=vendor,
+    @classmethod
+    def build_cpe(cls, part, vendor='*', product='*', version='*'):
+        """
+        Build cpe 2.3 string base on vendor, product, version and part
+        Args:
+            part (CPEType):
+            vendor (str):
+            product (str):
+            version (str):
+        Returns:
+            str: cpe2.3 string
+        """
+        vendor, product, version = cls.validate_cpe_arguments(vendor=vendor, product=product, version=version)
+
+        return "cpe:2.3:{part}:{vendor}:{product}:{version}:*:*:*:*:*:*:*".format(part=str(part.value), vendor=vendor,
                                                                                   product=product, version=version)
 
 
