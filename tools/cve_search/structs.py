@@ -9,19 +9,38 @@ class CVESearchVulnerabilityResult(object):
     Result of searching cve
 
     """
-    def __init__(self):
-        self.published = None
-        self.summary = None
-        self.cwe = None
-        self.cvss = None
-        self.cvss_time = None
-        self.id = None
-        self.access = None
-        self.impact = None
-        self.references = None
-        self.modified = None
-        self.vulnerable_configuration_cpe_2_2 = []
-        self.vulnerable_configuration = []
+    def __init__(self, published=None, summary=None, cwe=None, cvss=None, cvss_time=None, vuln_id=None, access=None,
+                 impact=None, references=None, modified=None, vulnerable_configuration_cpe_2_2=None,
+                 vulnerable_configuration=None):
+        """
+
+        Args:
+            published (int):
+            summary (str):
+            cwe (str):
+            cvss (float):
+            cvss_time (int):
+            vuln_id (str):
+            access (dict):
+            impact (dict):
+            references (list):
+            modified (int):
+            vulnerable_configuration_cpe_2_2 (list):
+            vulnerable_configuration (list):
+
+        """
+        self.published = published
+        self.summary = summary
+        self.cwe = cwe
+        self.cvss = cvss
+        self.cvss_time = cvss_time
+        self.id = vuln_id
+        self.access = access
+        self.impact = impact
+        self.references = references
+        self.modified = modified
+        self.vulnerable_configuration_cpe_2_2 = vulnerable_configuration_cpe_2_2 or []
+        self.vulnerable_configuration = vulnerable_configuration or []
 
     @property
     def output(self):
@@ -44,8 +63,8 @@ class CVESearchVulnerabilityResults(object):
     Contains results of CVE-Search
 
     """
-    def __init__(self):
-        self.vulnerabilities = []
+    def __init__(self, vulnerabilities=None):
+        self.vulnerabilities = vulnerabilities or tuple()
 
     def __getitem__(self, item):
         return self.vulnerabilities[item]

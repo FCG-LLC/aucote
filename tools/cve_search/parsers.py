@@ -42,5 +42,5 @@ class CVESearchParser(object):
 
         """
         return_value = CVESearchVulnerabilityResult()
-        return_value.vulnerabilities = [cls.dict_to_result(row) for row in data]
+        return_value.vulnerabilities = tuple(cls.dict_to_result(row) for row in data)
         return return_value

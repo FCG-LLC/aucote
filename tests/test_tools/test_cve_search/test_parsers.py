@@ -123,4 +123,4 @@ class CVESearchParserTest(TestCase):
         mock_result.side_effect = expected
         results = CVESearchParser.dict_to_results(data=data)
 
-        self.assertEqual(results.vulnerabilities, expected)
+        self.assertEqual(results.vulnerabilities, tuple(expected))

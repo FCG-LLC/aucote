@@ -103,7 +103,7 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         vulnerability_1 = MagicMock()
         vulnerability_1.output = 'test_vuln'
 
-        results.vulnerabilities.append(vulnerability_1)
+        results.vulnerabilities = (vulnerability_1, )
 
         result = self.task.get_vulnerabilities(results=results)
 

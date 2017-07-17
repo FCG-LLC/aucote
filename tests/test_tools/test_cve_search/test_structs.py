@@ -113,8 +113,7 @@ CVSS: {cvss}
 class CVESearchVulnerabilityResultsTest(TestCase):
     def test_output(self):
         results = CVESearchVulnerabilityResults()
-        results.vulnerabilities.append(MagicMock(output='test_1'))
-        results.vulnerabilities.append(MagicMock(output='test_2'))
+        results.vulnerabilities = (MagicMock(output='test_1'), MagicMock(output='test_2'))
 
         expected = '''test_1
 
@@ -125,8 +124,7 @@ test_2'''
 
     def test_getitem(self):
         results = CVESearchVulnerabilityResults()
-        results.vulnerabilities.append(MagicMock(output='test_1'))
-        results.vulnerabilities.append(MagicMock(output='test_2'))
+        results.vulnerabilities = (MagicMock(output='test_1'), MagicMock(output='test_2'))
 
         self.assertEqual(results[0], results.vulnerabilities[0])
         self.assertEqual(results[1], results.vulnerabilities[1])

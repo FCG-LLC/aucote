@@ -4,6 +4,12 @@ class CVESearchAPIConnectionException(Exception):
 
     """
 
+    def __init__(self, reason):
+        message = "Cannot connect to CVESearch API: {0}".format(reason)
+
+        super(CVESearchAPIConnectionException, self).__init__(message)
+
+
 
 class CVESearchAPIException(Exception):
     """

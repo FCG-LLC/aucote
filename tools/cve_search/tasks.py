@@ -23,6 +23,10 @@ class CVESearchServiceTask(PortTask):
     Task which proceed port service and asks CVE server for CVEs
 
     """
+    VENDOR_APACHE = 'apache'
+    APACHE_HTTPD = 'httpd'
+    APACHE_HTTP_SERVER = 'http_server'
+
     def __init__(self, *args, **kwargs):
         self.api = cfg['tools.cve-search.api'].strip("/")
         super(CVESearchServiceTask, self).__init__(*args, **kwargs)
@@ -64,11 +68,11 @@ class CVESearchServiceTask(PortTask):
             log.debug("CVE search: CPE without version is not supported")
             return
 
-        if cpe.get_vendor()[0] == 'apache':
-            if cpe.get_product()[0] == 'httpd':
-                return [cpe, CPE(cpe.as_uri_2_3().replace("httpd", "http_server"))]
-            elif cpe.get_product()[0] == 'http_server':
-                return [cpe, CPE(cpe.as_uri_2_3().replace("http_server", "httpd"))]
+        if cpe.get_vendor()[0] == self.VENDOR_APACHE:
+            if cpe.get_product()[0] == self.APACHE_HTTPD:
+                return [cpe, CPE(cpe.as_uri_2_3().replace(self.APACHE_HTTPD, self.APACHE_HTTP_SERVER))]
+            elif cpe.get_product()[0] == self.APACHE_HTTP_SERVER:
+                return [cpe, CPE(cpe.as_uri_2_3().replace(self.APACHE_HTTP_SERVER, self.APACHE_HTTPD))]
 
         return [cpe]
 
@@ -87,18 +91,14 @@ class CVESearchServiceTask(PortTask):
         url = "{api}/cvefor/{cpe}".format(api=self.api, cpe=cpe_encoded)
         try:
             response = await HTTPClient.instance().get(url)
-        except HTTPError:
-            raise CVESearchAPIConnectionException()
-        except ConnectionError:
-            raise CVESearchAPIConnectionException()
+        except HTTPError as exception:
+            raise CVESearchAPIConnectionException(str(exception))
+        except ConnectionError as exception:
+            raise CVESearchAPIConnectionException(str(exception))
 
         if response.code is not 200:
             raise CVESearchAPIException(response)
         return ujson.loads(response.body.decode())
 
     def get_vulnerabilities(self, results):
-        return_value = []
-
-        for result in results:
-            return_value.append(Vulnerability(exploit=self.exploit, port=self._port, output=result.output))
-        return return_value
+        return [Vulnerability(exploit=self.exploit, port=self._port, output=result.output) for result in results]
