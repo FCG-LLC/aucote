@@ -21,18 +21,19 @@ class Storage(DbInterface):
     SAVE_SCAN_DETAIL = "INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip," \
                        "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)"
     SAVE_SCAN_DETAIL_START = "UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND " \
-                             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?"
+                             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?"
     SAVE_SCAN_DETAIL_END = "UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND " \
-                           "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?"
-    SELECT_NODES = "SELECT id, ip, time FROM nodes where time > ? AND protocol=?"
+                           "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?"
+    SELECT_NODES = "SELECT id, ip, time FROM nodes where time > ? AND protocol IS ?"
     SELECT_PORTS = "SELECT id, ip, port, protocol, time FROM ports where time > ?"
     SELECT_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, port_number, " \
                    "scan_start, scan_end FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? " \
-                   "AND port_protocol = ? AND port_number = ?"
+                   "AND port_protocol IS ? AND port_number = ?"
     SELECT_PORTS_BY_NODE = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND "\
-                           "protocol=?"
+                           "protocol IS ?"
     SELECT_PORTS_BY_NODE_ALL_PROTS = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ?"
-    SELECT_PORTS_BY_NODES = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ? AND protocol=?"
+    SELECT_PORTS_BY_NODES = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ? AND " \
+                            "protocol IS ?"
     SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ?"
     CLEAR_SCANS = "DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL OR SCAN_END IS NULL"
     CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, " \

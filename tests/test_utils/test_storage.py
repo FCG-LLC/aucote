@@ -60,7 +60,7 @@ class StorageTest(TestCase):
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
     def test__get_nodes(self):
         result = self.storage._get_nodes(pasttime=700, timestamp=None, protocol=TransportProtocol.UDP.iana)
-        expected = 'SELECT id, ip, time FROM nodes where time > ? AND protocol=?', (139300, 17)
+        expected = 'SELECT id, ip, time FROM nodes where time > ? AND protocol IS ?', (139300, 17)
         self.assertEqual(result, expected)
 
     @patch('time.time', MagicMock(return_value=13))
@@ -123,7 +123,7 @@ class StorageTest(TestCase):
               (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
                port.transport_protocol.iana, port.number)),
             ("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
-              "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+              "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?",
               (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
                str(port.node.ip), port.transport_protocol.iana, port.number))
         ]
@@ -152,11 +152,11 @@ class StorageTest(TestCase):
              (14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
 
             ("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?",
              (3, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
 
             ("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?",
              (45, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
 
             ("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
@@ -164,11 +164,11 @@ class StorageTest(TestCase):
              (2, 'test_app_2', 'test_name_2', 3, '127.0.0.1', 6, 12)),
 
             ("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?",
              (3, 2, 'test_app_2', 'test_name_2', 3, '127.0.0.1', 6, 12)),
 
             ("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?",
              (45, 2, 'test_app_2', 'test_name_2', 3, '127.0.0.1', 6, 12))
         ]
 
@@ -193,11 +193,11 @@ class StorageTest(TestCase):
               (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
                port.transport_protocol.iana, port.number)),
             ("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
-              "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+              "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?",
               (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
                str(port.node.ip), port.transport_protocol.iana, port.number)),
             ("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
-              "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol=? AND port_number=?",
+              "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?",
               (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
                str(port.node.ip), port.transport_protocol.iana, port.number))
         ]
@@ -212,7 +212,7 @@ class StorageTest(TestCase):
         result = self.storage._get_scan_info(port=port, app='test_app')
         expected = ('SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, port_number, '
                     'scan_start, scan_end FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? '
-                    'AND port_protocol = ? AND port_number = ?', ('test_app', 3, '127.0.0.1', 6, 12))
+                    'AND port_protocol IS ? AND port_number = ?', ('test_app', 3, '127.0.0.1', 6, 12))
 
         self.assertCountEqual(result, expected)
 
@@ -237,7 +237,7 @@ class StorageTest(TestCase):
     def test__get_ports_by_node(self):
         node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
         result = self.storage._get_ports_by_node(node, 1200, protocol=TransportProtocol.TCP.iana)
-        expected = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND protocol=?", (3, '127.0.0.1', 1200, 6)
+        expected = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND protocol IS ?", (3, '127.0.0.1', 1200, 6)
 
         self.assertEqual(result, expected)
 
@@ -256,7 +256,7 @@ class StorageTest(TestCase):
 
         result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=TransportProtocol.UDP.iana)
         expected = (
-            "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ? AND protocol=?",
+            "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ? AND protocol IS ?",
             [3, '127.0.0.1', 7, '::1', 1200, 17]
         )
 
