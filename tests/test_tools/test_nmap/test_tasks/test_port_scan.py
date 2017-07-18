@@ -177,7 +177,7 @@ class NmapPortScanTaskTest(AsyncTestCase):
                     '127.0.0.1'}
 
         self.assertTrue(expected.issubset(result))
-        self.assertTrue('test,test2' in result or 'test2,test' in result)
+        self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     @gen_test
@@ -199,7 +199,7 @@ class NmapPortScanTaskTest(AsyncTestCase):
         expected = {'-sV'}
 
         self.assertTrue(expected.issubset(result))
-        self.assertTrue('test,test2' in result or 'test2,test' in result)
+        self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     @gen_test
@@ -223,7 +223,7 @@ class NmapPortScanTaskTest(AsyncTestCase):
                     '127.0.0.1'}
 
         self.assertTrue(expected.issubset(result))
-        self.assertTrue('test,test2' in result or 'test2,test' in result)
+        self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     @gen_test
@@ -318,7 +318,7 @@ class NmapPortScanTaskTest(AsyncTestCase):
         expected = {'--max-rate', '1337', '--script', '--script-args', 'test_args'}
 
         self.assertTrue(expected.issubset(result))
-        self.assertTrue('test,test2' in result or 'test2,test' in result)
+        self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     def test_prepare_args_physical(self, cfg):
@@ -336,7 +336,7 @@ class NmapPortScanTaskTest(AsyncTestCase):
         expected = {'--max-rate', '1337', '--script', '--script-args', 'test_args', '-e', 'wlan0'}
 
         self.assertTrue(expected.issubset(result))
-        self.assertTrue('test,test2' in result or 'test2,test' in result)
+        self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     def test_prepare_args_ipv6(self, cfg):
@@ -365,7 +365,7 @@ class NmapPortScanTaskTest(AsyncTestCase):
                     'test_args', '-e', 'wlan0'}
 
         self.assertTrue(expected.issubset(result))
-        self.assertTrue('test,test2' in result or 'test2,test' in result)
+        self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     def test_prepare_args_scripts_args(self, cfg):
