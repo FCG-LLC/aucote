@@ -116,7 +116,7 @@ portdetection:
 #        - testssl - SSL checks based on testssl.sh
 #
 # tools:
-#   (nmap|masscan|hydra|skipfish|aucote-http-headers|testssl):
+#   (nmap|masscan|hydra|skipfish|aucote-http-headers|testssl|cve-search):
 #     enable: (True|False) - Enable tool
 #     cmd: <str> - Command used to run application
 #     period: <str> - Defines how often use application
@@ -158,6 +158,10 @@ portdetection:
 #     limit: 0:10:00 - Time limit of skipfish scan
 #     threads: 5 - Amount of thread used by skipfish
 #     tmp_directory: /tmp - Path to the temporary directory for reports processing
+#
+#   cve-search:
+#     api: <str> - Address for CVE-search api, eg. http://localhost:5000/api
+#
 
 tools:
     nmap:
@@ -215,5 +219,12 @@ tools:
         periods: {}
         networks: []
         script_networks: {}
+    cve-search:
+        enable: True
+        period: 0s
+        periods: {}
+        networks: []
+        script_networks: {}
+        api: ''
     common:
         rate: 50
