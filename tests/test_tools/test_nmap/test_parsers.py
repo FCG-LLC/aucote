@@ -148,6 +148,9 @@ class NmapInfoParserTest(TestCase):
     VALID_OUTPUT = """<script output="test_output">
 </script>
 """
+    EMPTY_OUTPUT = """<script output="&#xa;">
+</script>
+"""
 
     ERROR_OUTPUT = """<script output="ERROR: test_output">
 </script>
@@ -169,6 +172,11 @@ class NmapInfoParserTest(TestCase):
         result = self.parser.parse(script)
         expected = 'test_output'
         self.assertEqual(result, expected)
+
+    def test_empty_output(self):
+        script = ElementTree.fromstring(self.EMPTY_OUTPUT)
+        result = self.parser.parse(script)
+        self.assertIsNone(result)
 
 
 class NmapParserTest(TestCase):
