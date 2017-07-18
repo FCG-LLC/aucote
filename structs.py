@@ -145,9 +145,6 @@ class TransportProtocol(Enum):
             TransportProtocol
 
         """
-        if number is None:
-            return None
-
         for val in cls:
             if val.iana == number:
                 return val

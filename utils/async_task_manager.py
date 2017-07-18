@@ -27,7 +27,6 @@ class AsyncTaskManager(object):
         self._shutdown_condition = Event()
         self._stop_condition = Event()
         self._cron_tasks = {}
-        self.run_tasks = {}
         self._parallel_tasks = parallel_tasks
         self._tasks = Queue()
         self._task_workers = []
@@ -77,7 +76,6 @@ class AsyncTaskManager(object):
         """
 
         self._cron_tasks[task] = AsyncCrontabTask(cron, task)
-        self.run_tasks[task] = False
 
     @gen.coroutine
     def stop(self):
@@ -102,7 +100,7 @@ class AsyncTaskManager(object):
             None
 
         """
-        if any(task.is_running() for task in self._cron_tasks.values()) or any(self.run_tasks.values()):
+        if any(task.is_running() for task in self._cron_tasks.values()):
             IOLoop.current().add_callback(self._prepare_shutdown)
             return
 
@@ -117,7 +115,6 @@ class AsyncTaskManager(object):
 
         """
         self._cron_tasks = {}
-        self.run_tasks = {}
         self._shutdown_condition.clear()
         self._stop_condition.clear()
 

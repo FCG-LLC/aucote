@@ -435,7 +435,7 @@ class Storage(DbInterface):
 
         for port in self.execute(self._get_ports(pasttime=pasttime)):
             ports.append(Port(node=Node(node_id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
-                              transport_protocol=TransportProtocol.from_iana(port[3])))
+                              transport_protocol=self._transport_protocol(port[3])))
         return ports
 
     def save_scan(self, exploit, port):
@@ -484,7 +484,7 @@ class Storage(DbInterface):
             return_value.append({
                 "exploit": Exploit(exploit_id=row[0]),
                 "port": Port(node=Node(node_id=row[3], ip=ipaddress.ip_address(row[4])), number=row[6],
-                             transport_protocol=TransportProtocol.from_iana(row[5])),
+                             transport_protocol=self._transport_protocol(row[5])),
                 "scan_start": row[7] or 0.,
                 "scan_end": row[8] or 0.,
                 "exploit_name": row[2]
@@ -531,7 +531,7 @@ class Storage(DbInterface):
             timestamp = time.time() - pasttime
 
         for row in self.execute(self._get_ports_by_node(node=node, timestamp=timestamp, protocol=protocol)):
-            port = Port(node=node, number=row[2], transport_protocol=TransportProtocol.from_iana(row[3]))
+            port = Port(node=node, number=row[2], transport_protocol=self._transport_protocol(row[3]))
             port.scan = Scan(start=port.node.scan.start)
             ports.append(port)
 
@@ -558,8 +558,24 @@ class Storage(DbInterface):
 
         for row in self.execute(self._get_ports_by_nodes(nodes=nodes, timestamp=timestamp, protocol=protocol)):
             node = nodes[nodes.index(Node(node_id=row[0], ip=ipaddress.ip_address(row[1])))]
-            port = Port(node=node, number=row[2], transport_protocol=TransportProtocol.from_iana(row[3]))
+            port = Port(node=node, number=row[2], transport_protocol=self._transport_protocol(row[3]))
             port.scan = Scan(start=port.node.scan.start)
             ports.append(port)
 
         return ports
+
+    def _transport_protocol(self, number):
+        """
+        Convert database protocol to TransportProtocol
+
+        Args:
+            number (int|None):
+
+        Returns:
+            TransportProtocol|None - None if number is None
+
+        """
+        if number is None:
+            return None
+
+        return TransportProtocol.from_iana(number)

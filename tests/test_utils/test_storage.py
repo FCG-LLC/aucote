@@ -1,8 +1,7 @@
 import ipaddress
-from types import GeneratorType
 from unittest import TestCase
 
-from sqlite3 import Connection, DatabaseError, time
+from sqlite3 import Connection
 
 from sqlite3 import connect
 from unittest.mock import MagicMock, patch, call
@@ -535,3 +534,13 @@ class StorageTest(TestCase):
         self.storage.execute(queries)
         self.storage.cursor.execute.assert_has_calls((call("part_1", "arg_1", "arg_2"), call("part_2", "arg_3")))
         self.storage.conn.commit.assert_called_once_with()
+
+    def test_transport_protocol_none(self):
+        result = self.storage._transport_protocol(None)
+        self.assertIsNone(result)
+
+    @patch('utils.storage.TransportProtocol')
+    def test_transport_protocol(self, protocol):
+        result = self.storage._transport_protocol(6)
+        protocol.from_iana.assert_called_once_with(6)
+        self.assertEqual(result, protocol.from_iana())

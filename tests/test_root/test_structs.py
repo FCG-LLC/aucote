@@ -26,10 +26,6 @@ class TransportProtocolTest(TestCase):
 
         self.assertEqual(result, expected)
 
-    def test_iana_none(self):
-        result = TransportProtocol.from_iana(None)
-        self.assertIsNone(result)
-
 
 class RiskLevelTest(TestCase):
     def test_risk_level_exception(self):

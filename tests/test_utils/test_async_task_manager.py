@@ -22,8 +22,6 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.task_manager._stop_condition = MagicMock()
         self.task_manager._cron_tasks['task_1'] = self.task_1
         self.task_manager._cron_tasks['task_2'] = self.task_2
-        self.task_manager.run_tasks['task_1'] = False
-        self.task_manager.run_tasks['task_2'] = False
 
     def tearDown(self):
         self.task_manager.clear()
@@ -67,7 +65,6 @@ class TestAsyncTaskManager(AsyncTestCase):
 
         self.task_manager.clear()
         self.assertEqual(self.task_manager._cron_tasks, {})
-        self.assertEqual(self.task_manager.run_tasks, {})
 
     @patch('utils.async_task_manager.IOLoop')
     @patch('utils.async_task_manager.partial')
@@ -106,9 +103,7 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.task_manager.add_crontab_task(task, '* * * * *')
 
         self.assertIn(task, self.task_manager._cron_tasks.keys())
-        self.assertIn(task, self.task_manager.run_tasks.keys())
         self.assertIsInstance(self.task_manager._cron_tasks.get(task), AsyncCrontabTask)
-        self.assertFalse(self.task_manager.run_tasks.get(task))
 
     @gen_test
     def test_add_task(self):
