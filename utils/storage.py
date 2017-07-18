@@ -693,7 +693,7 @@ class Storage(DbInterface):
         scans = []
 
         for row in self.execute(self._get_scans(protocol=protocol, scanner_name=scanner_name, limit=amount, offset=0)):
-            scan = Scan(start=row[3], end=row[4], protocol=TransportProtocol.from_iana(row[1]))
+            scan = Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]))
             scans.append(scan)
 
         return scans
