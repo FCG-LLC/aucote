@@ -86,45 +86,45 @@ class Storage(DbInterface):
         """
         return self._cursor
 
-    def _save_node(self, node, protocol=TransportProtocol.ALL):
+    def _save_node(self, node, protocol=None):
         """
         Saves node into to the storage
 
         Args:
             node (Node): node to save into storage
-            protocol (TransportProtocol):
+            protocol (int):
 
         Returns:
             tuple
 
         """
-        return self.SAVE_NODE_QUERY, (node.id, str(node.ip), time.time(), protocol.iana)
+        return self.SAVE_NODE_QUERY, (node.id, str(node.ip), time.time(), protocol)
 
-    def _save_nodes(self, nodes, protocol=TransportProtocol.ALL):
+    def _save_nodes(self, nodes, protocol=None):
         """
         Saves nodes into local storage
 
         Args:
             nodes (list):
-            protocol (TransportProtocol):
+            protocol (int):
 
         Returns:
             list
 
         """
-        queries = [(self.SAVE_NODE_QUERY, (node.id, str(node.ip), time.time(), protocol.iana)) for node in nodes]
+        queries = [(self.SAVE_NODE_QUERY, (node.id, str(node.ip), time.time(), protocol)) for node in nodes]
 
         log.debug("Saving nodes")
         return queries
 
-    def _get_nodes(self, pasttime, timestamp, protocol=TransportProtocol.ALL):
+    def _get_nodes(self, pasttime, timestamp, protocol=None):
         """
         Returns all nodes from local storage
 
         Args:
             pasttime (int):
             timestamp (int):
-            protocol (TransportProtocol):
+            protocol (int):
 
         Returns:
             tuple
@@ -132,7 +132,7 @@ class Storage(DbInterface):
         """
         if timestamp is None:
             timestamp = time.time() - pasttime
-        return self.SELECT_NODES, (timestamp, protocol.iana)
+        return self.SELECT_NODES, (timestamp, protocol)
 
     def _save_port(self, port):
         """
@@ -284,32 +284,32 @@ class Storage(DbInterface):
 
         return queries
 
-    def _get_ports_by_node(self, node, timestamp, protocol=TransportProtocol.ALL):
+    def _get_ports_by_node(self, node, timestamp, protocol=None):
         """
         Query for port scan detail from scans from pasttime ago
 
         Args:
             port (Port):
             app (str): app name
-            protocol (TransportProtocol):
+            protocol (int):
 
         Returns:
             tuple
 
         """
-        if protocol in (TransportProtocol.ALL, ):
+        if protocol is None:
             return self.SELECT_PORTS_BY_NODE_ALL_PROTS, (node.id, str(node.ip), timestamp)
 
-        return self.SELECT_PORTS_BY_NODE, (node.id, str(node.ip), timestamp, protocol.iana)
+        return self.SELECT_PORTS_BY_NODE, (node.id, str(node.ip), timestamp, protocol)
 
-    def _get_ports_by_nodes(self, nodes, timestamp, protocol=TransportProtocol.ALL):
+    def _get_ports_by_nodes(self, nodes, timestamp, protocol=None):
         """
         Query for port scan detail from scans from pasttime ago
 
         Args:
             port (Port):
             app (str): app name
-            protocol (TransportProtocol):
+            protocol (int):
 
         Returns:
             tuple
@@ -322,8 +322,8 @@ class Storage(DbInterface):
         parameters.append(timestamp)
         query = self.SELECT_PORTS_BY_NODES_ALL_PROTS
 
-        if protocol not in (TransportProtocol.ALL, ):
-            parameters.append(protocol.iana)
+        if protocol is not None:
+            parameters.append(protocol)
             query = self.SELECT_PORTS_BY_NODES
 
         where = 'OR'.join([' (id=? AND ip=?) '] * len(nodes))
@@ -351,7 +351,7 @@ class Storage(DbInterface):
 
         self.conn.commit()
 
-    def save_node(self, node, protocol=TransportProtocol.ALL):
+    def save_node(self, node, protocol=None):
         """
         Save node to database
 
@@ -364,7 +364,7 @@ class Storage(DbInterface):
         """
         return self.execute(self._save_node(node=node, protocol=protocol))
 
-    def save_nodes(self, nodes, protocol=TransportProtocol.ALL):
+    def save_nodes(self, nodes, protocol=None):
         """
         Save nodes to database
 
@@ -377,7 +377,7 @@ class Storage(DbInterface):
         """
         return self.execute(self._save_nodes(nodes=nodes, protocol=protocol))
 
-    def get_nodes(self, pasttime=0, timestamp=None, protocol=TransportProtocol.ALL):
+    def get_nodes(self, pasttime=0, timestamp=None, protocol=None):
         """
         Get nodes from database since timestamp. If timestamp is not given, it's computed basing on pastime.
 
@@ -512,7 +512,7 @@ class Storage(DbInterface):
         """
         return self.execute(self._create_tables())
 
-    def get_ports_by_node(self, node, pasttime=0, timestamp=None, protocol=TransportProtocol.ALL):
+    def get_ports_by_node(self, node, pasttime=0, timestamp=None, protocol=None):
         """
         Get open ports of node since timestamp or from pasttime if timestamp is not given.
 
@@ -520,6 +520,7 @@ class Storage(DbInterface):
             node (Node):
             pasttime (int):
             timestamp (int):
+            protocol (int):
 
         Returns:
             list - list of Nodes
@@ -536,7 +537,7 @@ class Storage(DbInterface):
 
         return ports
 
-    def get_ports_by_nodes(self, nodes, pasttime=0, timestamp=None, protocol=TransportProtocol.ALL):
+    def get_ports_by_nodes(self, nodes, pasttime=0, timestamp=None, protocol=None):
         """
         Get open ports of nodes since timestamp or from pasttime if timestamp is not given.
 
@@ -544,7 +545,7 @@ class Storage(DbInterface):
             nodes (list):
             pasttime (int):
             timestamp (int):
-            protocol (TransportProtocol):
+            protocol (int):
 
         Returns:
             list - list of Ports

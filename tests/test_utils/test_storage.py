@@ -37,7 +37,7 @@ class StorageTest(TestCase):
     @patch("time.time", MagicMock(return_value=7))
     def test__save_node(self):
         node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        result = self.storage._save_node(node, protocol=TransportProtocol.TCP)
+        result = self.storage._save_node(node, protocol=TransportProtocol.TCP.iana)
         expected = ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (1, '127.0.0.1', 7, 6))
 
         self.assertCountEqual(result, expected)
@@ -48,7 +48,7 @@ class StorageTest(TestCase):
                  Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2')),
                  Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))]
 
-        result = self.storage._save_nodes(nodes, protocol=TransportProtocol.TCP)
+        result = self.storage._save_nodes(nodes, protocol=TransportProtocol.TCP.iana)
         expected = (
             ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (1, '127.0.0.1', 17, 6)),
             ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (2, '127.0.0.2', 17, 6)),
@@ -60,7 +60,7 @@ class StorageTest(TestCase):
 
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
     def test__get_nodes(self):
-        result = self.storage._get_nodes(pasttime=700, timestamp=None, protocol=TransportProtocol.UDP)
+        result = self.storage._get_nodes(pasttime=700, timestamp=None, protocol=TransportProtocol.UDP.iana)
         expected = 'SELECT id, ip, time FROM nodes where time > ? AND protocol=?', (139300, 17)
         self.assertEqual(result, expected)
 
@@ -237,14 +237,14 @@ class StorageTest(TestCase):
 
     def test__get_ports_by_node(self):
         node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
-        result = self.storage._get_ports_by_node(node, 1200, protocol=TransportProtocol.TCP)
+        result = self.storage._get_ports_by_node(node, 1200, protocol=TransportProtocol.TCP.iana)
         expected = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND protocol=?", (3, '127.0.0.1', 1200, 6)
 
         self.assertEqual(result, expected)
 
     def test__get_ports_by_node_all_protocols(self):
         node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
-        result = self.storage._get_ports_by_node(node, 1200, protocol=TransportProtocol.ALL)
+        result = self.storage._get_ports_by_node(node, 1200, protocol=None)
         expected = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ?", (3, '127.0.0.1', 1200)
 
         self.assertEqual(result, expected)
@@ -255,7 +255,7 @@ class StorageTest(TestCase):
             Node(node_id=7, ip=ipaddress.ip_address('::1'))
         ]
 
-        result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=TransportProtocol.UDP)
+        result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=TransportProtocol.UDP.iana)
         expected = (
             "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ? AND protocol=?",
             [3, '127.0.0.1', 7, '::1', 1200, 17]
@@ -269,7 +269,7 @@ class StorageTest(TestCase):
             Node(node_id=7, ip=ipaddress.ip_address('::1'))
         ]
 
-        result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=TransportProtocol.ALL)
+        result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=None)
         expected = (
             "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ?",
             [3, '127.0.0.1', 7, '::1', 1200]
