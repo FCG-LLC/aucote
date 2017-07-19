@@ -10,7 +10,6 @@ from tornado.testing import AsyncTestCase, gen_test
 from aucote import main, Aucote
 from utils import Config
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
-from utils.storage import Storage
 
 
 @patch('aucote_cfg.cfg.load', Mock(return_value=""))
@@ -40,6 +39,7 @@ class AucoteTest(AsyncTestCase):
                 }
             },
             'kuduworker': {
+                'enable': True,
                 'queue': {
                     'address': None
                 }
@@ -89,6 +89,29 @@ class AucoteTest(AsyncTestCase):
         self.assertEqual(mock_aucote.return_value.run_scan.call_count, 1)
 
     @patch('aucote.cfg_load')
+    @patch('builtins.open', mock_open())
+    @patch('aucote.fcntl', MagicMock())
+    @patch('aucote.cfg', new_callable=Config)
+    @gen_test
+    async def test_scan_without_kudu(self, cfg, mock_cfg_load):
+        mock_cfg_load.return_value = Future()
+        mock_cfg_load.return_value.set_result(True)
+
+        args = PropertyMock()
+        args.configure_mock(cmd='scan')
+
+        cfg._cfg = self.cfg._cfg
+        cfg._cfg['kuduworker']['enable'] = False
+
+        run_scan_future = Future()
+        run_scan_future.set_result(MagicMock())
+
+        with patch('argparse.ArgumentParser.parse_args', return_value=args):
+            with patch('aucote.Aucote.run_scan', return_value=run_scan_future):
+                await main()
+                self.assertIsInstance(self.aucote._kudu_queue, MagicMock)
+
+    @patch('aucote.cfg_load')
     @patch('fixtures.exploits.Exploits.read', MagicMock(side_effect=NmapUnsupported))
     @patch('builtins.open', mock_open())
     @patch('aucote.fcntl', MagicMock())
@@ -100,9 +123,8 @@ class AucoteTest(AsyncTestCase):
         args.configure_mock(cmd='scan')
 
         with patch('argparse.ArgumentParser.parse_args', return_value=args):
-            with patch('aucote.Aucote.run_scan'):
-                with self.assertRaises(SystemExit):
-                    await main()
+            with self.assertRaises(SystemExit):
+                await main()
 
     @patch('aucote.cfg_load')
     @patch('builtins.open', mock_open())

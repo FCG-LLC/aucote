@@ -11,8 +11,9 @@ import sys
 import fcntl
 
 import signal
+from unittest.mock import MagicMock
+
 from tornado.ioloop import IOLoop
-from tornado.locks import Event
 
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
@@ -66,8 +67,13 @@ async def main():
         log.exception("Cofiguration seems to be invalid. Check ports and services or contact with collective-sense")
         exit(1)
 
-    with KuduQueue(cfg['kuduworker.queue.address']) as kudu_queue:
+    def get_kuduworker():
+        if cfg['kuduworker.enable']:
+            return KuduQueue(cfg['kuduworker.queue.address'])
+        else:
+            return MagicMock()  # used for local testing
 
+    with get_kuduworker() as kudu_queue:
         try:
             os.remove(cfg['service.scans.storage'])
         except FileNotFoundError:
