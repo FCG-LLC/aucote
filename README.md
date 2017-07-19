@@ -52,7 +52,8 @@ cp aucote_cfg.yaml.exmaple aucote_cfg.yaml
 
 Fulfill `aucote_cfg.yaml` - the most important fields are:
  - `topdis.api.host` and `topdis.api.port`, which define how to connect to Topdis 
- - `toucan.enable` - disable for local runs
+ - `toucan.enable` - might be good to disable for local runs
+ - `kuduworker.enable` - might be good to disable for local runs
  
 You might also want to change `aucote_cfg_default.yaml` - important fields:
  - service.scans.parallel_tasks - defines how many threads should be run
