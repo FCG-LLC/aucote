@@ -148,15 +148,7 @@ class Executor(Task):
             list
 
         """
-        ports = ports[:]
-
-        for port in storage_ports:
-            try:
-                ports.remove(port)
-            except ValueError:
-                continue
-
-        return ports
+        return [port for port in ports if port not in storage_ports]
 
     @property
     def ports(self):
