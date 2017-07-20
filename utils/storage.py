@@ -32,7 +32,7 @@ class Storage(DbInterface):
                                     "AND port_protocol IS NULL)) AND port_number=?"
     SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? " \
                    "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
-    SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where time > ?"
+    SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where time > ? and scan_id = ?"
     SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
                    "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
                    "LIMIT {limit} OFFSET {offset}"
@@ -170,7 +170,7 @@ class Storage(DbInterface):
         return self.SAVE_PORT_QUERY, (0, port.node.id, str(port.node.ip), port.number,
                                       self._protocol_to_iana(port.transport_protocol), time.time())
 
-    def _save_ports(self, ports):
+    def _save_ports(self, ports, scan):
         """
         Queries for saving ports scans into database
 
@@ -181,13 +181,14 @@ class Storage(DbInterface):
             list
 
         """
-        queries = [(self.SAVE_PORT_QUERY, (0, port.node.id, str(port.node.ip), port.number,
+        scan_id = self.get_scan_id(scan)
+        queries = [(self.SAVE_PORT_QUERY, (scan_id, port.node.id, str(port.node.ip), port.number,
                                            self._protocol_to_iana(port.transport_protocol), time.time()))
                    for port in ports]
 
         return queries
 
-    def _get_ports(self, pasttime):
+    def _get_ports(self, pasttime, scan):
         """
         Query for port scan detail from scans from pasttime ago
 
@@ -198,9 +199,10 @@ class Storage(DbInterface):
             tuple
 
         """
+        scan_id = self.get_scan_id(scan)
         timestamp = time.time() - pasttime
 
-        return self.SELECT_PORTS, (timestamp,)
+        return self.SELECT_PORTS, (timestamp, scan_id)
 
     def _save_security_scan(self, exploit, port):
         """
@@ -415,7 +417,7 @@ class Storage(DbInterface):
         """
         return self.execute(self._save_port(port=port))
 
-    def save_ports(self, ports):
+    def save_ports(self, ports, scan):
         """
         Save ports to database
 
@@ -426,9 +428,9 @@ class Storage(DbInterface):
             None
 
         """
-        return self.execute(self._save_ports(ports=ports))
+        return self.execute(self._save_ports(ports=ports, scan=scan))
 
-    def get_ports(self, pasttime=900):
+    def get_ports(self, scan, pasttime=900):
         """
         Get ports from database from pasttime.
 
@@ -441,7 +443,7 @@ class Storage(DbInterface):
         """
         ports = []
 
-        for port in self.execute(self._get_ports(pasttime=pasttime)):
+        for port in self.execute(self._get_ports(pasttime=pasttime, scan=scan)):
             ports.append(Port(node=Node(node_id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
                               transport_protocol=self._transport_protocol(port[3])))
         return ports

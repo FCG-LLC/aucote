@@ -19,7 +19,7 @@ class Executor(Task):
 
     """
 
-    def __init__(self, ports=None, scan_only=False, nodes=None, *args, **kwargs):
+    def __init__(self, ports=None, scan_only=False, nodes=None, scan=None, *args, **kwargs):
         """
         Init executor. Sets kudu_queue and nodes
 
@@ -27,6 +27,7 @@ class Executor(Task):
         super(Executor, self).__init__(*args, **kwargs)
         self._ports = ports or []
         self.nodes = nodes or []
+        self._scan = scan or Scan()
 
         self.scan_only = scan_only
         if cfg['portdetection._internal.broadcast']:
@@ -71,12 +72,13 @@ class Executor(Task):
             await self._execute_nodes()
 
     def _execute_ports(self):
-        storage_ports = self.storage.get_ports(parse_period(cfg['portdetection._internal.port_period']))
+        storage_ports = self.storage.get_ports(pasttime=parse_period(cfg['portdetection._internal.port_period']),
+                                               scan=self._scan)
 
         ports = self._get_ports_for_scanning(self.ports, storage_ports)
         log.info("Found %i recently not scanned ports", len(ports))
 
-        self.storage.save_ports(ports)
+        self.storage.save_ports(ports, scan=self._scan)
 
         for port in ports:
             self.add_async_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only))
