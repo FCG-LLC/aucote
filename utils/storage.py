@@ -314,15 +314,9 @@ class Storage(DbInterface):
         Query for port scan detail from scans from pasttime ago
 
         Args:
-<<<<<<< HEAD
-            port (Port):
-            app (str): app name
-            protocol (int):
-=======
             nodes (list):
             timestamp (int):
             protocol (TransportProtocol):
->>>>>>> Add scans to the storage
 
         Returns:
             tuple
