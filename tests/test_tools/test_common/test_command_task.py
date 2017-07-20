@@ -22,7 +22,9 @@ class CommandTaskTest(AsyncTestCase):
         future.set_result(self.future_return)
         self.command.async_call = MagicMock(return_value=future)
         self.exploit = MagicMock()
-        self.task = CommandTask(aucote=self.aucote, port=self.port, command=self.command, exploits=[self.exploit])
+        self.scan = Scan()
+        self.task = CommandTask(aucote=self.aucote, port=self.port, command=self.command, exploits=[self.exploit],
+                                scan=self.scan)
 
     def test_init(self):
         self.assertEqual(self.task._port, self.port)

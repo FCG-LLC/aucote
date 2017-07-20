@@ -22,5 +22,6 @@ class CVESearchTool(Tool):
             self.port = PhysicalPort(node=self.node)
             self.port.scan = Scan()
 
-        self.aucote.add_async_task(CVESearchServiceTask(aucote=self.aucote, port=self.port,
-                                                  exploits=[self.aucote.exploits.find('cve-search', 'cve-search')]))
+        self.aucote.add_async_task(CVESearchServiceTask(aucote=self.aucote, port=self.port, scan=self._scan,
+                                                        exploits=[self.aucote.exploits.find('cve-search',
+                                                                                            'cve-search')]))

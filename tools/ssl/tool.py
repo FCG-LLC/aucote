@@ -23,5 +23,5 @@ class SSLTool(Tool):
             None
 
         """
-        self.aucote.add_async_task(SSLScriptTask(aucote=self.aucote, port=self.port,
-                                           exploits=[self.aucote.exploits.find('testssl', 'testssl')]))
+        self.aucote.add_async_task(SSLScriptTask(aucote=self.aucote, port=self.port, scan=self._scan,
+                                                 exploits=[self.aucote.exploits.find('testssl', 'testssl')]))

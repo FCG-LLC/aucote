@@ -51,9 +51,10 @@ class AucoteHttpHeadersTaskTest(AsyncTestCase):
                 'test': HeaderDefinition(pattern='test_nie', obligatory=True)
             }
         }
+        self.scan = Scan()
         self.custom_headers = {'Accept-Encoding': 'gzip, deflate', 'User-Agent': 'test'}
         self.task = AucoteHttpHeadersTask(port=self.port, aucote=self.aucote, exploits=[self.exploit],
-                                          config=self.config)
+                                          config=self.config, scan=self.scan)
 
     def tearDown(self):
         HTTPClient._instance = None

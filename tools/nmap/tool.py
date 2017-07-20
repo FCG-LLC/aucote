@@ -42,7 +42,7 @@ class NmapTool(Tool):
         packs = itertools.zip_longest(*by_name.values())
 
         for pack in packs:
-            self.aucote.add_async_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
+            self.aucote.add_async_task(NmapPortScanTask(aucote=self.aucote, port=self.port, scan=self._scan,
                                                         script_classes=[val for val in pack if val is not None],
                                                         rate=self.rate))
 
@@ -97,7 +97,7 @@ class NmapTool(Tool):
                 task = NmapScript(exploit=exploit, port=self.port, parser=parser(), name=name, args=arg)
 
                 if singular:
-                    self.aucote.add_async_task(NmapPortScanTask(aucote=self.aucote, port=self.port,
+                    self.aucote.add_async_task(NmapPortScanTask(aucote=self.aucote, port=self.port, scan=self._scan,
                                                                 script_classes=[task], rate=self.rate))
                     continue
                 tasks.append(task)

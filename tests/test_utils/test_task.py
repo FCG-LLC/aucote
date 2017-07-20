@@ -20,8 +20,9 @@ class TaskTest(TestCase):
         self.executor = MagicMock()
         self.executor.kudu_queue = MagicMock()
         self.executor.exploits = MagicMock()
+        self.scan = Scan()
 
-        self.task = Task(aucote=self.executor)
+        self.task = Task(aucote=self.executor, scan=self.scan)
 
     def test_init(self):
         """
