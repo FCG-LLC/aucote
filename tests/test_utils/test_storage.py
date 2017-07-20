@@ -7,7 +7,7 @@ from sqlite3 import connect
 from unittest.mock import MagicMock, patch, call
 
 from fixtures.exploits import Exploit
-from structs import Node, Port, TransportProtocol, Scan
+from structs import Node, Port, TransportProtocol, Scan, Vulnerability
 from utils.storage import Storage
 
 
@@ -247,8 +247,8 @@ class StorageTest(TestCase):
 
             (
             'CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, '\
-            'port_protocol int, port int, vulnerability_subid int, cve text, cvss text, '\
-            'output text, time int, primary key(scan_id, node_id, node_ip, port_protocol, port,'\
+            'port_protocol int, port int, vulnerability_id int, vulnerability_subid int, cve text, cvss text, '\
+            'output text, time int, primary key(scan_id, node_id, node_ip, port_protocol, port, '\
             'vulnerability_subid))',)
         ]
 
@@ -666,3 +666,45 @@ class StorageTest(TestCase):
         self.assertEqual(result[1].protocol, TransportProtocol.TCP)
         self.assertEqual(result[1].start, 2)
         self.assertEqual(result[1].end, 18)
+
+    def test__save_vulnerabilities(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
+        exploit = Exploit(exploit_id=14)
+        exploit.name = 'test_name'
+        exploit.app = 'test_app'
+        node = Node(node_id=37, ip=ipaddress.ip_address('127.94.44.32'))
+        node.scan = scan
+        port = Port(node=node, number=45, transport_protocol=TransportProtocol.UDP)
+        vulnerabilities = [
+            Vulnerability(port=port, output='test_output_1', exploit=exploit, cve='CVE-2017', cvss=6.7, subid=1,
+                          vuln_time=13),
+            Vulnerability(port=port, output='test_output_2', exploit=exploit, cve='CWE-14', cvss=8.9, subid=2,
+                          vuln_time=98)
+        ]
+        self.storage.get_scan_id = MagicMock(return_value=16)
+
+        expected = [
+            ("INSERT OR REPLACE INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
+             "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
+             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+             (16, 37, '127.94.44.32', 17, 45, 14, 1, 'CVE-2017', 6.7, 'test_output_1', 13)),
+
+            ("INSERT OR REPLACE INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
+             "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
+             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+             (16, 37, '127.94.44.32', 17, 45, 14, 2, 'CWE-14', 8.9, 'test_output_2', 98))
+        ]
+
+        result = self.storage._save_vulnerabilities(vulnerabilities, scan)
+
+        self.storage.get_scan_id.assert_called_once_with(scan)
+        self.assertEqual(result, expected)
+
+    def test_save_vulnerabilities(self):
+        vulnerabilities = MagicMock()
+        scan = MagicMock()
+        self.storage._save_vulnerabilities = MagicMock()
+        self.storage.execute = MagicMock()
+        self.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=scan)
+        self.storage._save_vulnerabilities.assert_called_once_with(vulnerabilities=vulnerabilities, scan=scan)
+        self.storage.execute.assert_called_once_with(self.storage._save_vulnerabilities())

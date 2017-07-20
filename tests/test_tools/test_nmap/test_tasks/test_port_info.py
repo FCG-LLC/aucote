@@ -1,11 +1,12 @@
 import ipaddress
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 from xml.etree import ElementTree
 
 from cpe import CPE
 from tornado.concurrent import Future
 from tornado.testing import gen_test, AsyncTestCase
 
+from fixtures.exploits import Exploit
 from structs import Port, TransportProtocol, Node, BroadcastPort
 
 from tools.nmap.tasks.port_info import NmapPortInfoTask
@@ -300,3 +301,29 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         expected = CPE('cpe:/a:apache:http_server:2.4.23')
 
         self.assertEqual(result, expected)
+
+    @patch('tools.nmap.tasks.port_info.Exploit')
+    @patch('tools.nmap.tasks.port_info.Vulnerability')
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
+    @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
+    @gen_test
+    async def test_store_vulnerabilities(self, cfg, mock_serializer, vulnerability, exploit):
+        cfg._cfg = self.cfg
+        future = Future()
+        future.set_result(ElementTree.fromstring(self.XML_CPE))
+        self.port_info.command.async_call = MagicMock(return_value=future)
+        self.port_info.scan_only = True
+        await self.port_info()
+
+        expected = 5*[vulnerability.return_value]
+        self.aucote.storage.save_vulnerabilities.assert_called_once_with(vulnerabilities=expected,
+                                                                         scan=self.port_info.scan)
+        exploit.assert_called_once_with(exploit_id=0)
+
+        vulnerability.assert_has_calls([
+            call(exploit=exploit(), port=self.port, output='http', subid=1),
+            call(exploit=exploit(), port=self.port, output='Apache httpd', subid=2),
+            call(exploit=exploit(), port=self.port, output='2.4.23', subid=3),
+            call(exploit=exploit(), port=self.port, output=None, subid=4),
+            call(exploit=exploit(), port=self.port, output='cpe:2.3:a:apache:http_server:2.4.23:*:*:*:*:*:*:*', subid=5)
+        ])

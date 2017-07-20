@@ -81,7 +81,8 @@ class Executor(Task):
         self.storage.save_ports(ports, scan=self._scan)
 
         for port in ports:
-            self.add_async_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only))
+            self.add_async_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only,
+                                                 scan=self._scan))
 
     async def _execute_nodes(self):
         for node in self.nodes:

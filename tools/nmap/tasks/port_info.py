@@ -5,7 +5,8 @@ import logging as log
 
 from aucote_cfg import cfg
 from database.serializer import Serializer
-from structs import BroadcastPort, TransportProtocol
+from fixtures.exploits import Exploit
+from structs import BroadcastPort, TransportProtocol, Vulnerability, Scan
 from structs import PhysicalPort
 from tools.common.port_task import PortTask
 from tools.nmap.base import NmapBase
@@ -16,8 +17,13 @@ class NmapPortInfoTask(PortTask):
     Scans one port using provided vulnerability scan
 
     """
+    SERVICE_PROTOCOL = 1
+    SERVICE_NAME = 2
+    SERVICE_VERSION = 3
+    SERVICE_BANNER = 4
+    SERVICE_CPE = 5
 
-    def __init__(self, scan_only=False, *args, **kwargs):
+    def __init__(self, scan=None, scan_only=False, *args, **kwargs):
         """
         Initiazlize variables.
 
@@ -28,8 +34,10 @@ class NmapPortInfoTask(PortTask):
 
         """
         super().__init__(exploits=[], *args, **kwargs)
+
         self.command = NmapBase()
         self.scan_only = scan_only
+        self.scan = scan or Scan()
 
     def prepare_args(self):
         """
@@ -100,6 +108,19 @@ class NmapPortInfoTask(PortTask):
             cpe = service.find("cpe")
             if cpe is not None:
                 self._port.service.cpe = cpe.text
+
+        exploit = Exploit(exploit_id=0)
+        cpe = self.port.service.cpe.as_fs() if self.port.service.cpe else None
+
+        vulnerabilities = [
+            Vulnerability(exploit=exploit, port=self.port, output=self.port.protocol, subid=self.SERVICE_PROTOCOL),
+            Vulnerability(exploit=exploit, port=self.port, output=self.port.service.name, subid=self.SERVICE_NAME),
+            Vulnerability(exploit=exploit, port=self.port, output=self.port.service.version,
+                          subid=self.SERVICE_VERSION),
+            Vulnerability(exploit=exploit, port=self.port, output=self.port.banner, subid=self.SERVICE_BANNER),
+            Vulnerability(exploit=exploit, port=self.port, output=cpe, subid=self.SERVICE_CPE)
+        ]
+        self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self.scan)
 
         self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None), dont_wait=True)
 
