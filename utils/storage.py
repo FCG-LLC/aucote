@@ -32,7 +32,9 @@ class Storage(DbInterface):
                                     "AND port_protocol IS NULL)) AND port_number=?"
     SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? " \
                    "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
-    SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where time > ? and scan_id = ?"
+    SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN scans ON "\
+                   "scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND "\
+                   "scans.protocol IS NULL)) AND scans.scanner_name=?"
     SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
                    "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
                    "LIMIT {limit} OFFSET {offset}"
@@ -194,6 +196,7 @@ class Storage(DbInterface):
 
         Args:
             pasttime(int)
+            scan (Scan):
 
         Returns:
             tuple
@@ -201,8 +204,9 @@ class Storage(DbInterface):
         """
         scan_id = self.get_scan_id(scan)
         timestamp = time.time() - pasttime
+        iana =        self._protocol_to_iana(scan.protocol)
 
-        return self.SELECT_PORTS, (timestamp, scan_id)
+        return self.SELECT_PORTS, (timestamp, iana, iana, scan.scanner)
 
     def _save_security_scan(self, exploit, port):
         """

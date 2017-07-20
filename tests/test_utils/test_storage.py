@@ -115,11 +115,12 @@ class StorageTest(TestCase):
 
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
     def test__get_ports(self):
-        scan = Scan()
+        scan = Scan(protocol=TransportProtocol.UDP, scanner='test')
         self.storage.get_scan_id = MagicMock(return_value=87)
         result = self.storage._get_ports(700, scan=scan)
-        expected = 'SELECT node_id, node_ip, port, port_protocol, time FROM ports where time > ? and scan_id = ?',\
-                   (139300, 87)
+        expected = 'SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN scans '\
+                   'ON scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?',\
+                   (139300, 17, 17, 'test')
 
         self.storage.get_scan_id.assert_called_once_with(scan)
         self.assertEqual(result, expected)
