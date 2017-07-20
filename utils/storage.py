@@ -17,7 +17,8 @@ class Storage(DbInterface):
 
     """
     SAVE_NODE_QUERY = "INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)"
-    SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)"
+    SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) "\
+                      "VALUES (?, ?, ?, ?, ?, ?)"
     SAVE_SCAN_QUERY = "INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)"
     UPDATE_SCAN_END_QUERY = "UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) "\
                             "AND scanner_name=? and scan_start=?"
@@ -31,7 +32,7 @@ class Storage(DbInterface):
                                     "AND port_protocol IS NULL)) AND port_number=?"
     SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? " \
                    "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
-    SELECT_PORTS = "SELECT id, ip, port, protocol, time FROM ports where time > ?"
+    SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where time > ?"
     SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
                    "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
                    "LIMIT {limit} OFFSET {offset}"
@@ -41,20 +42,22 @@ class Storage(DbInterface):
                             "port_number, scan_start, scan_end FROM security_scans WHERE exploit_app=? AND node_id=? " \
                             "AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) "\
                             "AND port_number=?"
-    SELECT_PORTS_BY_NODE = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND "\
-                           "(protocol=? OR (? IS NULL AND protocol IS NULL))"
-    SELECT_PORTS_BY_NODE_ALL_PROTS = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ?"
-    SELECT_PORTS_BY_NODES = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ? AND " \
-                            "(protocol=? OR (? IS NULL AND protocol IS NULL))"
-    SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ?"
+    SELECT_PORTS_BY_NODE = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? "\
+                           "AND node_ip=? AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"
+    SELECT_PORTS_BY_NODE_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? "\
+                                     "AND node_ip=? AND time > ?"
+    SELECT_PORTS_BY_NODES = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where ({where}) " \
+                            "AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"
+    SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where ({where}) "\
+                                      "AND time > ?"
     CLEAR_SECURITY_SCANS = "DELETE FROM security_scans WHERE scan_start >= scan_end OR scan_start IS NULL "\
                            "OR SCAN_END IS NULL"
     CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (exploit_id int, exploit_app text, " \
                                   "exploit_name text, node_id int, node_ip text, port_protocol int, port_number int, " \
                                   "scan_start float, scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, "\
                                   "port_protocol, port_number))"
-    CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int," \
-                         "primary key (id, ip, port, protocol))"
+    CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports (scan_id int, node_id int, node_ip text, port int, " \
+                         "port_protocol int, time int, primary key (scan_id, node_id, node_ip, port, port_protocol))"
     CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes(scan_id int, node_id int, node_ip text, time int, " \
                          "primary key (scan_id, node_id, node_ip))"
     CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
@@ -164,7 +167,7 @@ class Storage(DbInterface):
             tuple
 
         """
-        return self.SAVE_PORT_QUERY, (port.node.id, str(port.node.ip), port.number,
+        return self.SAVE_PORT_QUERY, (0, port.node.id, str(port.node.ip), port.number,
                                       self._protocol_to_iana(port.transport_protocol), time.time())
 
     def _save_ports(self, ports):
@@ -178,7 +181,7 @@ class Storage(DbInterface):
             list
 
         """
-        queries = [(self.SAVE_PORT_QUERY, (port.node.id, str(port.node.ip), port.number,
+        queries = [(self.SAVE_PORT_QUERY, (0, port.node.id, str(port.node.ip), port.number,
                                            self._protocol_to_iana(port.transport_protocol), time.time()))
                    for port in ports]
 
@@ -331,7 +334,7 @@ class Storage(DbInterface):
             parameters.extend([iana, iana])
             query = self.SELECT_PORTS_BY_NODES
 
-        where = 'OR'.join([' (id=? AND ip=?) '] * len(nodes))
+        where = 'OR'.join([' (node_id=? AND node_ip=?) '] * len(nodes))
 
         return query.format(where=where), parameters
 
