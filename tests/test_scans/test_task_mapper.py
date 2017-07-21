@@ -260,14 +260,8 @@ class TaskMapperTest(AsyncTestCase):
         self.task_mapper.store_security_scan(exploits=[self.exploits['test'][0]], port=self.UDP,
                                              storage=self.executor.storage)
 
-        result = self.executor.storage.save_security_scans.call_args[1]
-        expected = {
-            'exploits': [self.exploits['test'][0]],
-            'port': self.UDP
-        }
-
-        self.assertDictEqual(result, expected)
-        self.assertEqual(result['port'].scan.start, self.UDP.scan.start)
+        self.executor.storage.save_security_scans.assert_called_once_with(exploits=[self.exploits['test'][0]],
+                                                                          port=self.UDP, scan=self.scan)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)

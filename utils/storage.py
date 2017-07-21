@@ -217,13 +217,14 @@ class Storage(DbInterface):
 
         return self.SELECT_PORTS, (timestamp, iana, iana, scan.scanner)
 
-    def _save_security_scan(self, exploit, port):
+    def _save_security_scan(self, exploit, port, scan):
         """
         Queries for saving scan into database
 
         Args:
             exploit (Exploit): needs some exploit details to save into storage
             port (Port): needs some port details to save into storage
+            scan (Scan):
 
         Returns:
             list
@@ -234,22 +235,23 @@ class Storage(DbInterface):
                   port.scan.start, port.scan.end, exploit.id, port.node.id, str(port.node), str(port))
         queries = []
         iana = self._protocol_to_iana(port.transport_protocol)
+        scan_id = self.get_scan_id(scan)
 
-        queries.append((self.SAVE_SECURITY_SCAN_DETAIL, (None, exploit.id, exploit.app, exploit.name, port.node.id,
+        queries.append((self.SAVE_SECURITY_SCAN_DETAIL, (scan_id, exploit.id, exploit.app, exploit.name, port.node.id,
                                                          str(port.node.ip), iana, port.number)))
 
         if port.scan.start:
             queries.append((self.SAVE_SECURITY_SCAN_DETAIL_START, (port.scan.start, exploit.id, exploit.app,
                                                                    exploit.name, port.node.id, str(port.node.ip), iana,
-                                                                   iana, port.number, None)))
+                                                                   iana, port.number, scan_id)))
 
         if port.scan.end:
             queries.append((self.SAVE_SECURITY_SCAN_DETAIL_END, (port.scan.end, exploit.id, exploit.app, exploit.name,
                                                                  port.node.id, str(port.node.ip), iana, iana,
-                                                                 port.number, None)))
+                                                                 port.number, scan_id)))
         return queries
 
-    def _save_security_scans(self, exploits, port):
+    def _save_security_scans(self, exploits, port, scan):
         """
         Queries for saving scans into database
 
@@ -262,9 +264,10 @@ class Storage(DbInterface):
  .
 
         """
-        return list(query for exploit in exploits for query in self._save_security_scan(exploit=exploit, port=port))
+        return list(query for exploit in exploits for query in self._save_security_scan(exploit=exploit, port=port,
+                                                                                        scan=scan))
 
-    def _get_security_scan_info(self, port, app):
+    def _get_security_scan_info(self, port, app, scan):
         """
         Query for scan detail for provided port and app
 
@@ -277,8 +280,9 @@ class Storage(DbInterface):
 
         """
         iana = self._protocol_to_iana(port.transport_protocol)
-        return self.SELECT_SECURITY_SCANS, (app, port.node.id, str(port.node.ip), iana, iana, port.number, None, None,
-                                            None)
+        scan_iana = self._protocol_to_iana(scan.protocol)
+        return self.SELECT_SECURITY_SCANS, (app, port.node.id, str(port.node.ip), iana, iana, port.number, scan_iana,
+                                            scan_iana, scan.scanner)
 
     def _clear_security_scans(self):
         """
@@ -477,7 +481,7 @@ class Storage(DbInterface):
         """
         return self.execute(self._save_security_scan(exploit=exploit, port=port))
 
-    def save_security_scans(self, exploits, port):
+    def save_security_scans(self, exploits, port, scan):
         """
         Save scans of port to database basing on given exploits
 
@@ -489,9 +493,9 @@ class Storage(DbInterface):
             None
 
         """
-        return self.execute(self._save_security_scans(exploits=exploits, port=port))
+        return self.execute(self._save_security_scans(exploits=exploits, port=port, scan=scan))
 
-    def get_security_scan_info(self, port, app):
+    def get_security_scan_info(self, port, app, scan):
         """
         Get scan info from database
 
@@ -505,7 +509,7 @@ class Storage(DbInterface):
         """
         return_value = []
 
-        for row in self.execute(self._get_security_scan_info(port=port, app=app)):
+        for row in self.execute(self._get_security_scan_info(port=port, app=app, scan=scan)):
             return_value.append({
                 "exploit": Exploit(exploit_id=row[0]),
                 "port": Port(node=Node(node_id=row[3], ip=ipaddress.ip_address(row[4])), number=row[6],
