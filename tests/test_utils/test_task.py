@@ -52,16 +52,8 @@ class TaskTest(TestCase):
 
         self.task.store_scan_end(exploits=[exploit], port=port)
 
-        result = self.task.aucote.storage.save_security_scans.call_args[1]
-
-        expected = {
-            'exploits': [exploit],
-            'port': port
-        }
-
-        self.assertDictEqual(result, expected)
-        self.assertEqual(result['port'].scan.end, port.scan.end)
-
+        self.task.aucote.storage.save_security_scans.assert_called_once_with(exploits=[exploit], port=port,
+                                                                             scan=self.scan)
     def test_reload_config(self):
         result = self.task.reload_config()
 
