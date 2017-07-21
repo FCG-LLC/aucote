@@ -257,6 +257,7 @@ class TaskMapperTest(AsyncTestCase):
 
     def test_store_scan(self):
         self.UDP.scan = Scan(start=25.0)
+
         self.task_mapper.store_security_scan(exploits=[self.exploits['test'][0]], port=self.UDP,
                                              storage=self.executor.storage)
 
