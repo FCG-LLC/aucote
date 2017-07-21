@@ -230,7 +230,6 @@ class Storage(DbInterface):
             list
 
         """
-
         log.debug("Saving scan details: scan_start(%s), scan_end(%s), exploit_id(%s), node_id(%s), node(%s), port(%s)",
                   port.scan.start, port.scan.end, exploit.id, port.node.id, str(port.node), str(port))
         queries = []
@@ -467,19 +466,20 @@ class Storage(DbInterface):
                               transport_protocol=self._transport_protocol(port[3])))
         return ports
 
-    def save_security_scan(self, exploit, port):
+    def save_security_scan(self, exploit, port, scan):
         """
         Save scan of port by exploit to database
 
         Args:
             exploit (Exploit):
             port (Port):
+            scan (Scan):
 
         Returns:
             None
 
         """
-        return self.execute(self._save_security_scan(exploit=exploit, port=port))
+        return self.execute(self._save_security_scan(exploit=exploit, port=port, scan=scan))
 
     def save_security_scans(self, exploits, port, scan):
         """

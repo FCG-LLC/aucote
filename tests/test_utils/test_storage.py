@@ -137,6 +137,7 @@ class StorageTest(TestCase):
         start_scan = 17
         port.scan = Scan(start=start_scan)
         result = self.storage._save_security_scan(exploit=exploit, port=port, scan=scan)
+        self.storage.get_scan_id.assert_called_once_with(scan)
 
         expected = [
             ("INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, "
@@ -210,6 +211,7 @@ class StorageTest(TestCase):
         start_scan = 17
         port.scan = Scan(start=start_scan, end=start_scan)
         result = self.storage._save_security_scan(exploit=exploit, port=port, scan=scan)
+        self.storage.get_scan_id.assert_called_once_with(scan)
 
         expected = [
             ("INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, "
@@ -407,12 +409,13 @@ class StorageTest(TestCase):
         self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
 
     def test_save_security_scan(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
         exploit = MagicMock()
         port = MagicMock()
         self.storage._save_security_scan = MagicMock()
         self.storage.execute = MagicMock()
-        self.storage.save_security_scan(exploit=exploit, port=port)
-        self.storage._save_security_scan.assert_called_once_with(exploit=exploit, port=port)
+        self.storage.save_security_scan(exploit=exploit, port=port, scan=scan)
+        self.storage._save_security_scan.assert_called_once_with(exploit=exploit, port=port, scan=scan)
         self.storage.execute.assert_called_once_with(self.storage._save_security_scan())
 
     def test_save_security_scans(self):
