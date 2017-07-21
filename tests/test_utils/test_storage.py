@@ -13,6 +13,7 @@ from utils.storage import Storage
 
 class StorageTest(TestCase):
     def setUp(self):
+        self.maxDiff = None
         self.storage = Storage(filename=":memory:")
 
     def test_init(self):
@@ -136,12 +137,12 @@ class StorageTest(TestCase):
         result = self.storage._save_security_scan(exploit=exploit, port=port)
 
         expected = [
-            ("INSERT OR IGNORE INTO security_scans (exploit_id, exploit_app, exploit_name, node_id, node_ip, "
-              "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
-              (14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
+            ("INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, "
+              "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+              (None, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
             ("UPDATE security_scans SET scan_start=? WHERE exploit_id=? AND exploit_app=? AND "
-              "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=?",
-              (17, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 6, 12))
+              "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
+              (17, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 6, 12, None))
         ]
 
         self.assertCountEqual(result[0], expected[0])
@@ -163,29 +164,29 @@ class StorageTest(TestCase):
         result = self.storage._save_security_scans(exploits=[exploit, exploit_2], port=port)
 
         expected = [
-            ("INSERT OR IGNORE INTO security_scans (exploit_id, exploit_app, exploit_name, node_id, node_ip, "
-             "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
-             (14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
+            ("INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, "
+             "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+             (None, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
 
             ("UPDATE security_scans SET scan_start=? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=?",
-             (3, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 6, 12)),
+             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
+             (3, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 6, 12, None)),
 
             ("UPDATE security_scans SET scan_end=? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=?",
-             (45, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 6, 12)),
+             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
+             (45, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 6, 12, None)),
 
-            ("INSERT OR IGNORE INTO security_scans (exploit_id, exploit_app, exploit_name, node_id, node_ip, "
-             "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
-             (2, 'test_app_2', 'test_name_2', 3, '127.0.0.1', 6, 12)),
+            ("INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, "
+             "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+             (None, 2, 'test_app_2', 'test_name_2', 3, '127.0.0.1', 6, 12)),
 
             ("UPDATE security_scans SET scan_start=? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=?",
-             (3, 2, 'test_app_2', 'test_name_2', 3, '127.0.0.1', 6, 6, 12)),
+             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
+             (3, 2, 'test_app_2', 'test_name_2', 3, '127.0.0.1', 6, 6, 12, None)),
 
             ("UPDATE security_scans SET scan_end=? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=?",
-             (45, 2, 'test_app_2', 'test_name_2', 3, '127.0.0.1', 6, 6, 12))
+             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
+             (45, 2, 'test_app_2', 'test_name_2', 3, '127.0.0.1', 6, 6, 12, None))
         ]
 
         self.assertCountEqual(result, expected)
@@ -204,15 +205,15 @@ class StorageTest(TestCase):
         result = self.storage._save_security_scan(exploit=exploit, port=port)
 
         expected = [
-            ("INSERT OR IGNORE INTO security_scans (exploit_id, exploit_app, exploit_name, node_id, node_ip, "
-              "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
-              (14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
+            ("INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, "
+              "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+              (None, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
             ("UPDATE security_scans SET scan_start=? WHERE exploit_id=? AND exploit_app=? AND "
-              "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=?",
-              (17, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 6, 12)),
+              "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
+              (17, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 6, 12, None)),
             ("UPDATE security_scans SET scan_end=? WHERE exploit_id=? AND exploit_app=? AND "
-              "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=?",
-              (17, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 6, 12))
+              "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
+              (17, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 6, 12, None))
         ]
 
         self.assertCountEqual(result, expected)
@@ -224,17 +225,18 @@ class StorageTest(TestCase):
 
         result = self.storage._get_security_scan_info(port=port, app='test_app')
         expected = ('SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, port_number, '
-                    'scan_start, scan_end FROM security_scans WHERE exploit_app=? AND node_id=? AND node_ip=? '
-                    'AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=?', ('test_app', 3, '127.0.0.1', 6, 6, 12))
+                    'scan_start, scan_end FROM security_scans INNER JOIN scans ON scan_id=scans.ROWID '
+                    'WHERE exploit_app=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? '\
+                    'AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?', ('test_app', 3, '127.0.0.1', 6, 6, 12, None, None, None))
 
         self.assertCountEqual(result, expected)
 
     def test__create_table(self):
         result = self.storage._create_tables()
         expected = [
-            ("CREATE TABLE IF NOT EXISTS security_scans (exploit_id int, exploit_app text, exploit_name text, "
-              "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
-              "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, port_number))",),
+            ("CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, exploit_app text, "
+              "exploit_name text, node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
+              "scan_end float, PRIMARY KEY (scan_id, exploit_id, node_id, node_ip, port_protocol, port_number))",),
 
             ("CREATE TABLE IF NOT EXISTS ports (scan_id int, node_id int, node_ip text, port int, port_protocol int,"
               " time int, primary key (scan_id, node_id, node_ip, port, port_protocol))",),

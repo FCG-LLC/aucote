@@ -22,14 +22,14 @@ class Storage(DbInterface):
     SAVE_SCAN_QUERY = "INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)"
     UPDATE_SCAN_END_QUERY = "UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) "\
                             "AND scanner_name=? and scan_start=?"
-    SAVE_SECURITY_SCAN_DETAIL = "INSERT OR IGNORE INTO security_scans (exploit_id, exploit_app, exploit_name, " \
-                                "node_id, node_ip, port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    SAVE_SECURITY_SCAN_DETAIL = "INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name,"\
+                                " node_id, node_ip, port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     SAVE_SECURITY_SCAN_DETAIL_START = "UPDATE security_scans SET scan_start=? WHERE exploit_id=? AND exploit_app=? AND"\
                                       " exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL "\
-                                      "AND port_protocol IS NULL)) AND port_number=?"
+                                      "AND port_protocol IS NULL)) AND port_number=? AND scan_id=?"
     SAVE_SECURITY_SCAN_DETAIL_END = "UPDATE security_scans SET scan_end=? WHERE exploit_id=? AND exploit_app=? AND " \
                                     "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL "\
-                                    "AND port_protocol IS NULL)) AND port_number=?"
+                                    "AND port_protocol IS NULL)) AND port_number=? AND scan_id=?"
     SAVE_VULNERABILITY = "INSERT OR REPLACE INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
                          "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
@@ -44,9 +44,10 @@ class Storage(DbInterface):
     SELECT_SCAN = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
                   "(? IS NULL AND protocol IS NULL)) AND scanner_name=? AND scan_start=? LIMIT 1"
     SELECT_SECURITY_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, " \
-                            "port_number, scan_start, scan_end FROM security_scans WHERE exploit_app=? AND node_id=? " \
-                            "AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) "\
-                            "AND port_number=?"
+                            "port_number, scan_start, scan_end FROM security_scans INNER JOIN scans ON " \
+                            "scan_id=scans.ROWID WHERE exploit_app=? AND node_id=? AND node_ip=? "\
+                            "AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? "\
+                            "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
     SELECT_PORTS_BY_NODE = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? "\
                            "AND node_ip=? AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"
     SELECT_PORTS_BY_NODE_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? "\
@@ -57,10 +58,10 @@ class Storage(DbInterface):
                                       "AND time > ?"
     CLEAR_SECURITY_SCANS = "DELETE FROM security_scans WHERE scan_start >= scan_end OR scan_start IS NULL "\
                            "OR SCAN_END IS NULL"
-    CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (exploit_id int, exploit_app text, " \
-                                  "exploit_name text, node_id int, node_ip text, port_protocol int, port_number int, " \
-                                  "scan_start float, scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, "\
-                                  "port_protocol, port_number))"
+    CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, " \
+                                  "exploit_app text, exploit_name text, node_id int, node_ip text, port_protocol int, "\
+                                  "port_number int, scan_start float, scan_end float, PRIMARY KEY (scan_id, "\
+                                  "exploit_id, node_id, node_ip, port_protocol, port_number))"
     CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports (scan_id int, node_id int, node_ip text, port int, " \
                          "port_protocol int, time int, primary key (scan_id, node_id, node_ip, port, port_protocol))"
     CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes(scan_id int, node_id int, node_ip text, time int, " \
@@ -233,18 +234,18 @@ class Storage(DbInterface):
         queries = []
         iana = self._protocol_to_iana(port.transport_protocol)
 
-        queries.append((self.SAVE_SECURITY_SCAN_DETAIL, (exploit.id, exploit.app, exploit.name, port.node.id,
+        queries.append((self.SAVE_SECURITY_SCAN_DETAIL, (None, exploit.id, exploit.app, exploit.name, port.node.id,
                                                          str(port.node.ip), iana, port.number)))
 
         if port.scan.start:
             queries.append((self.SAVE_SECURITY_SCAN_DETAIL_START, (port.scan.start, exploit.id, exploit.app,
                                                                    exploit.name, port.node.id, str(port.node.ip), iana,
-                                                                   iana, port.number)))
+                                                                   iana, port.number, None)))
 
         if port.scan.end:
             queries.append((self.SAVE_SECURITY_SCAN_DETAIL_END, (port.scan.end, exploit.id, exploit.app, exploit.name,
                                                                  port.node.id, str(port.node.ip), iana, iana,
-                                                                 port.number)))
+                                                                 port.number, None)))
         return queries
 
     def _save_security_scans(self, exploits, port):
@@ -275,7 +276,8 @@ class Storage(DbInterface):
 
         """
         iana = self._protocol_to_iana(port.transport_protocol)
-        return self.SELECT_SECURITY_SCANS, (app, port.node.id, str(port.node.ip), iana, iana, port.number)
+        return self.SELECT_SECURITY_SCANS, (app, port.node.id, str(port.node.ip), iana, iana, port.number, None, None,
+                                            None)
 
     def _clear_security_scans(self):
         """
