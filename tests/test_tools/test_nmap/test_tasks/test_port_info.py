@@ -7,7 +7,7 @@ from tornado.concurrent import Future
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
-from structs import Port, TransportProtocol, Node, BroadcastPort
+from structs import Port, TransportProtocol, Node, BroadcastPort, Scan
 
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils import Config
@@ -107,8 +107,9 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         self.port = Port(number=22, transport_protocol=TransportProtocol.TCP, node=self.node)
         self.port_ipv6 = Port(number=22, node=self.node_ipv6, transport_protocol=TransportProtocol.TCP)
+        self.scan = Scan()
 
-        self.port_info = NmapPortInfoTask(aucote=self.aucote, port=self.port)
+        self.port_info = NmapPortInfoTask(aucote=self.aucote, port=self.port, scan=self.scan)
 
         self.cfg = {
             'portdetection': {
@@ -273,19 +274,24 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         self.assertFalse(self.aucote.task_mapper.assign_tasks.called)
 
+    @patch('tools.nmap.tasks.port_info.TaskMapper')
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     @gen_test
-    async def test_scan_only_false(self, cfg, mock_serializer):
+    async def test_scan_only_false(self, cfg, mock_serializer, task_mapper):
         cfg._cfg = self.cfg
         self.port_info.scan_only = False
         future = Future()
         future.set_result(ElementTree.fromstring(self.XML_HTTP_WITH_TUNNEL))
+
+        task_mapper.return_value.assign_tasks.return_value = Future()
+        task_mapper.return_value.assign_tasks.return_value.set_result(True)
+
         self.port_info.command.async_call = MagicMock(return_value=future)
 
         await self.port_info()
 
-        self.assertTrue(self.aucote.task_mapper.assign_tasks.called)
+        self.assertTrue(task_mapper.return_value.assign_tasks.called)
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
     @gen_test
@@ -317,7 +323,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         expected = 5*[vulnerability.return_value]
         self.aucote.storage.save_vulnerabilities.assert_called_once_with(vulnerabilities=expected,
-                                                                         scan=self.port_info.scan)
+                                                                         scan=self.port_info._scan)
         exploit.assert_called_once_with(exploit_id=0)
 
         vulnerability.assert_has_calls([

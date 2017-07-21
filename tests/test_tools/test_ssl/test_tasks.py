@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
-from structs import Port, Node, TransportProtocol, Vulnerability
+from structs import Port, Node, TransportProtocol, Vulnerability, Scan
 from tools.ssl.base import SSLBase
 from tools.ssl.structs import SSLResults
 from tools.ssl.tasks import SSLScriptTask
@@ -15,7 +15,8 @@ class SSLScriptTaskTest(TestCase):
         port = Port(node=Node(node_id=2, ip=ipaddress.ip_address('127.0.0.1')),
                     transport_protocol=TransportProtocol.TCP, number=16)
         aucote = MagicMock()
-        self.task = SSLScriptTask(port=port, exploits=[exploit], aucote=aucote)
+        self.scan = Scan()
+        self.task = SSLScriptTask(port=port, exploits=[exploit], aucote=aucote, scan=self.scan)
 
     def test_init(self):
         self.assertIsInstance(self.task.command, SSLBase)

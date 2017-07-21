@@ -13,19 +13,21 @@ from structs import SpecialPort
 from utils.time import parse_period
 
 
-class TaskMapper:
+class TaskMapper(object):
     """
     Assign tasks for a provided port
 
     """
 
-    def __init__(self, aucote):
+    def __init__(self, aucote, scan):
         """
         Args:
             executor (Executor): tasks executor
+            scan (Scan): Scan under which the mapper is working
 
         """
         self._aucote = aucote
+        self._scan = scan
 
     async def assign_tasks(self, port, storage):
         """
@@ -56,7 +58,7 @@ class TaskMapper:
             log.info("Using %i exploits against %s", len(exploits), port)
             self.store_security_scan(port=port, exploits=exploits, storage=storage)
             task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, port=port.copy(),
-                                                         config=EXECUTOR_CONFIG['apps'][app])
+                                                         config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
 
             self._aucote.add_async_task(task)
 
@@ -77,7 +79,7 @@ class TaskMapper:
             log.info("Using %i exploits against %s", len(exploits), node)
 
             task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, node=node,
-                                                         config=EXECUTOR_CONFIG['apps'][app])
+                                                         config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
 
             self._aucote.add_async_task(task)
 

@@ -4,7 +4,7 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from scans.executor import Executor
-from structs import Node, Port, TransportProtocol, BroadcastPort
+from structs import Node, Port, TransportProtocol, BroadcastPort, Scan
 from utils import Config
 
 
@@ -24,7 +24,8 @@ class ExecutorTest(AsyncTestCase):
         self.cfg = cfg
         self.aucote = MagicMock()
         self.aucote.storage = MagicMock()
-        self.executor = Executor(aucote=self.aucote)
+        self.scan = Scan()
+        self.executor = Executor(aucote=self.aucote, scan=self.scan)
 
     def test_init(self):
         self.assertEqual(self.executor.exploits, self.aucote.exploits)

@@ -6,6 +6,7 @@ import logging as log
 from aucote_cfg import cfg
 from database.serializer import Serializer
 from fixtures.exploits import Exploit
+from scans.task_mapper import TaskMapper
 from structs import BroadcastPort, TransportProtocol, Vulnerability, Scan
 from structs import PhysicalPort
 from tools.common.port_task import PortTask
@@ -23,7 +24,7 @@ class NmapPortInfoTask(PortTask):
     SERVICE_BANNER = 4
     SERVICE_CPE = 5
 
-    def __init__(self, scan=None, scan_only=False, *args, **kwargs):
+    def __init__(self, scan_only=False, *args, **kwargs):
         """
         Initiazlize variables.
 
@@ -37,7 +38,6 @@ class NmapPortInfoTask(PortTask):
 
         self.command = NmapBase()
         self.scan_only = scan_only
-        self.scan = scan or Scan()
 
     def prepare_args(self):
         """
@@ -120,9 +120,9 @@ class NmapPortInfoTask(PortTask):
             Vulnerability(exploit=exploit, port=self.port, output=self.port.banner, subid=self.SERVICE_BANNER),
             Vulnerability(exploit=exploit, port=self.port, output=cpe, subid=self.SERVICE_CPE)
         ]
-        self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self.scan)
+        self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self._scan)
 
         self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None), dont_wait=True)
 
         if not self.scan_only:
-            await self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)
+            await TaskMapper(aucote=self.aucote, scan=self._scan).assign_tasks(self._port, self.aucote.storage)
