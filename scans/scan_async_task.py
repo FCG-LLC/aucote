@@ -190,8 +190,8 @@ class ScanAsyncTask(object):
         try:
             resource = await HTTPClient.instance().get(url)
         except (HTTPError, ConnectionError) as exception:
-            log.warning('Cannot connect to topdis: %s:%s, %s', cfg['topdis.api.host'], cfg['topdis.api.port'],
-                        str(exception))
+            log.error('Cannot connect to topdis: %s:%s, %s', cfg['topdis.api.host'], cfg['topdis.api.port'],
+                      str(exception))
             return []
 
         nodes_cfg = json.loads(resource.body)
