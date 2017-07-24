@@ -216,12 +216,10 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         future = Future()
         future.set_result(ElementTree.fromstring(self.XML_BANNER))
         self.port_info.command.async_call = MagicMock(return_value=future)
+
         await self.port_info()
 
-        result = self.aucote.task_mapper.assign_tasks.call_args[0]
-        expected = (BroadcastPort(), self.aucote.storage)
-
-        self.assertEqual(result, expected)
+        self.aucote.task_mapper.assign_tasks.assert_called_once_with(BroadcastPort())
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)

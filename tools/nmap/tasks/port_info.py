@@ -79,7 +79,7 @@ class NmapPortInfoTask(PortTask):
 
         """
         if isinstance(self._port, (BroadcastPort, PhysicalPort)):
-            await self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)
+            await self.aucote.task_mapper.assign_tasks(self._port)
             return
 
         args = self.prepare_args()

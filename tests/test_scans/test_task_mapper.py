@@ -81,7 +81,7 @@ class TaskMapperTest(AsyncTestCase):
             }
         }
         self.executor.storage.get_security_scan_info.return_value = []
-        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP)
 
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 1)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 1)
@@ -108,7 +108,7 @@ class TaskMapperTest(AsyncTestCase):
             }
         }
         self.executor.storage.get_security_scan_info.return_value = []
-        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP)
         self.task_mapper._aucote.add_async_task.assert_called_once_with(
             self.EXECUTOR_CONFIG['apps']['test']['class'].return_value)
 
@@ -116,7 +116,7 @@ class TaskMapperTest(AsyncTestCase):
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
     @gen_test
     async def test_disable_all_app_running(self):
-        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP)
 
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 0)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 0)
@@ -143,7 +143,7 @@ class TaskMapperTest(AsyncTestCase):
             }
         }
         self.executor.storage.get_security_scan_info.return_value = []
-        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP)
 
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 0)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 1)
@@ -190,7 +190,7 @@ class TaskMapperTest(AsyncTestCase):
             },
         ]
 
-        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP)
 
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
         expected = []
@@ -244,11 +244,10 @@ class TaskMapperTest(AsyncTestCase):
         expected = [self.exploits['test'][1]]
         expected_call = {
             'exploits': [self.exploits['test'][1]],
-            'port': self.UDP,
-            'storage': self.executor.storage
+            'port': self.UDP
         }
 
-        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP)
 
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
 
@@ -257,9 +256,7 @@ class TaskMapperTest(AsyncTestCase):
 
     def test_store_scan(self):
         self.UDP.scan = Scan(start=25.0)
-
-        self.task_mapper.store_security_scan(exploits=[self.exploits['test'][0]], port=self.UDP,
-                                             storage=self.executor.storage)
+        self.task_mapper.store_security_scan(exploits=[self.exploits['test'][0]], port=self.UDP)
 
         self.executor.storage.save_security_scans.assert_called_once_with(exploits=[self.exploits['test'][0]],
                                                                           port=self.UDP, scan=self.scan)
@@ -287,7 +284,7 @@ class TaskMapperTest(AsyncTestCase):
             }
         }
         self.executor.storage.get_security_scan_info.return_value = []
-        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP)
 
         self.assertNotEqual(id(self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['port']), id(self.UDP))
         self.assertNotEqual(id(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_args[1]['port']), id(self.TCP))
@@ -362,7 +359,7 @@ class TaskMapperTest(AsyncTestCase):
 
         expected = [self.exploits['test'][1]]
 
-        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP)
 
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
 
@@ -413,7 +410,7 @@ class TaskMapperTest(AsyncTestCase):
 
         self.task_mapper.store_security_scan = MagicMock()
         expected = [self.exploits['test'][0], self.exploits['test'][1]]
-        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP)
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
 
         self.assertEqual(result, expected)
@@ -462,7 +459,7 @@ class TaskMapperTest(AsyncTestCase):
 
         self.EXECUTOR_CONFIG['apps']['test']['class'] = MagicMock()
 
-        await self.task_mapper.assign_tasks(self.UDP, storage=self.executor.storage)
+        await self.task_mapper.assign_tasks(self.UDP)
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
         expected = [self.exploits['test'][0]]
         self.assertEqual(result, expected)

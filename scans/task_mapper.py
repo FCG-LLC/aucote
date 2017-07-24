@@ -29,12 +29,17 @@ class TaskMapper(object):
         self._aucote = aucote
         self._scan = scan
 
-    async def assign_tasks(self, port, storage):
+    async def assign_tasks(self, port, scripts=None):
         """
-        Assign tasks for a provided port
+
+        Args:
+            port (Port):
+            scripts (list|None): list of exploits or None, which stands for all exploits
+
+        Returns:
 
         """
-        scripts = self._aucote.exploits.find_all_matching(port)
+        scripts = scripts or self._aucote.exploits.find_all_matching(port)
 
         for app, exploits in scripts.items():
             if not cfg['tools.{0}.enable'.format(app)]:
@@ -43,7 +48,7 @@ class TaskMapper(object):
             log.info("Found %i exploits", len(exploits))
             periods = cfg.get('tools.{0}.periods.*'.format(app)).cfg
 
-            scans = storage.get_security_scan_info(port=port, app=app, scan=self._scan)
+            scans = self.storage.get_security_scan_info(port=port, app=app, scan=self._scan)
 
             for scan in scans:
                 period = parse_period(periods.get(scan['exploit_name'], None) or
@@ -56,7 +61,7 @@ class TaskMapper(object):
                 exploits = self._filter_exploits(app, exploits, port.node)
 
             log.info("Using %i exploits against %s", len(exploits), port)
-            self.store_security_scan(port=port, exploits=exploits, storage=storage)
+            self.store_security_scan(port=port, exploits=exploits)
             task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, port=port.copy(),
                                                          config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
 
@@ -108,16 +113,19 @@ class TaskMapper(object):
         """
         return self._aucote.exploits
 
-    def store_security_scan(self, port, exploits, storage):
+    def store_security_scan(self, port, exploits):
         """
         Saves scan details into storage
 
         Args:
             port (Port):
             exploits (Exploits):
-            storage (Storage):
 
         Returns:
             None
         """
-        storage.save_security_scans(exploits=exploits, port=port, scan=self._scan)
+        self.storage.save_security_scans(exploits=exploits, port=port, scan=self._scan)
+
+    @property
+    def storage(self):
+        return self._aucote.storage
