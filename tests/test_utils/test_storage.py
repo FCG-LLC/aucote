@@ -454,6 +454,14 @@ class StorageTest(TestCase):
         self.storage._get_ports_by_node.assert_called_once_with(node=node, timestamp=7)
         self.storage.execute.assert_called_once_with(self.storage._get_ports_by_node())
 
+    def test_get_ports_by_nodes_without_nodes(self):
+        nodes = []
+        expected = []
+
+        result = self.storage.get_ports_by_nodes(nodes)
+
+        self.assertEqual(result, expected)
+
     @patch('utils.storage.time.time', MagicMock(return_value=108))
     def test_get_ports_by_nodes(self):
         pasttime = 30
