@@ -318,7 +318,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @gen_test
     async def test_getting_nodes_cannot_connect_to_topdis(self, cfg, http_client):
         cfg._cfg = self.cfg
-        http_client.instance().get.side_effect = HTTPError('')
+        http_client.instance().get.side_effect = HTTPError(404)
         result = await self.thread._get_topdis_nodes()
         expected = []
 
