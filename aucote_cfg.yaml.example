@@ -30,14 +30,14 @@ fixtures:
         filename: fixtures/exploits/exploits.csv
 
 # kuduworker: Configuration of kudu.
+#   enable: <bool> - Define if kudu should be enable or not
 #   queue:
 #     address: <str> - URL to the kudu worker
-#   enable: <bool> - Define if kudu should be enable or not
 
 kuduworker:
+    enable: False
     queue:
         address: ipc:///tmp/scar-pipeline.ipc
-    enable: False
 
 # This section contains configuration related to topdis service
 # topdis:
