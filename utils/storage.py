@@ -20,20 +20,22 @@ class Storage(DbInterface):
     SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)"
     SAVE_SCAN_DETAIL = "INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip," \
                        "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    SAVE_SCAN_DETAIL_START = "UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND " \
-                             "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?"
-    SAVE_SCAN_DETAIL_END = "UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND " \
-                           "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?"
-    SELECT_NODES = "SELECT id, ip, time FROM nodes where time > ? AND protocol IS ?"
+    SAVE_SCAN_DETAIL_START = "UPDATE scans SET scan_start=? WHERE exploit_id=? AND exploit_app=? AND " \
+                             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND "\
+                             "port_protocol IS NULL)) AND port_number=?"
+    SAVE_SCAN_DETAIL_END = "UPDATE scans SET scan_end=? WHERE exploit_id=? AND exploit_app=? AND " \
+                           "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND "\
+                           "port_protocol IS NULL)) AND port_number=?"
+    SELECT_NODES = "SELECT id, ip, time FROM nodes where time > ? AND (protocol=? OR (? IS NULL AND protocol IS NULL))"
     SELECT_PORTS = "SELECT id, ip, port, protocol, time FROM ports where time > ?"
     SELECT_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, port_number, " \
-                   "scan_start, scan_end FROM scans WHERE exploit_app = ? AND node_id = ? AND node_ip = ? " \
-                   "AND port_protocol IS ? AND port_number = ?"
+                   "scan_start, scan_end FROM scans WHERE exploit_app=? AND node_id=? AND node_ip=? " \
+                   "AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=?"
     SELECT_PORTS_BY_NODE = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND "\
-                           "protocol IS ?"
+                           "(protocol=? OR (? IS NULL AND protocol IS NULL))"
     SELECT_PORTS_BY_NODE_ALL_PROTS = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ?"
     SELECT_PORTS_BY_NODES = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ? AND " \
-                            "protocol IS ?"
+                            "(protocol=? OR (? IS NULL AND protocol IS NULL))"
     SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT id, ip, port, protocol, time FROM ports where ({where}) AND time > ?"
     CLEAR_SCANS = "DELETE FROM scans WHERE scan_start >= scan_end OR scan_start IS NULL OR SCAN_END IS NULL"
     CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans (exploit_id int, exploit_app text, exploit_name text, " \
@@ -134,7 +136,8 @@ class Storage(DbInterface):
         """
         if timestamp is None:
             timestamp = time.time() - pasttime
-        return self.SELECT_NODES, (timestamp, self._protocol_to_iana(protocol))
+        iana = self._protocol_to_iana(protocol)
+        return self.SELECT_NODES, (timestamp, iana, iana)
 
     def _save_port(self, port):
         """
@@ -203,20 +206,18 @@ class Storage(DbInterface):
         log.debug("Saving scan details: scan_start(%s), scan_end(%s), exploit_id(%s), node_id(%s), node(%s), port(%s)",
                   port.scan.start, port.scan.end, exploit.id, port.node.id, str(port.node), str(port))
         queries = []
+        iana = self._protocol_to_iana(port.transport_protocol)
 
         queries.append((self.SAVE_SCAN_DETAIL, (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
-                                                self._protocol_to_iana(port.transport_protocol), port.number)))
+                                                iana, port.number)))
 
         if port.scan.start:
             queries.append((self.SAVE_SCAN_DETAIL_START, (port.scan.start, exploit.id, exploit.app, exploit.name,
-                                                          port.node.id, str(port.node.ip),
-                                                          self._protocol_to_iana(port.transport_protocol),
-                                                          port.number)))
+                                                          port.node.id, str(port.node.ip), iana, iana, port.number)))
 
         if port.scan.end:
             queries.append((self.SAVE_SCAN_DETAIL_END, (port.scan.end, exploit.id, exploit.app, exploit.name,
-                                                        port.node.id, str(port.node.ip),
-                                                        self._protocol_to_iana(port.transport_protocol), port.number)))
+                                                        port.node.id, str(port.node.ip), iana, iana, port.number)))
         return queries
 
     def _save_scans(self, exploits, port):
@@ -231,26 +232,7 @@ class Storage(DbInterface):
             list
 
         """
-        queries = []
-
-        for exploit in exploits:
-            queries.append((self.SAVE_SCAN_DETAIL, (exploit.id, exploit.app, exploit.name, port.node.id,
-                                                    str(port.node.ip), self._protocol_to_iana(port.transport_protocol),
-                                                    port.number)))
-
-            if port.scan.start:
-                queries.append((self.SAVE_SCAN_DETAIL_START, (port.scan.start, exploit.id, exploit.app, exploit.name,
-                                                              port.node.id, str(port.node.ip),
-                                                              self._protocol_to_iana(port.transport_protocol),
-                                                              port.number)))
-
-            if port.scan.end:
-                queries.append((self.SAVE_SCAN_DETAIL_END, (port.scan.end, exploit.id, exploit.app, exploit.name,
-                                                            port.node.id, str(port.node.ip),
-                                                            self._protocol_to_iana(port.transport_protocol),
-                                                            port.number)))
-
-        return queries
+        return list(query for exploit in exploits for query in self._save_scan(exploit=exploit, port=port))
 
     def _get_scan_info(self, port, app):
         """
@@ -264,8 +246,8 @@ class Storage(DbInterface):
             tuple
 
         """
-        return self.SELECT_SCANS, (app, port.node.id, str(port.node.ip),
-                                   self._protocol_to_iana(port.transport_protocol), port.number)
+        iana = self._protocol_to_iana(port.transport_protocol)
+        return self.SELECT_SCANS, (app, port.node.id, str(port.node.ip), iana, iana, port.number)
 
     def _clear_scan_details(self):
         """
@@ -307,8 +289,9 @@ class Storage(DbInterface):
         """
         if protocol is None:
             return self.SELECT_PORTS_BY_NODE_ALL_PROTS, (node.id, str(node.ip), timestamp)
+        iana = self._protocol_to_iana(protocol)
 
-        return self.SELECT_PORTS_BY_NODE, (node.id, str(node.ip), timestamp, self._protocol_to_iana(protocol))
+        return self.SELECT_PORTS_BY_NODE, (node.id, str(node.ip), timestamp, iana, iana)
 
     def _get_ports_by_nodes(self, nodes, timestamp, protocol=None):
         """
@@ -331,7 +314,8 @@ class Storage(DbInterface):
         query = self.SELECT_PORTS_BY_NODES_ALL_PROTS
 
         if protocol is not None:
-            parameters.append(self._protocol_to_iana(protocol))
+            iana = self._protocol_to_iana(protocol)
+            parameters.extend([iana, iana])
             query = self.SELECT_PORTS_BY_NODES
 
         where = 'OR'.join([' (id=? AND ip=?) '] * len(nodes))
