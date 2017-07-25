@@ -3,8 +3,7 @@ Asynchronous HTTP client for Aucote. It's using tornado's AsyncHTTPClient.
 
 """
 import logging as log
-from tornado.httpclient import AsyncHTTPClient
-from tornado.httpclient import HTTPRequest
+from tornado.httpclient import AsyncHTTPClient, HTTPRequest
 import ujson
 
 
@@ -41,7 +40,7 @@ class HTTPClient(object):
 
         """
         if response.error:
-            log.error("Error: %s" % response.error)
+            log.info("Error: %s with requesting %s", response.error, response.request.url)
         return response
 
     def get(self, url, **kwargs):
