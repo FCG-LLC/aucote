@@ -13,7 +13,7 @@ from netaddr import IPSet
 from tornado.locks import Event
 
 from aucote_cfg import cfg
-from structs import Node, Scan, ScanType, TopisOSDiscoveryType, Service, CPEType, TransportProtocol
+from structs import Node, Scan, ScanType, TopisOSDiscoveryType, Service, CPEType
 from utils.http_client import HTTPClient
 from utils.time import parse_period, parse_time_to_timestamp
 

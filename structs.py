@@ -609,3 +609,11 @@ class VulnerabilityChange(object):
         self.current_id = current_id
         self.previous_id = previous_id
         self.time = change_time or time.time()
+
+    def __eq__(self, other):
+        return isinstance(other, VulnerabilityChange) and self.type == other.type \
+               and self.vulnerability_id == other.vulnerability_id and self.previous_id == other.previous_id \
+               and self.vulnerability_subid == other.vulnerability_subid and self.current_id == other.current_id
+
+    def __hash__(self):
+        return hash((self.type, self.vulnerability_id, self.vulnerability_subid, self.current_id, self.previous_id))

@@ -345,7 +345,7 @@ class PortStateTest(TestCase):
         self.assertEqual(result, expected)
 
 
-class VulnerabilityChangeTest(object):
+class VulnerabilityChangeTest(TestCase):
     def setUp(self):
         self.previous_id = 2
         self.current_id = 3

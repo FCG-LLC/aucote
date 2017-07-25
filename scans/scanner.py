@@ -8,7 +8,7 @@ import netifaces
 from aucote_cfg import cfg
 from scans.executor import Executor
 from scans.scan_async_task import ScanAsyncTask
-from structs import ScanStatus, PhysicalPort, Scan, TransportProtocol
+from structs import ScanStatus, PhysicalPort, Scan, TransportProtocol, VulnerabilityChange, VulnerabilityChangeType
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
@@ -61,6 +61,7 @@ class Scanner(ScanAsyncTask):
 
             scan.end = time.time()
             self.storage.update_scan(scan)
+            self.diff_with_last_scan(scan)
 
         await self._clean_scan()
 
@@ -97,8 +98,7 @@ class Scanner(ScanAsyncTask):
 
         ports.extend(self._get_special_ports())
 
-        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan_only=scan_only,
-                                            scan=scan))
+        await Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan_only=scan_only, scan=scan)()
 
     async def _clean_scan(self):
         """
@@ -179,3 +179,40 @@ class Scanner(ScanAsyncTask):
                 return_value.append(port)
 
         return return_value
+
+    def diff_with_last_scan(self, scan):
+        """
+        Differentiate two last scans.
+
+        Obtain nodes scanned in current scan. For each node check what changed in port state from last scan of this node
+
+        Args:
+            scan (Scan):
+
+        Returns:
+            None
+
+        """
+        nodes = self.storage.get_nodes_by_scan(scan=scan)
+        changes = []
+
+        for node in nodes:
+            last_scans = self.storage.get_scans_by_node(node=node)
+            current_ports = set(self.storage.get_ports_by_scan_and_node(node=node, scan=scan))
+
+            if len(last_scans) < 2:
+                previous_ports = set()
+            else:
+                previous_ports = set(self.storage.get_ports_by_scan_and_node(node=node, scan=last_scans[1]))
+
+            new_ports = current_ports - previous_ports
+            removed_ports = previous_ports - current_ports
+
+            changes.extend(VulnerabilityChange(change_type=VulnerabilityChangeType.PORTDETECTION,
+                                               change_time=time.time(), previous_id=None, vulnerability_id=0,
+                                               current_id=port.row_id, vulnerability_subid=0) for port in new_ports)
+            changes.extend(VulnerabilityChange(change_type=VulnerabilityChangeType.PORTDETECTION, current_id=None,
+                                               change_time=time.time(), previous_id=port.row_id, vulnerability_id=0,
+                                               vulnerability_subid=0) for port in removed_ports)
+
+        self.storage.save_changes(changes)

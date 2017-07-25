@@ -124,6 +124,44 @@ class StorageTest(TestCase):
                    (139300, 17, 17, 'test')
         self.assertEqual(result, expected)
 
+    def test__get_scan_nodes(self):
+        scan = Scan(protocol=TransportProtocol.UDP, scanner='test')
+        self.storage.get_scan_id = MagicMock(return_value=87)
+        expected = 'SELECT node_id, node_ip, time, scan_id FROM nodes WHERE scan_id=?', (87, )
+
+        result = self.storage._get_scan_nodes(scan)
+
+        self.assertEqual(result, expected)
+
+    def test__get_scans_by_node(self):
+        node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
+        expected = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans " \
+                   "LEFT JOIN nodes ON scans.ROWID = nodes.scan_id WHERE node_id=? AND node_ip=? " \
+                   "ORDER BY scan_end DESC, scan_start ASC LIMIT 13 OFFSET 45", (3, '127.0.0.1')
+
+        result = self.storage._get_scans_by_node(node=node, limit=13, offset=45)
+
+        self.assertEqual(result, expected)
+
+    def test__get_ports_by_node_and_scan(self):
+        scan = Scan(protocol=TransportProtocol.UDP, scanner='test')
+        self.storage.get_scan_id = MagicMock(return_value=87)
+        node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
+        expected = "SELECT node_id, node_ip, port, port_protocol, time, ROWID FROM ports where "\
+                   "node_id=? AND node_ip=? AND scan_id=?", (3, '127.0.0.1', 87)
+
+        result = self.storage._get_ports_by_node_and_scan(node=node, scan=scan)
+
+        self.assertEqual(result, expected)
+
+    def test__get_scan_by_id(self):
+        scan_id = 77
+        expected = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE scan_id=?", (77,)
+
+        result = self.storage._get_scan_by_id(scan_id)
+
+        self.assertEqual(result, expected)
+
     def test__save_security_scan(self):
         scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
         self.storage.get_scan_id = MagicMock(return_value=7)
@@ -394,6 +432,28 @@ class StorageTest(TestCase):
         self.assertEqual(result[0].ip, ipaddress.ip_address('127.0.0.1'))
         self.assertEqual(result[1].ip, ipaddress.ip_address('::1'))
 
+    def test_get_nodes_by_scan(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
+        self.storage._get_scan_nodes = MagicMock()
+        self.storage.execute = MagicMock(return_value=(
+            (1, '127.0.0.1'),
+            (2, '::1'),
+        ))
+
+        result = self.storage.get_nodes_by_scan(scan=scan)
+
+        self.storage._get_scan_nodes.assert_called_once_with(scan=scan)
+        self.storage.execute.assert_called_once_with(self.storage._get_scan_nodes())
+
+        self.assertEqual(result[0].id, 1)
+        self.assertEqual(result[1].id, 2)
+
+        self.assertEqual(result[0].scan, scan)
+        self.assertEqual(result[1].scan, scan)
+
+        self.assertEqual(result[0].ip, ipaddress.ip_address('127.0.0.1'))
+        self.assertEqual(result[1].ip, ipaddress.ip_address('::1'))
+
     def test_save_port(self):
         port = MagicMock()
         self.storage._save_port = MagicMock()
@@ -423,6 +483,36 @@ class StorageTest(TestCase):
 
         self.assertEqual(result[0].node.id, 1)
         self.assertEqual(result[1].node.id, 2)
+
+        self.assertEqual(result[0].node.ip, ipaddress.ip_address('127.0.0.1'))
+        self.assertEqual(result[1].node.ip, ipaddress.ip_address('::1'))
+
+        self.assertEqual(result[0].number, 20)
+        self.assertEqual(result[1].number, 23)
+
+        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
+
+        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
+
+    def test_get_ports_by_scan_and_node(self):
+        scan = Scan(protocol=TransportProtocol.UDP, scanner='test')
+        self.storage.get_scan_id = MagicMock(return_value=87)
+        node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
+        self.storage._get_ports_by_node_and_scan = MagicMock()
+        self.storage.execute = MagicMock(return_value=(
+            (1, '127.0.0.1', 20, 6, 78, 67),
+            (2, '::1', 23, 17, 89, 98),
+        ))
+
+        result = self.storage.get_ports_by_scan_and_node(node=node, scan=scan)
+
+        self.storage.execute.assert_called_once_with(self.storage._get_ports_by_node_and_scan(node=node, scan=scan))
+
+        self.assertEqual(result[0].node.id, 1)
+        self.assertEqual(result[1].node.id, 2)
+
+        self.assertEqual(result[0].row_id, 67)
+        self.assertEqual(result[1].row_id, 98)
 
         self.assertEqual(result[0].node.ip, ipaddress.ip_address('127.0.0.1'))
         self.assertEqual(result[1].node.ip, ipaddress.ip_address('::1'))
@@ -719,6 +809,50 @@ class StorageTest(TestCase):
         self.assertEqual(result[1].protocol, TransportProtocol.TCP)
         self.assertEqual(result[1].start, 2)
         self.assertEqual(result[1].end, 18)
+
+    def test_get_scans_by_node(self):
+        self.storage._get_scans_by_node = MagicMock()
+        node = Node(node_id=37, ip=ipaddress.ip_address('127.94.44.32'))
+        self.storage.execute = MagicMock(return_value=(
+            (1, 17, 'test_name', 13, 19),
+            (2, 6, 'test_name', 2, 18),
+        ))
+
+        result = self.storage.get_scans_by_node(node=node)
+
+        self.storage._get_scans_by_node.assert_called_once_with(node=node)
+        self.storage.execute.assert_called_once_with(self.storage._get_scans_by_node())
+
+        self.assertEqual(result[0].protocol, TransportProtocol.UDP)
+        self.assertEqual(result[0].start, 13)
+        self.assertEqual(result[0].end, 19)
+
+        self.assertEqual(result[1].protocol, TransportProtocol.TCP)
+        self.assertEqual(result[1].start, 2)
+        self.assertEqual(result[1].end, 18)
+
+    def test_get_scan_by_id(self):
+        self.storage._get_scan_by_id = MagicMock()
+        self.storage.execute = MagicMock(return_value=(
+            (1, 17, 'test_name', 13, 19),
+        ))
+
+        result = self.storage.get_scan_by_id(15)
+
+        self.storage._get_scan_by_id.assert_called_once_with(15)
+        self.storage.execute.assert_called_once_with(self.storage._get_scan_by_id())
+
+        self.assertEqual(result.protocol, TransportProtocol.UDP)
+        self.assertEqual(result.start, 13)
+        self.assertEqual(result.end, 19)
+
+    def test_get_scan_by_id_no_results(self):
+        self.storage._get_scan_by_id = MagicMock()
+        self.storage.execute = MagicMock(return_value=tuple())
+
+        result = self.storage.get_scan_by_id(15)
+
+        self.assertEqual(result, None)
 
     def test__save_vulnerabilities(self):
         scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
