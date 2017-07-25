@@ -73,6 +73,9 @@ class Storage(DbInterface):
                                    "port_protocol int, port int, vulnerability_id int, vulnerability_subid int, "\
                                    "cve text, cvss text, output text, time int, primary key(scan_id, node_id, "\
                                    "node_ip, port_protocol, port, vulnerability_subid))"
+    CREATE_CHANGES_TABLE = "CREATE TABLE IF NOT EXISTS changes(type int, vulnerability_id int, "\
+                           "vulnerability_subid int, previous_id int, current_id int, time int, PRIMARY KEY(type, " \
+                           "vulnerability_id, vulnerability_subid, previous_id, current_id, time))"
 
     def __init__(self, filename="storage.sqlite3"):
 
@@ -306,7 +309,8 @@ class Storage(DbInterface):
                    (self.CREATE_SECURITY_SCANS_TABLE,),
                    (self.CREATE_PORTS_TABLE,),
                    (self.CREATE_NODES_TABLE,),
-                   (self.CREATE_VULNERABILITIES_TABLE,)]
+                   (self.CREATE_VULNERABILITIES_TABLE,),
+                   (self.CREATE_CHANGES_TABLE,)]
 
         return queries
 

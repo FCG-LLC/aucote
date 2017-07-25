@@ -250,7 +250,13 @@ class StorageTest(TestCase):
             'CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, '\
             'port_protocol int, port int, vulnerability_id int, vulnerability_subid int, cve text, cvss text, '\
             'output text, time int, primary key(scan_id, node_id, node_ip, port_protocol, port, '\
-            'vulnerability_subid))',)
+            'vulnerability_subid))',),
+
+            (
+                'CREATE TABLE IF NOT EXISTS changes(type int, vulnerability_id int, vulnerability_subid int, ' \
+                'previous_id int, current_id int, time int, PRIMARY KEY(type, vulnerability_id, ' \
+                'vulnerability_subid, previous_id, current_id, time))',
+            )
         ]
 
         self.assertCountEqual(result, expected)
