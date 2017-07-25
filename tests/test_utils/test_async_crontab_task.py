@@ -86,6 +86,16 @@ class AsyncCrontabTaskTest(AsyncTestCase):
         self.assertTrue(mock_exc.called)
         self.task._prepare_next_iteration.assert_called_once_with()
 
+    @patch('utils.async_crontab_task.time.time', MagicMock(return_value=305))
+    @gen_test
+    def test_call_with_incorrect_cron(self):
+        self.task._prepare_next_iteration = MagicMock()
+        self.task._last_execute = 300
+        self.task._cron = 'incorrect_cron'
+        yield self.task()
+        self.assertFalse(self.func.called)
+        self.task._prepare_next_iteration.assert_called_once_with()
+
     @gen_test
     def test_stopping_cron_loop(self):
         self.task._prepare_next_iteration = MagicMock()

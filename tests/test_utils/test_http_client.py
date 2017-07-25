@@ -66,5 +66,5 @@ class HTTPClientTest(AsyncTestCase):
     def test_handle_response_with_error(self, log):
         expected = MagicMock()
         result = self.client._handle_response(expected)
-        self.assertTrue(log.error.called)
+        self.assertTrue(log.info.called)
         self.assertEqual(result, expected)

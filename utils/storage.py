@@ -531,6 +531,9 @@ class Storage(DbInterface):
         """
         ports = []
 
+        if not nodes:
+            return []
+
         if timestamp is None:
             timestamp = time.time() - pasttime
 
