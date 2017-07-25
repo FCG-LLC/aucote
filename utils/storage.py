@@ -34,6 +34,8 @@ class Storage(DbInterface):
     SAVE_VULNERABILITY = "INSERT OR REPLACE INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
                          "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    SAVE_CHANGE = "INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
+                  "current_id, time) VALUES (?, ?, ?, ?, ?, ?)"
     SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? " \
                    "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
     SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN scans ON "\
@@ -214,7 +216,6 @@ class Storage(DbInterface):
             tuple
 
         """
-        scan_id = self.get_scan_id(scan)
         timestamp = time.time() - pasttime
         iana =        self._protocol_to_iana(scan.protocol)
 
@@ -285,6 +286,34 @@ class Storage(DbInterface):
         scan_iana = self._protocol_to_iana(scan.protocol)
         return self.SELECT_SECURITY_SCANS, (app, port.node.id, str(port.node.ip), iana, iana, port.number, scan_iana,
                                             scan_iana, scan.scanner)
+
+    def _save_change(self, change):
+        """
+        Query for saving changes between scans
+
+        Args:
+            change: VulnerabilityChange
+
+        Returns:
+            tuple
+
+        """
+        return self.SAVE_CHANGE, (change.type.value, change.vulnerability_id, change.vulnerability_subid,
+                                  change.previous_id, change.current_id, change.time)
+
+    def _save_changes(self, changes):
+        """
+        Queries for saving multiple changes into database
+
+        Args:
+            changes (list):
+
+        Returns:
+            list
+
+        """
+        return [(self.SAVE_CHANGE, (change.type.value, change.vulnerability_id, change.vulnerability_subid,
+                                   change.previous_id, change.current_id, change.time)) for change in changes]
 
     def _clear_security_scans(self):
         """
@@ -524,6 +553,19 @@ class Storage(DbInterface):
             })
 
         return return_value
+
+    def save_changes(self, changes):
+        """
+        Save changes to database
+
+        Args:
+            changes (list):
+
+        Returns:
+            None
+
+        """
+        return self.execute(self._save_changes(changes=changes))
 
     def clear_security_scans(self):
         """

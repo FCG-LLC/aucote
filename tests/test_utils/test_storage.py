@@ -7,7 +7,7 @@ from sqlite3 import connect
 from unittest.mock import MagicMock, patch, call
 
 from fixtures.exploits import Exploit
-from structs import Node, Port, TransportProtocol, Scan, Vulnerability
+from structs import Node, Port, TransportProtocol, Scan, Vulnerability, VulnerabilityChange, VulnerabilityChangeType
 from utils.storage import Storage
 
 
@@ -122,8 +122,6 @@ class StorageTest(TestCase):
         expected = 'SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN scans '\
                    'ON scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?',\
                    (139300, 17, 17, 'test')
-
-        self.storage.get_scan_id.assert_called_once_with(scan)
         self.assertEqual(result, expected)
 
     def test__save_security_scan(self):
@@ -227,6 +225,38 @@ class StorageTest(TestCase):
                     'AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?', ('test_app', 3, '127.0.0.1', 6, 6, 12, 17, 17, 'test_name'))
 
         result = self.storage._get_security_scan_info(port=port, app='test_app', scan=scan)
+
+        self.assertCountEqual(result, expected)
+
+    def test__save_change(self):
+        change = VulnerabilityChange(vulnerability_subid=13, vulnerability_id=45, current_id=15, change_time=124445,
+                                     previous_id=124, change_type=VulnerabilityChangeType.PORTDETECTION)
+
+        expected = ("INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
+                    "current_id, time) VALUES (?, ?, ?, ?, ?, ?)",
+                    (VulnerabilityChangeType.PORTDETECTION.value, 45, 13, 124, 15, 124445))
+
+        result = self.storage._save_change(change)
+
+        self.assertCountEqual(result, expected)
+
+    def test__save_changes(self):
+        changes = [
+            VulnerabilityChange(vulnerability_subid=13, vulnerability_id=45, current_id=15, change_time=124445,
+                                previous_id=124, change_type=VulnerabilityChangeType.PORTDETECTION),
+            VulnerabilityChange(vulnerability_subid=31, vulnerability_id=57, current_id=33, change_time=32434,
+                                previous_id=117, change_type=VulnerabilityChangeType.VULNERABILITIES)
+            ]
+
+        expected = [("INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
+                    "current_id, time) VALUES (?, ?, ?, ?, ?, ?)",
+                     (VulnerabilityChangeType.PORTDETECTION.value, 45, 13, 124, 15, 124445)),
+                    ("INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
+                     "current_id, time) VALUES (?, ?, ?, ?, ?, ?)",
+                     (VulnerabilityChangeType.VULNERABILITIES.value, 57, 31, 117, 33, 32434))
+                    ]
+
+        result = self.storage._save_changes(changes)
 
         self.assertCountEqual(result, expected)
 
@@ -466,6 +496,14 @@ class StorageTest(TestCase):
 
         self.assertEqual(result[0]['exploit'].id, 11)
         self.assertEqual(result[1]['exploit'].id, 22)
+
+    def test_save_changes(self):
+        changes = MagicMock()
+        self.storage._save_changes = MagicMock()
+        self.storage.execute = MagicMock()
+        self.storage.save_changes(changes=changes)
+        self.storage._save_changes.assert_called_once_with(changes=changes)
+        self.storage.execute.assert_called_once_with(self.storage._save_changes())
 
     def test_clear_security_scans(self):
         self.storage._clear_security_scans = MagicMock()
