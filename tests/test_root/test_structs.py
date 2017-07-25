@@ -4,7 +4,8 @@ from unittest.mock import MagicMock
 
 from cpe import CPE
 
-from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState
+from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState, \
+    VulnerabilityChangeType, VulnerabilityChange
 from structs import TransportProtocol
 
 
@@ -342,3 +343,24 @@ class PortStateTest(TestCase):
         expected = PortState.OPEN_FILTERED
 
         self.assertEqual(result, expected)
+
+
+class VulnerabilityChangeTest(object):
+    def setUp(self):
+        self.previous_id = 2
+        self.current_id = 3
+        self.type = VulnerabilityChangeType.PORTDETECTION
+        self.time = 124
+        self.vuln_id = 3
+        self.vuln_subid = 7
+        self.change = VulnerabilityChange(previous_id=self.previous_id, current_id=self.current_id,
+                                          change_type=self.type, change_time=self.time, vulnerability_id=self.vuln_id,
+                                          vulnerability_subid=self.vuln_subid)
+
+    def test_init(self):
+        self.assertEqual(self.change.previous_id, self.previous_id)
+        self.assertEqual(self.change.current_id, self.current_id)
+        self.assertEqual(self.change.type, self.type)
+        self.assertEqual(self.change.time, self.time)
+        self.assertEqual(self.change.vulnerability_id, self.vuln_id)
+        self.assertEqual(self.change.vulnerability_subid, self.vuln_subid)

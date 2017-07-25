@@ -575,3 +575,37 @@ class PortState(Enum):
     @classmethod
     def from_string(cls, text):
         return cls[text.replace('|', '_').upper()]
+
+
+class VulnerabilityChangeType(Enum):
+    """
+    Vulnerability change type
+
+    """
+    PORTDETECTION = 1
+    VULNERABILITIES = 2
+
+
+class VulnerabilityChange(object):
+    """
+    Represents change between two port or sevurity scans
+
+    """
+    def __init__(self, change_type, vulnerability_id, vulnerability_subid, current_id, previous_id, change_time=None):
+        """
+
+        Args:
+            change_type (VulnerabilityChangeType):
+            vulnerability_id (int):
+            vulnerability_subid (int):
+            current_id (int):
+            previous_id (int):
+            time (int):
+
+        """
+        self.type = change_type
+        self.vulnerability_id = vulnerability_id
+        self.vulnerability_subid = vulnerability_subid
+        self.current_id = current_id
+        self.previous_id = previous_id
+        self.time = change_time or time.time()
