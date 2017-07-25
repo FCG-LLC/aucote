@@ -36,7 +36,7 @@ class StorageTest(TestCase):
     @patch("time.time", MagicMock(return_value=7))
     def test__save_node(self):
         node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        result = self.storage._save_node(node, protocol=TransportProtocol.TCP.iana)
+        result = self.storage._save_node(node, protocol=TransportProtocol.TCP)
         expected = ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (1, '127.0.0.1', 7, 6))
 
         self.assertCountEqual(result, expected)
@@ -47,7 +47,7 @@ class StorageTest(TestCase):
                  Node(node_id=2, ip=ipaddress.ip_address('127.0.0.2')),
                  Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))]
 
-        result = self.storage._save_nodes(nodes, protocol=TransportProtocol.TCP.iana)
+        result = self.storage._save_nodes(nodes, protocol=TransportProtocol.TCP)
         expected = (
             ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (1, '127.0.0.1', 17, 6)),
             ("INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)", (2, '127.0.0.2', 17, 6)),
@@ -59,7 +59,7 @@ class StorageTest(TestCase):
 
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
     def test__get_nodes(self):
-        result = self.storage._get_nodes(pasttime=700, timestamp=None, protocol=TransportProtocol.UDP.iana)
+        result = self.storage._get_nodes(pasttime=700, timestamp=None, protocol=TransportProtocol.UDP)
         expected = 'SELECT id, ip, time FROM nodes where time > ? AND protocol IS ?', (139300, 17)
         self.assertEqual(result, expected)
 
@@ -71,7 +71,7 @@ class StorageTest(TestCase):
         result = self.storage._save_port(port)
 
         expected = ("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
-                     (port.node.id, str(port.node.ip), port.number, port.transport_protocol.iana, 13))
+                    (1, '127.0.0.1', 1, 6, 13))
 
         self.assertCountEqual(result, expected)
 
@@ -106,9 +106,7 @@ class StorageTest(TestCase):
         self.assertEqual(result, expected)
 
     def test__save_scan(self):
-        exploit = Exploit(exploit_id=14)
-        exploit.name = 'test_name'
-        exploit.app = 'test_app'
+        exploit = Exploit(exploit_id=14, name='test_name', app='test_app')
 
         port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=3), number=12,
                     transport_protocol=TransportProtocol.TCP)
@@ -120,12 +118,10 @@ class StorageTest(TestCase):
         expected = [
             ("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
               "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
-              (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
-               port.transport_protocol.iana, port.number)),
+              (14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
             ("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
               "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?",
-              (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
-               str(port.node.ip), port.transport_protocol.iana, port.number))
+              (17, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12))
         ]
 
         self.assertCountEqual(result[0], expected[0])
@@ -190,16 +186,13 @@ class StorageTest(TestCase):
         expected = [
             ("INSERT OR IGNORE INTO scans (exploit_id, exploit_app, exploit_name, node_id, node_ip,"
               "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)",
-              (exploit.id, exploit.app, exploit.name, port.node.id, str(port.node.ip),
-               port.transport_protocol.iana, port.number)),
+              (14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
             ("UPDATE scans SET scan_start = ? WHERE exploit_id=? AND exploit_app=? AND "
               "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?",
-              (port.scan.start, exploit.id, exploit.app, exploit.name, port.node.id,
-               str(port.node.ip), port.transport_protocol.iana, port.number)),
+              (17, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12)),
             ("UPDATE scans SET scan_end = ? WHERE exploit_id=? AND exploit_app=? AND "
               "exploit_name=? AND node_id=? AND node_ip=? AND port_protocol IS ? AND port_number=?",
-              (port.scan.end, exploit.id, exploit.app, exploit.name, port.node.id,
-               str(port.node.ip), port.transport_protocol.iana, port.number))
+              (17, 14, 'test_app', 'test_name', 3, '127.0.0.1', 6, 12))
         ]
 
         self.assertCountEqual(result, expected)
@@ -236,7 +229,7 @@ class StorageTest(TestCase):
 
     def test__get_ports_by_node(self):
         node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
-        result = self.storage._get_ports_by_node(node, 1200, protocol=TransportProtocol.TCP.iana)
+        result = self.storage._get_ports_by_node(node, 1200, protocol=TransportProtocol.TCP)
         expected = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND protocol IS ?", (3, '127.0.0.1', 1200, 6)
 
         self.assertEqual(result, expected)
@@ -254,7 +247,7 @@ class StorageTest(TestCase):
             Node(node_id=7, ip=ipaddress.ip_address('::1'))
         ]
 
-        result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=TransportProtocol.UDP.iana)
+        result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=TransportProtocol.UDP)
         expected = (
             "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ? AND protocol IS ?",
             [3, '127.0.0.1', 7, '::1', 1200, 17]
@@ -544,3 +537,8 @@ class StorageTest(TestCase):
         result = self.storage._transport_protocol(6)
         protocol.from_iana.assert_called_once_with(6)
         self.assertEqual(result, protocol.from_iana())
+
+    def test_protocol_to_iana_none(self):
+        protocol = None
+        result = self.storage._protocol_to_iana(protocol)
+        self.assertIsNone(result)
