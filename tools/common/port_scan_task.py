@@ -7,7 +7,7 @@ from tools.common import OpenPortsParser
 from utils.exceptions import NonXMLOutputException, StopCommandException
 
 
-class ScanTask(object):
+class PortScanTask(object):
     """
     Base class for scanner
 

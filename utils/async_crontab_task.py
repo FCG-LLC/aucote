@@ -26,6 +26,10 @@ class AsyncCrontabTask(object):
         self._loop = IOLoop.current().instance()
 
     @property
+    def name(self):
+        return str(self.func)
+
+    @property
     def cron(self):
         """
         Cron value of current task
@@ -68,11 +72,11 @@ class AsyncCrontabTask(object):
 
             self._last_execute = current_cron_time
 
-            log.debug("AsyncCrontabTask[%s]: Executing", self.func.__name__)
+            log.debug("AsyncCrontabTask[%s]: Executing", self.name)
             await self.func()
-            log.debug("AsyncCrontabTask[%s]: Finished", self.func.__name__)
+            log.debug("AsyncCrontabTask[%s]: Finished", self.name)
         except Exception:
-            log.exception("AsyncCrontabTask[%s]: Exception", self.func.__name__)
+            log.exception("AsyncCrontabTask[%s]: Exception", self.name)
         finally:
             self._prepare_next_iteration()
 

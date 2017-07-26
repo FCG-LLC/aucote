@@ -2,15 +2,14 @@
 This module contains class responsible for scanning ports by using nmap
 
 """
-from tools.common.scan_task import ScanTask
+from tools.common.port_scan_task import PortScanTask
 from aucote_cfg import cfg
 from tools.nmap.tool import NmapTool
-from utils.config import Config
 from utils.exceptions import StopCommandException
 from .base import NmapBase
 
 
-class PortsScan(ScanTask):
+class PortsScan(PortScanTask):
     """
     This class is responsible for scanning node
 
@@ -23,14 +22,14 @@ class PortsScan(ScanTask):
         super(PortsScan, self).__init__(NmapBase())
 
     def prepare_args(self, nodes):
-        args = ['-Pn', '--host-timeout', str(cfg['portdetection._internal.host_timeout'])]
+        args = ['-Pn']
         rate = str(cfg['portdetection.network_scan_rate'])
 
         if self.ipv6:
             args.append('-6')
 
         if self.tcp:
-            args.append('-sS')
+            args.extend(['-sS', '--host-timeout', str(cfg['portdetection._internal.host_timeout'])])
 
         if self.udp:
             args.extend(('-sU', '--min-rate', rate, '--max-retries', str(cfg['portdetection._internal.udp_retries']),
