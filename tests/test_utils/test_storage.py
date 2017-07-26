@@ -564,7 +564,7 @@ class StorageTest(TestCase):
     def test__update_scan(self):
         scan = Scan(start=1, end=42, protocol=TransportProtocol.TCP, scanner='test_name')
         result = self.storage._update_scan(scan=scan)
-        expected = 'UPDATE scans set scan_end = ? WHERE protocol=? AND scanner_name=? and scan_start=?', (42, 6, 'test_name', 1)
+        expected = 'UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND scanner_name=? and scan_start=?', (42, 6, 6, 'test_name', 1)
         self.assertCountEqual(result, expected)
 
     def test__get_scans(self):
@@ -577,7 +577,7 @@ class StorageTest(TestCase):
         scan = Scan(start=1, end=17, protocol=TransportProtocol.TCP, scanner='test_name')
         result = self.storage._get_scan(scan)
         expected = 'SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND '\
-                   'scanner_name=? AND scan_start=? LIMIT 1', (6, 'test_name', 1)
+                   'scanner_name=? AND scan_start=? LIMIT 1', (6, 6, 'test_name', 1)
         self.assertCountEqual(result, expected)
 
     def test_save_scan(self):

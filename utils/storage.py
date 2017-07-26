@@ -19,7 +19,8 @@ class Storage(DbInterface):
     SAVE_NODE_QUERY = "INSERT OR REPLACE INTO nodes (id, ip, time, protocol) VALUES (?, ?, ?, ?)"
     SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)"
     SAVE_SCAN_QUERY = "INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)"
-    UPDATE_SCAN_END_QUERY = "UPDATE scans set scan_end = ? WHERE protocol=? AND scanner_name=? and scan_start=?"
+    UPDATE_SCAN_END_QUERY = "UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) "\
+                            "AND scanner_name=? and scan_start=?"
     SAVE_SECURITY_SCAN_DETAIL = "INSERT OR IGNORE INTO security_scans (exploit_id, exploit_app, exploit_name, " \
                                 "node_id, node_ip, port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?)"
     SAVE_SECURITY_SCAN_DETAIL_START = "UPDATE security_scans SET scan_start=? WHERE exploit_id=? AND exploit_app=? AND"\
@@ -621,14 +622,16 @@ class Storage(DbInterface):
         return self.SAVE_SCAN_QUERY, (self._protocol_to_iana(scan.protocol), scan.scanner, scan.start, scan.end)
 
     def _update_scan(self, scan):
-        return self.UPDATE_SCAN_END_QUERY, (scan.end, self._protocol_to_iana(scan.protocol), scan.scanner, scan.start)
+        iana = self._protocol_to_iana(scan.protocol)
+        return self.UPDATE_SCAN_END_QUERY, (scan.end, iana, iana, scan.scanner, scan.start)
 
     def _get_scans(self, protocol, scanner_name, limit=2, offset=0):
         iana = self._protocol_to_iana(protocol)
         return self.SELECT_SCANS.format(limit=limit, offset=offset), (iana, iana, scanner_name)
 
     def _get_scan(self, scan):
-        return self.SELECT_SCAN, (scan.protocol.iana, scan.scanner, scan.start)
+        iana = self._protocol_to_iana(scan.protocol)
+        return self.SELECT_SCAN, (iana, iana, scan.scanner, scan.start)
 
     def save_scan(self, scan):
         """
