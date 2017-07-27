@@ -65,7 +65,6 @@ class StorageTest(TestCase):
         self.assertIsInstance(result, list)
 
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
-
     def test__get_nodes(self):
         scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
         result = self.storage._get_nodes(pasttime=700, timestamp=None, scan=scan)
@@ -76,13 +75,15 @@ class StorageTest(TestCase):
 
     @patch('time.time', MagicMock(return_value=13))
     def test__save_port(self):
+        scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
         port = Port(node=Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1),
                     transport_protocol=TransportProtocol.TCP, number=1)
+        self.storage.get_scan_id = MagicMock(return_value=16)
 
-        result = self.storage._save_port(port)
+        result = self.storage._save_port(port, scan=scan)
 
         expected = ("INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) VALUES (?, ?, ?, ?, ?, ?)",
-                    (0, 1, '127.0.0.1', 1, 6, 13))
+                    (16, 1, '127.0.0.1', 1, 6, 13))
 
         self.assertCountEqual(result, expected)
 

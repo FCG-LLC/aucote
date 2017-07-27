@@ -45,6 +45,7 @@ class Storage(DbInterface):
     SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN scans ON "\
                    "scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND "\
                    "scans.protocol IS NULL)) AND scans.scanner_name=?"
+    SELECT_PORTS_BY_ID = "SELECT node_id, node_ip, port, port_protocol, time FROM ports WHERE ROWID=?"
     SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
                    "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
                    "LIMIT {limit} OFFSET {offset}"
@@ -129,7 +130,7 @@ class Storage(DbInterface):
         """
         return self._cursor
 
-    def _save_node(self, node, scan):
+    def _save_node(self, node, scan, scan_id=None):
         """
         Saves node into to the storage
 
@@ -140,7 +141,8 @@ class Storage(DbInterface):
             tuple
 
         """
-        scan_id = self.get_scan_id(scan)
+        if not scan_id:
+            scan_id = self.get_scan_id(scan)
         return self.SAVE_NODE_QUERY, (scan_id, node.id, str(node.ip), time.time())
 
     def _save_nodes(self, nodes, scan):
@@ -156,10 +158,7 @@ class Storage(DbInterface):
 
         """
         scan_id = self.get_scan_id(scan)
-        queries = [(self.SAVE_NODE_QUERY, (scan_id, node.id, str(node.ip), time.time())) for node in nodes]
-
-        log.debug("Saving nodes")
-        return queries
+        return [self._save_node(node=node, scan=scan, scan_id=scan_id) for node in nodes]
 
     def _get_nodes(self, pasttime, timestamp, scan):
         """
@@ -179,7 +178,7 @@ class Storage(DbInterface):
         iana = self._protocol_to_iana(scan.protocol)
         return self.SELECT_NODES, (timestamp, iana, iana, scan.scanner)
 
-    def _save_port(self, port):
+    def _save_port(self, port, scan, scan_id=None):
         """
         Query for saving port scan into database
 
@@ -190,7 +189,9 @@ class Storage(DbInterface):
             tuple
 
         """
-        return self.SAVE_PORT_QUERY, (0, port.node.id, str(port.node.ip), port.number,
+        if not scan_id:
+            scan_id = self.get_scan_id(scan)
+        return self.SAVE_PORT_QUERY, (scan_id, port.node.id, str(port.node.ip), port.number,
                                       self._protocol_to_iana(port.transport_protocol), time.time())
 
     def _save_ports(self, ports, scan):
@@ -205,11 +206,7 @@ class Storage(DbInterface):
 
         """
         scan_id = self.get_scan_id(scan)
-        queries = [(self.SAVE_PORT_QUERY, (scan_id, port.node.id, str(port.node.ip), port.number,
-                                           self._protocol_to_iana(port.transport_protocol), time.time()))
-                   for port in ports]
-
-        return queries
+        return [self._save_port(port=port, scan=scan, scan_id=scan_id) for port in ports]
 
     def _get_ports(self, pasttime, scan):
         """
@@ -301,8 +298,8 @@ class Storage(DbInterface):
  .
 
         """
-        return list(query for exploit in exploits for query in self._save_security_scan(exploit=exploit, port=port,
-                                                                                        scan=scan))
+        return [query for exploit in exploits for query in self._save_security_scan(exploit=exploit, port=port,
+                                                                                    scan=scan)]
 
     def _get_security_scan_info(self, port, app, scan):
         """
@@ -846,13 +843,8 @@ class Storage(DbInterface):
             list - list of scans
 
         """
-        scans = []
-
-        for row in self.execute(self._get_scans(protocol=protocol, scanner_name=scanner_name, limit=amount, offset=0)):
-            scan = Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]))
-            scans.append(scan)
-
-        return scans
+        return[self._scan_from_row(row) for row in self.execute(self._get_scans(protocol=protocol, limit=amount,
+                                                                                offset=0, scanner_name=scanner_name))]
 
     def get_scans_by_node(self, node):
         """
@@ -867,13 +859,7 @@ class Storage(DbInterface):
             list - list of scans
 
         """
-        scans = []
-
-        for row in self.execute(self._get_scans_by_node(node=node)):
-            scan = Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]))
-            scans.append(scan)
-
-        return scans
+        return [self._scan_from_row(row) for row in self.execute(self._get_scans_by_node(node=node))]
 
     def get_scan_by_id(self, scan_id):
         """
@@ -892,8 +878,7 @@ class Storage(DbInterface):
         if not result:
             return None
 
-        row = result[0]
-        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]))
+        return self._scan_from_row(result[0])
 
     def _save_vulnerabilities(self, vulnerabilities, scan):
         """
@@ -928,3 +913,6 @@ class Storage(DbInterface):
 
         """
         return self.execute(self._save_vulnerabilities(vulnerabilities=vulnerabilities, scan=scan))
+
+    def _scan_from_row(self, row):
+        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]))
