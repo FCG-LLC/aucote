@@ -7,7 +7,7 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 from scans.scanner import Scanner
 from structs import Node, PhysicalPort, Port, TransportProtocol, ScanStatus, Scan, VulnerabilityChangeType, \
-    VulnerabilityChange
+    VulnerabilityChange, PortDetectionChange
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -317,7 +317,8 @@ class ScannerTest(AsyncTestCase):
         await self.thread()
         self.assertFalse(self.thread.run_scan.called)
 
-    def test_diff_two_last_scans(self):
+    @patch('scans.scanner.Serializer.serialize_port_detection_change')
+    def test_diff_two_last_scans(self, serializer):
         current_scan = Scan()
         previous_scan = Scan()
         node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
@@ -334,21 +335,21 @@ class ScannerTest(AsyncTestCase):
         self.aucote.storage.get_scans_by_node.return_value = [current_scan, previous_scan]
         self.aucote.storage.get_ports_by_scan_and_node.side_effect = ([port_unchanged, port_added],
                                                                       [port_unchanged, port_removed])
-        expected = ([
-            VulnerabilityChange(change_type=VulnerabilityChangeType.PORTDETECTION, vulnerability_id=0,
-                                current_id=17, vulnerability_subid=0, previous_id=None),
-            VulnerabilityChange(change_type=VulnerabilityChangeType.PORTDETECTION, vulnerability_id=0,
-                                current_id=None, vulnerability_subid=0, previous_id=18),
-            ],)
+        expected = [
+            PortDetectionChange(current_finding=port_added, previous_finding=None),
+            PortDetectionChange(current_finding=None, previous_finding=port_removed)
+        ]
 
         self.thread.diff_with_last_scan(current_scan)
 
         self.aucote.storage.get_nodes_by_scan.assert_called_once_with(scan=current_scan)
         self.assertEqual(len(self.aucote.storage.save_changes.call_args_list), 1)
-        result = self.aucote.storage.save_changes.call_args[0]
-        self.assertCountEqual(result[0], expected[0])
+        result = self.aucote.storage.save_changes.call_args[0][0]
+        self.assertCountEqual(result, expected)
+        self.assertCountEqual([serializer.call_args_list[0][0][0], serializer.call_args_list[1][0][0]], expected)
 
-    def test_diff_two_last_scans_for_first_scan(self):
+    @patch('scans.scanner.Serializer.serialize_port_detection_change')
+    def test_diff_two_last_scans_for_first_scan(self, serializer):
         current_scan = Scan()
         node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 
@@ -361,16 +362,15 @@ class ScannerTest(AsyncTestCase):
 
         self.aucote.storage.get_scans_by_node.return_value = [current_scan]
         self.aucote.storage.get_ports_by_scan_and_node.side_effect = ([port_unchanged, port_added],)
-        expected = ([
-            VulnerabilityChange(change_type=VulnerabilityChangeType.PORTDETECTION, vulnerability_id=0,
-                                current_id=17, vulnerability_subid=0, previous_id=None),
-            VulnerabilityChange(change_type=VulnerabilityChangeType.PORTDETECTION, vulnerability_id=0,
-                                current_id=19, vulnerability_subid=0, previous_id=None),
-            ],)
+        expected = [
+            PortDetectionChange(current_finding=port_added, previous_finding=None),
+            PortDetectionChange(current_finding=port_unchanged, previous_finding=None)
+        ]
 
         self.thread.diff_with_last_scan(current_scan)
 
         self.aucote.storage.get_nodes_by_scan.assert_called_once_with(scan=current_scan)
         self.assertEqual(len(self.aucote.storage.save_changes.call_args_list), 1)
-        result = self.aucote.storage.save_changes.call_args[0]
-        self.assertCountEqual(result[0], expected[0])
+        result = self.aucote.storage.save_changes.call_args[0][0]
+        self.assertCountEqual(result, expected)
+        self.assertCountEqual([serializer.call_args_list[0][0][0], serializer.call_args_list[1][0][0]], expected)

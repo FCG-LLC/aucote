@@ -267,8 +267,14 @@ class StorageTest(TestCase):
         self.assertCountEqual(result, expected)
 
     def test__save_change(self):
-        change = VulnerabilityChange(vulnerability_subid=13, vulnerability_id=45, current_id=15, change_time=124445,
-                                     previous_id=124, change_type=VulnerabilityChangeType.PORTDETECTION)
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        previous_finding = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
+        previous_finding.row_id = 124
+        current_finding = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
+        current_finding.row_id = 15
+        change = VulnerabilityChange(vulnerability_subid=13, vulnerability_id=45, current_finding=current_finding,
+                                     change_time=124445, change_type=VulnerabilityChangeType.PORTDETECTION,
+                                     previous_finding=previous_finding)
 
         expected = ("INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
                     "current_id, time) VALUES (?, ?, ?, ?, ?, ?)",
@@ -279,11 +285,26 @@ class StorageTest(TestCase):
         self.assertCountEqual(result, expected)
 
     def test__save_changes(self):
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+
+        previous_finding_1 = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
+        previous_finding_1.row_id = 124
+        current_finding_1 = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
+        current_finding_1.row_id = 15
+
+        previous_finding_2 = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
+        previous_finding_2.row_id = 117
+        current_finding_2 = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
+        current_finding_2.row_id = 33
+
+
         changes = [
-            VulnerabilityChange(vulnerability_subid=13, vulnerability_id=45, current_id=15, change_time=124445,
-                                previous_id=124, change_type=VulnerabilityChangeType.PORTDETECTION),
-            VulnerabilityChange(vulnerability_subid=31, vulnerability_id=57, current_id=33, change_time=32434,
-                                previous_id=117, change_type=VulnerabilityChangeType.VULNERABILITIES)
+            VulnerabilityChange(vulnerability_subid=13, vulnerability_id=45, current_finding=current_finding_1,
+                                change_time=124445, previous_finding=previous_finding_1,
+                                change_type=VulnerabilityChangeType.PORTDETECTION),
+            VulnerabilityChange(vulnerability_subid=31, vulnerability_id=57, current_finding=current_finding_2,
+                                change_time=32434, change_type=VulnerabilityChangeType.VULNERABILITIES,
+                                previous_finding=previous_finding_2)
             ]
 
         expected = [("INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \

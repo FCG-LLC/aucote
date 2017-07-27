@@ -11,6 +11,7 @@ class MsgType(Enum):
     """
     VULNERABILITY = 0
     EXPLOIT = 1
+    CHANGE = 2
 
 
 class Serializer:
@@ -63,4 +64,28 @@ class Serializer:
         msg.add_str(exploit.title)
         msg.add_str(exploit.description)
         msg.add_byte(exploit.risk_level.number)
+        return msg
+
+    @classmethod
+    def serialize_port_detection_change(cls, vuln_change):
+        """
+
+        Args:
+            vuln_change (PortDetectionChange):
+
+        Returns:
+
+        """
+        msg = KuduMsg()
+        msg.add_short(MsgType.CHANGE.value)
+        msg.add_ip(vuln_change.node_ip)
+        msg.add_short(vuln_change.port_number)
+        msg.add_byte(vuln_change.port_protocol.iana)
+        msg.add_int(vuln_change.vulnerability_id)
+        msg.add_int(vuln_change.vulnerability_subid)
+        msg.add_datetime(vuln_change.time)
+        msg.add_int(vuln_change.node_id)
+        msg.add_datetime(vuln_change.previous_scan_start)
+        msg.add_datetime(vuln_change.current_scan_start)
+        msg.add_str(vuln_change.output)
         return msg

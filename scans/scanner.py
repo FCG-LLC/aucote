@@ -6,9 +6,11 @@ import time
 import netifaces
 
 from aucote_cfg import cfg
+from database.serializer import Serializer
 from scans.executor import Executor
 from scans.scan_async_task import ScanAsyncTask
-from structs import ScanStatus, PhysicalPort, Scan, TransportProtocol, VulnerabilityChange, VulnerabilityChangeType
+from structs import ScanStatus, PhysicalPort, Scan, TransportProtocol, VulnerabilityChange, VulnerabilityChangeType, \
+    PortDetectionChange
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
@@ -208,11 +210,12 @@ class Scanner(ScanAsyncTask):
             new_ports = current_ports - previous_ports
             removed_ports = previous_ports - current_ports
 
-            changes.extend(VulnerabilityChange(change_type=VulnerabilityChangeType.PORTDETECTION,
-                                               change_time=time.time(), previous_id=None, vulnerability_id=0,
-                                               current_id=port.row_id, vulnerability_subid=0) for port in new_ports)
-            changes.extend(VulnerabilityChange(change_type=VulnerabilityChangeType.PORTDETECTION, current_id=None,
-                                               change_time=time.time(), previous_id=port.row_id, vulnerability_id=0,
-                                               vulnerability_subid=0) for port in removed_ports)
+            changes.extend(PortDetectionChange(change_time=time.time(), previous_finding=None,
+                                               current_finding=port) for port in new_ports)
+
+            changes.extend(PortDetectionChange(current_finding=None, change_time=time.time(),
+                                               previous_finding=port) for port in removed_ports)
 
         self.storage.save_changes(changes)
+        for change in changes:
+            self.aucote.kudu_queue.send(Serializer.serialize_port_detection_change(change))

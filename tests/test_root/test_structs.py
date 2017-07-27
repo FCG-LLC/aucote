@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from cpe import CPE
 
 from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState, \
-    VulnerabilityChangeType, VulnerabilityChange
+    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange
 from structs import TransportProtocol
 
 
@@ -345,22 +345,56 @@ class PortStateTest(TestCase):
         self.assertEqual(result, expected)
 
 
-class VulnerabilityChangeTest(TestCase):
+class PortDetectionChangeTest(TestCase):
     def setUp(self):
-        self.previous_id = 2
-        self.current_id = 3
+        self.node = Node(node_id=13, ip=ipaddress.ip_address('127.0.0.5'))
+        self.scan_1 = Scan(start=150421)
+        self.scan_2 = Scan(start=159985)
+        self.port_1 = Port(transport_protocol=TransportProtocol.TCP, number=80, node=self.node)
+        self.port_1.scan = self.scan_1
+
+        self.port_2 = Port(transport_protocol=TransportProtocol.UDP, number=19, node=self.node)
+        self.port_2.scan = self.scan_2
+
         self.type = VulnerabilityChangeType.PORTDETECTION
-        self.time = 124
-        self.vuln_id = 3
-        self.vuln_subid = 7
-        self.change = VulnerabilityChange(previous_id=self.previous_id, current_id=self.current_id,
-                                          change_type=self.type, change_time=self.time, vulnerability_id=self.vuln_id,
-                                          vulnerability_subid=self.vuln_subid)
+
+        self.change_1 = PortDetectionChange(change_time=159986, current_finding=self.port_1, previous_finding=None)
+        self.change_2 = PortDetectionChange(change_time=159911, current_finding=None, previous_finding=self.port_2)
 
     def test_init(self):
-        self.assertEqual(self.change.previous_id, self.previous_id)
-        self.assertEqual(self.change.current_id, self.current_id)
-        self.assertEqual(self.change.type, self.type)
-        self.assertEqual(self.change.time, self.time)
-        self.assertEqual(self.change.vulnerability_id, self.vuln_id)
-        self.assertEqual(self.change.vulnerability_subid, self.vuln_subid)
+        self.assertEqual(self.change_1.current_finding, self.port_1)
+        self.assertIsNone(self.change_1.previous_finding)
+        self.assertIsNone(self.change_2.current_finding, None)
+        self.assertEqual(self.change_2.previous_finding, self.port_2)
+        self.assertEqual(self.change_1.type, VulnerabilityChangeType.PORTDETECTION)
+        self.assertEqual(self.change_1.time, 159986)
+        self.assertEqual(self.change_1.vulnerability_id, 0)
+        self.assertEqual(self.change_1.vulnerability_subid, 0)
+
+    def test_node_ip(self):
+        self.assertEqual(self.change_1.node_ip, ipaddress.ip_address('127.0.0.5'))
+        self.assertEqual(self.change_2.node_ip, ipaddress.ip_address('127.0.0.5'))
+
+    def test_node_id(self):
+        self.assertEqual(self.change_1.node_id, 13)
+        self.assertEqual(self.change_2.node_id, 13)
+
+    def test_previous_scan_start(self):
+        self.assertIsNone(self.change_1.previous_scan_start)
+        self.assertEqual(self.change_2.previous_scan_start, 159985)
+
+    def test_current_scan_start(self):
+        self.assertEqual(self.change_1.current_scan_start, 150421)
+        self.assertIsNone(self.change_2.current_scan_start)
+
+    def test_output(self):
+        self.assertEqual(self.change_1.output, "New port discovered")
+        self.assertEqual(self.change_2.output, "Port disappeared")
+
+    def test_port_number(self):
+        self.assertEqual(self.change_1.port_number, 80)
+        self.assertEqual(self.change_2.port_number, 19)
+
+    def test_port_protocol(self):
+        self.assertEqual(self.change_1.port_protocol, TransportProtocol.TCP)
+        self.assertEqual(self.change_2.port_protocol, TransportProtocol.UDP)

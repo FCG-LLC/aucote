@@ -333,7 +333,7 @@ class Storage(DbInterface):
 
         """
         return self.SAVE_CHANGE, (change.type.value, change.vulnerability_id, change.vulnerability_subid,
-                                  change.previous_id, change.current_id, change.time)
+                                  change.previous_finding.row_id, change.current_finding.row_id, change.time)
 
     def _save_changes(self, changes):
         """
@@ -346,8 +346,7 @@ class Storage(DbInterface):
             list
 
         """
-        return [(self.SAVE_CHANGE, (change.type.value, change.vulnerability_id, change.vulnerability_subid,
-                                   change.previous_id, change.current_id, change.time)) for change in changes]
+        return [self._save_change(change) for change in changes]
 
     def _clear_security_scans(self):
         """
@@ -551,10 +550,11 @@ class Storage(DbInterface):
 
     def get_ports_by_scan_and_node(self, node, scan):
         """
-        Get ports from database for given scan.
+        Get ports from database for given node and scan.
 
         Args:
-            pasttime (int):
+            node (Node):
+            scan (Scan):
 
         Returns:
             list - list of Ports
@@ -566,6 +566,7 @@ class Storage(DbInterface):
             storage_port = Port(node=Node(node_id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
                                 transport_protocol=self._transport_protocol(port[3]))
             storage_port.row_id = port[5]
+            storage_port.scan = scan
             ports.append(storage_port)
         return ports
 
