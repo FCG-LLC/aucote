@@ -126,10 +126,11 @@ class ScannerTest(AsyncTestCase):
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=nodes, ports=result, scan_only=False)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
+    @patch('scans.scan_async_task.Scan')
     @patch('scans.scanner.Scanner.scanners', new_callable=PropertyMock)
     @patch('scans.scanner.cfg', new_callable=Config)
     @gen_test
-    async def test_periodical_scan(self, cfg, scanners):
+    async def test_periodical_scan(self, cfg, scanners, scan):
         cfg._cfg = {'portdetection': {'scan_enabled': True}}
         nodes = MagicMock()
         future = Future()

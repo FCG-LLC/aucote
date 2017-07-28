@@ -369,7 +369,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         self.thread.storage.get_nodes = MagicMock(return_value=[node_2])
 
-        result = await self.thread._get_nodes_for_scanning()
+        scan = Scan()
+
+        result = await self.thread._get_nodes_for_scanning(scan)
         expected = [node_3]
 
         self.assertListEqual(result, expected)

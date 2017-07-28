@@ -20,14 +20,14 @@ class ToolsScannerTest(AsyncTestCase):
         ports = [MagicMock(), MagicMock()]
         nodes = [MagicMock(), MagicMock(), MagicMock()]
 
-        self.task._get_topdis_nodes = MagicMock(return_value=Future())
-        self.task._get_topdis_nodes.return_value.set_result(nodes)
+        self.task._get_nodes_for_scanning = MagicMock(return_value=Future())
+        self.task._get_nodes_for_scanning.return_value.set_result(nodes)
 
         self.task.get_ports_for_scan = MagicMock(return_value=ports)
 
         await self.task()
 
-        mock_executor.assert_called_once_with(aucote=self.task.aucote, ports=ports)
+        mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=nodes, ports=ports)
         self.task.get_ports_for_scan.assert_called_once_with(nodes)
 
     @patch('scans.tools_scanner.ToolsScanner.previous_scan', new_callable=PropertyMock)
