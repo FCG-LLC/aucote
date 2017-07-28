@@ -27,7 +27,7 @@ class ToolsScannerTest(AsyncTestCase):
 
         await self.task()
 
-        mock_executor.assert_called_once_with(aucote=self.task.aucote, ports=ports)
+        mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=nodes, ports=ports)
         self.task.get_ports_for_scan.assert_called_once_with(nodes)
 
     @patch('scans.tools_scanner.ToolsScanner.previous_scan', new_callable=PropertyMock)
