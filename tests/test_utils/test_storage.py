@@ -80,8 +80,8 @@ class StorageTest(TestCase):
 
         result = self.storage._save_port(port)
 
-        expected = ("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
-                    (1, '127.0.0.1', 1, 6, 13))
+        expected = ("INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) VALUES (?, ?, ?, ?, ?, ?)",
+                    (0, 1, '127.0.0.1', 1, 6, 13))
 
         self.assertCountEqual(result, expected)
 
@@ -95,15 +95,19 @@ class StorageTest(TestCase):
                  Port(node=nodes[1], transport_protocol=TransportProtocol.UDP, number=65),
                  Port(node=nodes[2], transport_protocol=TransportProtocol.ICMP, number=99), ]
 
-        result = self.storage._save_ports(ports)
+        scan = Scan()
+        self.storage.get_scan_id = MagicMock(return_value=34)
+
+        result = self.storage._save_ports(ports, scan)
+        self.storage.get_scan_id.assert_called_once_with(scan)
 
         expected = [
-            ("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
-             (1, '127.0.0.1', 5, 6, 122)),
-            ("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
-             (2, '127.0.0.2', 65, 17, 122)),
-            ("INSERT OR REPLACE INTO ports (id, ip, port, protocol, time) VALUES (?, ?, ?, ?, ?)",
-             (3, '127.0.0.3', 99, 1, 122)),
+            ("INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) VALUES (?, ?, ?, ?, ?, ?)",
+             (34, 1, '127.0.0.1', 5, 6, 122)),
+            ("INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) VALUES (?, ?, ?, ?, ?, ?)",
+             (34, 2, '127.0.0.2', 65, 17, 122)),
+            ("INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) VALUES (?, ?, ?, ?, ?, ?)",
+             (34, 3, '127.0.0.3', 99, 1, 122)),
         ]
 
         self.assertCountEqual(result, expected)
@@ -111,8 +115,14 @@ class StorageTest(TestCase):
 
     @patch('utils.storage.time.time', MagicMock(return_value=140000))
     def test__get_ports(self):
-        result = self.storage._get_ports(700)
-        expected = 'SELECT id, ip, port, protocol, time FROM ports where time > ?', (139300,)
+        scan = Scan(protocol=TransportProtocol.UDP, scanner='test')
+        self.storage.get_scan_id = MagicMock(return_value=87)
+        result = self.storage._get_ports(700, scan=scan)
+        expected = 'SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN scans '\
+                   'ON scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?',\
+                   (139300, 17, 17, 'test')
+
+        self.storage.get_scan_id.assert_called_once_with(scan)
         self.assertEqual(result, expected)
 
     def test__save_security_scan(self):
@@ -226,8 +236,8 @@ class StorageTest(TestCase):
               "node_id int, node_ip text, port_protocol int, port_number int, scan_start float, "
               "scan_end float, PRIMARY KEY (exploit_id, node_id, node_ip, port_protocol, port_number))",),
 
-            ("CREATE TABLE IF NOT EXISTS ports (id int, ip text, port int, protocol int, time int,"
-              "primary key (id, ip, port, protocol))",),
+            ("CREATE TABLE IF NOT EXISTS ports (scan_id int, node_id int, node_ip text, port int, port_protocol int,"
+              " time int, primary key (scan_id, node_id, node_ip, port, port_protocol))",),
 
             ('CREATE TABLE IF NOT EXISTS nodes(scan_id int, node_id int, node_ip text, time int, primary key (scan_id, node_id, node_ip))',),
 
@@ -244,14 +254,15 @@ class StorageTest(TestCase):
     def test__get_ports_by_node(self):
         node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
         result = self.storage._get_ports_by_node(node, 1200, protocol=TransportProtocol.TCP)
-        expected = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ? AND (protocol=? OR (? IS NULL AND protocol IS NULL))", (3, '127.0.0.1', 1200, 6, 6)
+        expected = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? AND node_ip=? AND "\
+                   "time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))", (3, '127.0.0.1', 1200, 6, 6)
 
         self.assertEqual(result, expected)
 
     def test__get_ports_by_node_all_protocols(self):
         node = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.1'))
         result = self.storage._get_ports_by_node(node, 1200, protocol=None)
-        expected = "SELECT id, ip, port, protocol, time FROM ports where id=? AND ip=? AND time > ?", (3, '127.0.0.1', 1200)
+        expected = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? AND node_ip=? AND time > ?", (3, '127.0.0.1', 1200)
 
         self.assertEqual(result, expected)
 
@@ -263,7 +274,8 @@ class StorageTest(TestCase):
 
         result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=TransportProtocol.UDP)
         expected = (
-            "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ? AND (protocol=? OR (? IS NULL AND protocol IS NULL))",
+            "SELECT node_id, node_ip, port, port_protocol, time FROM ports where ( (node_id=? AND node_ip=?) OR "\
+            "(node_id=? AND node_ip=?) ) AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))",
             [3, '127.0.0.1', 7, '::1', 1200, 17, 17]
         )
 
@@ -277,7 +289,7 @@ class StorageTest(TestCase):
 
         result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=None)
         expected = (
-            "SELECT id, ip, port, protocol, time FROM ports where ( (id=? AND ip=?) OR (id=? AND ip=?) ) AND time > ?",
+            "SELECT node_id, node_ip, port, port_protocol, time FROM ports where ( (node_id=? AND node_ip=?) OR (node_id=? AND node_ip=?) ) AND time > ?",
             [3, '127.0.0.1', 7, '::1', 1200]
         )
 
@@ -347,23 +359,22 @@ class StorageTest(TestCase):
         self.storage.execute.assert_called_once_with(self.storage._save_port())
 
     def test_save_ports(self):
+        self.storage.scan = MagicMock()
         ports = MagicMock()
         self.storage._save_ports = MagicMock()
         self.storage.execute = MagicMock()
-        self.storage.save_ports(ports=ports)
-        self.storage._save_ports.assert_called_once_with(ports=ports)
+        self.storage.save_ports(ports=ports, scan=self.storage.scan)
         self.storage.execute.assert_called_once_with(self.storage._save_ports())
 
     def test_get_ports(self):
+        self.storage.scan = MagicMock()
         self.storage._get_ports = MagicMock()
         self.storage.execute = MagicMock(return_value=(
             (1, '127.0.0.1', 20, 6),
             (2, '::1', 23, 17),
         ))
 
-        result = self.storage.get_ports(pasttime=100)
-
-        self.storage._get_ports.assert_called_once_with(pasttime=100)
+        result = self.storage.get_ports(pasttime=100, scan=self.storage.scan)
         self.storage.execute.assert_called_once_with(self.storage._get_ports(pasttime=100))
 
         self.assertEqual(result[0].node.id, 1)

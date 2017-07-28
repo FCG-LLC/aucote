@@ -55,7 +55,7 @@ class Scanner(ScanAsyncTask):
             self.storage.save_nodes(nodes, scan=scan)
             self.current_scan = nodes
 
-            await self.run_scan(nodes, scan_only=self.as_service, scanners=scanners, protocol=protocol)
+            await self.run_scan(nodes, scan_only=self.as_service, scanners=scanners, protocol=protocol, scan=scan)
 
             self.current_scan = []
 
@@ -64,7 +64,7 @@ class Scanner(ScanAsyncTask):
 
         await self._clean_scan()
 
-    async def run_scan(self, nodes, scanners, protocol=PROTOCOL, scan_only=False):
+    async def run_scan(self, nodes, scanners, scan, protocol=PROTOCOL, scan_only=False):
         """
         Run scanning.
 
@@ -97,7 +97,8 @@ class Scanner(ScanAsyncTask):
 
         ports.extend(self._get_special_ports())
 
-        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan_only=scan_only))
+        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan_only=scan_only,
+                                            scan=scan))
 
     async def _clean_scan(self):
         """
