@@ -532,6 +532,18 @@ class Vulnerability(object):
         self.subid = subid
         self.time = vuln_time or time.time()
 
+    def __eq__(self, other):
+        return isinstance(other, Vulnerability) and self.port == other.port and self.exploit == other.exploit and \
+               self.subid == other.subid and self.output == other.output and self.cve == other.cve and \
+               self.cvss == other.cvss
+
+    def is_almost_equal(self, other):
+        return isinstance(other, Vulnerability) and self.port == other.port and self.exploit == other.exploit and \
+               self.subid == other.subid
+
+    def __hash__(self):
+        return hash((self.port, self.exploit, self.subid, self.output, self.cve, self.cvss))
+
 
 class ScanStatus(Enum):
     """
@@ -586,7 +598,7 @@ class VulnerabilityChangeType(Enum):
     VULNERABILITIES = 2
 
 
-class VulnerabilityChange(object):
+class VulnerabilityChangeBase(object):
 
     """
     Represents change between two port or severity scans
@@ -613,7 +625,7 @@ class VulnerabilityChange(object):
         self.time = change_time or time.time()
 
     def __eq__(self, other):
-        return isinstance(other, VulnerabilityChange) and self.vulnerability_subid == other.vulnerability_subid \
+        return isinstance(other, VulnerabilityChangeBase) and self.vulnerability_subid == other.vulnerability_subid\
                and self.vulnerability_id == other.vulnerability_id and self.previous_finding == other.previous_finding \
                and self.type == other.type and self.current_finding == other.current_finding
 
@@ -625,8 +637,45 @@ class VulnerabilityChange(object):
     def finding(self):
         return self.current_finding or self.previous_finding
 
+    @property
+    def port(self):
+        """
 
-class PortDetectionChange(VulnerabilityChange):
+        Returns:
+            Port
+        """
+        raise NotImplementedError
+
+    @property
+    def node_ip(self):
+        return self.port.node.ip
+
+    @property
+    def node_id(self):
+        return self.port.node.id
+
+    @property
+    def previous_scan(self):
+        raise NotImplementedError
+
+    @property
+    def current_scan(self):
+        raise NotImplementedError
+
+    @property
+    def port_number(self):
+        return self.port.number
+
+    @property
+    def port_protocol(self):
+        return self.port.transport_protocol
+
+    @property
+    def output(self):
+        raise NotImplementedError
+
+
+class PortDetectionChange(VulnerabilityChangeBase):
     """
     Represents change between two port detection scans
 
@@ -643,22 +692,6 @@ class PortDetectionChange(VulnerabilityChange):
                                                   vulnerability_id=0, vulnerability_subid=0, *args, **kwargs)
 
     @property
-    def node_ip(self):
-        return self.finding.node.ip
-
-    @property
-    def node_id(self):
-        return self.finding.node.id
-
-    @property
-    def previous_scan_start(self):
-        return self.previous_finding and self.previous_finding.scan.start
-
-    @property
-    def current_scan_start(self):
-        return self.current_finding and self.current_finding.scan.start
-
-    @property
     def output(self):
         if self.previous_finding and not self.current_finding:
             return "Port disappeared"
@@ -666,9 +699,42 @@ class PortDetectionChange(VulnerabilityChange):
             return "New port discovered"
 
     @property
-    def port_number(self):
-        return self.finding.number
+    def port(self):
+        return self.finding
 
     @property
-    def port_protocol(self):
-        return self.finding.transport_protocol
+    def previous_scan(self):
+        return self.previous_finding and self.previous_finding.scan.start
+
+    @property
+    def current_scan(self):
+        return self.current_finding and self.current_finding.scan.start
+
+
+class VulnerabilityChange(VulnerabilityChangeBase):
+    def __init__(self, *args, **kwargs):
+        super(VulnerabilityChange, self).__init__(change_type=VulnerabilityChangeType.VULNERABILITIES,
+                                                  vulnerability_id=None, vulnerability_subid=None, *args, **kwargs)
+        self.vulnerability_id = self.finding.exploit.id
+        self.vulnerability_subid = self.finding.subid
+
+    @property
+    def port(self):
+        return self.finding.port
+
+    @property
+    def previous_scan(self):
+        return self.previous_finding and self.previous_finding.time
+
+    @property
+    def current_scan(self):
+        return self.current_finding and self.current_finding.time
+
+    @property
+    def output(self):
+        if self.previous_finding and not self.current_finding:
+            return self.previous_finding.output
+        elif self.current_finding and not self.previous_finding:
+            return self.current_finding.output
+        elif self.current_finding and self.previous_finding:
+            return "{0} changed to {1}".format(self.previous_finding.output, self.current_finding.output)

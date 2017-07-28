@@ -7,7 +7,7 @@ import time
 import logging as log
 
 from fixtures.exploits import Exploit
-from structs import Port, Node, TransportProtocol, Scan
+from structs import Port, Node, TransportProtocol, Scan, Vulnerability
 from utils.database_interface import DbInterface
 
 
@@ -36,11 +36,20 @@ class Storage(DbInterface):
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     SAVE_CHANGE = "INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
                   "current_id, time) VALUES (?, ?, ?, ?, ?, ?)"
+    SELECT_VULNERABILITIES = "SELECT scan_id, node_id, node_ip, port_protocol, port, vulnerability_id, " \
+                             "vulnerability_subid, cve, cvss, output, time, ROWID FROM vulnerabilities WHERE node_id=?"\
+                             " AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"\
+                             " AND vulnerability_id=?"
     SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? " \
                    "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
     SELECT_SCANS_BY_NODE = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans "\
                            "LEFT JOIN nodes ON scans.ROWID = nodes.scan_id WHERE node_id=? AND node_ip=? "\
                            "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
+    SELECT_SCANS_BY_SEC_SCAN = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans " \
+                               "LEFT JOIN security_scans ON scans.ROWID = security_scans.scan_id WHERE node_id=? AND " \
+                               "node_ip=? AND port_number=? AND (port_protocol=? OR (? IS NULL " \
+                               "AND port_protocol IS NULL))AND exploit_id=? AND exploit_app=? AND exploit_name=?" \
+                               "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
     SELECT_SCAN_NODES = "SELECT node_id, node_ip, time, scan_id FROM nodes WHERE scan_id=?"
     SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN scans ON "\
                    "scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND "\
@@ -178,6 +187,22 @@ class Storage(DbInterface):
         iana = self._protocol_to_iana(scan.protocol)
         return self.SELECT_NODES, (timestamp, iana, iana, scan.scanner)
 
+    def _get_vulnerabilities(self, port, exploit, scan):
+        """
+        Returns all nodes from local storage
+
+        Args:
+            pasttime (int):
+            timestamp (int):
+            scan (Scan):
+
+        Returns:
+            tuple
+
+        """
+        iana = self._protocol_to_iana(port.transport_protocol)
+        return self.SELECT_VULNERABILITIES, (port.node.id, str(port.node.ip), port.number, iana, iana, exploit.id)
+
     def _save_port(self, port, scan, scan_id=None):
         """
         Query for saving port scan into database
@@ -251,6 +276,22 @@ class Storage(DbInterface):
 
         """
         return self.SELECT_SCANS_BY_NODE.format(limit=limit, offset=offset), (node.id, str(node.ip), )
+
+    def _get_scans_by_security_scan(self, exploit, port, limit=2, offset=0):
+        """
+        Query for port scan detail for given scan
+
+        Args:
+            scan (Scan):
+
+        Returns:
+            tuple
+
+        """
+        iana = self._protocol_to_iana(port.transport_protocol)
+        return self.SELECT_SCANS_BY_SEC_SCAN.format(limit=limit, offset=offset), (port.node.id, str(port.node.ip),
+                                                                                  port.number, iana, iana, exploit.id,
+                                                                                  exploit.app, exploit.name)
 
     def _save_security_scan(self, exploit, port, scan):
         """
@@ -330,7 +371,8 @@ class Storage(DbInterface):
 
         """
         return self.SAVE_CHANGE, (change.type.value, change.vulnerability_id, change.vulnerability_subid,
-                                  change.previous_finding.row_id, change.current_finding.row_id, change.time)
+                                  change.previous_finding.row_id if change.previous_finding else None,
+                                  change.current_finding.row_id if change.current_finding else None, change.time)
 
     def _save_changes(self, changes):
         """
@@ -500,6 +542,26 @@ class Storage(DbInterface):
         for node in self.execute(self._get_nodes(pasttime=pasttime, timestamp=timestamp, scan=scan)):
             nodes.append(Node(node_id=node[0], ip=ipaddress.ip_address(node[1])))
         return nodes
+
+    def get_vulnerabilities(self, port, exploit, scan):
+        """
+        Get nodes from database since timestamp. If timestamp is not given, it's computed basing on pastime.
+
+        Args:
+            pasttime (int):
+            timestamp (int):
+
+        Returns:
+            list - list of nodes
+        """
+        vulnerabilities = []
+
+        for row in self.execute(self._get_vulnerabilities(port=port, exploit=exploit, scan=scan)):
+            vulnerability = Vulnerability(port=port, exploit=exploit, cve=row[7], cvss=row[8], output=row[9],
+                                                 subid=row[6], vuln_time=row[10])
+            vulnerability.row_id = row[11]
+            vulnerabilities.append(vulnerability)
+        return vulnerabilities
 
     def save_port(self, port):
         """
@@ -860,6 +922,22 @@ class Storage(DbInterface):
 
         """
         return [self._scan_from_row(row) for row in self.execute(self._get_scans_by_node(node=node))]
+
+    def get_scans_by_security_scan(self, exploit, port):
+        """
+        Obtain scans from storage based on given node
+
+        Args:
+            protocol (TransportProtocol):
+            scanner_name (str):
+            amount (int):
+
+        Returns:
+            list - list of scans
+
+        """
+        return [self._scan_from_row(row) for row in self.execute(self._get_scans_by_security_scan(port=port,
+                                                                                                  exploit=exploit))]
 
     def get_scan_by_id(self, scan_id):
         """

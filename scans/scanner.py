@@ -218,4 +218,4 @@ class Scanner(ScanAsyncTask):
 
         self.storage.save_changes(changes)
         for change in changes:
-            self.aucote.kudu_queue.send(Serializer.serialize_port_detection_change(change))
+            self.aucote.kudu_queue.send(Serializer.serialize_vulnerability_change(change))

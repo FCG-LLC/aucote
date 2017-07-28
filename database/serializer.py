@@ -67,7 +67,7 @@ class Serializer:
         return msg
 
     @classmethod
-    def serialize_port_detection_change(cls, vuln_change):
+    def serialize_vulnerability_change(cls, vuln_change):
         """
 
         Args:
@@ -85,7 +85,7 @@ class Serializer:
         msg.add_int(vuln_change.vulnerability_subid)
         msg.add_datetime(vuln_change.time)
         msg.add_int(vuln_change.node_id)
-        msg.add_datetime(vuln_change.previous_scan_start)
-        msg.add_datetime(vuln_change.current_scan_start)
+        msg.add_datetime(vuln_change.previous_scan)
+        msg.add_datetime(vuln_change.current_scan)
         msg.add_str(vuln_change.output)
         return msg

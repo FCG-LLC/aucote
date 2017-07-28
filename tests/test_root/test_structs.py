@@ -380,12 +380,12 @@ class PortDetectionChangeTest(TestCase):
         self.assertEqual(self.change_2.node_id, 13)
 
     def test_previous_scan_start(self):
-        self.assertIsNone(self.change_1.previous_scan_start)
-        self.assertEqual(self.change_2.previous_scan_start, 159985)
+        self.assertIsNone(self.change_1.previous_scan)
+        self.assertEqual(self.change_2.previous_scan, 159985)
 
     def test_current_scan_start(self):
-        self.assertEqual(self.change_1.current_scan_start, 150421)
-        self.assertIsNone(self.change_2.current_scan_start)
+        self.assertEqual(self.change_1.current_scan, 150421)
+        self.assertIsNone(self.change_2.current_scan)
 
     def test_output(self):
         self.assertEqual(self.change_1.output, "New port discovered")

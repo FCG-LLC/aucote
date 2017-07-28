@@ -3,11 +3,13 @@ Provides task responsible for obtain detailed information about port
 """
 import logging as log
 
+import time
+
 from aucote_cfg import cfg
 from database.serializer import Serializer
 from fixtures.exploits import Exploit
 from scans.task_mapper import TaskMapper
-from structs import BroadcastPort, TransportProtocol, Vulnerability, Scan
+from structs import BroadcastPort, TransportProtocol, Vulnerability, Scan, VulnerabilityChange
 from structs import PhysicalPort
 from tools.common.port_task import PortTask
 from tools.nmap.base import NmapBase
@@ -34,7 +36,7 @@ class NmapPortInfoTask(PortTask):
             **kwargs:
 
         """
-        super().__init__(exploits=[], *args, **kwargs)
+        super().__init__(exploits=[Exploit(exploit_id=0, name='portscan', app='portscan')], *args, **kwargs)
 
         self.command = NmapBase()
         self.scan_only = scan_only
@@ -109,20 +111,21 @@ class NmapPortInfoTask(PortTask):
             if cpe is not None:
                 self._port.service.cpe = cpe.text
 
-        exploit = Exploit(exploit_id=0)
+        self.storage.save_security_scan(port=self.port, exploit=self.exploit, scan=self._scan)
         cpe = self.port.service.cpe.as_fs() if self.port.service.cpe else None
 
         vulnerabilities = [
-            Vulnerability(exploit=exploit, port=self.port, output=self.port.protocol, subid=self.SERVICE_PROTOCOL),
-            Vulnerability(exploit=exploit, port=self.port, output=self.port.service.name, subid=self.SERVICE_NAME),
-            Vulnerability(exploit=exploit, port=self.port, output=self.port.service.version,
+            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.protocol, subid=self.SERVICE_PROTOCOL),
+            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.service.name, subid=self.SERVICE_NAME),
+            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.service.version,
                           subid=self.SERVICE_VERSION),
-            Vulnerability(exploit=exploit, port=self.port, output=self.port.banner, subid=self.SERVICE_BANNER),
-            Vulnerability(exploit=exploit, port=self.port, output=cpe, subid=self.SERVICE_CPE)
+            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.banner, subid=self.SERVICE_BANNER),
+            Vulnerability(exploit=self.exploit, port=self.port, output=cpe, subid=self.SERVICE_CPE)
         ]
         self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self._scan)
 
         self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None), dont_wait=True)
+        self.diff_with_last_scan()
 
         if not self.scan_only:
             await TaskMapper(aucote=self.aucote, scan=self._scan).assign_tasks(self._port, self.aucote.storage)

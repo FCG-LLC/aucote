@@ -7,7 +7,7 @@ from sqlite3 import connect
 from unittest.mock import MagicMock, patch, call
 
 from fixtures.exploits import Exploit
-from structs import Node, Port, TransportProtocol, Scan, Vulnerability, VulnerabilityChange, VulnerabilityChangeType
+from structs import Node, Port, TransportProtocol, Scan, Vulnerability, VulnerabilityChangeBase, VulnerabilityChangeType
 from utils.storage import Storage
 
 
@@ -44,12 +44,12 @@ class StorageTest(TestCase):
         self.exploit_1 = Exploit(exploit_id=14, name='test_name', app='test_app')
         self.exploit_2 = Exploit(exploit_id=2, name='test_name_2', app='test_app_2')
 
-        self.vuln_change_1 = VulnerabilityChange(vulnerability_subid=13, vulnerability_id=45, change_time=124445,
-                                                 current_finding=self.port_1, previous_finding=self.port_2,
-                                                 change_type=VulnerabilityChangeType.PORTDETECTION)
-        self.vuln_change_2 = VulnerabilityChange(vulnerability_subid=31, vulnerability_id=57, change_time=32434,
-                                                 current_finding=self.port_2, previous_finding=self.port_3,
-                                                 change_type=VulnerabilityChangeType.VULNERABILITIES)
+        self.vuln_change_1 = VulnerabilityChangeBase(vulnerability_subid=13, vulnerability_id=45, change_time=124445,
+                                                     current_finding=self.port_1, previous_finding=self.port_2,
+                                                     change_type=VulnerabilityChangeType.PORTDETECTION)
+        self.vuln_change_2 = VulnerabilityChangeBase(vulnerability_subid=31, vulnerability_id=57, change_time=32434,
+                                                     current_finding=self.port_2, previous_finding=self.port_3,
+                                                     change_type=VulnerabilityChangeType.VULNERABILITIES)
 
         self.vulnerability_1 = Vulnerability(port=self.port_1, output='test_output_1', exploit=self.exploit_1,
                                              cve='CVE-2017', cvss=6.7, subid=1, vuln_time=13)
@@ -103,6 +103,17 @@ class StorageTest(TestCase):
 
         expected = 'SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? '\
                    'AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?', (139300, 17, 17, 'test_name')
+        self.assertEqual(result, expected)
+
+    def test__get_vulnerabilities(self):
+        self.storage.get_scan_id = MagicMock(return_value=16)
+        result = self.storage._get_vulnerabilities(port=self.port_1, scan=self.scan, exploit=self.exploit_1)
+        expected = 'SELECT scan_id, node_id, node_ip, port_protocol, port, vulnerability_id, ' \
+                   'vulnerability_subid, cve, cvss, output, time, ROWID FROM vulnerabilities ' \
+                   'WHERE node_id=? AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL ' \
+                   'AND port_protocol IS NULL)) AND vulnerability_id=?',\
+                   (1, '127.0.0.1', 45, 17, 17, 14),
+
         self.assertEqual(result, expected)
 
     @patch('time.time', MagicMock(return_value=13))
@@ -410,6 +421,37 @@ class StorageTest(TestCase):
         self.assertEqual(result[0].ip, ipaddress.ip_address('127.0.0.1'))
         self.assertEqual(result[1].ip, ipaddress.ip_address('::1'))
 
+    def test_get_vulnerabilities(self):
+        self.storage._get_vulnerabilities = MagicMock()
+        self.storage.execute = MagicMock(return_value=(
+            (1, 1, '127.0.0.1', 17, 33, 2, 1, 'CVE-1', 5.5, 'output_1', 13, 33),
+            (3, 2, '127.0.0.2', 6, 44, 3, 5, 'CVE-2', 4.4, 'output_2', 15, 44)
+        ))
+
+        result = self.storage.get_vulnerabilities(port=self.port_1, scan=self.scan, exploit=self.exploit_1)
+
+        self.storage._get_vulnerabilities.assert_called_once_with(port=self.port_1, scan=self.scan, exploit=self.exploit_1)
+        self.assertEqual(result[0].port, self.port_1)
+        self.assertEqual(result[1].port, self.port_1)
+
+        self.assertEqual(result[0].row_id, 33)
+        self.assertEqual(result[1].row_id, 44)
+
+        self.assertEqual(result[0].exploit, self.exploit_1)
+        self.assertEqual(result[1].exploit, self.exploit_1)
+
+        self.assertEqual(result[0].cvss, 5.5)
+        self.assertEqual(result[1].cvss, 4.4)
+
+        self.assertEqual(result[0].output, 'output_1')
+        self.assertEqual(result[1].output, 'output_2')
+
+        self.assertEqual(result[0].cve, 'CVE-1')
+        self.assertEqual(result[1].cve, 'CVE-2')
+
+        self.assertEqual(result[0].time, 13)
+        self.assertEqual(result[1].time, 15)
+
     def test_get_nodes_by_scan(self):
         self.storage._get_scan_nodes = MagicMock()
         self.storage.execute = MagicMock(return_value=(
@@ -708,6 +750,15 @@ class StorageTest(TestCase):
                    'scanner_name=? ORDER BY scan_end DESC, scan_start ASC LIMIT 3 OFFSET 17', (1, 1, 'test_name')
         self.assertCountEqual(result, expected)
 
+    def test__get_scans_by_security_scan(self):
+        result = self.storage._get_scans_by_security_scan(port=self.port_1, exploit=self.exploit_1, limit=3, offset=17)
+        expected = 'SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans LEFT JOIN security_scans ' \
+                   'ON scans.ROWID = security_scans.scan_id WHERE node_id=? AND node_ip=? AND port_number=? AND ' \
+                   '(port_protocol=? OR (? IS NULL AND port_protocol IS NULL))AND exploit_id=? AND exploit_app=? ' \
+                   'AND exploit_name=?ORDER BY scan_end DESC, scan_start ASC LIMIT 3 OFFSET 17', \
+                   (1, '127.0.0.1', 45, 17, 17, 14, 'test_app', 'test_name')
+        self.assertCountEqual(result, expected)
+
     def test__get_scan(self):
         result = self.storage._get_scan(self.scan)
         expected = 'SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND '\
@@ -782,6 +833,26 @@ class StorageTest(TestCase):
 
         self.storage._get_scans_by_node.assert_called_once_with(node=self.node_1)
         self.storage.execute.assert_called_once_with(self.storage._get_scans_by_node())
+
+        self.assertEqual(result[0].protocol, TransportProtocol.UDP)
+        self.assertEqual(result[0].start, 13)
+        self.assertEqual(result[0].end, 19)
+
+        self.assertEqual(result[1].protocol, TransportProtocol.TCP)
+        self.assertEqual(result[1].start, 2)
+        self.assertEqual(result[1].end, 18)
+
+    def test_get_scans_by_sec_scan(self):
+        self.storage._get_scans_by_security_scan = MagicMock()
+        self.storage.execute = MagicMock(return_value=(
+            (1, 17, 'test_name', 13, 19),
+            (2, 6, 'test_name', 2, 18),
+        ))
+
+        result = self.storage.get_scans_by_security_scan(port=self.port_1, exploit=self.exploit_1)
+
+        self.storage._get_scans_by_security_scan.assert_called_once_with(port=self.port_1, exploit=self.exploit_1)
+        self.storage.execute.assert_called_once_with(self.storage._get_scans_by_security_scan())
 
         self.assertEqual(result[0].protocol, TransportProtocol.UDP)
         self.assertEqual(result[0].start, 13)

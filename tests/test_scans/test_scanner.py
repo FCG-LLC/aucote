@@ -317,7 +317,7 @@ class ScannerTest(AsyncTestCase):
         await self.thread()
         self.assertFalse(self.thread.run_scan.called)
 
-    @patch('scans.scanner.Serializer.serialize_port_detection_change')
+    @patch('scans.scanner.Serializer.serialize_vulnerability_change')
     def test_diff_two_last_scans(self, serializer):
         current_scan = Scan()
         previous_scan = Scan()
@@ -348,7 +348,7 @@ class ScannerTest(AsyncTestCase):
         self.assertCountEqual(result, expected)
         self.assertCountEqual([serializer.call_args_list[0][0][0], serializer.call_args_list[1][0][0]], expected)
 
-    @patch('scans.scanner.Serializer.serialize_port_detection_change')
+    @patch('scans.scanner.Serializer.serialize_vulnerability_change')
     def test_diff_two_last_scans_for_first_scan(self, serializer):
         current_scan = Scan()
         node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)

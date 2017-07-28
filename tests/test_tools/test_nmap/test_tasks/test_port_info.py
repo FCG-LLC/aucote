@@ -308,7 +308,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         self.assertEqual(result, expected)
 
-    @patch('tools.nmap.tasks.port_info.Exploit')
+    @patch('tools.nmap.tasks.port_info.NmapPortInfoTask.exploit')
     @patch('tools.nmap.tasks.port_info.Vulnerability')
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
@@ -324,12 +324,11 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         expected = 5*[vulnerability.return_value]
         self.aucote.storage.save_vulnerabilities.assert_called_once_with(vulnerabilities=expected,
                                                                          scan=self.port_info._scan)
-        exploit.assert_called_once_with(exploit_id=0)
 
         vulnerability.assert_has_calls([
-            call(exploit=exploit(), port=self.port, output='http', subid=1),
-            call(exploit=exploit(), port=self.port, output='Apache httpd', subid=2),
-            call(exploit=exploit(), port=self.port, output='2.4.23', subid=3),
-            call(exploit=exploit(), port=self.port, output=None, subid=4),
-            call(exploit=exploit(), port=self.port, output='cpe:2.3:a:apache:http_server:2.4.23:*:*:*:*:*:*:*', subid=5)
+            call(exploit=exploit, port=self.port, output='http', subid=1),
+            call(exploit=exploit, port=self.port, output='Apache httpd', subid=2),
+            call(exploit=exploit, port=self.port, output='2.4.23', subid=3),
+            call(exploit=exploit, port=self.port, output=None, subid=4),
+            call(exploit=exploit, port=self.port, output='cpe:2.3:a:apache:http_server:2.4.23:*:*:*:*:*:*:*', subid=5)
         ])

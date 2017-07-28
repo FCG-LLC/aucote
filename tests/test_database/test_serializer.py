@@ -74,6 +74,6 @@ class SerializerTest(TestCase):
                              b'\x00\x00\x00\x00\x00\x00H\xe1j\x07\x00\x00\x00\x00\x01\x00\x00\x00\xf8\r@F\x00\x00\x00'
                              b'\x00\xc8\xa4(\x0b\x00\x00\x00\x00\x0b\x00test_output')
 
-        result = self.serializer.serialize_port_detection_change(change).data
+        result = self.serializer.serialize_vulnerability_change(change).data
 
         self.assertEqual(result, expected)
