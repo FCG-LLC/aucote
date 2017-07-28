@@ -60,7 +60,9 @@ class NmapToolTest(AsyncTestCase):
         self.port.protocol = 'test_service'
 
         self.aucote = MagicMock(storage=Storage(":memory:"))
-        self.nmap_tool = NmapTool(aucote=self.aucote, exploits=self.exploits, port=self.port, config=self.config)
+        self.scan = Scan()
+        self.nmap_tool = NmapTool(aucote=self.aucote, exploits=self.exploits, port=self.port, config=self.config,
+                                  scan=self.scan)
 
     @patch('tools.nmap.tool.NmapVulnParser')
     @patch('tools.nmap.tool.NmapInfoParser')

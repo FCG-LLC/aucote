@@ -513,7 +513,7 @@ class Vulnerability(object):
     Vulnerability object
 
     """
-    def __init__(self, exploit=None, port=None, output=None):
+    def __init__(self, exploit=None, port=None, output=None, cve=None, cvss=None, subid=None, vuln_time=None):
         """
         Init values
 
@@ -527,6 +527,10 @@ class Vulnerability(object):
         self.output = str(output)
         self.exploit = exploit
         self.port = port
+        self.cve = cve
+        self.cvss = cvss
+        self.subid = subid
+        self.time = vuln_time or time.time()
 
 
 class ScanStatus(Enum):

@@ -35,8 +35,9 @@ class SkipfishScanTaskTest(AsyncTestCase):
         self.port = Port(transport_protocol=TransportProtocol.TCP, number = 80, node=self.node)
         self.port.scan = Scan()
         self.exploit = Exploit(exploit_id=1)
+        self.scan = Scan()
 
-        self.task = SkipfishScanTask(aucote=self.aucote, port=self.port, exploits=[self.exploit])
+        self.task = SkipfishScanTask(aucote=self.aucote, port=self.port, exploits=[self.exploit], scan=self.scan,)
         self.task.aucote.exploits.find.return_value = self.exploit
         self.task.store_scan_end = MagicMock()
 

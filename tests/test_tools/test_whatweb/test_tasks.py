@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from fixtures.exploits import Exploit
-from structs import Port, Node, TransportProtocol
+from structs import Port, Node, TransportProtocol, Scan
 from tools.whatweb.base import WhatWebBase
 from tools.whatweb.tasks import WhatWebTask
 
@@ -15,7 +15,8 @@ class WhatWebTaskTest(TestCase):
         self.port.protocol = 'http'
         self.aucote = MagicMock()
         self.exploit = Exploit(app='whatweb', name='whatweb', exploit_id=1)
-        self.task = WhatWebTask(port=self.port, aucote=self.aucote, exploits=[self.exploit])
+        self.scan = Scan()
+        self.task = WhatWebTask(port=self.port, aucote=self.aucote, exploits=[self.exploit], scan=self.scan)
 
     def test_init(self):
         self.assertIsInstance(self.task.command, WhatWebBase)

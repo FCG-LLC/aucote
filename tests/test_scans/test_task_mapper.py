@@ -47,7 +47,9 @@ class TaskMapperTest(AsyncTestCase):
 
         self.exploits.update(test2=[Exploit(exploit_id=3)])
         self.executor.exploits.find_all_matching.return_value = self.exploits
-        self.task_mapper = TaskMapper(aucote=self.executor)
+        self.scan = Scan()
+
+        self.task_mapper = TaskMapper(aucote=self.executor, scan=self.scan)
 
     def tearDown(self):
         self.EXECUTOR_CONFIG['apps']['test']['class'].reset_mock()
@@ -489,4 +491,4 @@ class TaskMapperTest(AsyncTestCase):
         await self.task_mapper.assign_tasks_for_node(node)
 
         class_mock.assert_called_once_with(aucote=self.task_mapper._aucote, exploits=[exploit], node=node,
-                                           config=self.EXECUTOR_CONFIG['apps']['test'])
+                                           config=self.EXECUTOR_CONFIG['apps']['test'], scan=self.scan)

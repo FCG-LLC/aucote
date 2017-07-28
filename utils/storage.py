@@ -30,6 +30,9 @@ class Storage(DbInterface):
     SAVE_SECURITY_SCAN_DETAIL_END = "UPDATE security_scans SET scan_end=? WHERE exploit_id=? AND exploit_app=? AND " \
                                     "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL "\
                                     "AND port_protocol IS NULL)) AND port_number=?"
+    SAVE_VULNERABILITY = "INSERT OR REPLACE INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
+                         "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
+                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? " \
                    "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
     SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN scans ON "\
@@ -64,6 +67,10 @@ class Storage(DbInterface):
                          "primary key (scan_id, node_id, node_ip))"
     CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
                          "scan_end int, UNIQUE (protocol, scanner_name, scan_start))"
+    CREATE_VULNERABILITIES_TABLE = "CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, "\
+                                   "port_protocol int, port int, vulnerability_id int, vulnerability_subid int, "\
+                                   "cve text, cvss text, output text, time int, primary key(scan_id, node_id, "\
+                                   "node_ip, port_protocol, port, vulnerability_subid))"
 
     def __init__(self, filename="storage.sqlite3"):
 
@@ -292,7 +299,8 @@ class Storage(DbInterface):
         queries = [(self.CREATE_SCANS_TABLE,),
                    (self.CREATE_SECURITY_SCANS_TABLE,),
                    (self.CREATE_PORTS_TABLE,),
-                   (self.CREATE_NODES_TABLE,)]
+                   (self.CREATE_NODES_TABLE,),
+                   (self.CREATE_VULNERABILITIES_TABLE,)]
 
         return queries
 
@@ -699,3 +707,37 @@ class Storage(DbInterface):
             scans.append(scan)
 
         return scans
+
+    def _save_vulnerabilities(self, vulnerabilities, scan):
+        """
+        Save vulnarabilities into local storage
+
+        Args:
+            vulnerabilities (list): list of Vulnerability
+            scan (Scan):
+
+        Returns:
+            None
+
+        """
+        scan_id = self.get_scan_id(scan)
+        queries = [(self.SAVE_VULNERABILITY, (scan_id, vuln.port.node.id, str(vuln.port.node.ip),
+                                              self._protocol_to_iana(vuln.port.transport_protocol), vuln.port.number,
+                                              vuln.exploit.id, vuln.subid, vuln.cve, vuln.cvss, vuln.output,
+                                              vuln.time))
+                   for vuln in vulnerabilities]
+        return queries
+
+    def save_vulnerabilities(self, vulnerabilities, scan):
+        """
+        Save vulnarabilities into local storage
+
+        Args:
+            vulnerabilities (list): list of Vulnerability
+            scan (Scan):
+
+        Returns:
+            None
+
+        """
+        return self.execute(self._save_vulnerabilities(vulnerabilities=vulnerabilities, scan=scan))

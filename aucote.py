@@ -18,8 +18,8 @@ from tornado.ioloop import IOLoop
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
 from scans.scanner import Scanner
-from scans.task_mapper import TaskMapper
 from scans.tools_scanner import ToolsScanner
+from scans.scan_async_task import ScanAsyncTask
 from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
@@ -104,7 +104,6 @@ class Aucote(object):
     def __init__(self, exploits, kudu_queue, tools_config):
         self.exploits = exploits
         self._kudu_queue = kudu_queue
-        self.task_mapper = TaskMapper(self)
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
         signal.signal(signal.SIGHUP, self.graceful_stop)
