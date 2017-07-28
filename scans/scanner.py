@@ -44,7 +44,7 @@ class Scanner(ScanAsyncTask):
         await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
         for protocol, scanners in self.scanners.items():
-            scan = Scan(self.scan_start)
+            scan = Scan(self.scan_start, protocol=protocol, scanner='scan')
             self.storage.save_scan(scan)
 
             nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, protocol=protocol)
