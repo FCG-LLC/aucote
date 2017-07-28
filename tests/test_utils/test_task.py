@@ -51,7 +51,7 @@ class TaskTest(TestCase):
 
         self.task.store_scan_end(exploits=[exploit], port=port)
 
-        result = self.task.aucote.storage.save_scans.call_args[1]
+        result = self.task.aucote.storage.save_security_scans.call_args[1]
 
         expected = {
             'exploits': [exploit],

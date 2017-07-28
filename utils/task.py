@@ -57,7 +57,7 @@ class Task(object):
             None
 
         """
-        self.aucote.storage.save_scans(exploits=exploits, port=port)
+        self.aucote.storage.save_security_scans(exploits=exploits, port=port)
 
     def store_vulnerability(self, vuln):
         """
