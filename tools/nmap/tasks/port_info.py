@@ -20,11 +20,6 @@ class NmapPortInfoTask(PortTask):
     Scans one port using provided vulnerability scan
 
     """
-    SERVICE_PROTOCOL = 1
-    SERVICE_NAME = 2
-    SERVICE_VERSION = 3
-    SERVICE_BANNER = 4
-    SERVICE_CPE = 5
 
     def __init__(self, scan_only=False, *args, **kwargs):
         """
@@ -115,12 +110,16 @@ class NmapPortInfoTask(PortTask):
         cpe = self.port.service.cpe.as_fs() if self.port.service.cpe else None
 
         vulnerabilities = [
-            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.protocol, subid=self.SERVICE_PROTOCOL),
-            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.service.name, subid=self.SERVICE_NAME),
+            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.protocol,
+                          subid=Vulnerability.SERVICE_PROTOCOL),
+            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.service.name,
+                          subid=Vulnerability.SERVICE_NAME),
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.service.version,
-                          subid=self.SERVICE_VERSION),
-            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.banner, subid=self.SERVICE_BANNER),
-            Vulnerability(exploit=self.exploit, port=self.port, output=cpe, subid=self.SERVICE_CPE)
+                          subid=Vulnerability.SERVICE_VERSION),
+            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.banner,
+                          subid=Vulnerability.SERVICE_BANNER),
+            Vulnerability(exploit=self.exploit, port=self.port, output=cpe,
+                          subid=Vulnerability.SERVICE_CPE)
         ]
         self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self._scan)
 

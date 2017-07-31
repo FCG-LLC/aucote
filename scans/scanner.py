@@ -199,7 +199,7 @@ class Scanner(ScanAsyncTask):
         changes = []
 
         for node in nodes:
-            last_scans = self.storage.get_scans_by_node(node=node)
+            last_scans = self.storage.get_scans_by_node(node=node, scan=scan)
             current_ports = set(self.storage.get_ports_by_scan_and_node(node=node, scan=scan))
 
             if len(last_scans) < 2:

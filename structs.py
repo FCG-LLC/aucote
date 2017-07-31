@@ -513,6 +513,13 @@ class Vulnerability(object):
     Vulnerability object
 
     """
+    PORTDETECTION = 0
+    SERVICE_PROTOCOL = 1
+    SERVICE_NAME = 2
+    SERVICE_VERSION = 3
+    SERVICE_BANNER = 4
+    SERVICE_CPE = 5
+
     def __init__(self, exploit=None, port=None, output=None, cve=None, cvss=None, subid=None, vuln_time=None):
         """
         Init values
@@ -689,7 +696,8 @@ class PortDetectionChange(VulnerabilityChangeBase):
 
         """
         super(PortDetectionChange, self).__init__(change_type=VulnerabilityChangeType.PORTDETECTION,
-                                                  vulnerability_id=0, vulnerability_subid=0, *args, **kwargs)
+                                                  vulnerability_id=0,
+                                                  vulnerability_subid=Vulnerability.PORTDETECTION, *args, **kwargs)
 
     @property
     def output(self):

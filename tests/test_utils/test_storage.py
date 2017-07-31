@@ -111,8 +111,8 @@ class StorageTest(TestCase):
         expected = 'SELECT scan_id, node_id, node_ip, port_protocol, port, vulnerability_id, ' \
                    'vulnerability_subid, cve, cvss, output, time, ROWID FROM vulnerabilities ' \
                    'WHERE node_id=? AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL ' \
-                   'AND port_protocol IS NULL)) AND vulnerability_id=?',\
-                   (1, '127.0.0.1', 45, 17, 17, 14),
+                   'AND port_protocol IS NULL)) AND vulnerability_id=? AND scan_id=?',\
+                   (1, '127.0.0.1', 45, 17, 17, 14, 16),
 
         self.assertEqual(result, expected)
 
@@ -168,9 +168,10 @@ class StorageTest(TestCase):
     def test__get_scans_by_node(self):
         expected = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans " \
                    "LEFT JOIN nodes ON scans.ROWID = nodes.scan_id WHERE node_id=? AND node_ip=? " \
-                   "ORDER BY scan_end DESC, scan_start ASC LIMIT 13 OFFSET 45", (1, '127.0.0.1')
+                   " AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"\
+                   "ORDER BY scan_end DESC, scan_start ASC LIMIT 13 OFFSET 45", (1, '127.0.0.1', 17, 17, 'test_name')
 
-        result = self.storage._get_scans_by_node(node=self.node_1, limit=13, offset=45)
+        result = self.storage._get_scans_by_node(node=self.node_1, scan=self.scan, limit=13, offset=45)
 
         self.assertEqual(result, expected)
 
@@ -829,9 +830,9 @@ class StorageTest(TestCase):
             (2, 6, 'test_name', 2, 18),
         ))
 
-        result = self.storage.get_scans_by_node(node=self.node_1)
+        result = self.storage.get_scans_by_node(node=self.node_1, scan=self.scan)
 
-        self.storage._get_scans_by_node.assert_called_once_with(node=self.node_1)
+        self.storage._get_scans_by_node.assert_called_once_with(node=self.node_1, scan=self.scan)
         self.storage.execute.assert_called_once_with(self.storage._get_scans_by_node())
 
         self.assertEqual(result[0].protocol, TransportProtocol.UDP)

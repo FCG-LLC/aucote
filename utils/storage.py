@@ -39,11 +39,12 @@ class Storage(DbInterface):
     SELECT_VULNERABILITIES = "SELECT scan_id, node_id, node_ip, port_protocol, port, vulnerability_id, " \
                              "vulnerability_subid, cve, cvss, output, time, ROWID FROM vulnerabilities WHERE node_id=?"\
                              " AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"\
-                             " AND vulnerability_id=?"
+                             " AND vulnerability_id=? AND scan_id=?"
     SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? " \
                    "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
     SELECT_SCANS_BY_NODE = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans "\
                            "LEFT JOIN nodes ON scans.ROWID = nodes.scan_id WHERE node_id=? AND node_ip=? "\
+                           " AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"\
                            "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
     SELECT_SCANS_BY_SEC_SCAN = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans " \
                                "LEFT JOIN security_scans ON scans.ROWID = security_scans.scan_id WHERE node_id=? AND " \
@@ -201,7 +202,9 @@ class Storage(DbInterface):
 
         """
         iana = self._protocol_to_iana(port.transport_protocol)
-        return self.SELECT_VULNERABILITIES, (port.node.id, str(port.node.ip), port.number, iana, iana, exploit.id)
+        scan_id = self.get_scan_id(scan)
+        return self.SELECT_VULNERABILITIES, (port.node.id, str(port.node.ip), port.number, iana, iana, exploit.id,
+                                             scan_id)
 
     def _save_port(self, port, scan, scan_id=None):
         """
@@ -264,7 +267,7 @@ class Storage(DbInterface):
         scan_id = self.get_scan_id(scan)
         return self.SELECT_SCAN_NODES, (scan_id, )
 
-    def _get_scans_by_node(self, node, limit=2, offset=0):
+    def _get_scans_by_node(self, node, scan, limit=2, offset=0):
         """
         Query for port scan detail for given scan
 
@@ -275,7 +278,9 @@ class Storage(DbInterface):
             tuple
 
         """
-        return self.SELECT_SCANS_BY_NODE.format(limit=limit, offset=offset), (node.id, str(node.ip), )
+        iana = self._protocol_to_iana(scan.protocol)
+        return self.SELECT_SCANS_BY_NODE.format(limit=limit, offset=offset), (node.id, str(node.ip), iana, iana,
+                                                                              scan.scanner)
 
     def _get_scans_by_security_scan(self, exploit, port, limit=2, offset=0):
         """
@@ -908,20 +913,19 @@ class Storage(DbInterface):
         return[self._scan_from_row(row) for row in self.execute(self._get_scans(protocol=protocol, limit=amount,
                                                                                 offset=0, scanner_name=scanner_name))]
 
-    def get_scans_by_node(self, node):
+    def get_scans_by_node(self, node, scan):
         """
         Obtain scans from storage based on given node
 
         Args:
             protocol (TransportProtocol):
-            scanner_name (str):
-            amount (int):
+            scan (Scan):
 
         Returns:
             list - list of scans
 
         """
-        return [self._scan_from_row(row) for row in self.execute(self._get_scans_by_node(node=node))]
+        return [self._scan_from_row(row) for row in self.execute(self._get_scans_by_node(node=node, scan=scan))]
 
     def get_scans_by_security_scan(self, exploit, port):
         """
@@ -993,4 +997,4 @@ class Storage(DbInterface):
         return self.execute(self._save_vulnerabilities(vulnerabilities=vulnerabilities, scan=scan))
 
     def _scan_from_row(self, row):
-        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]))
+        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]), scanner=row[2])
