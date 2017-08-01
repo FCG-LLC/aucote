@@ -71,8 +71,8 @@ class SerializerTest(TestCase):
         change = PortDetectionChange(current_finding=current_finding, change_time=124445,
                                      previous_finding=previous_finding)
         expected = bytearray(b'\x02\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00X\x00\x06\x00\x00'
-                             b'\x00\x00\x00\x00\x00\x00H\xe1j\x07\x00\x00\x00\x00\x01\x00\x00\x00\xf8\r@F\x00\x00\x00'
-                             b'\x00\xc8\xa4(\x0b\x00\x00\x00\x00\x0b\x00test_output')
+                             b'\x00\x00\x00\x00\x00\x00H\xe1j\x07\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\xf8\r@F\x00'
+                             b'\x00\x00\x00\xc8\xa4(\x0b\x00\x00\x00\x00\x0b\x00test_output')
 
         result = self.serializer.serialize_vulnerability_change(change).data
 
