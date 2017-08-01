@@ -9,7 +9,7 @@ from aucote_cfg import cfg
 from database.serializer import Serializer
 from fixtures.exploits import Exploit
 from scans.task_mapper import TaskMapper
-from structs import BroadcastPort, TransportProtocol, Vulnerability, Scan, VulnerabilityChange
+from structs import BroadcastPort, TransportProtocol, Vulnerability, VulnerabilityChange
 from structs import PhysicalPort
 from tools.common.port_task import PortTask
 from tools.nmap.base import NmapBase
@@ -185,4 +185,4 @@ class NmapPortInfoTask(PortTask):
 
         self.storage.save_changes(changes)
         for change in changes:
-            self.aucote.kudu_queue.send(Serializer.serialize_vulnerability_change(change))
+            self.aucote.kudu_queue.send_msg(Serializer.serialize_vulnerability_change(change))

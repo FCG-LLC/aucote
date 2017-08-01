@@ -1,3 +1,9 @@
+"""
+Exceptions used by cve-search tool and tasks
+
+"""
+
+
 class CVESearchAPIConnectionException(Exception):
     """
     Raises if cannot connect to the cve-search API

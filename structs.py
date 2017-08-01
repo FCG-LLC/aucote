@@ -545,6 +545,16 @@ class Vulnerability(object):
                self.cvss == other.cvss
 
     def is_almost_equal(self, other):
+        """
+        Check if vulnerability is this same but with different output
+
+        Args:
+            other (Vulnerability):
+
+        Returns:
+            bool
+
+        """
         return isinstance(other, Vulnerability) and self.port == other.port and self.exploit == other.exploit and \
                self.subid == other.subid
 
@@ -642,6 +652,14 @@ class VulnerabilityChangeBase(object):
 
     @property
     def finding(self):
+        """
+        Returns one of the finding. As findings should be the same class objects, and handle information about this same
+        port, there is enough to return any of them
+
+        Returns:
+            object
+
+        """
         return self.current_finding or self.previous_finding
 
     @property
@@ -655,30 +673,79 @@ class VulnerabilityChangeBase(object):
 
     @property
     def node_ip(self):
+        """
+        Ip of node which change
+
+        Returns:
+            IPv4Address|IPv6Address
+
+        """
         return self.port.node.ip
 
     @property
     def node_id(self):
+        """
+        Id of node which change
+
+        Returns:
+            int
+
+        """
         return self.port.node.id
 
     @property
     def previous_scan(self):
+        """
+        Previous scan timestamp
+
+        Returns:
+            int
+
+        """
         raise NotImplementedError
 
     @property
     def current_scan(self):
+        """
+        Current scan timestamp
+
+        Returns:
+            int
+
+        """
         raise NotImplementedError
 
     @property
     def port_number(self):
+        """
+        Number of port which change
+
+        Returns:
+            int
+
+        """
         return self.port.number
 
     @property
     def port_protocol(self):
+        """
+        Protocol of port which change
+
+        Returns:
+            TransportProtocol
+
+        """
         return self.port.transport_protocol
 
     @property
     def output(self):
+        """
+        Human friendly description of change
+
+        Returns:
+            str
+
+        """
         raise NotImplementedError
 
 
@@ -720,6 +787,10 @@ class PortDetectionChange(VulnerabilityChangeBase):
 
 
 class VulnerabilityChange(VulnerabilityChangeBase):
+    """
+    Represents change between two vulnerability scans for specific node and port
+
+    """
     def __init__(self, *args, **kwargs):
         super(VulnerabilityChange, self).__init__(change_type=VulnerabilityChangeType.VULNERABILITIES,
                                                   vulnerability_id=None, vulnerability_subid=None, *args, **kwargs)

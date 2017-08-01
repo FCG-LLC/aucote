@@ -390,8 +390,8 @@ class StorageTest(TestCase):
         node = MagicMock()
         self.storage._save_node = MagicMock()
         self.storage.execute = MagicMock()
-        self.storage.save_node(node=node, protocol=TransportProtocol.UDP)
-        self.storage._save_node.assert_called_once_with(node=node, protocol=TransportProtocol.UDP)
+        self.storage.save_node(node=node, scan=self.scan)
+        self.storage._save_node.assert_called_once_with(node=node, scan=self.scan)
         self.storage.execute.assert_called_once_with(self.storage._save_node())
 
     def test_save_nodes(self):
@@ -478,8 +478,8 @@ class StorageTest(TestCase):
         port = MagicMock()
         self.storage._save_port = MagicMock()
         self.storage.execute = MagicMock()
-        self.storage.save_port(port=port)
-        self.storage._save_port.assert_called_once_with(port=port)
+        self.storage.save_port(port=port, scan=self.scan)
+        self.storage._save_port.assert_called_once_with(port=port, scan=self.scan)
         self.storage.execute.assert_called_once_with(self.storage._save_port())
 
     def test_save_ports(self):

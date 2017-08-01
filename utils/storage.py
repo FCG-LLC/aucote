@@ -505,7 +505,7 @@ class Storage(DbInterface):
 
         self.conn.commit()
 
-    def save_node(self, node, protocol=None):
+    def save_node(self, node, scan):
         """
         Save node to database
 
@@ -516,7 +516,7 @@ class Storage(DbInterface):
             None
 
         """
-        return self.execute(self._save_node(node=node, protocol=protocol))
+        return self.execute(self._save_node(node=node, scan=scan))
 
     def save_nodes(self, nodes, scan):
         """
@@ -563,12 +563,12 @@ class Storage(DbInterface):
 
         for row in self.execute(self._get_vulnerabilities(port=port, exploit=exploit, scan=scan)):
             vulnerability = Vulnerability(port=port, exploit=exploit, cve=row[7], cvss=row[8], output=row[9],
-                                                 subid=row[6], vuln_time=row[10])
+                                          subid=row[6], vuln_time=row[10])
             vulnerability.row_id = row[11]
             vulnerabilities.append(vulnerability)
         return vulnerabilities
 
-    def save_port(self, port):
+    def save_port(self, port, scan):
         """
         Save port to database
 
@@ -579,7 +579,7 @@ class Storage(DbInterface):
             None
 
         """
-        return self.execute(self._save_port(port=port))
+        return self.execute(self._save_port(port=port, scan=scan))
 
     def save_ports(self, ports, scan):
         """
@@ -954,8 +954,6 @@ class Storage(DbInterface):
             Scan
 
         """
-        scans = []
-
         result = self.execute(self._get_scan_by_id(scan_id))
         if not result:
             return None

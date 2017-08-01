@@ -2,10 +2,6 @@
 This module contains task related to port.
 
 """
-import time
-
-from database.serializer import Serializer
-from structs import VulnerabilityChange
 from utils.task import Task
 
 

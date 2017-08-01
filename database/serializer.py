@@ -71,7 +71,7 @@ class Serializer:
         """
 
         Args:
-            vuln_change (PortDetectionChange):
+            vuln_change (VulnerabilityChange):
 
         Returns:
 

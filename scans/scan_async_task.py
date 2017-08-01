@@ -3,14 +3,14 @@ This module contains class responsible scanning tasks.
 
 """
 import ipaddress
-from tornado.httpclient import HTTPError
 import logging as log
 import time
+from tornado.httpclient import HTTPError
+from tornado.locks import Event
 import ujson as json
 
 from croniter import croniter
 from netaddr import IPSet
-from tornado.locks import Event
 
 from aucote_cfg import cfg
 from structs import Node, Scan, ScanType, TopisOSDiscoveryType, Service, CPEType
@@ -83,7 +83,7 @@ class ScanAsyncTask(object):
         log.debug('Got %i nodes from topdis', len(nodes))
         return nodes
 
-    async def _get_nodes_for_scanning(self, scan, timestamp=None, protocol=None, filter_out_storage=True):
+    async def _get_nodes_for_scanning(self, scan, timestamp=None, filter_out_storage=True):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period

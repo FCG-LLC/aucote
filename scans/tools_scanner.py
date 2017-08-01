@@ -1,3 +1,9 @@
+"""
+Scanner dedicated for tools.
+
+"""
+
+
 import logging as log
 
 import time
@@ -10,6 +16,10 @@ from structs import Scan
 
 
 class ToolsScanner(ScanAsyncTask):
+    """
+    Scanner dedicated for tools.
+
+    """
     PROTOCOL = None
 
     async def __call__(self):
