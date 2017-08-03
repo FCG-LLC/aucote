@@ -208,11 +208,15 @@ class ScanTest(TestCase):
     def setUp(self):
         self.start = 13
         self.end = 14.6
-        self.scan = Scan(start=self.start, end=self.end)
+        self.protocol = TransportProtocol.ICMP
+        self.scanner = "test_scanner"
+        self.scan = Scan(start=self.start, end=self.end, protocol=self.protocol, scanner=self.scanner)
 
     def test_init(self):
         self.assertEqual(self.scan.start, self.start)
         self.assertEqual(self.scan.end, self.end)
+        self.assertEqual(self.scan.protocol, self.protocol)
+        self.assertEqual(self.scan.scanner, self.scanner)
 
 
 class SpecialPortTest(TestCase):
@@ -328,6 +332,7 @@ class ServiceTest(TestCase):
         result = Service.validate_cpe_arguments(version=version, product=product, vendor=vendor)
         expected = "cisco", "ios", "12.04e"
         self.assertEqual(result, expected)
+
 
 class PortStateTest(TestCase):
 
