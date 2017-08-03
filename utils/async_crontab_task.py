@@ -63,8 +63,7 @@ class AsyncCrontabTask(object):
             try:
                 current_cron = croniter(self.cron, current_time - 60).next()
             except CroniterBadCronError:
-                log.error("AsyncCrontabTask[%s]: %s is invalid cron value. Skipping scan", self.func.__name__,
-                          self.cron)
+                log.error("AsyncCrontabTask[%s]: %s is invalid cron value. Skipping scan", self.name, self.cron)
                 return
 
             if current_cron != current_cron_time or current_cron_time == self._last_execute:
