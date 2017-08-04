@@ -388,8 +388,8 @@ class PortDetectionChangeTest(TestCase):
         self.assertIsNone(self.change_2.current_scan)
 
     def test_output(self):
-        self.assertEqual(self.change_1.output, "New port discovered")
-        self.assertEqual(self.change_2.output, "Port disappeared")
+        self.assertEqual(self.change_1.description, "New port discovered")
+        self.assertEqual(self.change_2.description, "Port disappeared")
 
     def test_port_number(self):
         self.assertEqual(self.change_1.port_number, 80)

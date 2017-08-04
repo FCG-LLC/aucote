@@ -56,8 +56,8 @@ class SerializerTest(TestCase):
 
         self.assertEqual(result, expected)
 
-    @patch('structs.PortDetectionChange.output', new_callable=PropertyMock)
-    def test_serialize_change(self, output):
+    @patch('structs.PortDetectionChange.description', new_callable=PropertyMock)
+    def test_serialize_portchange(self, output):
         output.return_value = 'test_output'
         scan_1 = Scan(start=1178603, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
         scan_2 = Scan(start=187213, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
@@ -71,8 +71,33 @@ class SerializerTest(TestCase):
         change = PortDetectionChange(current_finding=current_finding, change_time=124445,
                                      previous_finding=previous_finding)
         expected = bytearray(b'\x02\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00X\x00\x06\x00\x00'
-                             b'\x00\x00\x00\x00\x00\x00H\xe1j\x07\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\xf8\r@F\x00'
-                             b'\x00\x00\x00\xc8\xa4(\x0b\x00\x00\x00\x00\x0b\x00test_output')
+                             b'\x00\x00\x00\x00\x00\x00H\xe1j\x07\x00\x00\x00\x00\x01\x00\x00\x00\x00\xf8\r@F\x00'
+                             b'\x00\x00\x00\xc8\xa4(\x0b\x00\x00\x00\x00\x00\x00\x00\x00\x0b\x00test_output')
+
+        result = self.serializer.serialize_vulnerability_change(change).data
+
+        self.assertEqual(result, expected)
+
+    @patch('structs.PortDetectionChange.description', new_callable=PropertyMock)
+    def test_serialize_vulnchange(self, output):
+        output.return_value = 'test_output'
+        scan_1 = Scan(start=1178603, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
+        scan_2 = Scan(start=187213, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        port = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
+        exploit = Exploit(name="exploit_name", app="exploit_app", exploit_id=18)
+        previous_finding = Vulnerability(output="test_output_1", exploit=exploit, port=port, subid=13, vuln_time=13456)
+        previous_finding.scan = scan_1
+        previous_finding.row_id = 124
+        current_finding = Vulnerability(output="test_output_2", exploit=exploit, port=port, subid=13, vuln_time=6456345)
+        current_finding.row_id = 15
+        current_finding.scan = scan_2
+        change = VulnerabilityChange(current_finding=current_finding, change_time=124445,
+                                     previous_finding=previous_finding)
+        expected = bytearray(b'\x02\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00X\x00\x06\x12\x00'
+                             b'\x00\x00\r\x00\x00\x00H\xe1j\x07\x00\x00\x00\x00\x01\x00\x00\x00\x00\x80R\xcd\x00\x00'
+                             b'\x00\x00\x00\xa8\x01\xd4\x80\x01\x00\x00\x00\r\x00test_output_1\r\x00test_output_2\x15'
+                             b'\x00Vulnerability changed')
 
         result = self.serializer.serialize_vulnerability_change(change).data
 

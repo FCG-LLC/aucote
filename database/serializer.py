@@ -71,7 +71,7 @@ class Serializer:
         """
 
         Args:
-            vuln_change (VulnerabilityChange):
+            vuln_change (VulnerabilityChangeBase):
 
         Returns:
 
@@ -85,8 +85,10 @@ class Serializer:
         msg.add_int(vuln_change.vulnerability_subid)
         msg.add_datetime(vuln_change.time)
         msg.add_int(vuln_change.node_id)
-        msg.add_short(0)
+        msg.add_byte(vuln_change.score)
         msg.add_datetime(vuln_change.previous_scan)
         msg.add_datetime(vuln_change.current_scan)
-        msg.add_str(vuln_change.output)
+        msg.add_str(vuln_change.previous_output)
+        msg.add_str(vuln_change.current_output)
+        msg.add_str(vuln_change.description)
         return msg

@@ -622,7 +622,7 @@ class VulnerabilityChangeBase(object):
 
     """
     def __init__(self, change_type, vulnerability_id, vulnerability_subid, current_finding, previous_finding,
-                 change_time=None):
+                 change_time=None, score=0):
         """
 
         Args:
@@ -640,6 +640,7 @@ class VulnerabilityChangeBase(object):
         self.current_finding = current_finding
         self.previous_finding = previous_finding
         self.time = change_time or time.time()
+        self.score = score
 
     def __eq__(self, other):
         return isinstance(other, VulnerabilityChangeBase) and self.vulnerability_subid == other.vulnerability_subid\
@@ -738,9 +739,31 @@ class VulnerabilityChangeBase(object):
         return self.port.transport_protocol
 
     @property
-    def output(self):
+    def description(self):
         """
         Human friendly description of change
+
+        Returns:
+            str
+
+        """
+        raise NotImplementedError
+
+    @property
+    def previous_output(self):
+        """
+        Output of previous finding
+
+        Returns:
+            str
+
+        """
+        raise NotImplementedError
+
+    @property
+    def current_output(self):
+        """
+        Output of current finding
 
         Returns:
             str
@@ -767,7 +790,7 @@ class PortDetectionChange(VulnerabilityChangeBase):
                                                   vulnerability_subid=Vulnerability.PORTDETECTION, *args, **kwargs)
 
     @property
-    def output(self):
+    def description(self):
         if self.previous_finding and not self.current_finding:
             return "Port disappeared"
         elif self.current_finding and not self.previous_finding:
@@ -784,6 +807,14 @@ class PortDetectionChange(VulnerabilityChangeBase):
     @property
     def current_scan(self):
         return self.current_finding and self.current_finding.scan.start
+
+    @property
+    def previous_output(self):
+        return ""
+
+    @property
+    def current_output(self):
+        return ""
 
 
 class VulnerabilityChange(VulnerabilityChangeBase):
@@ -810,10 +841,18 @@ class VulnerabilityChange(VulnerabilityChangeBase):
         return self.current_finding and self.current_finding.time
 
     @property
-    def output(self):
+    def description(self):
         if self.previous_finding and not self.current_finding:
-            return self.previous_finding.output
+            return "Vulnerability disappeared"
         elif self.current_finding and not self.previous_finding:
-            return self.current_finding.output
+            return "Vulnerability appeared"
         elif self.current_finding and self.previous_finding:
-            return "{0} changed to {1}".format(self.previous_finding.output, self.current_finding.output)
+            return "Vulnerability changed"
+
+    @property
+    def previous_output(self):
+        return self.previous_finding and self.previous_finding.output or ""
+
+    @property
+    def current_output(self):
+        return self.current_finding and self.current_finding.output or ""
