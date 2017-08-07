@@ -32,6 +32,10 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         self.port.service_name = 'ssh'
         self.port.scan = Scan()
         self.port.service = Service()
+        self.app = Service()
+        self.app_2 = Service()
+        self.app.cpe = 'cpe:/a:microsoft:iexplorer:8.0.6001:beta'
+        self.app_2.cpe = 'cpe:/a:microsoft:aexplorer:8.0.6001:beta'
         self.cpe_txt = 'cpe:/a:microsoft:internet_explorer:8.0.6001:beta'
         self.os_cpe_txt = 'cpe:/o:a:b:4'
         self.cpe_without_version = 'cpe:/o:cisco:ios'
@@ -61,8 +65,7 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         result = await self.task.api_cvefor(service.cpe)
 
         self.assertEqual(result, expected)
-        mock_get.assert_called_once_with('localhost:200/cvefor/cpe%3A2.3%3Aa%3Amicrosoft%3Ainternet_explorer%3A8.0.6001%3Abeta%3A%2A%3A%2A%3A%2A%3A%2A%3A%2A%3A%2A',
-                                         connect_timeout=120, request_timeout=300)
+        mock_get.assert_called_once_with('localhost:200/cvefor/cpe%3A2.3%3Aa%3Amicrosoft%3Ainternet_explorer%3A8.0.6001%3Abeta%3A%2A%3A%2A%3A%2A%3A%2A%3A%2A%3A%2A',)
 
     @patch('tools.cve_search.tasks.HTTPClient')
     @gen_test
@@ -195,4 +198,32 @@ class CVESearchServiceTaskTest(AsyncTestCase):
 
         await self.task.api_cvefor(cpe)
 
-        mock_get.assert_called_once_with(expected, connect_timeout=120, request_timeout=300)
+        mock_get.assert_called_once_with(expected)
+
+    def test_unique_cpe(self):
+        cpe_1 = CPE('cpe:2.3:o:cisco:ios:12.2\(52\)se:*:*:*:*:*:*:*')
+        cpe_2 = CPE('cpe:2.3:o:cisco:ios:12.2\(52\)se:*:*:*:*:*:*:*')
+        expected = [cpe_1]
+
+        result = self.task._unique_cpes([cpe_1, cpe_2])
+
+        self.assertCountEqual(result, expected)
+
+    @patch('tools.cve_search.tasks.Vulnerability')
+    @patch('tools.cve_search.tasks.CVESearchParser.dict_to_results')
+    @gen_test
+    async def test_call_with_api_exception(self, mock_results, mock_vuln):
+        expected = MagicMock()
+        future = Future()
+        future.set_result([expected])
+        self.port.apps = [self.app, self.app_2]
+        self.task.api_cvefor = MagicMock(side_effect=(CVESearchAPIConnectionException('just test'), future))
+        self.task.get_vulnerabilities = MagicMock()
+        self.task.store_vulnerability = MagicMock()
+
+        await self.task()
+
+        mock_results.assert_called_once_with([expected])
+        self.task.store_vulnerability.assert_called_once_with(mock_vuln.return_value)
+        mock_vuln.assert_called_once_with(exploit=self.task.exploit, port=self.task.port,
+                                          output=mock_results.return_value.output)

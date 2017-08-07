@@ -38,7 +38,10 @@ class CVESearchServiceTask(PortTask):
             return
         result = []
         for cpe in cpes:
-            result.extend(await self.api_cvefor(cpe))
+            try:
+                result.extend(await self.api_cvefor(cpe))
+            except CVESearchAPIConnectionException:
+                log.warning("Error during connection to cve-search server")
 
         if not result:
             return
@@ -54,28 +57,51 @@ class CVESearchServiceTask(PortTask):
             list - list of CPEs
 
         """
-        cpe = None
+        cpes = []
+        return_value = []
 
-        if isinstance(self.port, PhysicalPort):
-            cpe = self.port.node.os.cpe
+        if self.port.apps:
+            cpes = [app.cpe for app in self.port.apps]
+        elif isinstance(self.port, PhysicalPort):
+            cpes = [self.port.node.os.cpe]
         elif isinstance(self.port, Port):
-            cpe = self.port.service.cpe
+            cpes = [self.port.service.cpe]
 
-        if not cpe:
-            log.debug("CVE search: CPE is not defined")
-            return
+        for cpe in self._unique_cpes(cpes):
+            if not cpe.get_version()[0]:
+                log.debug("CVE search: CPE without version is not supported")
+                continue
 
-        if not cpe.get_version()[0]:
-            log.debug("CVE search: CPE without version is not supported")
-            return
+            if cpe.get_vendor()[0] == self.VENDOR_APACHE:
+                if cpe.get_product()[0] == self.APACHE_HTTPD:
+                    return_value.extend([cpe, CPE(cpe.as_uri_2_3().replace(self.APACHE_HTTPD,
+                                                                           self.APACHE_HTTP_SERVER))])
+                    continue
+                elif cpe.get_product()[0] == self.APACHE_HTTP_SERVER:
+                    return_value.extend([cpe, CPE(cpe.as_uri_2_3().replace(self.APACHE_HTTP_SERVER,
+                                                                           self.APACHE_HTTPD))])
+                    continue
 
-        if cpe.get_vendor()[0] == self.VENDOR_APACHE:
-            if cpe.get_product()[0] == self.APACHE_HTTPD:
-                return [cpe, CPE(cpe.as_uri_2_3().replace(self.APACHE_HTTPD, self.APACHE_HTTP_SERVER))]
-            elif cpe.get_product()[0] == self.APACHE_HTTP_SERVER:
-                return [cpe, CPE(cpe.as_uri_2_3().replace(self.APACHE_HTTP_SERVER, self.APACHE_HTTPD))]
+            return_value.append(cpe)
 
-        return [cpe]
+        return self._unique_cpes(return_value)
+
+    def _unique_cpes(self, cpes):
+        """
+        Return list of unique cpes
+
+        Args:
+            cpes (list):
+
+        Returns:
+            list
+
+        """
+        return_value = []
+        for cpe in cpes:
+            if cpe is not None and cpe not in return_value:
+                return_value.append(cpe)
+        return return_value
 
     async def api_cvefor(self, cpe):
         """
@@ -93,7 +119,7 @@ class CVESearchServiceTask(PortTask):
         cpe_encoded = re.sub('%2([89])', r'%25252\1', quote(cpe.as_fs().replace('\\', '')))
         url = "{api}/cvefor/{cpe}".format(api=self.api, cpe=cpe_encoded)
         try:
-            response = await HTTPClient.instance().get(url, connect_timeout=120, request_timeout=300)
+            response = await HTTPClient.instance().get(url)
         except HTTPError as exception:
             raise CVESearchAPIConnectionException(str(exception))
         except ConnectionError as exception:
