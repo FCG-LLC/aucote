@@ -114,7 +114,7 @@ class Task(object):
         Storage for aucote application
 
         Returns:
-            None
+            Storage
 
         """
         return self.aucote.storage

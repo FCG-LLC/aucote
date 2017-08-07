@@ -27,6 +27,13 @@ class AsyncCrontabTask(object):
 
     @property
     def name(self):
+        """
+        Name of cron job
+
+        Returns:
+            str
+            
+        """
         return str(self.func)
 
     @property

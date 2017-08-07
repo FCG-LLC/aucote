@@ -68,7 +68,7 @@ class SSLResult(object):
 
         """
         if not self.cve:
-            return """{finding}""".format(cve=self.cve, finding=self.finding)
+            return """{finding}""".format(finding=self.finding)
 
         return """CVE: {cve}
 Finding: {finding}""".format(cve=self.cve, finding=self.finding)

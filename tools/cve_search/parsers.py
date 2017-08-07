@@ -1,7 +1,15 @@
+"""
+Parsers for CVE-search tool
+
+"""
 from tools.cve_search.structs import CVESearchVulnerabilityResult, CVESearchVulnerabilityResults
 
 
 class CVESearchParser(object):
+    """
+    CVE-search output parser. Supports both text and json (default) outputs.
+
+    """
     @classmethod
     def dict_to_result(cls, data):
         """

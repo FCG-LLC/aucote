@@ -7,7 +7,7 @@ from tornado.concurrent import Future
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
-from structs import Port, TransportProtocol, Node, BroadcastPort, Scan
+from structs import Port, TransportProtocol, Node, BroadcastPort, Scan, Vulnerability, VulnerabilityChange
 
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils import Config
@@ -101,6 +101,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.aucote = MagicMock()
         self.aucote.task_mapper.assign_tasks = MagicMock(return_value=Future())
         self.aucote.task_mapper.assign_tasks.return_value.set_result(MagicMock())
+        self.exploit = Exploit(exploit_id=4)
 
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         self.node_ipv6 = Node(ip=ipaddress.ip_address('::1'), node_id=None)
@@ -308,7 +309,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         self.assertEqual(result, expected)
 
-    @patch('tools.nmap.tasks.port_info.Exploit')
+    @patch('tools.nmap.tasks.port_info.NmapPortInfoTask.exploit')
     @patch('tools.nmap.tasks.port_info.Vulnerability')
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
@@ -324,12 +325,69 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         expected = 5*[vulnerability.return_value]
         self.aucote.storage.save_vulnerabilities.assert_called_once_with(vulnerabilities=expected,
                                                                          scan=self.port_info._scan)
-        exploit.assert_called_once_with(exploit_id=0)
 
         vulnerability.assert_has_calls([
-            call(exploit=exploit(), port=self.port, output='http', subid=1),
-            call(exploit=exploit(), port=self.port, output='Apache httpd', subid=2),
-            call(exploit=exploit(), port=self.port, output='2.4.23', subid=3),
-            call(exploit=exploit(), port=self.port, output=None, subid=4),
-            call(exploit=exploit(), port=self.port, output='cpe:2.3:a:apache:http_server:2.4.23:*:*:*:*:*:*:*', subid=5)
+            call(exploit=exploit, port=self.port, output='http', subid=vulnerability.SERVICE_PROTOCOL),
+            call(exploit=exploit, port=self.port, output='Apache httpd', subid=vulnerability.SERVICE_NAME),
+            call(exploit=exploit, port=self.port, output='2.4.23', subid=vulnerability.SERVICE_VERSION),
+            call(exploit=exploit, port=self.port, output=None, subid=vulnerability.SERVICE_BANNER),
+            call(exploit=exploit, port=self.port, output='cpe:2.3:a:apache:http_server:2.4.23:*:*:*:*:*:*:*',
+                 subid=vulnerability.SERVICE_CPE)
         ])
+
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability_change')
+    @patch('tools.nmap.tasks.port_info.time.time', MagicMock(return_value=12))
+    def test_diff_two_last_scans(self, serializer):
+        exploit = Exploit(exploit_id=1)
+        self.port_info._current_exploits = [self.exploit]
+        scan_2 = Scan()
+        scans = [self.scan, scan_2]
+        self.port_info.storage.get_scans_by_security_scan.return_value = scans
+        vuln_added = Vulnerability(port=self.port, exploit=exploit, subid=3, output='a')
+        vuln_removed = Vulnerability(port=self.port, exploit=exploit, subid=1, output='b')
+        vuln_changed_1 = Vulnerability(port=self.port, exploit=exploit, subid=2, output='c')
+        vuln_changed_2 = Vulnerability(port=self.port, exploit=exploit, subid=2, output='d')
+        vuln_common = Vulnerability(port=self.port, exploit=exploit, subid=5, output='e')
+        self.port_info.storage.get_vulnerabilities.side_effect = ([vuln_added, vuln_changed_1, vuln_common],
+                                                                  [vuln_removed, vuln_changed_2, vuln_common])
+
+        expected = [
+            VulnerabilityChange(change_time=12, previous_finding=None, current_finding=vuln_added),
+            VulnerabilityChange(change_time=12, previous_finding=vuln_removed, current_finding=None),
+            VulnerabilityChange(change_time=12, previous_finding=vuln_changed_2, current_finding=vuln_changed_1),
+        ]
+
+        self.port_info.diff_with_last_scan()
+
+        self.port_info.storage.get_vulnerabilities.assert_has_calls((
+            call(port=self.port, exploit=self.exploit, scan=self.scan),
+            call(port=self.port, exploit=self.exploit, scan=scan_2)
+        ), any_order=True)
+
+        self.assertCountEqual(self.port_info.storage.save_changes.call_args[0][0], expected)
+        serializer.assert_has_calls((call(vuln) for vuln in expected))
+
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability_change')
+    @patch('tools.nmap.tasks.port_info.time.time', MagicMock(return_value=12))
+    def test_diff_two_last_scans_first_scan(self, serializer):
+        exploit = Exploit(exploit_id=1)
+        self.port_info._current_exploits = [self.exploit]
+        scans = [self.scan]
+        self.port_info.storage.get_scans_by_security_scan.return_value = scans
+        vuln_added = Vulnerability(port=self.port, exploit=exploit, subid=3, output='a')
+        vuln_changed_1 = Vulnerability(port=self.port, exploit=exploit, subid=2, output='c')
+        self.port_info.storage.get_vulnerabilities.return_value = [vuln_added, vuln_changed_1]
+
+        expected = [
+            VulnerabilityChange(change_time=12, previous_finding=None, current_finding=vuln_added),
+            VulnerabilityChange(change_time=12, previous_finding=None, current_finding=vuln_changed_1)
+        ]
+
+        self.port_info.diff_with_last_scan()
+
+        self.port_info.storage.get_vulnerabilities.assert_has_calls((
+            call(port=self.port, exploit=self.exploit, scan=self.scan),
+        ))
+
+        self.assertCountEqual(self.port_info.storage.save_changes.call_args[0][0], expected)
+        serializer.assert_has_calls((call(vuln) for vuln in expected), any_order=True)
