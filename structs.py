@@ -513,6 +513,13 @@ class Vulnerability(object):
     Vulnerability object
 
     """
+    PORTDETECTION = 0
+    SERVICE_PROTOCOL = 1
+    SERVICE_NAME = 2
+    SERVICE_VERSION = 3
+    SERVICE_BANNER = 4
+    SERVICE_CPE = 5
+
     def __init__(self, exploit=None, port=None, output=None, cve=None, cvss=None, subid=None, vuln_time=None):
         """
         Init values
@@ -531,6 +538,28 @@ class Vulnerability(object):
         self.cvss = cvss
         self.subid = subid
         self.time = vuln_time or time.time()
+
+    def __eq__(self, other):
+        return isinstance(other, Vulnerability) and self.port == other.port and self.exploit == other.exploit and \
+               self.subid == other.subid and self.output == other.output and self.cve == other.cve and \
+               self.cvss == other.cvss
+
+    def is_almost_equal(self, other):
+        """
+        Check if vulnerability is this same but with different output
+
+        Args:
+            other (Vulnerability):
+
+        Returns:
+            bool
+
+        """
+        return isinstance(other, Vulnerability) and self.port == other.port and self.exploit == other.exploit and \
+               self.subid == other.subid
+
+    def __hash__(self):
+        return hash((self.port, self.exploit, self.subid, self.output, self.cve, self.cvss))
 
 
 class ScanStatus(Enum):
@@ -575,3 +604,255 @@ class PortState(Enum):
     @classmethod
     def from_string(cls, text):
         return cls[text.replace('|', '_').upper()]
+
+
+class VulnerabilityChangeType(Enum):
+    """
+    Vulnerability change type
+
+    """
+    PORTDETECTION = 1
+    VULNERABILITIES = 2
+
+
+class VulnerabilityChangeBase(object):
+
+    """
+    Represents change between two port or severity scans
+
+    """
+    def __init__(self, change_type, vulnerability_id, vulnerability_subid, current_finding, previous_finding,
+                 change_time=None, score=0):
+        """
+
+        Args:
+            change_type (VulnerabilityChangeType):
+            vulnerability_id (int):
+            vulnerability_subid (int):
+            current_finding (object):
+            previous_finding (object):
+            change_time (int):
+
+        """
+        self.type = change_type
+        self.vulnerability_id = vulnerability_id
+        self.vulnerability_subid = vulnerability_subid
+        self.current_finding = current_finding
+        self.previous_finding = previous_finding
+        self.time = change_time or time.time()
+        self.score = score
+
+    def __eq__(self, other):
+        return isinstance(other, VulnerabilityChangeBase) and self.vulnerability_subid == other.vulnerability_subid\
+               and self.vulnerability_id == other.vulnerability_id and self.previous_finding == other.previous_finding \
+               and self.type == other.type and self.current_finding == other.current_finding
+
+    def __hash__(self):
+        return hash((self.type, self.vulnerability_id, self.vulnerability_subid, self.current_finding,
+                     self.previous_finding))
+
+    @property
+    def finding(self):
+        """
+        Returns one of the finding. As findings should be the same class objects, and handle information about this same
+        port, there is enough to return any of them
+
+        Returns:
+            object
+
+        """
+        return self.current_finding or self.previous_finding
+
+    @property
+    def port(self):
+        """
+
+        Returns:
+            Port
+        """
+        raise NotImplementedError
+
+    @property
+    def node_ip(self):
+        """
+        Ip of node which change
+
+        Returns:
+            IPv4Address|IPv6Address
+
+        """
+        return self.port.node.ip
+
+    @property
+    def node_id(self):
+        """
+        Id of node which change
+
+        Returns:
+            int
+
+        """
+        return self.port.node.id
+
+    @property
+    def previous_scan(self):
+        """
+        Previous scan timestamp
+
+        Returns:
+            int
+
+        """
+        raise NotImplementedError
+
+    @property
+    def current_scan(self):
+        """
+        Current scan timestamp
+
+        Returns:
+            int
+
+        """
+        raise NotImplementedError
+
+    @property
+    def port_number(self):
+        """
+        Number of port which change
+
+        Returns:
+            int
+
+        """
+        return self.port.number
+
+    @property
+    def port_protocol(self):
+        """
+        Protocol of port which change
+
+        Returns:
+            TransportProtocol
+
+        """
+        return self.port.transport_protocol
+
+    @property
+    def description(self):
+        """
+        Human friendly description of change
+
+        Returns:
+            str
+
+        """
+        raise NotImplementedError
+
+    @property
+    def previous_output(self):
+        """
+        Output of previous finding
+
+        Returns:
+            str
+
+        """
+        raise NotImplementedError
+
+    @property
+    def current_output(self):
+        """
+        Output of current finding
+
+        Returns:
+            str
+
+        """
+        raise NotImplementedError
+
+
+class PortDetectionChange(VulnerabilityChangeBase):
+    """
+    Represents change between two port detection scans
+
+    """
+    def __init__(self, *args, **kwargs):
+        """
+
+        Args:
+            current_finding (Port):
+            previous_finding (Port):
+
+        """
+        super(PortDetectionChange, self).__init__(change_type=VulnerabilityChangeType.PORTDETECTION,
+                                                  vulnerability_id=0,
+                                                  vulnerability_subid=Vulnerability.PORTDETECTION, *args, **kwargs)
+
+    @property
+    def description(self):
+        if self.previous_finding and not self.current_finding:
+            return "Port disappeared"
+        elif self.current_finding and not self.previous_finding:
+            return "New port discovered"
+
+    @property
+    def port(self):
+        return self.finding
+
+    @property
+    def previous_scan(self):
+        return self.previous_finding and self.previous_finding.scan.start
+
+    @property
+    def current_scan(self):
+        return self.current_finding and self.current_finding.scan.start
+
+    @property
+    def previous_output(self):
+        return ""
+
+    @property
+    def current_output(self):
+        return ""
+
+
+class VulnerabilityChange(VulnerabilityChangeBase):
+    """
+    Represents change between two vulnerability scans for specific node and port
+
+    """
+    def __init__(self, *args, **kwargs):
+        super(VulnerabilityChange, self).__init__(change_type=VulnerabilityChangeType.VULNERABILITIES,
+                                                  vulnerability_id=None, vulnerability_subid=None, *args, **kwargs)
+        self.vulnerability_id = self.finding.exploit.id
+        self.vulnerability_subid = self.finding.subid
+
+    @property
+    def port(self):
+        return self.finding.port
+
+    @property
+    def previous_scan(self):
+        return self.previous_finding and self.previous_finding.time
+
+    @property
+    def current_scan(self):
+        return self.current_finding and self.current_finding.time
+
+    @property
+    def description(self):
+        if self.previous_finding and not self.current_finding:
+            return "Vulnerability disappeared"
+        elif self.current_finding and not self.previous_finding:
+            return "Vulnerability appeared"
+        elif self.current_finding and self.previous_finding:
+            return "Vulnerability changed"
+
+    @property
+    def previous_output(self):
+        return self.previous_finding and self.previous_finding.output or ""
+
+    @property
+    def current_output(self):
+        return self.current_finding and self.current_finding.output or ""

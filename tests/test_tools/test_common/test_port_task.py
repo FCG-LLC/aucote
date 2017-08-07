@@ -1,7 +1,8 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 
-from structs import Port, Scan
+from fixtures.exploits import Exploit
+from structs import Port, Scan, Node, Vulnerability, VulnerabilityChange
 from tools.common.port_task import PortTask
 
 

@@ -11,7 +11,8 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from scans.scan_async_task import ScanAsyncTask
-from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus, CPEType
+from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus, CPEType, VulnerabilityChange, \
+    VulnerabilityChangeType, PortDetectionChange
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 

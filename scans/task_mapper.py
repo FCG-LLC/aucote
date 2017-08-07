@@ -43,7 +43,7 @@ class TaskMapper(object):
             log.info("Found %i exploits", len(exploits))
             periods = cfg.get('tools.{0}.periods.*'.format(app)).cfg
 
-            scans = storage.get_security_scan_info(port=port, app=app)
+            scans = storage.get_security_scan_info(port=port, app=app, scan=self._scan)
 
             for scan in scans:
                 period = parse_period(periods.get(scan['exploit_name'], None) or
@@ -108,8 +108,7 @@ class TaskMapper(object):
         """
         return self._aucote.exploits
 
-    @classmethod
-    def store_security_scan(cls, port, exploits, storage):
+    def store_security_scan(self, port, exploits, storage):
         """
         Saves scan details into storage
 
@@ -121,4 +120,4 @@ class TaskMapper(object):
         Returns:
             None
         """
-        storage.save_security_scans(exploits=exploits, port=port)
+        storage.save_security_scans(exploits=exploits, port=port, scan=self._scan)
