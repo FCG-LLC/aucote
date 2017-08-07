@@ -46,6 +46,12 @@ class AsyncTaskManager(object):
 
     @property
     def shutdown_condition(self):
+        """
+        Event which is resolved if every job is done and AsyncTaskManager is ready to shutdown
+
+        Returns:
+            Event
+        """
         return self._shutdown_condition
 
     def start(self):
@@ -165,4 +171,11 @@ class AsyncTaskManager(object):
 
     @property
     def cron_tasks(self):
+        """
+        List of cron tasks
+
+        Returns:
+            list
+
+        """
         return self._cron_tasks.keys()

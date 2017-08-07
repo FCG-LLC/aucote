@@ -19,13 +19,12 @@ from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
 from scans.scanner import Scanner
 from scans.tools_scanner import ToolsScanner
-from scans.scan_async_task import ScanAsyncTask
 from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
 from utils.kudu_queue import KuduQueue
-from database.serializer import Serializer
 from utils.web_server import WebServer
+from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
 
 VERSION = (0, 1, 0)
@@ -69,6 +68,13 @@ async def main():
         exit(1)
 
     def get_kuduworker():
+        """
+        Get kudu worker if enable, mock otherwise
+
+        Returns:
+            KuduQueue|MagicMock
+
+        """
         if cfg['kuduworker.enable']:
             return KuduQueue(cfg['kuduworker.queue.address'])
         else:

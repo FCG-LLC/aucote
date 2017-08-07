@@ -6,7 +6,8 @@ from netaddr import IPSet
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 from scans.scanner import Scanner
-from structs import Node, PhysicalPort, Port, TransportProtocol, ScanStatus, Scan
+from structs import Node, PhysicalPort, Port, TransportProtocol, ScanStatus, Scan, VulnerabilityChangeType, \
+    VulnerabilityChange, PortDetectionChange
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -110,7 +111,6 @@ class ScannerTest(AsyncTestCase):
         ipv6_scanner.scan_ports.return_value = Future()
         ipv6_scanner.scan_ports.return_value.set_result(ports_ipv6)
 
-
         mock_netiface.interfaces.return_value = ['test', 'test2']
         mock_netiface.ifaddresses.side_effect = ([mock_netiface.AF_INET], [''])
 
@@ -120,6 +120,9 @@ class ScannerTest(AsyncTestCase):
         ports = [ports_ipv4[0], ports_ipv6[0], port]
 
         scan = Scan()
+
+        mock_executor.return_value.return_value = Future()
+        mock_executor.return_value.return_value.set_result(True)
 
         yield self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock(), scan=scan)
         result = mock_executor.call_args_list[0][1]['ports']
@@ -313,3 +316,61 @@ class ScannerTest(AsyncTestCase):
 
         await self.thread()
         self.assertFalse(self.thread.run_scan.called)
+
+    @patch('scans.scanner.Serializer.serialize_vulnerability_change')
+    def test_diff_two_last_scans(self, serializer):
+        current_scan = Scan()
+        previous_scan = Scan()
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+
+        self.aucote.storage.get_nodes_by_scan.return_value = [node]
+
+        port_added = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
+        port_added.row_id = 17
+        port_removed = Port(node, transport_protocol=TransportProtocol.TCP, number=80)
+        port_removed.row_id = 18
+        port_unchanged = Port(node, transport_protocol=TransportProtocol.TCP, number=22)
+        port_unchanged.row_id = 19
+
+        self.aucote.storage.get_scans_by_node.return_value = [current_scan, previous_scan]
+        self.aucote.storage.get_ports_by_scan_and_node.side_effect = ([port_unchanged, port_added],
+                                                                      [port_unchanged, port_removed])
+        expected = [
+            PortDetectionChange(current_finding=port_added, previous_finding=None),
+            PortDetectionChange(current_finding=None, previous_finding=port_removed)
+        ]
+
+        self.thread.diff_with_last_scan(current_scan)
+
+        self.aucote.storage.get_nodes_by_scan.assert_called_once_with(scan=current_scan)
+        self.assertEqual(len(self.aucote.storage.save_changes.call_args_list), 1)
+        result = self.aucote.storage.save_changes.call_args[0][0]
+        self.assertCountEqual(result, expected)
+        self.assertCountEqual([serializer.call_args_list[0][0][0], serializer.call_args_list[1][0][0]], expected)
+
+    @patch('scans.scanner.Serializer.serialize_vulnerability_change')
+    def test_diff_two_last_scans_for_first_scan(self, serializer):
+        current_scan = Scan()
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+
+        self.aucote.storage.get_nodes_by_scan.return_value = [node]
+
+        port_added = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
+        port_added.row_id = 17
+        port_unchanged = Port(node, transport_protocol=TransportProtocol.TCP, number=22)
+        port_unchanged.row_id = 19
+
+        self.aucote.storage.get_scans_by_node.return_value = [current_scan]
+        self.aucote.storage.get_ports_by_scan_and_node.side_effect = ([port_unchanged, port_added],)
+        expected = [
+            PortDetectionChange(current_finding=port_added, previous_finding=None),
+            PortDetectionChange(current_finding=port_unchanged, previous_finding=None)
+        ]
+
+        self.thread.diff_with_last_scan(current_scan)
+
+        self.aucote.storage.get_nodes_by_scan.assert_called_once_with(scan=current_scan)
+        self.assertEqual(len(self.aucote.storage.save_changes.call_args_list), 1)
+        result = self.aucote.storage.save_changes.call_args[0][0]
+        self.assertCountEqual(result, expected)
+        self.assertCountEqual([serializer.call_args_list[0][0][0], serializer.call_args_list[1][0][0]], expected)

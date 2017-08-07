@@ -68,20 +68,20 @@ def parse_time_to_timestamp(txt):
     return parse_time(txt).timestamp()
 
 
-def time_str(dt):
+def time_str(date):
     """
     By default datetime doesn't have time information and we need to clearly return everything in UTC
 
     Args:
-        dt:
+        date:
 
     Returns:
         str
 
     """
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=pytz.utc)
-    return dt.isoformat()
+    if date.tzinfo is None:
+        date = date.replace(tzinfo=pytz.utc)
+    return date.isoformat()
 
 
 def parse_timestamp_to_time(timestamp):
