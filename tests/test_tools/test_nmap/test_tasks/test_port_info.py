@@ -233,7 +233,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         mock_serializer.assert_called_once_with(self.port_info._port, None)
 
-        self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value, dont_wait=True)
+        self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)
 
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     def test_prepare_args_ipv6(self, cfg):
