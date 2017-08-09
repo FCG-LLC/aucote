@@ -127,7 +127,7 @@ class NmapPortInfoTask(PortTask):
         self.diff_with_last_scan()
 
         if not self.scan_only:
-            await TaskMapper(aucote=self.aucote, scan=self._scan).assign_tasks(self._port, self.aucote.storage)
+            await TaskMapper(aucote=self.aucote, scan=self._scan).assign_tasks(self._port)
 
     def diff_with_last_scan(self):
         """
