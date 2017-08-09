@@ -71,19 +71,21 @@ class Executor(Task):
             await self._execute_nodes()
 
     def _execute_ports(self):
-        storage_ports = self.storage.get_ports(parse_period(cfg['portdetection._internal.port_period']))
+        storage_ports = self.storage.get_ports(pasttime=parse_period(cfg['portdetection._internal.port_period']),
+                                               scan=self._scan)
 
         ports = self._get_ports_for_scanning(self.ports, storage_ports)
         log.info("Found %i recently not scanned ports", len(ports))
 
-        self.storage.save_ports(ports)
+        self.storage.save_ports(ports, scan=self._scan)
 
         for port in ports:
-            self.add_async_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only))
+            self.add_async_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only,
+                                                 scan=self._scan))
 
     async def _execute_nodes(self):
         for node in self.nodes:
-            await TaskMapper(aucote=self.aucote).assign_tasks_for_node(node)
+            await TaskMapper(aucote=self.aucote, scan=self._scan).assign_tasks_for_node(node)
 
     def __call__(self, *args, **kwargs):
         """
@@ -146,15 +148,7 @@ class Executor(Task):
             list
 
         """
-        ports = ports[:]
-
-        for port in storage_ports:
-            try:
-                ports.remove(port)
-            except ValueError:
-                continue
-
-        return ports
+        return [port for port in ports if port not in storage_ports]
 
     @property
     def ports(self):

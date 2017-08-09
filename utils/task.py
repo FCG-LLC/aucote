@@ -13,7 +13,7 @@ class Task(object):
     Base class for tasks, e.g. scan, nmap, hydra
 
     """
-    def __init__(self, aucote):
+    def __init__(self, aucote, scan):
         """
         Assign executor
 
@@ -22,6 +22,7 @@ class Task(object):
         self.creation_time = time.time()
         self.start_time = None
         self._name = None
+        self._scan = scan
 
     @property
     def kudu_queue(self):
@@ -57,7 +58,7 @@ class Task(object):
             None
 
         """
-        self.aucote.storage.save_scans(exploits=exploits, port=port)
+        self.aucote.storage.save_security_scans(exploits=exploits, port=port, scan=self._scan)
 
     def store_vulnerability(self, vuln):
         """
@@ -73,6 +74,8 @@ class Task(object):
         log.debug('Found vulnerability: port=%s exploit=%s output=%s', vuln.port, vuln.exploit.id, vuln.output)
         msg = Serializer.serialize_port_vuln(vuln.port, vuln)
         self.kudu_queue.send_msg(msg)
+
+        self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self._scan)
 
     def store_vulnerabilities(self, vulnerabilities):
         """
@@ -90,6 +93,8 @@ class Task(object):
         if vulnerabilities:
             for vulnerability in vulnerabilities:
                 self.store_vulnerability(vulnerability)
+
+        self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self._scan)
 
         return None
 
@@ -109,7 +114,7 @@ class Task(object):
         Storage for aucote application
 
         Returns:
-            None
+            Storage
 
         """
         return self.aucote.storage

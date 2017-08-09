@@ -5,8 +5,8 @@ Tasks related to cve-search module
 import logging as log
 import re
 
+from urllib.parse import quote
 import ujson
-from urllib.parse import urlencode, quote
 
 from cpe import CPE
 from tornado.httpclient import HTTPError

@@ -1,3 +1,9 @@
+"""
+Scanner dedicated for tools.
+
+"""
+
+
 import logging as log
 
 import time
@@ -6,10 +12,14 @@ from croniter import croniter
 from aucote_cfg import cfg
 from scans.executor import Executor
 from scans.scan_async_task import ScanAsyncTask
-from structs import TransportProtocol
+from structs import Scan
 
 
 class ToolsScanner(ScanAsyncTask):
+    """
+    Scanner dedicated for tools.
+
+    """
     PROTOCOL = None
 
     async def __call__(self):
@@ -21,10 +31,19 @@ class ToolsScanner(ScanAsyncTask):
 
         """
         log.info("Starting security scan")
-        nodes = await self._get_topdis_nodes()
+
+        scan = Scan(time.time(), protocol=self.PROTOCOL, scanner='tools scan')
+        self.storage.save_scan(scan)
+
+        nodes = await self._get_nodes_for_scanning(timestamp=None, scan=scan, filter_out_storage=False)
+        self.storage.save_nodes(nodes, scan=scan)
+
         ports = self.get_ports_for_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_async_task(Executor(aucote=self.aucote, ports=ports))
+        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan=scan))
+
+        scan.end = time.time()
+        self.storage.update_scan(scan)
 
     def get_ports_for_scan(self, nodes):
         """

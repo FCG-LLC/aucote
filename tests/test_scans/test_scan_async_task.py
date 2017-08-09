@@ -11,7 +11,8 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from scans.scan_async_task import ScanAsyncTask
-from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus, CPEType
+from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus, CPEType, VulnerabilityChange, \
+    VulnerabilityChangeType, PortDetectionChange
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -369,7 +370,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         self.thread.storage.get_nodes = MagicMock(return_value=[node_2])
 
-        result = await self.thread._get_nodes_for_scanning()
+        scan = Scan()
+
+        result = await self.thread._get_nodes_for_scanning(scan)
         expected = [node_3]
 
         self.assertListEqual(result, expected)

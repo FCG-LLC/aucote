@@ -39,7 +39,8 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         self.port.service.cpe = self.cpe_txt
         self.exploit = Exploit(exploit_id=1)
         self.aucote = MagicMock()
-        self.task = CVESearchServiceTask(aucote=self.aucote, port=self.port, exploits=[self.exploit])
+        self.scan = Scan()
+        self.task = CVESearchServiceTask(aucote=self.aucote, port=self.port, exploits=[self.exploit], scan=self.scan)
 
     def test_init(self):
         self.assertEqual(self.task.api, 'localhost:200')

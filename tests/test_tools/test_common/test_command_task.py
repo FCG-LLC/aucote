@@ -22,7 +22,9 @@ class CommandTaskTest(AsyncTestCase):
         future.set_result(self.future_return)
         self.command.async_call = MagicMock(return_value=future)
         self.exploit = MagicMock()
-        self.task = CommandTask(aucote=self.aucote, port=self.port, command=self.command, exploits=[self.exploit])
+        self.scan = Scan()
+        self.task = CommandTask(aucote=self.aucote, port=self.port, command=self.command, exploits=[self.exploit],
+                                scan=self.scan)
 
     def test_init(self):
         self.assertEqual(self.task._port, self.port)
@@ -67,7 +69,7 @@ class CommandTaskTest(AsyncTestCase):
         self.command.async_call.side_effect = CalledProcessError(returncode=127, cmd='test')
 
         result = await self.task()
-        args_storage = self.aucote.storage.save_scans.call_args[1]
+        args_storage = self.aucote.storage.save_security_scans.call_args[1]
         self.assertEqual(result, None)
         self.assertEqual(args_storage['port'].scan.end, 0)
         self.assertEqual(args_storage['port'].scan.start, 5)

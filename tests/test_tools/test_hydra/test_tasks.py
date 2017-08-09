@@ -30,9 +30,10 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.port.service_name = 'ssh'
         self.port.scan = Scan()
         self.exploit = Exploit(exploit_id=1)
+        self.scan = Scan()
 
         self.hydra_script_task = HydraScriptTask(exploits=[self.exploit], aucote=self.aucote, port=self.port,
-                                                 service=self.port.service_name)
+                                                 service=self.port.service_name, scan=self.scan,)
         self.hydra_script_task.store_scan_end = MagicMock()
         self.hydra_script_task.aucote.exploits.find.return_value = self.exploit
 

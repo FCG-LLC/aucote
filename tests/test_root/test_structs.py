@@ -4,7 +4,8 @@ from unittest.mock import MagicMock
 
 from cpe import CPE
 
-from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState
+from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState, \
+    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange
 from structs import TransportProtocol
 
 
@@ -208,11 +209,21 @@ class ScanTest(TestCase):
     def setUp(self):
         self.start = 13
         self.end = 14.6
-        self.scan = Scan(start=self.start, end=self.end)
+        self.protocol = TransportProtocol.ICMP
+        self.scanner = "test_scanner"
+        self.scan = Scan(start=self.start, end=self.end, protocol=self.protocol, scanner=self.scanner)
 
     def test_init(self):
-        self.assertEqual(self.scan.start, self.start)
-        self.assertEqual(self.scan.end, self.end)
+        expected = {
+            "_start": 13,
+            "end": 14.6,
+            "_protocol": TransportProtocol.ICMP,
+            "_scanner": "test_scanner"
+        }
+
+        result = self.scan.__dict__
+
+        self.assertDictEqual(result, expected)
 
 
 class SpecialPortTest(TestCase):
@@ -249,7 +260,6 @@ class BroadcastPortTest(TestCase):
 class ServiceTest(TestCase):
     def setUp(self):
         self.name = 'test_name'
-        self.version = 'test_version'
         self.vendor = 'apache'
         self.product = 'http_server'
         self.version = '2.4\(23\)'
@@ -260,8 +270,15 @@ class ServiceTest(TestCase):
         self.service.cpe = self.cpe
 
     def test_init(self):
-        self.assertEqual(self.name, self.service.name)
-        self.assertEqual(self.version, self.service.version)
+        expected = {
+            'name': 'test_name',
+            'version': '2.4\(23\)',
+            '_cpe': CPE('cpe:2.3:a:apache:http_server:2.4\(23\):*:*:*:*:*:*:*')
+        }
+
+        result = self.service.__dict__
+
+        self.assertDictEqual(result, expected)
 
     def test_cpe_setter_and_getter(self):
         self.assertEqual(self.service.cpe, CPE(self.cpe))
@@ -329,6 +346,7 @@ class ServiceTest(TestCase):
         expected = "cisco", "ios", "12.04e"
         self.assertEqual(result, expected)
 
+
 class PortStateTest(TestCase):
 
     def test_from_string(self):
@@ -337,3 +355,78 @@ class PortStateTest(TestCase):
         expected = PortState.OPEN_FILTERED
 
         self.assertEqual(result, expected)
+
+
+class PortDetectionChangeTest(TestCase):
+    def setUp(self):
+        self.node = Node(node_id=13, ip=ipaddress.ip_address('127.0.0.5'))
+        self.scan_1 = Scan(start=150421)
+        self.scan_2 = Scan(start=159985)
+        self.port_1 = Port(transport_protocol=TransportProtocol.TCP, number=80, node=self.node)
+        self.port_1.scan = self.scan_1
+
+        self.port_2 = Port(transport_protocol=TransportProtocol.UDP, number=19, node=self.node)
+        self.port_2.scan = self.scan_2
+
+        self.type = VulnerabilityChangeType.PORTDETECTION
+
+        self.change_1 = PortDetectionChange(change_time=159986, current_finding=self.port_1, previous_finding=None)
+        self.change_2 = PortDetectionChange(change_time=159911, current_finding=None, previous_finding=self.port_2)
+
+    def test_init_change_1(self):
+        expected = {
+            'current_finding': self.port_1,
+            'previous_finding': None,
+            'type': VulnerabilityChangeType.PORTDETECTION,
+            'time': 159986,
+            'score': 0,
+            'vulnerability_id': 0,
+            'vulnerability_subid': 0
+        }
+
+        result = self.change_1.__dict__
+
+        self.assertDictEqual(result, expected)
+
+    def test_init_change_2(self):
+        expected = {
+            'current_finding': None,
+            'previous_finding': self.port_2,
+            'type': VulnerabilityChangeType.PORTDETECTION,
+            'time': 159911,
+            'score': 0,
+            'vulnerability_id': 0,
+            'vulnerability_subid': 0
+        }
+
+        result = self.change_2.__dict__
+
+        self.assertDictEqual(result, expected)
+
+    def test_node_ip(self):
+        self.assertEqual(self.change_1.node_ip, ipaddress.ip_address('127.0.0.5'))
+        self.assertEqual(self.change_2.node_ip, ipaddress.ip_address('127.0.0.5'))
+
+    def test_node_id(self):
+        self.assertEqual(self.change_1.node_id, 13)
+        self.assertEqual(self.change_2.node_id, 13)
+
+    def test_previous_scan_start(self):
+        self.assertIsNone(self.change_1.previous_scan)
+        self.assertEqual(self.change_2.previous_scan, 159985)
+
+    def test_current_scan_start(self):
+        self.assertEqual(self.change_1.current_scan, 150421)
+        self.assertIsNone(self.change_2.current_scan)
+
+    def test_output(self):
+        self.assertEqual(self.change_1.description, "New port discovered")
+        self.assertEqual(self.change_2.description, "Port disappeared")
+
+    def test_port_number(self):
+        self.assertEqual(self.change_1.port_number, 80)
+        self.assertEqual(self.change_2.port_number, 19)
+
+    def test_port_protocol(self):
+        self.assertEqual(self.change_1.port_protocol, TransportProtocol.TCP)
+        self.assertEqual(self.change_2.port_protocol, TransportProtocol.UDP)

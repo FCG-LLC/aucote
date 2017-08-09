@@ -13,19 +13,21 @@ from structs import SpecialPort
 from utils.time import parse_period
 
 
-class TaskMapper:
+class TaskMapper(object):
     """
     Assign tasks for a provided port
 
     """
 
-    def __init__(self, aucote):
+    def __init__(self, aucote, scan):
         """
         Args:
             executor (Executor): tasks executor
+            scan (Scan): Scan under which the mapper is working
 
         """
         self._aucote = aucote
+        self._scan = scan
 
     async def assign_tasks(self, port, storage):
         """
@@ -41,7 +43,7 @@ class TaskMapper:
             log.info("Found %i exploits", len(exploits))
             periods = cfg.get('tools.{0}.periods.*'.format(app)).cfg
 
-            scans = storage.get_scan_info(port=port, app=app)
+            scans = storage.get_security_scan_info(port=port, app=app, scan=self._scan)
 
             for scan in scans:
                 period = parse_period(periods.get(scan['exploit_name'], None) or
@@ -54,9 +56,9 @@ class TaskMapper:
                 exploits = self._filter_exploits(app, exploits, port.node)
 
             log.info("Using %i exploits against %s", len(exploits), port)
-            self.store_scan_details(port=port, exploits=exploits, storage=storage)
+            self.store_security_scan(port=port, exploits=exploits, storage=storage)
             task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, port=port.copy(),
-                                                         config=EXECUTOR_CONFIG['apps'][app])
+                                                         config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
 
             self._aucote.add_async_task(task)
 
@@ -77,7 +79,7 @@ class TaskMapper:
             log.info("Using %i exploits against %s", len(exploits), node)
 
             task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, node=node,
-                                                         config=EXECUTOR_CONFIG['apps'][app])
+                                                         config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
 
             self._aucote.add_async_task(task)
 
@@ -106,8 +108,7 @@ class TaskMapper:
         """
         return self._aucote.exploits
 
-    @classmethod
-    def store_scan_details(cls, port, exploits, storage):
+    def store_security_scan(self, port, exploits, storage):
         """
         Saves scan details into storage
 
@@ -119,4 +120,4 @@ class TaskMapper:
         Returns:
             None
         """
-        storage.save_scans(exploits=exploits, port=port)
+        storage.save_security_scans(exploits=exploits, port=port, scan=self._scan)

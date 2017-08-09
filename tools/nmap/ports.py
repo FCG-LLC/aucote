@@ -2,9 +2,9 @@
 This module contains class responsible for scanning ports by using nmap
 
 """
-from tools.common.port_scan_task import PortScanTask
 from aucote_cfg import cfg
 from tools.nmap.tool import NmapTool
+from tools.common.port_scan_task import PortScanTask
 from utils.exceptions import StopCommandException
 from .base import NmapBase
 

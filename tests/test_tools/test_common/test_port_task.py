@@ -1,7 +1,8 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 
-from structs import Port
+from fixtures.exploits import Exploit
+from structs import Port, Scan, Node, Vulnerability, VulnerabilityChange
 from tools.common.port_task import PortTask
 
 
@@ -10,7 +11,8 @@ class PortTaskTest(TestCase):
         self.aucote = MagicMock()
         self.port = Port(node=MagicMock(), transport_protocol=None, number=MagicMock())
         self.exploit = MagicMock()
-        self.task = PortTask(aucote=self.aucote, port=self.port, exploits=[self.exploit])
+        self.scan = Scan()
+        self.task = PortTask(aucote=self.aucote, port=self.port, exploits=[self.exploit], scan=self.scan)
 
     def test_init(self):
         self.assertEqual(self.task._port, self.port)

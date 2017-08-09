@@ -1,3 +1,9 @@
+"""
+Scanner is responsible for performing port detection scans
+
+"""
+
+
 import ipaddress
 import logging as log
 
@@ -6,15 +12,20 @@ import time
 import netifaces
 
 from aucote_cfg import cfg
+from database.serializer import Serializer
 from scans.executor import Executor
 from scans.scan_async_task import ScanAsyncTask
-from structs import ScanStatus, PhysicalPort, Scan, TransportProtocol
+from structs import ScanStatus, PhysicalPort, Scan, TransportProtocol, PortDetectionChange
 from tools.masscan import MasscanPorts
 from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
 
 
 class Scanner(ScanAsyncTask):
+    """
+    Scanner is responsible for performing port detection scans
+
+    """
     PROTOCOL = TransportProtocol.TCP
     IPV4 = "IPv4"
     IPV6 = "IPv6"
@@ -35,8 +46,6 @@ class Scanner(ScanAsyncTask):
         if not cfg['portdetection.scan_enabled']:
             return
         log.info("Starting port scan")
-        nodes = await self._get_nodes_for_scanning(timestamp=None, protocol=self.PROTOCOL, filter_out_storage=True)
-        log.debug("Found %i nodes for potential scanning", len(nodes))
 
         self._shutdown_condition.clear()
         self.scan_start = time.time()
@@ -44,22 +53,29 @@ class Scanner(ScanAsyncTask):
         await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
         for protocol, scanners in self.scanners.items():
-            nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, protocol=protocol)
+            scan = Scan(self.scan_start, protocol=protocol, scanner='scan')
+            self.storage.save_scan(scan)
+
+            nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, scan=scan)
             if not nodes:
                 log.warning("List of nodes is empty")
                 continue
             log.debug("Found %i nodes for potential scanning", len(nodes))
 
-            self.storage.save_nodes(nodes, protocol=protocol)
+            self.storage.save_nodes(nodes, scan=scan)
             self.current_scan = nodes
 
-            await self.run_scan(nodes, scan_only=self.as_service, scanners=scanners, protocol=protocol)
+            await self.run_scan(nodes, scan_only=self.as_service, scanners=scanners, protocol=protocol, scan=scan)
 
             self.current_scan = []
 
+            scan.end = time.time()
+            self.storage.update_scan(scan)
+            self.diff_with_last_scan(scan)
+
         await self._clean_scan()
 
-    async def run_scan(self, nodes, scanners, protocol=PROTOCOL, scan_only=False):
+    async def run_scan(self, nodes, scanners, scan, protocol=PROTOCOL, scan_only=False):
         """
         Run scanning.
 
@@ -92,7 +108,7 @@ class Scanner(ScanAsyncTask):
 
         ports.extend(self._get_special_ports())
 
-        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan_only=scan_only))
+        await Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan_only=scan_only, scan=scan)()
 
     async def _clean_scan(self):
         """
@@ -138,6 +154,13 @@ class Scanner(ScanAsyncTask):
 
     @property
     def scanners(self):
+        """
+        Dictionary of scanners and protocol for scan in relation: {protocol: { ipv4: scanner, ...}, ...}
+
+        Returns:
+            dict
+
+        """
         return {
             TransportProtocol.TCP: self._tcp_scanners,
             TransportProtocol.UDP: self._udp_scanners
@@ -173,3 +196,41 @@ class Scanner(ScanAsyncTask):
                 return_value.append(port)
 
         return return_value
+
+    def diff_with_last_scan(self, scan):
+        """
+        Differentiate two last scans.
+
+        Obtain nodes scanned in current scan. For each node check what changed in port state from last scan of this node
+
+        Args:
+            scan (Scan):
+
+        Returns:
+            None
+
+        """
+        nodes = self.storage.get_nodes_by_scan(scan=scan)
+        changes = []
+
+        for node in nodes:
+            last_scans = self.storage.get_scans_by_node(node=node, scan=scan)
+            current_ports = set(self.storage.get_ports_by_scan_and_node(node=node, scan=scan))
+
+            if len(last_scans) < 2:
+                previous_ports = set()
+            else:
+                previous_ports = set(self.storage.get_ports_by_scan_and_node(node=node, scan=last_scans[1]))
+
+            new_ports = current_ports - previous_ports
+            removed_ports = previous_ports - current_ports
+
+            changes.extend(PortDetectionChange(change_time=time.time(), previous_finding=None,
+                                               current_finding=port) for port in new_ports)
+
+            changes.extend(PortDetectionChange(current_finding=None, change_time=time.time(),
+                                               previous_finding=port) for port in removed_ports)
+
+        self.storage.save_changes(changes)
+        for change in changes:
+            self.aucote.kudu_queue.send_msg(Serializer.serialize_vulnerability_change(change))
