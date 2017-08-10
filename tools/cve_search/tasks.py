@@ -14,7 +14,7 @@ from tornado.httpclient import HTTPError
 from aucote_cfg import cfg
 from structs import Vulnerability, Port, PhysicalPort
 from tools.common.port_task import PortTask
-from tools.cve_search.exceptions import CVESearchAPIException, CVESearchAPIConnectionException
+from tools.cve_search.exceptions import CVESearchApiException
 from tools.cve_search.parsers import CVESearchParser
 from utils.http_client import HTTPClient
 
@@ -40,7 +40,7 @@ class CVESearchServiceTask(PortTask):
         for cpe in cpes:
             try:
                 result.extend(await self.api_cvefor(cpe))
-            except CVESearchAPIConnectionException:
+            except CVESearchApiException:
                 log.warning("Error during connection to cve-search server")
 
         if not result:
@@ -121,12 +121,10 @@ class CVESearchServiceTask(PortTask):
         try:
             response = await HTTPClient.instance().get(url)
         except HTTPError as exception:
-            raise CVESearchAPIConnectionException(str(exception))
+            raise CVESearchApiException(str(exception))
         except ConnectionError as exception:
-            raise CVESearchAPIConnectionException(str(exception))
+            raise CVESearchApiException(str(exception))
 
-        if response.code is not 200:
-            raise CVESearchAPIException(response)
         return ujson.loads(response.body.decode())
 
     def get_vulnerabilities(self, results):

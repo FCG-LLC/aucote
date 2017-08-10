@@ -7,8 +7,8 @@ from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
 from structs import Port, Node, Scan, TransportProtocol, Service, PhysicalPort
-from tools.cve_search.exceptions import CVESearchAPIException, CVESearchAPIConnectionException
-from tools.cve_search.structs import CVESearchVulnerabilityResults, CVESearchVulnerabilityResult
+from tools.cve_search.exceptions import CVESearchApiException
+from tools.cve_search.structs import CVESearchVulnerabilityResults
 from tools.cve_search.tasks import CVESearchServiceTask
 from utils import Config
 
@@ -69,27 +69,12 @@ class CVESearchServiceTaskTest(AsyncTestCase):
 
     @patch('tools.cve_search.tasks.HTTPClient')
     @gen_test
-    async def test_api_cvefor_api_http_non_200(self, mock_http):
-        json_data = '{"test_key": "test_value"}'
-        response = HTTPResponse(code=404, buffer='', request=HTTPRequest('test_url'))
-        mock_get = mock_http.instance.return_value.get
-        mock_get.return_value = Future()
-        mock_get.return_value.set_result(response)
-        response._body = json_data.encode()
-
-        service = Service()
-        service.cpe = self.cpe_txt
-        with self.assertRaises(CVESearchAPIException):
-            await self.task.api_cvefor(service.cpe)
-
-    @patch('tools.cve_search.tasks.HTTPClient')
-    @gen_test
     async def test_api_cvefor_http_error(self, mock_http):
         mock_http.instance().get.side_effect = HTTPError(code=404)
 
         service = Service()
         service.cpe = self.cpe_txt
-        with self.assertRaises(CVESearchAPIConnectionException):
+        with self.assertRaises(CVESearchApiException):
             await self.task.api_cvefor(service.cpe)
 
     @patch('tools.cve_search.tasks.HTTPClient')
@@ -99,7 +84,7 @@ class CVESearchServiceTaskTest(AsyncTestCase):
 
         service = Service()
         service.cpe = self.cpe_txt
-        with self.assertRaises(CVESearchAPIConnectionException):
+        with self.assertRaises(CVESearchApiException):
             await self.task.api_cvefor(service.cpe)
 
     def test_get_vulnerabilities(self):
@@ -217,7 +202,7 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         future = Future()
         future.set_result([expected])
         self.port.apps = [self.app, self.app_2]
-        self.task.api_cvefor = MagicMock(side_effect=(CVESearchAPIConnectionException('just test'), future))
+        self.task.api_cvefor = MagicMock(side_effect=(CVESearchApiException('just test'), future))
         self.task.get_vulnerabilities = MagicMock()
         self.task.store_vulnerability = MagicMock()
 
