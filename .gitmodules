@@ -1,0 +1,3 @@
+[submodule ".ci-utils"]
+	path = .ci-utils
+	url = git@github.com:FCG-LLC/ci-utils.git
