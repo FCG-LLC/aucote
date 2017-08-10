@@ -74,6 +74,7 @@ Entry { filename = "http-vuln-cve2017-5638.nse", categories = { "vuln", } }
 Entry { filename = "http-waf-detect.nse", categories = { "discovery", "intrusive", } }
 Entry { filename = "http-waf-fingerprint.nse", categories = { "discovery", "intrusive", } }
 Entry { filename = "http-webdav-scan.nse", categories = { "default", "discovery", "safe", } }
+Entry { filename = "http-websphere-console.nse", categories = { "default", "discovery", } }
 Entry { filename = "http-wordpress-users.nse", categories = { "auth", "intrusive", "vuln", } }
 Entry { filename = "iax2-version.nse", categories = { "version", } }
 Entry { filename = "ike-version.nse", categories = { "default", "discovery", "safe", "version", } }
@@ -132,6 +133,7 @@ Entry { filename = "smb-vuln-ms07-029.nse", categories = { "dos", "exploit", "in
 Entry { filename = "smb-vuln-ms08-067.nse", categories = { "dos", "exploit", "intrusive", "vuln", } }
 Entry { filename = "smb-vuln-ms10-054.nse", categories = { "dos", "intrusive", "vuln", } }
 Entry { filename = "smb-vuln-ms10-061.nse", categories = { "intrusive", "vuln", } }
+Entry { filename = "smb-vuln-ms17-010.nse", categories = { "safe", "vuln", } }
 Entry { filename = "smb-vuln-regsvc-dos.nse", categories = { "dos", "exploit", "intrusive", "vuln", } }
 Entry { filename = "smtp-vuln-cve2010-4344.nse", categories = { "exploit", "intrusive", "vuln", } }
 Entry { filename = "smtp-vuln-cve2011-1720.nse", categories = { "intrusive", "vuln", } }
@@ -153,6 +155,7 @@ Entry { filename = "ssl-heartbleed.nse", categories = { "safe", "vuln", } }
 Entry { filename = "ssl-known-key.nse", categories = { "default", "discovery", "safe", "vuln", } }
 Entry { filename = "ssl-poodle.nse", categories = { "safe", "vuln", } }
 Entry { filename = "sslv2.nse", categories = { "default", "safe", } }
+Entry { filename = "struts2-scan.nse", categories = { "discovery", "safe", } }
 Entry { filename = "stun-version.nse", categories = { "version", } }
 Entry { filename = "supermicro-ipmi-conf.nse", categories = { "exploit", "vuln", } }
 Entry { filename = "teamspeak2-version.nse", categories = { "version", } }

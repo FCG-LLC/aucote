@@ -66,6 +66,11 @@ EXECUTOR_CONFIG = {
                 },
                 'http-trace': {
                     'parser': NmapInfoParser
+                },
+                'struts2-scan': {
+                    'parser': NmapInfoParser,
+                    'singular': True,  # http-iis-webdav-vuln, http-slowloris-check, http-webdav-scan,
+                                       # http-email-harvest in some way influence on this script
                 }
             },
             'services': {
