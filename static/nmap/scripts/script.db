@@ -8,6 +8,7 @@ Entry { filename = "broadcast-listener.nse", categories = { "broadcast", "safe",
 Entry { filename = "broadcast-wpad-discover.nse", categories = { "broadcast", "safe", } }
 Entry { filename = "cassandra-info.nse", categories = { "default", "discovery", "safe", } }
 Entry { filename = "cccam-version.nse", categories = { "version", } }
+Entry { filename = "cisco-asa-scan.nse", categories = { "default", "safe", } }
 Entry { filename = "citrix-enum-apps.nse", categories = { "discovery", "safe", } }
 Entry { filename = "citrix-enum-servers-xml.nse", categories = { "discovery", "safe", } }
 Entry { filename = "citrix-enum-servers.nse", categories = { "discovery", "safe", } }
