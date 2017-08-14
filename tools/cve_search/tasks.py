@@ -12,7 +12,7 @@ from cpe import CPE
 from tornado.httpclient import HTTPError
 
 from aucote_cfg import cfg
-from structs import Vulnerability, Port, PhysicalPort
+from structs import Vulnerability, PhysicalPort, Port
 from tools.common.port_task import PortTask
 from tools.cve_search.exceptions import CVESearchApiException
 from tools.cve_search.parsers import CVESearchParser
@@ -58,13 +58,13 @@ class CVESearchServiceTask(PortTask):
 
         """
         cpes = []
-        return_value = []
+        detailed_cpes = []
 
         if self.port.apps:
-            cpes = [app.cpe for app in self.port.apps]
-        elif isinstance(self.port, PhysicalPort):
+            cpes = [app.cpe for app in self.port.apps if app.cpe is not None]
+        elif isinstance(self.port, PhysicalPort) and self.port.node.os.cpe is not None:
             cpes = [self.port.node.os.cpe]
-        elif isinstance(self.port, Port):
+        elif isinstance(self.port, Port) and self.port.service.cpe is not None:
             cpes = [self.port.service.cpe]
 
         for cpe in self._unique_cpes(cpes):
@@ -74,17 +74,17 @@ class CVESearchServiceTask(PortTask):
 
             if cpe.get_vendor()[0] == self.VENDOR_APACHE:
                 if cpe.get_product()[0] == self.APACHE_HTTPD:
-                    return_value.extend([cpe, CPE(cpe.as_uri_2_3().replace(self.APACHE_HTTPD,
-                                                                           self.APACHE_HTTP_SERVER))])
+                    detailed_cpes.extend([cpe, CPE(cpe.as_uri_2_3().replace(self.APACHE_HTTPD,
+                                                                            self.APACHE_HTTP_SERVER))])
                     continue
                 elif cpe.get_product()[0] == self.APACHE_HTTP_SERVER:
-                    return_value.extend([cpe, CPE(cpe.as_uri_2_3().replace(self.APACHE_HTTP_SERVER,
-                                                                           self.APACHE_HTTPD))])
+                    detailed_cpes.extend([cpe, CPE(cpe.as_uri_2_3().replace(self.APACHE_HTTP_SERVER,
+                                                                            self.APACHE_HTTPD))])
                     continue
 
-            return_value.append(cpe)
+            detailed_cpes.append(cpe)
 
-        return self._unique_cpes(return_value)
+        return self._unique_cpes(detailed_cpes)
 
     def _unique_cpes(self, cpes):
         """
@@ -99,7 +99,7 @@ class CVESearchServiceTask(PortTask):
         """
         return_value = []
         for cpe in cpes:
-            if cpe is not None and cpe not in return_value:
+            if cpe not in return_value:
                 return_value.append(cpe)
         return return_value
 

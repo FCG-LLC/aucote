@@ -54,6 +54,10 @@ class WhatWebResult(object):
 
 
 class WhatWebProduct(object):
+    """
+    Keeps product and vendor of specific application
+
+    """
     def __init__(self, vendor, product):
         self.vendor = vendor
         self.product = product
@@ -131,7 +135,8 @@ WHATWEBPLUGINDETAILS = {
     'DotNetNuke': [{'product': WhatWebProduct(vendor='dotnetnuke', product='dotnetnuke')}],
     'Dreambox': [{'product': WhatWebProduct(vendor='dreambox', product='dm500c')}],
     'Drupal': [{'product': WhatWebProduct(vendor='drupal', product='drupal')}],
-    'Easy-File-Sharing-Web-Server': [{'product': WhatWebProduct(vendor='efssoft', product='easy_file_sharing_web_server')}],
+    'Easy-File-Sharing-Web-Server': [{'product': WhatWebProduct(vendor='efssoft',
+                                                                product='easy_file_sharing_web_server')}],
     'ECShop': [{'product': WhatWebProduct(vendor='ecshop', product='epshop')}],
     'eDirectory': [{'product': WhatWebProduct(vendor='novell', product='edirectory')}],
     'eGroupWare': [{'product': WhatWebProduct(vendor='egroupware', product='egroupware')}],
@@ -360,7 +365,8 @@ WHATWEBPLUGINDETAILS = {
     'Wing-FTP-Server': [{'product': WhatWebProduct(vendor='wftpserver', product='wing_ftp_server')}],
     'WolfCMS': [{'product': WhatWebProduct(vendor='wolfcms', product='wolf_cms')}],
     'Wordpress-Contact-Form': [{'product': WhatWebProduct(vendor='cfdbplugin', product='contact_form_db')}],
-    'WordPress-Mobile-Pack': [{'product': WhatWebProduct(vendor='wordpress_mobile_pack_project', product='wordpress_mobile_pack')}],
+    'WordPress-Mobile-Pack': [{'product': WhatWebProduct(vendor='wordpress_mobile_pack_project',
+                                                         product='wordpress_mobile_pack')}],
     'wpQuiz': [{'product': WhatWebProduct(vendor='wire_plastic_design', product='wpquiz')}],
     'X7-Chat': [{'product': WhatWebProduct(vendor='x7_group', product='x7_chat')}],
     'XchangeBoard': [{'product': WhatWebProduct(vendor='xchangeboard', product='xchangeboard')}],
@@ -400,7 +406,7 @@ WHATWEBPLUGINDETAILS = {
     'JGS-Portal': [{'product': WhatWebProduct(vendor='jgs-xa', product='jgs-portal')}],
     'Jigsaw': [{'product': WhatWebProduct(vendor='w3c', product='jigsaw')}],
     'Jive-SBS': [{'product': WhatWebProduct(vendor='jive_software', product='jive')}],
-    'Joomla': [{'product': WhatWebProduct(vendor='joomla', product='joomla\!')}],
+    'Joomla': [{'product': WhatWebProduct(vendor='joomla', product=r'joomla\!')}],
     'Karrigell': [{'product': WhatWebProduct(vendor='karrigell', product='karrigell')}],
     'Kerio-Connect': [{'product': WhatWebProduct(vendor='kerio', product='connect')}],
     'Kerio-WebSTAR': [{'product': WhatWebProduct(vendor='kerio', product='webstar')}],

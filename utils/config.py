@@ -78,10 +78,10 @@ class Config:
             else:
                 return_value = self._get(key)
 
-            if isinstance(return_value, dict) or isinstance(return_value, list):
+            if isinstance(return_value, (dict, list)):
                 return Config(return_value)
-            else:
-                return return_value
+
+            return return_value
         except KeyError:
             raise KeyError(key)
         except ToucanException:
@@ -201,8 +201,7 @@ class Config:
             output.extend(data[common:])
             output.extend(defaults[common:])
             return output
-        else:
-            return data
+        return data
 
     def _simplify_defaults(self, defaults):
         if callable(defaults):

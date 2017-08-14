@@ -128,4 +128,11 @@ class TaskMapper(object):
 
     @property
     def storage(self):
+        """
+        Aucote's storage
+
+        Returns:
+            Storage
+
+        """
         return self._aucote.storage

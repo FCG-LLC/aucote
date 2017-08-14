@@ -77,8 +77,7 @@ async def main():
         """
         if cfg['kuduworker.enable']:
             return KuduQueue(cfg['kuduworker.queue.address'])
-        else:
-            return MagicMock()  # used for local testing
+        return MagicMock()  # used for local testing
 
     with get_kuduworker() as kudu_queue:
         try:

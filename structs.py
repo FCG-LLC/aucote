@@ -859,8 +859,8 @@ class VulnerabilityChange(VulnerabilityChangeBase):
 
     @property
     def previous_output(self):
-        return self.previous_finding and self.previous_finding.output or ""
+        return self.previous_finding.output if self.previous_finding else ""
 
     @property
     def current_output(self):
-        return self.current_finding and self.current_finding.output or ""
+        return self.current_finding.output if self.current_finding else ""

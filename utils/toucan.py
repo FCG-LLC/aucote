@@ -108,12 +108,13 @@ class Toucan(object):
             response = await self._http_client.get(url="{api}/config/{key}".format(api=self.api, key=toucan_key))
 
             result = self.proceed_response(key, response)
+            strip_key = key.rstrip(".*")
 
-            if isinstance(result, dict) and key.rstrip(".*") in result.keys():
-                del result[key.rstrip(".*")]
+            if isinstance(result, dict) and strip_key in result.keys():
+                del result[strip_key]
 
-                if not len(result):
-                    result[key.rstrip(".*")] = {}
+                if not result:
+                    result[strip_key] = {}
 
             return result
 
@@ -121,7 +122,6 @@ class Toucan(object):
             self._handle_exception(key, exception)
         except ConnectionError as exception:
             raise ToucanConnectionException(str(exception))
-
 
     @retry_if_fail
     async def put(self, key, values):
@@ -139,9 +139,9 @@ class Toucan(object):
             ToucanException|ToucanConnectionException
 
         """
-        toucan_key = self._get_slash_separated_key(key, strip_slashes=True) if key is not "*" else key
+        toucan_key = self._get_slash_separated_key(key, strip_slashes=True) if key != "*" else key
 
-        if key is not "*":
+        if key != "*":
             data = {
                 "value": values,
             }
