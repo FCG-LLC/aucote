@@ -65,14 +65,14 @@ class Config:
                     return_value = self._get(key)
 
                 elif self.toucan.is_special(key):
-                    result = IOLoop().run_sync(partial(self.toucan.get, key))
+                    result = self._from_toucan(key)
 
                     for subkey, value in result.items():
                         self._set(subkey, value)
                     return_value = self._get(key)
 
                 else:
-                    return_value = IOLoop().run_sync(partial(self.toucan.get, key))
+                    return_value = self._from_toucan(key)
                     self._set(key, return_value)
             else:
                 return_value = self._get(key)
@@ -86,6 +86,25 @@ class Config:
         except ToucanException:
             log.exception("Error while obtaining configuration: %s", key)
             raise KeyError(key)
+
+    def _from_toucan(self, key):
+        """
+        Obtains config value from toucan based on given key
+
+        Args:
+            key (str): Configuration key
+
+        Returns:
+
+        """
+        tmp_ioloop = IOLoop()
+        try:
+            return_value = tmp_ioloop.run_sync(partial(self.toucan.get, key))
+        finally:
+            tmp_ioloop.close(True)
+
+        return return_value
+
 
     def set(self, key, value):
         """

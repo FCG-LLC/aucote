@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch, mock_open
 
 from coverage.backunittest import TestCase
 from tornado.concurrent import Future
+from tornado.ioloop import IOLoop
 
 from utils import Config
 from utils.exceptions import ToucanException
@@ -273,4 +274,16 @@ class ConfigTest(TestCase):
             }
         }
 
+        self.assertEqual(result, expected)
+
+    @patch('utils.config.partial')
+    @patch('utils.config.IOLoop')
+    def test_from_toucan(self, ioloop, partial):
+        self.config.toucan = MagicMock()
+        expected = ioloop().run_sync.return_value
+        result = self.config._from_toucan('test')
+
+        partial.assert_called_once_with(self.config.toucan.get, 'test')
+        ioloop().run_sync.assert_called_once_with(partial())
+        ioloop().close.assert_called_once_with(True)
         self.assertEqual(result, expected)
