@@ -32,7 +32,7 @@ class SkipfishScanTaskTest(AsyncTestCase):
         self.aucote = MagicMock()
 
         self.node = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
-        self.port = Port(transport_protocol=TransportProtocol.TCP, number = 80, node=self.node)
+        self.port = Port(transport_protocol=TransportProtocol.TCP, number=80, node=self.node)
         self.port.scan = Scan()
         self.exploit = Exploit(exploit_id=1)
         self.scan = Scan()

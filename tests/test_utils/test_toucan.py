@@ -7,9 +7,12 @@ from tornado.testing import gen_test, AsyncTestCase
 from utils.exceptions import ToucanException, ToucanUnsetException, ToucanConnectionException
 from utils.toucan import Toucan
 
+future = Future()
+future.set_result(True)
 
+
+@patch('utils.http_client.gen.sleep', MagicMock(return_value=future))
 class TestToucan(AsyncTestCase):
-
     def setUp(self):
         super(TestToucan, self).setUp()
         self.toucan = Toucan('test_prot://test_host:3000/')
@@ -25,7 +28,6 @@ class TestToucan(AsyncTestCase):
         with self.assertRaises(ToucanUnsetException):
             await self.toucan.get("test.key")
 
-    @patch('utils.toucan.Toucan.min_retry_time', 0)
     @gen_test
     async def test_get_502(self):
         self.response.code = 502
@@ -34,7 +36,6 @@ class TestToucan(AsyncTestCase):
         with self.assertRaises(ToucanConnectionException):
             await self.toucan.get("test.key")
 
-    @patch('utils.toucan.Toucan.min_retry_time', 0)
     @gen_test
     async def test_get_502_invalid_json(self):
         self.response.code = 502
@@ -50,7 +51,6 @@ class TestToucan(AsyncTestCase):
         with self.assertRaises(ToucanException):
             await self.toucan.get("test.key")
 
-    @patch('utils.toucan.Toucan.min_retry_time', 0)
     @gen_test
     async def test_get_599(self):
         self.response.code = 500
@@ -59,7 +59,6 @@ class TestToucan(AsyncTestCase):
         with self.assertRaises(ToucanConnectionException):
             await self.toucan.get("test.key")
 
-    @patch('utils.toucan.Toucan.min_retry_time', 0)
     @gen_test
     async def test_connection_exception(self):
         self.response.code = 500
@@ -83,19 +82,14 @@ class TestToucan(AsyncTestCase):
         with self.assertRaises(ToucanException):
             await self.toucan.get("test.key")
 
-    @patch('utils.toucan.Toucan.min_retry_time', 1)
-    @patch('utils.toucan.Toucan.max_retry_time', 4)
-    @patch('utils.toucan.Toucan.max_retry_count', 5)
-    @patch('utils.toucan.time.sleep')
     @gen_test
-    async def test_try_if_fail_decorator_time_exceeded(self, mock_sleep):
+    async def test_try_if_fail_decorator_time_exceeded(self):
         self.response.code = 502
         self.response._body = b'{"message": "test_error"}'
         self.toucan._http_client.get.side_effect = (HTTPError(code=502, response=self.response))
 
         with self.assertRaises(ToucanConnectionException):
             await self.toucan.get("test.key")
-        mock_sleep.assert_has_calls([call(1), call(2), call(4), call(4), call(4)], True)
 
     @patch('utils.toucan.ujson.loads')
     @gen_test
@@ -209,7 +203,6 @@ class TestToucan(AsyncTestCase):
         with self.assertRaises(ToucanException):
             await self.toucan.get('test.key')
 
-    @patch('utils.toucan.Toucan.min_retry_time', 0)
     @gen_test
     async def test_put_with_exception(self):
         self.toucan._http_client.put.side_effect = (HTTPError(code=500, response=self.response))
@@ -218,7 +211,6 @@ class TestToucan(AsyncTestCase):
             await self.toucan.put("test.key", "test_value")
         self.assertEqual(self.toucan._http_client.put.call_count, 1)
 
-    @patch('utils.toucan.Toucan.min_retry_time', 0)
     @gen_test
     async def test_put_with_exception_404(self):
         self.response.code = 404
@@ -228,8 +220,6 @@ class TestToucan(AsyncTestCase):
             await self.toucan.put("test.key", "test_value")
         self.assertEqual(self.toucan._http_client.put.call_count, 1)
 
-    @patch('utils.toucan.Toucan.min_retry_time', 0)
-    @patch('utils.toucan.Toucan.max_retry_count', 1)
     @patch('utils.toucan.ujson.loads')
     @gen_test
     async def test_put_with_exception_502(self, mock_json):
@@ -243,10 +233,7 @@ class TestToucan(AsyncTestCase):
 
         with self.assertRaises(ToucanConnectionException):
             await self.toucan.put("test.key", "test_value")
-        self.assertEqual(self.toucan._http_client.put.call_count, 1)
 
-    @patch('utils.toucan.Toucan.min_retry_time', 0)
-    @patch('utils.toucan.Toucan.max_retry_count', 1)
     @gen_test
     async def test_put_with_connection_exception(self):
         self.response.code = 404
@@ -254,7 +241,6 @@ class TestToucan(AsyncTestCase):
 
         with self.assertRaises(ToucanConnectionException):
             await self.toucan.put("test.key", "test_value")
-        self.assertEqual(self.toucan._http_client.put.call_count, 1)
 
     @gen_test
     async def test_push_config_exists_without_overwrite(self):

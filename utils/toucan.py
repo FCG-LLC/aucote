@@ -8,53 +8,7 @@ import ujson
 from tornado.httpclient import HTTPError
 
 from utils.exceptions import ToucanException, ToucanUnsetException, ToucanConnectionException
-from utils.http_client import HTTPClient
-
-
-def retry_if_fail(function):
-    """
-    Retry function execution in case of connection fail
-
-    Args:
-        function:
-
-    Returns:
-        function
-
-    """
-    async def function_wrapper(*args, **kwargs):
-        """
-        Try to execute function. In case of fail double waiting time.
-        Waiting time cannot exceed Toucan.max_retry_count.
-        Raise exception after Toucan.max_retry_count failed tries
-
-        Args:
-            *args:
-            **kwargs:
-
-        Returns:
-            mixed
-
-        Raises:
-            ToucanConnectionException
-
-        """
-        wait_time = Toucan.min_retry_time
-        try_counter = 0
-        while try_counter < Toucan.max_retry_count:
-            try:
-                return await function(*args, **kwargs)
-            except ToucanConnectionException as exception:
-                log.warning("Cannot connect to Toucan: %s", str(exception))
-                log.warning("Retry in %s s", wait_time)
-                time.sleep(wait_time)
-                wait_time *= 2
-                if wait_time > Toucan.max_retry_time:
-                    wait_time = Toucan.max_retry_time
-                try_counter += 1
-        raise ToucanConnectionException
-
-    return function_wrapper
+from utils.http_client import HTTPClient, retry_if_fail
 
 
 class Toucan(object):
@@ -87,7 +41,8 @@ class Toucan(object):
 
         raise ToucanException(key)
 
-    @retry_if_fail
+    @retry_if_fail(min_retry_time=min_retry_time, max_retry_time=max_retry_time, max_retries=max_retry_count,
+                   exceptions=ToucanConnectionException)
     async def get(self, key):
         """
         Get config from toucan
@@ -120,10 +75,11 @@ class Toucan(object):
 
         except HTTPError as exception:
             self._handle_exception(key, exception)
-        except ConnectionError as exception:
+        except (ConnectionError, OSError) as exception:
             raise ToucanConnectionException(str(exception))
 
-    @retry_if_fail
+    @retry_if_fail(min_retry_time=min_retry_time, max_retry_time=max_retry_time, max_retries=max_retry_count,
+                   exceptions=ToucanConnectionException)
     async def put(self, key, values):
         """
         Put config into toucan

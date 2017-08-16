@@ -16,7 +16,7 @@ from structs import Vulnerability, PhysicalPort, Port
 from tools.common.port_task import PortTask
 from tools.cve_search.exceptions import CVESearchApiException
 from tools.cve_search.parsers import CVESearchParser
-from utils.http_client import HTTPClient
+from utils.http_client import HTTPClient, retry_if_fail
 
 
 class CVESearchServiceTask(PortTask):
@@ -27,6 +27,9 @@ class CVESearchServiceTask(PortTask):
     VENDOR_APACHE = 'apache'
     APACHE_HTTPD = 'httpd'
     APACHE_HTTP_SERVER = 'http_server'
+    MAX_RETRIES = 3
+    MIN_RETRY_TIME = 10
+    MAX_RETRY_TIME = 120
 
     def __init__(self, *args, **kwargs):
         self.api = cfg['tools.cve-search.api'].strip("/")
@@ -103,6 +106,8 @@ class CVESearchServiceTask(PortTask):
                 return_value.append(cpe)
         return return_value
 
+    @retry_if_fail(min_retry_time=MIN_RETRY_TIME, max_retry_time=MAX_RETRY_TIME, max_retries=MAX_RETRIES,
+                   exceptions=CVESearchApiException)
     async def api_cvefor(self, cpe):
         """
         Get list of CVES from cve-search API
@@ -120,9 +125,7 @@ class CVESearchServiceTask(PortTask):
         url = "{api}/cvefor/{cpe}".format(api=self.api, cpe=cpe_encoded)
         try:
             response = await HTTPClient.instance().get(url)
-        except HTTPError as exception:
-            raise CVESearchApiException(str(exception))
-        except ConnectionError as exception:
+        except (HTTPError, ConnectionError) as exception:
             raise CVESearchApiException(str(exception))
 
         return ujson.loads(response.body.decode())

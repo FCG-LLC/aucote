@@ -12,7 +12,11 @@ from tools.cve_search.structs import CVESearchVulnerabilityResults
 from tools.cve_search.tasks import CVESearchServiceTask
 from utils import Config
 
+future = Future()
+future.set_result(True)
 
+
+@patch('utils.http_client.gen.sleep', MagicMock(return_value=future))
 class CVESearchServiceTaskTest(AsyncTestCase):
 
     @patch('tools.cve_search.tasks.cfg', new_callable=Config)

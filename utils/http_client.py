@@ -3,8 +3,76 @@ Asynchronous HTTP client for Aucote. It's using tornado's AsyncHTTPClient.
 
 """
 import logging as log
-from tornado.httpclient import AsyncHTTPClient, HTTPRequest
+
+from tornado import gen
+from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPError
 import ujson
+
+
+def retry_if_fail(min_retry_time, max_retry_time, max_retries, exceptions):
+    """
+    Retry function execution in case of connection fail.
+    In case of fail double waiting time starting from min_retry_time.
+    Waiting time cannot exceed max_retry_time.
+    Raise exception after max_retries failed tries. max_retries has to be more than 1
+
+    Args:
+        function (callable):
+        min_retry_time (int):
+        max_retry_time (int):
+        max_retries (int):
+        exceptions (Exception|tuple):
+
+    Returns:
+        callable
+
+    """
+    def decorator(function):
+        """
+
+        Args:
+            function:
+
+        Returns:
+            function
+
+        """
+        async def function_wrapper(*args, **kwargs):
+            """
+            Try to execute function. In case of fail double waiting time.
+            Waiting time cannot exceed max_retry_time.
+            Raise exception after max_retries failed tries
+
+            Args:
+                *args:
+                **kwargs:
+
+            Returns:
+                mixed
+
+            Raises:
+                ToucanConnectionException
+
+            """
+            wait_time = min_retry_time
+            try_counter = 0
+            while try_counter < max_retries:
+                try:
+                    return await function(*args, **kwargs)
+                except exceptions as exception:
+                    log.warning("Cannot connect to Toucan: %s", str(exception))
+                    log.warning("Retry in %s s", wait_time)
+                    await gen.sleep(wait_time)
+                    wait_time *= 2
+                    if wait_time > max_retry_time:
+                        wait_time = max_retry_time
+                    try_counter += 1
+
+                    if try_counter >= max_retries:
+                        raise exception
+
+        return function_wrapper
+    return decorator
 
 
 class HTTPClient(object):
@@ -101,3 +169,4 @@ class HTTPClient(object):
             kwargs.setdefault('headers', {})['Content-Type'] = 'application/json'
         request = HTTPRequest(**kwargs)
         return AsyncHTTPClient().fetch(request, self._handle_response)
+
