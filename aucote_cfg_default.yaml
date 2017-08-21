@@ -69,6 +69,7 @@ service:
 #     udp_retries: <int> - How many UDP scan retries is allowed by port detection
 #     port_period: <period> - Minimal port scanning interval
 #     broadcast: <bool> - Enable broadcast scanning if True (default is False)
+#     categories: - List of allowed script categories
 
 portdetection:
     scan_enabled: True
@@ -101,6 +102,7 @@ portdetection:
         nmap_udp: True
         port_period: 0s
         broadcast: False
+        categories: []
 
 
 # In this section there is configuration related to the tools used by the aucote
