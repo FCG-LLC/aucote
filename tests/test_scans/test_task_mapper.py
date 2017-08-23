@@ -55,7 +55,7 @@ class TaskMapperTest(AsyncTestCase):
         self.cfg = {
             'portdetection': {
                 '_internal': {
-                    'categories': ['other', 'http']
+                    'categories': ['other', 'brute']
                 }
             },
             'tools': {
@@ -245,7 +245,7 @@ class TaskMapperTest(AsyncTestCase):
         self.exploits = OrderedDict({
             'test': [
                 Exploit(exploit_id=1, name='test_1', categories={ExploitCategory.OTHER}),
-                Exploit(exploit_id=2, name='test_2', categories={ExploitCategory.HTTP}),
+                Exploit(exploit_id=2, name='test_2', categories={ExploitCategory.BRUTE}),
                 Exploit(exploit_id=3, name='test_3', categories={ExploitCategory.OTHER}),
                 Exploit(exploit_id=4, name='test_4', categories={ExploitCategory.OTHER})
             ]
@@ -287,7 +287,7 @@ class TaskMapperTest(AsyncTestCase):
     @gen_test
     async def test_restricted_categories(self, cfg):
         cfg._cfg = self.cfg
-        cfg['portdetection._internal.categories'] = ['http']
+        cfg['portdetection._internal.categories'] = ['brute']
 
         self.task_mapper.store_security_scan = MagicMock()
         expected = [self.exploits['test'][0], self.exploits['test'][1]]
