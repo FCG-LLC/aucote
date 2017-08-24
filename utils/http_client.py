@@ -4,6 +4,7 @@ Asynchronous HTTP client for Aucote. It's using tornado's AsyncHTTPClient.
 """
 import logging as log
 
+import functools
 from tornado import gen
 from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPError
 import ujson
@@ -37,6 +38,7 @@ def retry_if_fail(min_retry_time, max_retry_time, max_retries, exceptions):
             function
 
         """
+        @functools.wraps(function)
         async def function_wrapper(*args, **kwargs):
             """
             Try to execute function. In case of fail double waiting time.
@@ -63,9 +65,7 @@ def retry_if_fail(min_retry_time, max_retry_time, max_retries, exceptions):
                     log.warning("Cannot connect to Toucan: %s", str(exception))
                     log.warning("Retry in %s s", wait_time)
                     await gen.sleep(wait_time)
-                    wait_time *= 2
-                    if wait_time > max_retry_time:
-                        wait_time = max_retry_time
+                    wait_time = min(wait_time*2, max_retry_time)
                     try_counter += 1
 
                     if try_counter >= max_retries:

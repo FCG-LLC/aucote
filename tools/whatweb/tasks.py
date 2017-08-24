@@ -6,6 +6,7 @@ from structs import CPEType, Service, Port
 from tools.common.command_task import CommandTask
 from tools.whatweb.base import WhatWebBase
 from tools.whatweb.structs import WHATWEBPLUGINDETAILS
+import logging as log
 
 
 class WhatWebTask(CommandTask):
@@ -58,6 +59,7 @@ class WhatWebTask(CommandTask):
                 )
 
         if not cpes:
+            log.debug("No cpes for %s found by whatweb", str(self.port))
             return
 
         exploits = self.aucote.exploits.find_by_apps(['cve-search'])
