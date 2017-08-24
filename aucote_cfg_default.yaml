@@ -73,6 +73,9 @@ service:
 #     max_retries: <int> - How many UDP scan retries is allowed by port detection
 #     defeat_icmp_ratelimit: <bool> - If True, Nmap won't be waiting on ICMP Port Unreachable
 #
+#   tools: - Additional options for tools scan
+#     scan_nodes: <bool> - Define if exploits for node should be executed
+#
 #   _internal: - more advanced  configuration
 #     port_period: <period> - Minimal port scanning interval
 #     broadcast: <bool> - Enable broadcast scanning if True (default is False)
@@ -136,6 +139,7 @@ portdetection:
             include: [0.0.0.0/0] # all hosts found by other scans
             exclude: []
         scan_rate: 50
+        scan_nodes: True
     sctp:
         scan_enabled: False
         scan_type: "LIVE"

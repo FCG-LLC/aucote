@@ -3,7 +3,6 @@ Scanner dedicated for tools.
 
 """
 
-
 import logging as log
 
 import time
@@ -41,7 +40,8 @@ class ToolsScanner(ScanAsyncTask):
 
         ports = self.get_ports_for_scan(nodes)
         log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan=scan))
+        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes if cfg['portdetection.tools.scan_nodes']
+                                            else None, ports=ports, scan=scan))
 
         scan.end = time.time()
         self.storage.update_scan(scan)
@@ -55,25 +55,3 @@ class ToolsScanner(ScanAsyncTask):
 
             """
         return self.storage.get_ports_by_nodes(nodes=nodes, timestamp=self.previous_scan, protocol=self.PROTOCOL)
-
-    @property
-    def next_scan(self):
-        """
-        Time of next regular scan
-
-        Returns:
-            float
-
-        """
-        return croniter(cfg['portdetection._internal.tools_cron'], time.time()).get_next()
-
-    @property
-    def previous_scan(self):
-        """
-        Previous tool scan timestamp
-
-        Returns:
-            float
-
-        """
-        return croniter(cfg['portdetection._internal.tools_cron'], time.time()).get_prev()

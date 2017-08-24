@@ -16,8 +16,10 @@ class ToolsScannerTest(AsyncTestCase):
 
     @patch('scans.tools_scanner.Scan')
     @patch('scans.tools_scanner.Executor')
+    @patch('scans.tools_scanner.cfg', new_callable=Config)
     @gen_test
-    async def test_run_scripts(self, mock_executor, scan):
+    async def test_run_scripts(self, cfg, mock_executor, scan):
+        cfg['portdetection.tools.scan_nodes'] = True
         ports = [MagicMock(), MagicMock()]
         nodes = [MagicMock(), MagicMock(), MagicMock()]
 
@@ -29,6 +31,25 @@ class ToolsScannerTest(AsyncTestCase):
         await self.task.run()
 
         mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=nodes, ports=ports, scan=scan())
+        self.task.get_ports_for_scan.assert_called_once_with(nodes)
+
+    @patch('scans.tools_scanner.Scan')
+    @patch('scans.tools_scanner.Executor')
+    @patch('scans.tools_scanner.cfg', new_callable=Config)
+    @gen_test
+    async def test_run_disable_nodes(self, cfg, mock_executor, scan):
+        cfg['portdetection.tools.scan_nodes'] = False
+        ports = [MagicMock(), MagicMock()]
+        nodes = [MagicMock(), MagicMock(), MagicMock()]
+
+        self.task._get_nodes_for_scanning = MagicMock(return_value=Future())
+        self.task._get_nodes_for_scanning.return_value.set_result(nodes)
+
+        self.task.get_ports_for_scan = MagicMock(return_value=ports)
+
+        await self.task.run()
+
+        mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=None, ports=ports, scan=scan())
         self.task.get_ports_for_scan.assert_called_once_with(nodes)
 
     @patch('scans.tools_scanner.ToolsScanner.previous_scan', new_callable=PropertyMock)
@@ -46,35 +67,3 @@ class ToolsScannerTest(AsyncTestCase):
 
         self.assertEqual(result, ports)
         self.task.storage.get_ports_by_nodes.assert_called_once_with(nodes=nodes, timestamp=100, protocol=None)
-
-    @patch('scans.tools_scanner.cfg', new_callable=Config)
-    @patch('scans.tools_scanner.time.time', MagicMock(return_value=595))
-    def test_next_scan(self, mock_cfg):
-        mock_cfg._cfg = {
-            'portdetection': {
-                '_internal': {
-                    'tools_cron': '*/12 * * * *'
-                }
-            }
-        }
-
-        expected = 720
-        result = self.task.next_scan
-
-        self.assertEqual(result, expected)
-
-    @patch('scans.tools_scanner.cfg', new_callable=Config)
-    @patch('scans.tools_scanner.time.time', MagicMock(return_value=1595))
-    def test_previous_scan(self, mock_cfg):
-        mock_cfg._cfg = {
-            'portdetection': {
-                '_internal': {
-                    'tools_cron': '*/8 * * * *',
-                }
-            }
-        }
-
-        expected = 1440
-        result = self.task.previous_scan
-
-        self.assertEqual(result, expected)
