@@ -91,7 +91,7 @@ class KuduMsg:
 
         assert isinstance(val, (IPv4Address, IPv6Address))
         if isinstance(val, IPv4Address):
-            txt = '2002:%02x%02x:%02x%02x::'%tuple(val.packed)
+            txt = '2002:%02x%02x:%02x%02x::' % tuple(val.packed)
             val = IPv6Address(txt)
         self._data.extend(val.packed)
 
@@ -140,5 +140,5 @@ class KuduQueue(DbInterface):
 
         assert isinstance(msg, KuduMsg)
         log.debug('sending bytes to kuduworker: %s', bytes_str(msg.data))
-        flags = (dont_wait and DONTWAIT) or 0
+        flags = DONTWAIT if dont_wait else 0
         self._socket.send(msg.data, flags)

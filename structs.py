@@ -223,10 +223,11 @@ class Service(object):
     _ESCAPE_CPE = re.compile(_CPE_SPECIAL)
     _UNESCAPE_CPE = re.compile(r"(\\({0}))".format(_CPE_SPECIAL))
 
-    def __init__(self, name=None, version=None):
+    def __init__(self, name=None, version=None, cpe=None):
         self.name = name
         self.version = version
         self._cpe = None
+        self.cpe = cpe
 
     @property
     def cpe(self):
@@ -858,8 +859,8 @@ class VulnerabilityChange(VulnerabilityChangeBase):
 
     @property
     def previous_output(self):
-        return self.previous_finding and self.previous_finding.output or ""
+        return self.previous_finding.output if self.previous_finding else ""
 
     @property
     def current_output(self):
-        return self.current_finding and self.current_finding.output or ""
+        return self.current_finding.output if self.current_finding else ""

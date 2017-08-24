@@ -32,7 +32,7 @@ class AsyncCrontabTask(object):
 
         Returns:
             str
-            
+
         """
         return str(self.func)
 

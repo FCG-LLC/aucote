@@ -79,7 +79,7 @@ class NmapPortInfoTask(PortTask):
 
         """
         if isinstance(self._port, (BroadcastPort, PhysicalPort)):
-            await self.aucote.task_mapper.assign_tasks(self._port, self.aucote.storage)
+            await self.aucote.task_mapper.assign_tasks(self._port)
             return
 
         args = self.prepare_args()
@@ -123,11 +123,11 @@ class NmapPortInfoTask(PortTask):
         ]
         self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self._scan)
 
-        self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None), dont_wait=True)
+        self.kudu_queue.send_msg(Serializer.serialize_port_vuln(self._port, None))
         self.diff_with_last_scan()
 
         if not self.scan_only:
-            await TaskMapper(aucote=self.aucote, scan=self._scan).assign_tasks(self._port, self.aucote.storage)
+            await TaskMapper(aucote=self.aucote, scan=self._scan).assign_tasks(self._port)
 
     def diff_with_last_scan(self):
         """
