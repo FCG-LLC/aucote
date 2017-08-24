@@ -285,5 +285,5 @@ class ConfigTest(TestCase):
 
         partial.assert_called_once_with(self.config.toucan.get, 'test')
         ioloop().run_sync.assert_called_once_with(partial())
-        ioloop().close.assert_called_once_with(True)
+        ioloop().close.assert_called_once_with()
         self.assertEqual(result, expected)

@@ -6,6 +6,7 @@ import time
 import logging as log
 from functools import partial
 
+import contextlib
 import yaml
 from tornado.ioloop import IOLoop
 
@@ -97,14 +98,8 @@ class Config:
         Returns:
 
         """
-        tmp_ioloop = IOLoop()
-        try:
-            return_value = tmp_ioloop.run_sync(partial(self.toucan.get, key))
-        finally:
-            tmp_ioloop.close(True)
-
-        return return_value
-
+        with contextlib.closing(IOLoop()) as ioloop:
+            return ioloop.run_sync(partial(self.toucan.get, key))
 
     def set(self, key, value):
         """
