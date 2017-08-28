@@ -94,7 +94,11 @@ class Scanner(ScanAsyncTask):
             for scanner in scanners[ip_protocol]:
                 log.info("Scanning %i %s %s nodes for open ports.", len(dict_nodes[ip_protocol]), protocol.name,
                          ip_protocol)
-                ports.extend(await scanner.scan_ports(dict_nodes[ip_protocol]))
+                if protocol.name == TransportProtocol.UDP:
+                    ports.extend(await scanner.scan_ports(dict_nodes[ip_protocol]))
+                else:
+                    for node in dict_nodes[ip_protocol]:
+                        ports.extend(await scanner.scan_ports([node]))
 
         port_range_allow = NmapTool.ports_from_list(tcp=cfg['portdetection.tcp.ports.include'],
                                                     udp=cfg['portdetection.udp.ports.include'])
