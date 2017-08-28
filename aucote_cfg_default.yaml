@@ -181,7 +181,7 @@ portdetection:
 tools:
     nmap:
         cmd: nmap
-        enable: True
+        enable: False
         period: 1d
         scripts_dir: ./static/nmap/
         disable_scripts: []
@@ -215,31 +215,37 @@ tools:
         networks: []
         script_networks: {}
     aucote-http-headers:
-        enable: True
+        enable: False
         period: 0s
         periods: {}
         networks: []
         script_networks: {}
     testssl:
         cmd: testssl
-        enable: True
+        enable: False
         period: 0s
         periods: {}
         networks: []
         script_networks: {}
     whatweb:
         cmd: whatweb
-        enable: True
+        enable: False
         period: 0s
         periods: {}
         networks: []
         script_networks: {}
     cve-search:
-        enable: True
+        enable: False
         period: 0s
         periods: {}
         networks: []
         script_networks: {}
         api: ''
+    aucote-active-directory:
+        enable: True
+        period: 0s
+        periods: {}
+        networks: []
+        script_networks: {}
     common:
         rate: 50

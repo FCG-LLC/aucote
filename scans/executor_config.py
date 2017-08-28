@@ -1,6 +1,7 @@
 """
 Provides configuration for tools. Configuration is implicit and shouldn't be modified by end-user.
 """
+from tools.acuote_ad.tool import AucoteActiveDirectory
 from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
 from tools.cve_search.tool import CVESearchTool
@@ -169,6 +170,9 @@ EXECUTOR_CONFIG = {
         },
         'cve-search': {
             'class': CVESearchTool,
+        },
+        'aucote-active-directory': {
+            'class': AucoteActiveDirectory
         }
     },
     'node_scan': ['cve-search']
