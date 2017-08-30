@@ -1,7 +1,7 @@
 import datetime
 import ipaddress
 from unittest import TestCase
-from unittest.mock import PropertyMock, patch
+from unittest.mock import PropertyMock, patch, MagicMock
 
 from database.serializer import Serializer
 from fixtures.exploits import Exploit
@@ -17,7 +17,9 @@ class SerializerTest(TestCase):
         self.serializer = Serializer()
         self.vuln = Vulnerability()
 
-        node = Node(ip = ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        node.os = MagicMock()
+        node.os.name_with_version = 'test_name_and_version'
 
         port = Port(node=node, number=22, transport_protocol=TransportProtocol.TCP)
         port.protocol = 'ssh'
@@ -44,7 +46,8 @@ class SerializerTest(TestCase):
         result = self.serializer.serialize_port_vuln(self.vuln.port, self.vuln).data
         expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
                              b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
-                             b'\x00\x00\x04\x00Test\x01\x00\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00')
+                             b'\x00\x00\x04\x00Test\x01\x00\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x15\x00test_na'
+                             b'me_and_version')
 
         self.assertEqual(result, expected)
 

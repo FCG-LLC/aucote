@@ -258,6 +258,12 @@ class Service(object):
             return self._unescape_cpe(" ".join(self._cpe.get_vendor()))
 
     @property
+    def name_with_version(self):
+        if self.version is None or self.name is None:
+            return None
+        return "{name} {version}".format(name=self.name, version=self.version)
+
+    @property
     def cpe_product(self):
         """
         Get product name based on CPE
