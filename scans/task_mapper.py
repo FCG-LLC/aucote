@@ -76,6 +76,7 @@ class TaskMapper(object):
         Returns:
             None
         """
+        return
         apps = EXECUTOR_CONFIG['node_scan']
         scripts = self._aucote.exploits.find_by_apps(apps)
 
