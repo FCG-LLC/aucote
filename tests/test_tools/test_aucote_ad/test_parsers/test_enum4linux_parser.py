@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from tools.acuote_ad.parsers.enum4linux_parser import Enum4linuxParser
+from tools.acuote_ad.structs import Enum4linuxOS, Enum4linuxUser, Enum4linuxShare, Enum4linuxGroup
 
 
 class Enum4linuxParserTest(TestCase):
@@ -64,6 +65,96 @@ Domain=[CS] OS=[Windows Server 2012 R2 Standard 9600] Server=[Windows Server 201
 //10.12.2.175/IPC$	Mapping: OK	Listing: DENIED
 //10.12.2.175/NETLOGON	Mapping: OK, Listing: OK
 //10.12.2.175/SYSVOL	Mapping: OK, Listing: OK"""
+
+    BUILTIN_GROUPS = r"""[+] Getting builtin groups:
+group:[Administrators] rid:[0x220]
+group:[Users] rid:[0x221]
+group:[Guests] rid:[0x222]
+group:[Print Operators] rid:[0x226]
+group:[Backup Operators] rid:[0x227]
+group:[Replicator] rid:[0x228]
+group:[Remote Desktop Users] rid:[0x22b]
+group:[Network Configuration Operators] rid:[0x22c]
+group:[Performance Monitor Users] rid:[0x22e]
+group:[Performance Log Users] rid:[0x22f]
+group:[Distributed COM Users] rid:[0x232]
+group:[IIS_IUSRS] rid:[0x238]
+group:[Cryptographic Operators] rid:[0x239]
+group:[Event Log Readers] rid:[0x23d]
+group:[Certificate Service DCOM Access] rid:[0x23e]
+group:[RDS Remote Access Servers] rid:[0x23f]
+group:[RDS Endpoint Servers] rid:[0x240]
+group:[RDS Management Servers] rid:[0x241]
+group:[Hyper-V Administrators] rid:[0x242]
+group:[Access Control Assistance Operators] rid:[0x243]
+group:[Remote Management Users] rid:[0x244]
+group:[Server Operators] rid:[0x225]
+group:[Account Operators] rid:[0x224]
+group:[Pre-Windows 2000 Compatible Access] rid:[0x22a]
+group:[Incoming Forest Trust Builders] rid:[0x22d]
+group:[Windows Authorization Access Group] rid:[0x230]
+group:[Terminal Server License Servers] rid:[0x231]
+
+[+] Getting builtin group memberships:
+Group 'Users' (RID: 545) has member: NT AUTHORITY\INTERACTIVE
+Group 'Users' (RID: 545) has member: NT AUTHORITY\Authenticated Users
+Group 'Users' (RID: 545) has member: CS\Domain Users
+Group 'IIS_IUSRS' (RID: 568) has member: NT AUTHORITY\IUSR
+Group 'Administrators' (RID: 544) has member: CS\Administrator
+Group 'Administrators' (RID: 544) has member: CS\Enterprise Admins
+Group 'Administrators' (RID: 544) has member: CS\Domain Admins
+Group 'Pre-Windows 2000 Compatible Access' (RID: 554) has member: NT AUTHORITY\Authenticated Users
+Group 'Guests' (RID: 546) has member: CS\Guest
+Group 'Guests' (RID: 546) has member: CS\Domain Guests
+Group 'Windows Authorization Access Group' (RID: 560) has member: NT AUTHORITY\ENTERPRISE DOMAIN CONTROLLERS"""
+
+    LOCAL_GROUPS = r"""[+] Getting local groups:
+group:[Cert Publishers] rid:[0x205]
+group:[Denied RODC Password Replication Group] rid:[0x23c]
+
+[+] Getting local group memberships:
+Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\krbtgt
+Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\Domain Controllers
+Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\Enterprise Admins
+Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\Read-only Domain Controllers"""
+
+    DOMAIN_GROUPS = r"""[+] Getting domain groups:
+group:[Enterprise Read-only Domain Controllers] rid:[0x1f2]
+group:[Domain Admins] rid:[0x200]
+group:[Domain Users] rid:[0x201]
+group:[Domain Guests] rid:[0x202]
+group:[Domain Computers] rid:[0x203]
+group:[Domain Controllers] rid:[0x204]
+group:[Schema Admins] rid:[0x206]
+group:[Enterprise Admins] rid:[0x207]
+group:[Group Policy Creator Owners] rid:[0x208]
+group:[Read-only Domain Controllers] rid:[0x209]
+group:[Cloneable Domain Controllers] rid:[0x20a]
+group:[Protected Users] rid:[0x20d]
+group:[DnsUpdateProxy] rid:[0x44f]
+
+[+] Getting domain group memberships:
+Group 'Enterprise Admins' (RID: 519) has member: CS\Administrator
+Group 'Domain Controllers' (RID: 516) has member: CS\WIN-DUSS7GPO657$
+Group 'Group Policy Creator Owners' (RID: 520) has member: CS\Administrator
+Group 'Domain Computers' (RID: 515) has member: CS\CSISE$
+Group 'Domain Guests' (RID: 514) has member: CS\Guest
+Group 'Schema Admins' (RID: 518) has member: CS\Administrator
+Group 'Domain Users' (RID: 513) has member: CS\Administrator
+Group 'Domain Users' (RID: 513) has member: CS\krbtgt
+Group 'Domain Users' (RID: 513) has member: CS\jdoe
+Group 'Domain Users' (RID: 513) has member: CS\jkowalski
+Group 'Domain Admins' (RID: 512) has member: CS\Administrator"""
+
+    GROUPS = r""" ============================= 
+|    Groups on 10.12.2.175    |
+ ============================= 
+
+{builtin}
+
+{local}
+
+{domain}""".format(builtin=BUILTIN_GROUPS, local=LOCAL_GROUPS, domain=DOMAIN_GROUPS)
 
     OUTPUT = r"""WARNING: ldapsearch is not in your path.  Check that package is installed and your PATH is sane.
 Starting enum4linux v0.8.9 ( http://labs.portcullis.co.uk/application/enum4linux/ ) on Wed Aug 30 18:49:59 2017
@@ -146,97 +237,7 @@ Password Complexity: Enabled
 Minimum Password Length: 7
 
 
- ============================= 
-|    Groups on 10.12.2.175    |
- ============================= 
-
-[+] Getting builtin groups:
-group:[Administrators] rid:[0x220]
-group:[Users] rid:[0x221]
-group:[Guests] rid:[0x222]
-group:[Print Operators] rid:[0x226]
-group:[Backup Operators] rid:[0x227]
-group:[Replicator] rid:[0x228]
-group:[Remote Desktop Users] rid:[0x22b]
-group:[Network Configuration Operators] rid:[0x22c]
-group:[Performance Monitor Users] rid:[0x22e]
-group:[Performance Log Users] rid:[0x22f]
-group:[Distributed COM Users] rid:[0x232]
-group:[IIS_IUSRS] rid:[0x238]
-group:[Cryptographic Operators] rid:[0x239]
-group:[Event Log Readers] rid:[0x23d]
-group:[Certificate Service DCOM Access] rid:[0x23e]
-group:[RDS Remote Access Servers] rid:[0x23f]
-group:[RDS Endpoint Servers] rid:[0x240]
-group:[RDS Management Servers] rid:[0x241]
-group:[Hyper-V Administrators] rid:[0x242]
-group:[Access Control Assistance Operators] rid:[0x243]
-group:[Remote Management Users] rid:[0x244]
-group:[Server Operators] rid:[0x225]
-group:[Account Operators] rid:[0x224]
-group:[Pre-Windows 2000 Compatible Access] rid:[0x22a]
-group:[Incoming Forest Trust Builders] rid:[0x22d]
-group:[Windows Authorization Access Group] rid:[0x230]
-group:[Terminal Server License Servers] rid:[0x231]
-
-[+] Getting builtin group memberships:
-Group 'Users' (RID: 545) has member: NT AUTHORITY\INTERACTIVE
-Group 'Users' (RID: 545) has member: NT AUTHORITY\Authenticated Users
-Group 'Users' (RID: 545) has member: CS\Domain Users
-Group 'IIS_IUSRS' (RID: 568) has member: NT AUTHORITY\IUSR
-Group 'Administrators' (RID: 544) has member: CS\Administrator
-Group 'Administrators' (RID: 544) has member: CS\Enterprise Admins
-Group 'Administrators' (RID: 544) has member: CS\Domain Admins
-Group 'Pre-Windows 2000 Compatible Access' (RID: 554) has member: NT AUTHORITY\Authenticated Users
-Group 'Guests' (RID: 546) has member: CS\Guest
-Group 'Guests' (RID: 546) has member: CS\Domain Guests
-Group 'Windows Authorization Access Group' (RID: 560) has member: NT AUTHORITY\ENTERPRISE DOMAIN CONTROLLERS
-
-[+] Getting local groups:
-group:[Cert Publishers] rid:[0x205]
-group:[RAS and IAS Servers] rid:[0x229]
-group:[Allowed RODC Password Replication Group] rid:[0x23b]
-group:[Denied RODC Password Replication Group] rid:[0x23c]
-group:[WinRMRemoteWMIUsers__] rid:[0x3e8]
-group:[DnsAdmins] rid:[0x44e]
-
-[+] Getting local group memberships:
-Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\krbtgt
-Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\Domain Controllers
-Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\Schema Admins
-Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\Enterprise Admins
-Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\Cert Publishers
-Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\Domain Admins
-Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\Group Policy Creator Owners
-Group 'Denied RODC Password Replication Group' (RID: 572) has member: CS\Read-only Domain Controllers
-
-[+] Getting domain groups:
-group:[Enterprise Read-only Domain Controllers] rid:[0x1f2]
-group:[Domain Admins] rid:[0x200]
-group:[Domain Users] rid:[0x201]
-group:[Domain Guests] rid:[0x202]
-group:[Domain Computers] rid:[0x203]
-group:[Domain Controllers] rid:[0x204]
-group:[Schema Admins] rid:[0x206]
-group:[Enterprise Admins] rid:[0x207]
-group:[Group Policy Creator Owners] rid:[0x208]
-group:[Read-only Domain Controllers] rid:[0x209]
-group:[Cloneable Domain Controllers] rid:[0x20a]
-group:[Protected Users] rid:[0x20d]
-group:[DnsUpdateProxy] rid:[0x44f]
-
-[+] Getting domain group memberships:
-Group 'Enterprise Admins' (RID: 519) has member: CS\Administrator
-Group 'Domain Controllers' (RID: 516) has member: CS\WIN-DUSS7GPO657$
-Group 'Group Policy Creator Owners' (RID: 520) has member: CS\Administrator
-Group 'Domain Computers' (RID: 515) has member: CS\CSISE$
-Group 'Domain Guests' (RID: 514) has member: CS\Guest
-Group 'Schema Admins' (RID: 518) has member: CS\Administrator
-Group 'Domain Users' (RID: 513) has member: CS\Administrator
-Group 'Domain Users' (RID: 513) has member: CS\krbtgt
-Group 'Domain Users' (RID: 513) has member: CS\jdoe
-Group 'Domain Users' (RID: 513) has member: CS\jkowalski
-Group 'Domain Admins' (RID: 512) has member: CS\Administrator
+{groups}
 
  ====================================================================== 
 |    Users on 10.12.2.175 via RID cycling (RIDS: 500-550,1000-1050)    |
@@ -1186,39 +1187,25 @@ S-1-5-90-1050 *unknown*\*unknown* (8)
 
 enum4linux complete on Wed Aug 30 20:42:06 2017
 
-""".format(os_information=OS_INFORMATION, users=USERS, shares=SHARES)
+""".format(os_information=OS_INFORMATION, users=USERS, shares=SHARES, groups=GROUPS)
 
     def setUp(self):
         self.parser = Enum4linuxParser()
 
     def test_parse_os_information(self):
         result = self.parser.parse_os_information(self.OS_INFORMATION)
-        expected = {
-            'domain': 'CS',
-            'os': 'Windows Server 2012 R2 Standard 9600',
-            'server': 'Windows Server 2012 R2 Standard 6.3'
-        }
+        expected = Enum4linuxOS(domain='CS', os='Windows Server 2012 R2 Standard 9600',
+                                server='Windows Server 2012 R2 Standard 6.3')
+
         self.assertEqual(result, expected)
 
     def test_parse_users(self):
         result = self.parser.parse_users(self.USERS)
         expected = [
-            {
-                'index': '0xf4d',
-                'rid': '0x1f4',
-                'acb': '0x00000010',
-                'account': 'Administrator',
-                'name': None,
-                'desc': 'Built-in account for administering the computer/domain'
-            },
-            {
-                'index': '0x101e',
-                'rid': '0x451',
-                'acb': '0x00000210',
-                'account': 'jkowalski',
-                'name': 'Jan JK. Kowalski',
-                'desc': None
-            }
+            Enum4linuxUser(index='0xf4d', rid='0x1f4', acb='0x00000010', account='Administrator', name=None,
+                           desc='Built-in account for administering the computer/domain'),
+            Enum4linuxUser(index='0x101e', rid='0x451', acb='0x00000210', account='jkowalski', name='Jan JK. Kowalski',
+                           desc=None)
         ]
 
         self.assertEqual(result, expected)
@@ -1226,31 +1213,29 @@ enum4linux complete on Wed Aug 30 20:42:06 2017
     def test_parse_shares(self):
         result = self.parser.parse_shares(self.SHARES)
         expected = [
-            {
-                'name': 'ADMIN$',
-                'type': 'Disk',
-                'comment': 'Remote Admin'
-            },
-            {
-                'name': 'C$',
-                'type': 'Disk',
-                'comment': 'Default share'
-            },
-            {
-                'name': 'IPC$',
-                'type': 'IPC',
-                'comment': 'Remote IPC'
-            },
-            {
-                'name': 'NETLOGON',
-                'type': 'Disk',
-                'comment': 'Logon server share'
-            },
-            {
-                'name': 'SYSVOL',
-                'type': 'Disk',
-                'comment': 'Logon server share'
-            },
+            Enum4linuxShare(name='ADMIN$', share_type='Disk', comment='Remote Admin'),
+            Enum4linuxShare(name='C$', share_type='Disk', comment='Default share'),
+            Enum4linuxShare(name='IPC$', share_type='IPC', comment='Remote IPC'),
+            Enum4linuxShare(name='NETLOGON', share_type='Disk', comment='Logon server share'),
+            Enum4linuxShare(name='SYSVOL', share_type='Disk', comment='Logon server share')
         ]
 
-        self.assertEqual(result, expected)
+        self.assertCountEqual(result, expected)
+
+    def test_parse_groups_list(self):
+        result = self.parser.parse_groups_list(self.LOCAL_GROUPS)
+        result_users = [group.users for group in result]
+
+        expected = [
+            Enum4linuxGroup(name='Cert Publishers', rid='0x205'),
+            Enum4linuxGroup(name='Denied RODC Password Replication Group', rid='0x23c')
+        ]
+
+        expected_users = [set(), {'CS\krbtgt', 'CS\Domain Controllers', 'CS\Enterprise Admins',
+                                  'CS\Read-only Domain Controllers'}]
+
+        self.assertCountEqual(result, expected)
+        self.assertCountEqual(result_users, expected_users)
+
+    def test_parse(self):
+        result = self.parser.parse(self.OUTPUT)

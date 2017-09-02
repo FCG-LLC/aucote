@@ -8,7 +8,7 @@ from async_dns import types
 from async_dns.resolver import ProxyResolver
 
 from aucote_cfg import cfg
-from structs import SpecialPort
+from structs import SpecialPort, TransportProtocol
 from tools.acuote_ad.bases.enum4linux_base import Enum4linuxBase
 from tools.acuote_ad.tasks.enum4linux_task import Enum4linuxTask
 from tools.base import Tool
@@ -45,9 +45,12 @@ class AucoteActiveDirectory(Tool):
                         if node.ip == ip_address:
                             nodes.append(node)
 
+        exploits = [self.aucote.exploits.find('aucote-active-directory', 'enum4linux')]
+
         for node in nodes:
-            port = SpecialPort(node=node)
+            port = SpecialPort(node=node, transport_protocol=TransportProtocol.TCP)
+            port.scan = self._scan
             self.aucote.add_async_task(Enum4linuxTask(domain=domain_name, username=username, password=password,
                                                       command=Enum4linuxBase(), aucote=self.aucote, scan=self._scan,
-                                                      port=port, exploits=[]))
+                                                      port=port, exploits=exploits))
 

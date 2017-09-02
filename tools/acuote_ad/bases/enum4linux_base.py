@@ -7,7 +7,7 @@ class Enum4linuxBase(Command):
     Enum4Linux base class
 
     """
-    COMMON_ARGS = ('-o',)
+    COMMON_ARGS = ('-U', '-S', '-G', '-P', '-o', '-n', '-i')
     NAME = 'enum4linux.pl'
     CMD = 'enum4linux.pl'
     parser = Enum4linuxParser()
