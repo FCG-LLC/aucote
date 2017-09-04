@@ -1,6 +1,7 @@
 import re
 
-from tools.acuote_ad.structs import Enum4linuxOS, Enum4linuxUser, Enum4linuxResult, Enum4linuxShare, Enum4linuxGroup
+from tools.acuote_ad.structs import Enum4linuxOS, Enum4linuxUser, Enum4linuxResult, Enum4linuxShare, Enum4linuxGroup, \
+    Enum4linuxPasswordPolicy
 from tools.common.parsers import Parser
 
 
@@ -13,6 +14,9 @@ class Enum4linuxParser(Parser):
 
     SHARES_REGEX_SECTION = "\s+[=]+\s+\|\s+Share Enumeration.*?[=]+\s+.*?([=]{7,})"
     SHARES_REGEX_SECTION_COMPILED = re.compile(SHARES_REGEX_SECTION, re.DOTALL | re.MULTILINE)
+
+    PASSWORD_POLICY_SECTION = "\s+[=]+\s+\|\s+Password Policy Information.*?[=]+\s+.*?([=]{7,})"
+    PASSWORD_POLICY_SECTION_COMPILED = re.compile(PASSWORD_POLICY_SECTION, re.DOTALL | re.MULTILINE)
 
     OS_INFORMATION_REGEX = "Domain=\[(?P<domain>.*?)\].*?OS=\[(?P<os>.*?)\].*?Server=\[(?P<server>.*?)\]"
     OS_INFORMATION_REGEX_COMPILED = re.compile(OS_INFORMATION_REGEX)
@@ -41,11 +45,47 @@ class Enum4linuxParser(Parser):
     DOMAIN_GROUPS_REGEX = "\[\+\] Getting domain groups\:.*?(\[\+\] Getting domain group memberships).*?(\[\+\]|\n\n)"
     DOMAIN_GROUPS_REGEX_COMPILED = re.compile(DOMAIN_GROUPS_REGEX, re.DOTALL | re.MULTILINE)
 
+    PP_MIN_PASS_REGEX = "Minimum password length: (?P<min_length>.*)"
+    PP_HISTORY_REGEX = "Password history length: (?P<history>.*)"
+    PP_MAX_AGE_REGEX = "Maximum password age: (?P<max_age>.*)"
+    PP_CLEAR_REGEX = "Domain Password Store Cleartext: (?P<cleartext>.*)"
+    PP_LOCKOUT_REGEX = "Domain Password Lockout Admins: (?P<lockout_admins>.*)"
+    PP_NO_CLEAR_REGEX = "Domain Password No Clear Change: (?P<no_clear_change>.*)"
+    PP_NO_ANON_REGEX = "Domain Password No Anon Change: (?P<no_anon_change>.*)"
+    PP_COMPLEXITY_REGEX = "Domain Password Complex: (?P<complexity>.*)"
+    PP_MIN_AGE_REGEX = "Minimum password age: (?P<min_age>.*)"
+    PP_RESET_REGEX = "Reset Account Lockout Counter: (?P<reset_lockout>.*)"
+    PP_DURATION_REGEX = "Locked Account Duration: (?P<lockout_duration>.*)"
+    PP_THRESHOLD_REGEX = "Account Lockout Threshold: (?P<lockout_threshold>.*)"
+    PP_LOGOFF_REGEX = "Forced Log off Time: (?P<force_logoff_time>.*)"
+
+    PP_MIN_PASS_REGEX_COMPILED = re.compile(PP_MIN_PASS_REGEX)
+    PP_HISTORY_REGEX_COMPILED = re.compile(PP_HISTORY_REGEX)
+    PP_MAX_AGE_REGEX_COMPILED = re.compile(PP_MAX_AGE_REGEX)
+    PP_CLEAR_REGEX_COMPILED = re.compile(PP_CLEAR_REGEX)
+    PP_LOCKOUT_REGEX_COMPILED = re.compile(PP_LOCKOUT_REGEX)
+    PP_NO_CLEAR_REGEX_COMPILED = re.compile(PP_NO_CLEAR_REGEX)
+    PP_NO_ANON_REGEX_COMPILED = re.compile(PP_NO_ANON_REGEX)
+    PP_COMPLEXITY_REGEX_COMPILED = re.compile(PP_COMPLEXITY_REGEX)
+    PP_MIN_AGE_REGEX_COMPILED = re.compile(PP_MIN_AGE_REGEX)
+    PP_RESET_REGEX_COMPILED = re.compile(PP_RESET_REGEX)
+    PP_DURATION_REGEX_COMPILED = re.compile(PP_DURATION_REGEX)
+    PP_THRESHOLD_REGEX_COMPILED = re.compile(PP_THRESHOLD_REGEX)
+    PP_LOGOFF_REGEX_COMPILED = re.compile(PP_LOGOFF_REGEX)
+    
+    PP_REGEXES = (
+        PP_MIN_PASS_REGEX_COMPILED, PP_HISTORY_REGEX_COMPILED, PP_MAX_AGE_REGEX_COMPILED, PP_CLEAR_REGEX_COMPILED,
+        PP_LOCKOUT_REGEX_COMPILED, PP_NO_CLEAR_REGEX_COMPILED, PP_NO_ANON_REGEX_COMPILED, PP_COMPLEXITY_REGEX_COMPILED, 
+        PP_MIN_AGE_REGEX_COMPILED, PP_RESET_REGEX_COMPILED, PP_DURATION_REGEX_COMPILED, PP_THRESHOLD_REGEX_COMPILED,
+        PP_LOGOFF_REGEX_COMPILED
+    )
+
     def parse(self, stdout, stderr=None):
         return_value = Enum4linuxResult()
         os_information_regex_result = self.OS_INFORMATION_REGEX_SECTION_COMPILED.search(stdout)
         shares_regex_result = self.SHARES_REGEX_SECTION_COMPILED.search(stdout)
         users_regex_result = self.USERS_REGEX_SECTION_COMPILED.search(stdout)
+        password_policy_result = self.PASSWORD_POLICY_SECTION_COMPILED.search(stdout)
 
         if os_information_regex_result:
             return_value.os_result = self.parse_os_information(os_information_regex_result.group())
@@ -55,6 +95,9 @@ class Enum4linuxParser(Parser):
 
         if users_regex_result:
             return_value.users = self.parse_users(users_regex_result.group())
+
+        if password_policy_result and "Skipping this check" not in password_policy_result.group():
+            return_value.password_policy = self.parse_password_policy(password_policy_result.group())
 
         groups = self.parse_groups(stdout)
         return_value.local_groups = groups.get('local')
@@ -115,3 +158,12 @@ class Enum4linuxParser(Parser):
             'local': self.parse_groups_list(local_groups.group() if local_groups else ''),
             'domain': self.parse_groups_list(domain_groups.group() if domain_groups else '')
         }
+
+    def parse_password_policy(self, text):
+        params = {}
+        for regex in self.PP_REGEXES:
+            group = regex.search(text)
+            if group:
+                params.update(group.groupdict())
+        params = {key: value.strip() for key, value in params.items()}
+        return Enum4linuxPasswordPolicy(**params)

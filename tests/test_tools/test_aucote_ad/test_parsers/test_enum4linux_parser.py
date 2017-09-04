@@ -1,7 +1,8 @@
 from unittest import TestCase
 
 from tools.acuote_ad.parsers.enum4linux_parser import Enum4linuxParser
-from tools.acuote_ad.structs import Enum4linuxOS, Enum4linuxUser, Enum4linuxShare, Enum4linuxGroup
+from tools.acuote_ad.structs import Enum4linuxOS, Enum4linuxUser, Enum4linuxShare, Enum4linuxGroup, \
+    Enum4linuxPasswordPolicy
 
 
 class Enum4linuxParserTest(TestCase):
@@ -156,6 +157,44 @@ Group 'Domain Admins' (RID: 512) has member: CS\Administrator"""
 
 {domain}""".format(builtin=BUILTIN_GROUPS, local=LOCAL_GROUPS, domain=DOMAIN_GROUPS)
 
+    PASSWORD_POLICY = r""" =================================================== 
+|    Password Policy Information for 10.12.2.175    |
+ =================================================== 
+
+[+] Attaching to 10.12.2.175 using administrator:Iseisebaby!2
+
+	[+] Trying protocol 445/SMB...
+
+[+] Found domain(s):
+
+	[+] CS
+	[+] Builtin
+
+[+] Password Info for Domain: CS
+
+	[+] Minimum password length: 7
+	[+] Password history length: 24
+	[+] Maximum password age: 41 days 23 hours 52 minutes
+	[+] Password Complexity Flags: 000001
+
+		[+] Domain Refuse Password Change: 0
+		[+] Domain Password Store Cleartext: 0
+		[+] Domain Password Lockout Admins: 0
+		[+] Domain Password No Clear Change: 0
+		[+] Domain Password No Anon Change: 0
+		[+] Domain Password Complex: 1
+
+	[+] Minimum password age: 1 day 
+	[+] Reset Account Lockout Counter: 30 minutes
+	[+] Locked Account Duration: 30 minutes
+	[+] Account Lockout Threshold: None
+	[+] Forced Log off Time: Not Set
+
+[+] Retieved partial password policy with rpcclient:
+
+Password Complexity: Enabled
+Minimum Password Length: 7"""
+
     OUTPUT = r"""WARNING: ldapsearch is not in your path.  Check that package is installed and your PATH is sane.
 Starting enum4linux v0.8.9 ( http://labs.portcullis.co.uk/application/enum4linux/ ) on Wed Aug 30 18:49:59 2017
 
@@ -198,43 +237,7 @@ Domain Sid: S-1-5-21-3794042296-3353869093-3402567874
 
 {shares}
 
- =================================================== 
-|    Password Policy Information for 10.12.2.175    |
- =================================================== 
-
-[+] Attaching to 10.12.2.175 using administrator:Iseisebaby!2
-
-	[+] Trying protocol 445/SMB...
-
-[+] Found domain(s):
-
-	[+] CS
-	[+] Builtin
-
-[+] Password Info for Domain: CS
-
-	[+] Minimum password length: 7
-	[+] Password history length: 24
-	[+] Maximum password age: 41 days 23 hours 52 minutes
-	[+] Password Complexity Flags: 000001
-
-		[+] Domain Refuse Password Change: 0
-		[+] Domain Password Store Cleartext: 0
-		[+] Domain Password Lockout Admins: 0
-		[+] Domain Password No Clear Change: 0
-		[+] Domain Password No Anon Change: 0
-		[+] Domain Password Complex: 1
-
-	[+] Minimum password age: 1 day 
-	[+] Reset Account Lockout Counter: 30 minutes
-	[+] Locked Account Duration: 30 minutes
-	[+] Account Lockout Threshold: None
-	[+] Forced Log off Time: Not Set
-
-[+] Retieved partial password policy with rpcclient:
-
-Password Complexity: Enabled
-Minimum Password Length: 7
+{password_policy}
 
 
 {groups}
@@ -1187,7 +1190,7 @@ S-1-5-90-1050 *unknown*\*unknown* (8)
 
 enum4linux complete on Wed Aug 30 20:42:06 2017
 
-""".format(os_information=OS_INFORMATION, users=USERS, shares=SHARES, groups=GROUPS)
+""".format(os_information=OS_INFORMATION, users=USERS, shares=SHARES, groups=GROUPS, password_policy=PASSWORD_POLICY)
 
     def setUp(self):
         self.parser = Enum4linuxParser()
@@ -1237,5 +1240,12 @@ enum4linux complete on Wed Aug 30 20:42:06 2017
         self.assertCountEqual(result, expected)
         self.assertCountEqual(result_users, expected_users)
 
-    def test_parse(self):
-        result = self.parser.parse(self.OUTPUT)
+    def test_parse_password_policy(self):
+        result = self.parser.parse_password_policy(self.PASSWORD_POLICY)
+        expected = Enum4linuxPasswordPolicy(min_length='7', complexity='1', history='24',
+                                            max_age='41 days 23 hours 52 minutes', min_age='1 day', cleartext='0',
+                                            no_anon_change='0', no_clear_change='0', lockout_admins='0',
+                                            reset_lockout='30 minutes', lockout_duration='30 minutes',
+                                            lockout_threshold='None', force_logoff_time='Not Set')
+
+        self.assertEqual(result, expected)
