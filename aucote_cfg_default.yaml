@@ -69,6 +69,20 @@ service:
 #     udp_retries: <int> - How many UDP scan retries is allowed by port detection
 #     port_period: <period> - Minimal port scanning interval
 #     broadcast: <bool> - Enable broadcast scanning if True (default is False)
+#     categories: - List of allowed script categories
+#                   The available categories are:
+#                    - auth - scripts related to authentication
+#                    - brute - scripts perform bruteforcing
+#                    - dos - scripts may cause denial of service
+#                    - exploit - scripts may actively exploit vulnerabilities
+#                    - external - scripts in this category may send data out of network
+#                    - fuzzer - scripts which could sent unexpected data to target
+#                    - intrusive - scripts which could use intrusive methods and may change the target state
+#                    - malware - scripts checking target for malware infection
+#                    - safe - scripts safe to use
+#                    - version - scripts related to service detection
+#                    - vuln - scripts which performs particular vulnerabilities check
+#                    - other - scripts which aren't in any categories
 
 portdetection:
     scan_enabled: True
@@ -101,6 +115,7 @@ portdetection:
         nmap_udp: True
         port_period: 0s
         broadcast: False
+        categories: ['auth', 'exploit', 'fuzzer', 'intrusive', 'malware', 'safe', 'version', 'vuln']
 
 
 # In this section there is configuration related to the tools used by the aucote

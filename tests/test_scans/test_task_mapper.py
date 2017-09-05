@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch, MagicMock
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
+from fixtures.exploits.exploit import ExploitCategory
 from scans.task_mapper import TaskMapper
 from structs import Port, TransportProtocol, Scan, Node
 from utils import Config
@@ -51,6 +52,47 @@ class TaskMapperTest(AsyncTestCase):
 
         self.task_mapper = TaskMapper(aucote=self.executor, scan=self.scan)
 
+        self.cfg = {
+            'portdetection': {
+                '_internal': {
+                    'categories': ['other', 'brute']
+                }
+            },
+            'tools': {
+                'test': {
+                    'enable': True,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
+                    'period': '0s'
+                },
+                'test2': {
+                    'enable': True,
+                    'periods': {},
+                    'script_networks': {},
+                    'networks': [],
+                    'period': '0s'
+                }
+            }
+        }
+
+        self.executor.storage.get_security_scan_info.return_value = [
+            {
+                "exploit": self.exploits['test'][0],
+                "port": self.UDP,
+                "scan_start": 17.0,
+                "scan_end": 26.0,
+                "exploit_name": "test_1"
+            },
+            {
+                "exploit": self.exploits['test'][1],
+                "port": self.UDP,
+                "scan_start": 12.0,
+                "scan_end": 17.0,
+                "exploit_name": "test_2"
+            },
+        ]
+
     def tearDown(self):
         self.EXECUTOR_CONFIG['apps']['test']['class'].reset_mock()
         self.EXECUTOR_CONFIG['apps']['test2']['class'].reset_mock()
@@ -64,22 +106,7 @@ class TaskMapperTest(AsyncTestCase):
     @patch('scans.task_mapper.cfg', new_callable=Config)
     @gen_test
     async def test_app_running(self, cfg):
-        cfg._cfg = {
-            'tools': {
-                'test': {
-                    'enable': True,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                },
-                'test2': {
-                    'enable': True,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                }
-            }
-        }
+        cfg._cfg = self.cfg
         self.executor.storage.get_security_scan_info.return_value = []
         await self.task_mapper.assign_tasks(self.UDP)
 
@@ -91,22 +118,9 @@ class TaskMapperTest(AsyncTestCase):
     @gen_test
     async def test_app_add_async(self, cfg):
         self.EXECUTOR_CONFIG['apps']['test']['async'] = True
-        cfg._cfg = {
-            'tools': {
-                'test': {
-                    'enable': True,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                },
-                'test2': {
-                    'enable': False,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                }
-            }
-        }
+        cfg._cfg = self.cfg
+        cfg['tools.test2.enable'] = False
+
         self.executor.storage.get_security_scan_info.return_value = []
         await self.task_mapper.assign_tasks(self.UDP)
         self.task_mapper._aucote.add_async_task.assert_called_once_with(
@@ -125,23 +139,9 @@ class TaskMapperTest(AsyncTestCase):
     @patch('scans.task_mapper.cfg', new_callable=Config)
     @gen_test
     async def test_disable_first_app_running(self, cfg):
-        cfg._cfg = {
-            'tools': {
-                'test': {
-                    'enable': False,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                },
-                'test2': {
-                    'enable': True,
-                    'period': '0s',
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                }
-            }
-        }
+        cfg._cfg = self.cfg
+        cfg['tools.test.enable'] = False
+
         self.executor.storage.get_security_scan_info.return_value = []
         await self.task_mapper.assign_tasks(self.UDP)
 
@@ -153,42 +153,12 @@ class TaskMapperTest(AsyncTestCase):
     @patch('time.time', MagicMock(return_value=25.0))
     @gen_test
     async def test_storage_all_scanned_recently(self, cfg):
-        cfg._cfg = {
-            'tools': {
-                'test': {
-                    'enable': True,
-                    'script_networks': {},
-                    'networks': [],
-                    'periods': {
-                        'test_1': '1d',
-                        'test_2': '2d'
-                    }
-                },
-                'test2': {
-                    'enable': False,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                }
-            }
+        cfg._cfg = self.cfg
+        cfg['tools.test2.enable'] = False
+        cfg['tools.test.periods'] = {
+            'test_1': '1d',
+            'test_2': '2d'
         }
-
-        self.executor.storage.get_security_scan_info.return_value = [
-            {
-                "exploit": self.exploits['test'][0],
-                "port": self.UDP,
-                "scan_start": 17.0,
-                "scan_end": 26.0,
-                "exploit_name": "test_1"
-            },
-            {
-                "exploit": self.exploits['test'][1],
-                "port": self.UDP,
-                "scan_start": 12.0,
-                "scan_end": 17.0,
-                "exploit_name": "test_2"
-            },
-        ]
 
         await self.task_mapper.assign_tasks(self.UDP)
 
@@ -202,42 +172,12 @@ class TaskMapperTest(AsyncTestCase):
     @patch('time.time', MagicMock(return_value=25.0))
     @gen_test
     async def test_storage_one_scanned_recently(self, cfg):
-        cfg._cfg = {
-            'tools': {
-                'test': {
-                    'enable': True,
-                    'script_networks': {},
-                    'networks': [],
-                    'periods': {
-                        'test_1': '1d',
-                        'test_2': '1s'
-                    }
-                },
-                'test2': {
-                    'enable': False,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                }
-            }
+        cfg._cfg = self.cfg
+        cfg['tools.test2.enable'] = False
+        cfg['tools.test.periods'] = {
+            'test_1': '1d',
+            'test_2': '1s'
         }
-
-        self.executor.storage.get_security_scan_info.return_value = [
-            {
-                "exploit": self.exploits['test'][0],
-                "port": self.UDP,
-                "scan_start": 17.0,
-                "scan_end": 26.0,
-                "exploit_name": "test_1"
-            },
-            {
-                "exploit": self.exploits['test'][1],
-                "port": self.UDP,
-                "scan_start": 12.0,
-                "scan_end": 17.0,
-                "exploit_name": "test_2"
-            }
-        ]
 
         self.task_mapper.store_security_scan = MagicMock()
 
@@ -265,24 +205,7 @@ class TaskMapperTest(AsyncTestCase):
     @patch('scans.task_mapper.cfg', new_callable=Config)
     @gen_test
     async def test_copying_port(self, cfg):
-        cfg._cfg = {
-            'tools': {
-                'test': {
-                    'enable': True,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                    'period': '0s'
-                },
-                'test2': {
-                    'enable': True,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                    'period': '0s'
-                }
-            }
-        }
+        cfg._cfg = self.cfg
         self.executor.storage.get_security_scan_info.return_value = []
         await self.task_mapper.assign_tasks(self.UDP)
 
@@ -293,67 +216,42 @@ class TaskMapperTest(AsyncTestCase):
     @patch('scans.task_mapper.cfg', new_callable=Config)
     @gen_test
     async def test_restricted_script_network(self, cfg):
-        cfg._cfg = {
-            'tools': {
-                'test': {
-                    'enable': True,
-                    'periods': {
-                        'test_1': '1s',
-                        'test_2': '1s',
-                        'test_3': '1s',
-                        'test_4': '1s'
-                    },
-                    'script_networks': {
-                        'test_1': [
-                            '0.0.0.0/32'
-                        ],
-                        'test_3': [
-                            '0.0.0.0/32'
-                        ],
-                        'test_4': [
-                            '0.0.0.0/32'
-                        ]
-                    },
-                    'networks': [
-                        '0.0.0.0/0'
-                    ]
-                },
-                'test2': {
-                    'enable': False,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                }
-            }
+        cfg._cfg = self.cfg
+        cfg['tools.test2.enable'] = False
+        cfg['tools.test'] = {
+            'enable': True,
+            'periods': {
+                'test_1': '1s',
+                'test_2': '1s',
+                'test_3': '1s',
+                'test_4': '1s'
+            },
+            'script_networks': {
+                'test_1': [
+                    '0.0.0.0/32'
+                ],
+                'test_3': [
+                    '0.0.0.0/32'
+                ],
+                'test_4': [
+                    '0.0.0.0/32'
+                ]
+            },
+            'networks': [
+                '0.0.0.0/0'
+            ]
         }
 
         self.exploits = OrderedDict({
             'test': [
-                Exploit(exploit_id=1, name='test_1'),
-                Exploit(exploit_id=2, name='test_2'),
-                Exploit(exploit_id=3, name='test_3'),
-                Exploit(exploit_id=4, name='test_4')
+                Exploit(exploit_id=1, name='test_1', categories={ExploitCategory.OTHER}),
+                Exploit(exploit_id=2, name='test_2', categories={ExploitCategory.BRUTE}),
+                Exploit(exploit_id=3, name='test_3', categories={ExploitCategory.OTHER}),
+                Exploit(exploit_id=4, name='test_4', categories={ExploitCategory.OTHER})
             ]
         })
         self.executor.exploits.find_all_matching.return_value = self.exploits
         self.task_mapper._executor = self.executor
-
-        self.executor.storage.get_security_scan_info.return_value = [
-            {
-                "exploit": self.exploits['test'][0],
-                "port": self.UDP,
-                "scan_start": 17.0,
-                "scan_end": 26.0,
-                "exploit_name": "test_1"
-            },
-            {
-                "exploit": self.exploits['test'][1],
-                "port": self.UDP,
-                "scan_start": 12.0,
-                "scan_end": 17.0,
-                "exploit_name": "test_2"
-            }
-        ]
 
         self.task_mapper.store_security_scan = MagicMock()
 
@@ -369,44 +267,27 @@ class TaskMapperTest(AsyncTestCase):
     @patch('scans.task_mapper.cfg', new_callable=Config)
     @gen_test
     async def test_restricted_app_network(self, cfg):
-        cfg._cfg = {
-            'tools': {
-                'test': {
-                    'enable': True,
-                    'script_networks': {},
-                    'periods': {
-                        'test_1': '1s',
-                        'test_2': '1s'
-                    },
-                    'networks': [
-                        '0.0.0.0/0'
-                    ]
-                },
-                'test2': {
-                    'enable': False,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                }
-            }
+        cfg._cfg = self.cfg
+        cfg['tools.test2.enable'] = False
+        cfg['tools.test.periods'] = {
+            'test_1': '1s',
+            'test_2': '1s'
         }
+        cfg['tools.test.networks'] = ['0.0.0.0/0']
 
-        self.executor.storage.get_security_scan_info.return_value = [
-            {
-                "exploit": self.exploits['test'][0],
-                "port": self.UDP,
-                "scan_start": 17.0,
-                "scan_end": 26.0,
-                "exploit_name": "test_1"
-            },
-            {
-                "exploit": self.exploits['test'][1],
-                "port": self.UDP,
-                "scan_start": 12.0,
-                "scan_end": 17.0,
-                "exploit_name": "test_2"
-            }
-        ]
+        self.task_mapper.store_security_scan = MagicMock()
+        expected = [self.exploits['test'][0], self.exploits['test'][1]]
+        await self.task_mapper.assign_tasks(self.UDP)
+        result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
+
+        self.assertEqual(result, expected)
+
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
+    @patch('scans.task_mapper.cfg', new_callable=Config)
+    @gen_test
+    async def test_restricted_categories(self, cfg):
+        cfg._cfg = self.cfg
+        cfg['portdetection._internal.categories'] = ['brute']
 
         self.task_mapper.store_security_scan = MagicMock()
         expected = [self.exploits['test'][0], self.exploits['test'][1]]
@@ -420,25 +301,9 @@ class TaskMapperTest(AsyncTestCase):
     @patch('scans.task_mapper.cfg', new_callable=Config)
     @gen_test
     async def test_scan_after_service_change(self, cfg):
-        cfg._cfg = {
-            'tools': {
-                'test': {
-                    'enable': True,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [
-                        '0.0.0.0/0'
-                    ],
-                    'period': '0s'
-                },
-                'test2': {
-                    'enable': False,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                }
-            }
-        }
+        cfg._cfg = self.cfg
+        cfg['tools.test2.enable'] = False
+
         exploit = Exploit(exploit_id=3, name='test_3')
         self.executor.storage.get_security_scan_info.return_value = [
             {

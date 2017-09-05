@@ -8,6 +8,7 @@ import logging as log
 from netaddr import IPSet
 
 from aucote_cfg import cfg
+from fixtures.exploits.exploit import ExploitCategory
 from scans.executor_config import EXECUTOR_CONFIG
 from structs import SpecialPort
 from utils.time import parse_period
@@ -95,6 +96,10 @@ class TaskMapper(object):
     def _is_exploit_allowed(exploit, app, node):
         script_networks = cfg.get('tools.{0}.script_networks.*'.format(app)).cfg
         app_networks = cfg.get('tools.{0}.networks'.format(app)).cfg or None
+        categories = {ExploitCategory[cat.upper()] for cat in cfg.get('portdetection._internal.categories').cfg}
+
+        if exploit.categories - categories:
+            return False
 
         networks = script_networks.get(exploit.name, None)
 
