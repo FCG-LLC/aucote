@@ -20,20 +20,34 @@ class AucoteActiveDirectory(Tool):
 
     """
     async def call(self, *args, **kwargs):
-        dns_server = cfg['tools.aucote-active-directory.config.dns_server']
-        domain_name = cfg['tools.aucote-active-directory.config.domain']
-        domain = "_ldap._tcp.dc._msdcs.{domain}".format(domain=cfg['tools.aucote-active-directory.config.domain'])
+        dns_servers = cfg['tools.aucote-active-directory.config.dns_server']._cfg
+        domain_names = cfg['tools.aucote-active-directory.config.domain']._cfg
         username = cfg['tools.aucote-active-directory.config.username']
         password = cfg['tools.aucote-active-directory.config.password']
+        exploits = [self.aucote.exploits.find('aucote-active-directory', 'enum4linux')]
 
+        for domain_name in domain_names:
+            nodes = set()
+            for dns_server in dns_servers:
+                current_nodes = self.storage.get_nodes_by_scan(self._scan)
+                nodes.update(await self.resolve_nodes(dns_server=dns_server, domain_name=domain_name,
+                                                      current_nodes=current_nodes))
+
+            for node in nodes:
+                port = SpecialPort(node=node, transport_protocol=TransportProtocol.TCP)
+                port.scan = self._scan
+                self.aucote.add_async_task(Enum4linuxTask(domain=domain_name, username=username, password=password,
+                                                          command=Enum4linuxBase(), aucote=self.aucote, scan=self._scan,
+                                                          port=port, exploits=exploits))
+
+    async def resolve_nodes(self, dns_server, domain_name, current_nodes):
+        domain = "_ldap._tcp.dc._msdcs.{domain}".format(domain=domain_name)
+        nodes = []
         resolver = ProxyResolver()
         resolver.set_proxies([dns_server])
         dns_result = None
         while dns_result is None:
             dns_result = await resolver.query(domain, types.SRV)
-
-        nodes = []
-        current_nodes = self.storage.get_nodes_by_scan(self._scan)
 
         for record in dns_result.an:
             dns_a_result = None
@@ -45,11 +59,4 @@ class AucoteActiveDirectory(Tool):
                         if node.ip == ip_address:
                             nodes.append(node)
 
-        exploits = [self.aucote.exploits.find('aucote-active-directory', 'enum4linux')]
-
-        for node in nodes:
-            port = SpecialPort(node=node, transport_protocol=TransportProtocol.TCP)
-            port.scan = self._scan
-            self.aucote.add_async_task(Enum4linuxTask(domain=domain_name, username=username, password=password,
-                                                      command=Enum4linuxBase(), aucote=self.aucote, scan=self._scan,
-                                                      port=port, exploits=exploits))
+        return nodes

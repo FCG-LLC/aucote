@@ -46,7 +46,8 @@ class NmapInfoParser(NmapParser):
         output = script.get('output').strip()
         if not output:
             return None
-        if output.startswith("ERROR: "):
+        if output.startswith("ERROR: ") or "SMB: Couldn't find a NetBIOS name that works for the server. Sorry!" in \
+                output:
             log.warning(output)
             return None
         return output
