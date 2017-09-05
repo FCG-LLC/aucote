@@ -250,5 +250,7 @@ tools:
         config:
             dns_server: None
             domain: None
+            username: None
+            password: None
     common:
         rate: 50
