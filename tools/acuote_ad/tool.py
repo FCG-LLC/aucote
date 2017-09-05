@@ -18,6 +18,8 @@ class AucoteActiveDirectory(Tool):
     """
     This tool provides tasks for Active Directory management
 
+    ToDo: Push more information to kudu, when security_audits will be splitted
+
     """
     async def call(self, *args, **kwargs):
         dns_servers = cfg['tools.aucote-active-directory.config.dns_server']._cfg
