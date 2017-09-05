@@ -11,7 +11,7 @@ PACKAGE_TARGET_PATH=${PACKAGE_PATH}/opt/${PACKAGE_NAME}
 PACKAGE_BIN_PATH=${PACKAGE_PATH}/bin/
 PACKAGE_START_SCRIPTS=start_scripts/*
 PYTHON_VERSION=python3
-DEPENDENCIES="python3 (>= 3.5), nanomsg, masscan, libpq5, libyaml-dev, nmap-aucote (>=7.40), hydra (>= 8.3), skipfish, whatweb, testssl.sh (>=2.8), polenum, enum4linux, gp3finder"
+DEPENDENCIES="python3 (>= 3.5), nanomsg, masscan, libpq5, libyaml-dev, nmap-aucote (>=7.40), hydra (>= 8.3), skipfish, whatweb, testssl.sh (>=2.8), polenum, enum4linux"
 
 [[ -z $VERSION ]] && { echo "Usage: package [version]"; exit 1; }
 

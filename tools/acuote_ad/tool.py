@@ -53,4 +53,3 @@ class AucoteActiveDirectory(Tool):
             self.aucote.add_async_task(Enum4linuxTask(domain=domain_name, username=username, password=password,
                                                       command=Enum4linuxBase(), aucote=self.aucote, scan=self._scan,
                                                       port=port, exploits=exploits))
-
