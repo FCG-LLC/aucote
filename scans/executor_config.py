@@ -73,54 +73,12 @@ EXECUTOR_CONFIG = {
                     'singular': True,  # http-iis-webdav-vuln, http-slowloris-check, http-webdav-scan,
                                        # http-email-harvest in some way influence on this script
                 },
-                'smb-vuln-cve2009-3103': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-os-discovery': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-vuln-ms06-025': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-vuln-ms07-029': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-vuln-ms08-067': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-vuln-ms10-061': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-vuln-regsvc-dos': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-enum-domains': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-enum-sessions': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-enum-shares': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-system-info': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-vuln-conficker': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-vuln-ms10-054': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-enum-users': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-enum-groups': {
-                    'args': NmapTool.custom_args_smb
-                },
-                'smb-vuln-ms17-010': {
-                    'args': NmapTool.custom_args_smb
-                }
+                **{name: {'parser': NmapTool.custom_args_smb} for name in (
+                    'smb-vuln-cve2009-3103', 'smb-os-discovery', 'smb-vuln-ms06-025', 'smb-vuln-ms07-029',
+                    'smb-vuln-ms08-067', 'smb-vuln-ms10-061', 'smb-vuln-regsvc-dos', 'smb-enum-domains',
+                    'smb-enum-sessions', 'smb-enum-shares', 'smb-system-info', 'smb-vuln-conficker',
+                    'smb-vuln-ms10-054', 'smb-enum-users', 'smb-enum-groups', 'smb-vuln-ms17-010'
+                )},
             },
             'services': {
                 'http': {
