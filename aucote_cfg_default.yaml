@@ -59,6 +59,13 @@ service:
 #     scan_rate: <int> - Rate in packets per seconds for networks scan
 #                        tools.scan_rate is used also during tcp and udp scan for obtaining banners, service detection
 #
+#     status: - Read only. This branch is used to communicate witch frontend
+#        code: ('IDLE'|'IN PROGRESS') - Is scan idle or in progress
+#        previous_scan_start: <int> - When previous scan started
+#        next_scan_start: <int> - When next scan is going to be started
+#        scan_start: <int> - When current scan started
+#        previous_scan_duration: <int> - Duration of previous scan
+#
 #   (tcp|udp|sctp):  Options related only to tcp, udp and sctp scans
 #     ports: - Defines list of ports which should be or shouldn't be scanned
 #       tcp|udp|sctp:
@@ -111,6 +118,12 @@ portdetection:
             exclude: []
         scan_rate: 500
         host_timeout: 3600
+        status:
+            code: 'IDLE'
+            previous_scan_start: None
+            next_scan_start: None
+            scan_start: None
+            previous_scan_duration: None
     udp:
         scan_enabled: True
         scan_type: "LIVE"
@@ -128,6 +141,12 @@ portdetection:
         scan_rate: 50
         defeat_icmp_ratelimit: False
         max_retries: 5
+        status:
+            code: 'IDLE'
+            previous_scan_start: None
+            next_scan_start: None
+            scan_start: None
+            previous_scan_duration: None
     tools:
         scan_enabled: True
         scan_type: "LIVE"
@@ -140,6 +159,12 @@ portdetection:
             exclude: []
         scan_rate: 50
         scan_nodes: True
+        status:
+            code: 'IDLE'
+            previous_scan_start: None
+            next_scan_start: None
+            scan_start: None
+            previous_scan_duration: None
     sctp:
         scan_enabled: False
         scan_type: "LIVE"
@@ -156,6 +181,12 @@ portdetection:
             exclude: []
             exclude: []
         scan_rate: 500
+        status:
+            code: 'IDLE'
+            previous_scan_start: None
+            next_scan_start: None
+            scan_start: None
+            previous_scan_duration: None
     _internal:
         port_period: 0s
         broadcast: False
