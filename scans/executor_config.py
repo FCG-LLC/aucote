@@ -73,7 +73,7 @@ EXECUTOR_CONFIG = {
                     'singular': True,  # http-iis-webdav-vuln, http-slowloris-check, http-webdav-scan,
                                        # http-email-harvest in some way influence on this script
                 },
-                **{name: {'parser': NmapTool.custom_args_smb} for name in (
+                **{name: {'args': NmapTool.custom_args_smb} for name in (
                     'smb-vuln-cve2009-3103', 'smb-os-discovery', 'smb-vuln-ms06-025', 'smb-vuln-ms07-029',
                     'smb-vuln-ms08-067', 'smb-vuln-ms10-061', 'smb-vuln-regsvc-dos', 'smb-enum-domains',
                     'smb-enum-sessions', 'smb-enum-shares', 'smb-system-info', 'smb-vuln-conficker',
