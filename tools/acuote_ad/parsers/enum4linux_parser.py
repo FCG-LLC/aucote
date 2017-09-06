@@ -6,72 +6,53 @@ from tools.common.parsers import Parser
 
 
 class Enum4linuxParser(Parser):
-    OS_INFORMATION_REGEX_SECTION = "\s+[=]+\s+\|\s+OS information.*?[=]+\s+.*?([=]{7,}|$)"
-    OS_INFORMATION_REGEX_SECTION_COMPILED = re.compile(OS_INFORMATION_REGEX_SECTION, re.DOTALL | re.MULTILINE)
+    OS_INFORMATION_REGEX_SECTION_COMPILED = re.compile('\s+[=]+\s+\|\s+OS information.*?[=]+\s+.*?([=]{7,}|$)',
+                                                       re.DOTALL | re.MULTILINE)
 
-    USERS_REGEX_SECTION = "\s+[=]+\s+\|\s+Users.*?[=]+\s+.*?([=]{7,})"
-    USERS_REGEX_SECTION_COMPILED = re.compile(USERS_REGEX_SECTION, re.DOTALL | re.MULTILINE)
+    USERS_REGEX_SECTION_COMPILED = re.compile('\s+[=]+\s+\|\s+Users.*?[=]+\s+.*?([=]{7,})', re.DOTALL | re.MULTILINE)
 
-    SHARES_REGEX_SECTION = "\s+[=]+\s+\|\s+Share Enumeration.*?[=]+\s+.*?([=]{7,})"
-    SHARES_REGEX_SECTION_COMPILED = re.compile(SHARES_REGEX_SECTION, re.DOTALL | re.MULTILINE)
+    SHARES_REGEX_SECTION_COMPILED = re.compile('\s+[=]+\s+\|\s+Share Enumeration.*?[=]+\s+.*?([=]{7,})',
+                                               re.DOTALL | re.MULTILINE)
 
-    PASSWORD_POLICY_SECTION = "\s+[=]+\s+\|\s+Password Policy Information.*?[=]+\s+.*?([=]{7,})"
-    PASSWORD_POLICY_SECTION_COMPILED = re.compile(PASSWORD_POLICY_SECTION, re.DOTALL | re.MULTILINE)
+    PASSWORD_POLICY_SECTION_COMPILED = re.compile('\s+[=]+\s+\|\s+Password Policy Information.*?[=]+\s+.*?([=]{7,})',
+                                                  re.DOTALL | re.MULTILINE)
 
-    OS_INFORMATION_REGEX = "Domain=\[(?P<domain>.*?)\].*?OS=\[(?P<os>.*?)\].*?Server=\[(?P<server>.*?)\]"
-    OS_INFORMATION_REGEX_COMPILED = re.compile(OS_INFORMATION_REGEX)
+    OS_INFORMATION_REGEX_COMPILED = re.compile('Domain=\[(?P<domain>.*?)\].*?OS=\[(?P<os>.*?)\].*?Server='
+                                               '\[(?P<server>.*?)\]')
 
-    USERS_REGEX = 'index: (?P<index>.*?)RID: (?P<rid>.*?)acb: (?P<acb>.*?)Account: (?P<account>.*?)Name: (?P<name>.*?)Desc: (?P<desc>.*)'
-    USERS_REGEX_COMPILED = re.compile(USERS_REGEX)
+    USERS_REGEX_COMPILED = re.compile('index: (?P<index>.*?)RID: (?P<rid>.*?)acb: (?P<acb>.*?)Account: (?P<account>.*?)'
+                                      'Name: (?P<name>.*?)Desc: (?P<desc>.*)')
 
-    SHARES_LIST_REGEX = "\s+Sharename.*?(\n\n)"
-    SHARES_LIST_REGEX_COMPILED = re.compile(SHARES_LIST_REGEX, re.DOTALL | re.MULTILINE)
+    SHARES_LIST_REGEX_COMPILED = re.compile('\s+Sharename.*?(\n\n)', re.DOTALL | re.MULTILINE)
 
-    SHARE_REGEX = "(?P<name>.*?)\s{4,}(?P<share_type>.*?)\s{4,}(?P<comment>.*)"
-    SHARE_REGEX_COMPILED = re.compile(SHARE_REGEX)
+    SHARE_REGEX_COMPILED = re.compile('(?P<name>.*?)\s{4,}(?P<share_type>.*?)\s{4,}(?P<comment>.*)')
 
-    GROUP_REGEX = "group\:\[(?P<name>.*?)\]\s+rid\:\[(?P<rid>.*?)\]"
-    GROUP_REGEX_COMPILED = re.compile(GROUP_REGEX)
+    GROUP_REGEX_COMPILED = re.compile('group\:\[(?P<name>.*?)\]\s+rid\:\[(?P<rid>.*?)\]')
 
-    GROUP_USER_REGEX = "Group '(?P<group>.*?)'.*?has member\:\s+(?P<name>.*)"
-    GROUP_USER_REGEX_COMPILED = re.compile(GROUP_USER_REGEX)
+    GROUP_USER_REGEX_COMPILED = re.compile('Group \'(?P<group>.*?)\'.*?has member\:\s+(?P<name>.*)')
 
-    LOCAL_GROUPS_REGEX = "\[\+\] Getting local groups\:.*?(\[\+\] Getting local group memberships).*?(\[\+\]|\n\n)"
-    LOCAL_GROUPS_REGEX_COMPILED = re.compile(LOCAL_GROUPS_REGEX, re.DOTALL | re.MULTILINE)
+    LOCAL_GROUPS_REGEX_COMPILED = re.compile('\[\+\] Getting local groups\:.*?(\[\+\] Getting local group memberships)'
+                                             '.*?(\[\+\]|\n\n)', re.DOTALL | re.MULTILINE)
 
-    BUILTIN_GROUPS_REGEX = "\[\+\] Getting builtin groups\:.*?(\[\+\] Getting builtin group memberships).*?(\[\+\]|\n\n)"
-    BUILTIN_GROUPS_REGEX_COMPILED = re.compile(BUILTIN_GROUPS_REGEX, re.DOTALL | re.MULTILINE)
+    BUILTIN_GROUPS_REGEX_COMPILED = re.compile('\[\+\] Getting builtin groups\:.*?(\[\+\] Getting builtin group '
+                                               'memberships).*?(\[\+\]|\n\n)', re.DOTALL | re.MULTILINE)
 
-    DOMAIN_GROUPS_REGEX = "\[\+\] Getting domain groups\:.*?(\[\+\] Getting domain group memberships).*?(\[\+\]|\n\n)"
-    DOMAIN_GROUPS_REGEX_COMPILED = re.compile(DOMAIN_GROUPS_REGEX, re.DOTALL | re.MULTILINE)
+    DOMAIN_GROUPS_REGEX_COMPILED = re.compile('\[\+\] Getting domain groups\:.*?(\[\+\] Getting domain group '
+                                              'memberships).*?(\[\+\]|\n\n)', re.DOTALL | re.MULTILINE)
 
-    PP_MIN_PASS_REGEX = "Minimum password length: (?P<min_length>.*)"
-    PP_HISTORY_REGEX = "Password history length: (?P<history>.*)"
-    PP_MAX_AGE_REGEX = "Maximum password age: (?P<max_age>.*)"
-    PP_CLEAR_REGEX = "Domain Password Store Cleartext: (?P<cleartext>.*)"
-    PP_LOCKOUT_REGEX = "Domain Password Lockout Admins: (?P<lockout_admins>.*)"
-    PP_NO_CLEAR_REGEX = "Domain Password No Clear Change: (?P<no_clear_change>.*)"
-    PP_NO_ANON_REGEX = "Domain Password No Anon Change: (?P<no_anon_change>.*)"
-    PP_COMPLEXITY_REGEX = "Domain Password Complex: (?P<complexity>.*)"
-    PP_MIN_AGE_REGEX = "Minimum password age: (?P<min_age>.*)"
-    PP_RESET_REGEX = "Reset Account Lockout Counter: (?P<reset_lockout>.*)"
-    PP_DURATION_REGEX = "Locked Account Duration: (?P<lockout_duration>.*)"
-    PP_THRESHOLD_REGEX = "Account Lockout Threshold: (?P<lockout_threshold>.*)"
-    PP_LOGOFF_REGEX = "Forced Log off Time: (?P<force_logoff_time>.*)"
-
-    PP_MIN_PASS_REGEX_COMPILED = re.compile(PP_MIN_PASS_REGEX)
-    PP_HISTORY_REGEX_COMPILED = re.compile(PP_HISTORY_REGEX)
-    PP_MAX_AGE_REGEX_COMPILED = re.compile(PP_MAX_AGE_REGEX)
-    PP_CLEAR_REGEX_COMPILED = re.compile(PP_CLEAR_REGEX)
-    PP_LOCKOUT_REGEX_COMPILED = re.compile(PP_LOCKOUT_REGEX)
-    PP_NO_CLEAR_REGEX_COMPILED = re.compile(PP_NO_CLEAR_REGEX)
-    PP_NO_ANON_REGEX_COMPILED = re.compile(PP_NO_ANON_REGEX)
-    PP_COMPLEXITY_REGEX_COMPILED = re.compile(PP_COMPLEXITY_REGEX)
-    PP_MIN_AGE_REGEX_COMPILED = re.compile(PP_MIN_AGE_REGEX)
-    PP_RESET_REGEX_COMPILED = re.compile(PP_RESET_REGEX)
-    PP_DURATION_REGEX_COMPILED = re.compile(PP_DURATION_REGEX)
-    PP_THRESHOLD_REGEX_COMPILED = re.compile(PP_THRESHOLD_REGEX)
-    PP_LOGOFF_REGEX_COMPILED = re.compile(PP_LOGOFF_REGEX)
+    PP_MIN_PASS_REGEX_COMPILED = re.compile('Minimum password length: (?P<min_length>.*)')
+    PP_HISTORY_REGEX_COMPILED = re.compile('Password history length: (?P<history>.*)')
+    PP_MAX_AGE_REGEX_COMPILED = re.compile('Maximum password age: (?P<max_age>.*)')
+    PP_CLEAR_REGEX_COMPILED = re.compile('Domain Password Store Cleartext: (?P<cleartext>.*)')
+    PP_LOCKOUT_REGEX_COMPILED = re.compile('Domain Password Lockout Admins: (?P<lockout_admins>.*)')
+    PP_NO_CLEAR_REGEX_COMPILED = re.compile('Domain Password No Clear Change: (?P<no_clear_change>.*)')
+    PP_NO_ANON_REGEX_COMPILED = re.compile('Domain Password No Anon Change: (?P<no_anon_change>.*)')
+    PP_COMPLEXITY_REGEX_COMPILED = re.compile('Domain Password Complex: (?P<complexity>.*)')
+    PP_MIN_AGE_REGEX_COMPILED = re.compile('Minimum password age: (?P<min_age>.*)')
+    PP_RESET_REGEX_COMPILED = re.compile('Reset Account Lockout Counter: (?P<reset_lockout>.*)')
+    PP_DURATION_REGEX_COMPILED = re.compile('Locked Account Duration: (?P<lockout_duration>.*)')
+    PP_THRESHOLD_REGEX_COMPILED = re.compile('Account Lockout Threshold: (?P<lockout_threshold>.*)')
+    PP_LOGOFF_REGEX_COMPILED = re.compile('Forced Log off Time: (?P<force_logoff_time>.*)')
     
     PP_REGEXES = (
         PP_MIN_PASS_REGEX_COMPILED, PP_HISTORY_REGEX_COMPILED, PP_MAX_AGE_REGEX_COMPILED, PP_CLEAR_REGEX_COMPILED,
