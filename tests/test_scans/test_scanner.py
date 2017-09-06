@@ -168,16 +168,19 @@ class ScannerTest(AsyncTestCase):
         cfg.toucan.push_config.return_value.set_result(MagicMock())
 
         self.thread.scan_start = 17
+        self.thread.NAME = 'test_name'
         await self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
 
         expected = {
             'portdetection': {
-                'status': {
-                    'previous_scan_start': 57,
-                    'next_scan_start': 75,
-                    'scan_start': 17,
-                    'previous_scan_duration': 0,
-                    'code': "IN PROGRESS"
+                'test_name': {
+                    'status': {
+                        'previous_scan_start': 57,
+                        'next_scan_start': 75,
+                        'scan_start': 17,
+                        'previous_scan_duration': 0,
+                        'code': "IN PROGRESS"
+                    }
                 }
             }
         }
@@ -195,16 +198,19 @@ class ScannerTest(AsyncTestCase):
         cfg.toucan.push_config.return_value.set_result(MagicMock())
 
         self.thread.scan_start = 17
+        self.thread.NAME = 'test_name'
         await self.thread.update_scan_status(ScanStatus.IDLE)
 
         expected = {
             'portdetection': {
-                'status': {
-                    'previous_scan_start': 57,
-                    'next_scan_start': 75,
-                    'scan_start': 17,
-                    'previous_scan_duration': 283,
-                    'code': "IDLE"
+                'test_name': {
+                    'status': {
+                        'previous_scan_start': 57,
+                        'next_scan_start': 75,
+                        'scan_start': 17,
+                        'previous_scan_duration': 283,
+                        'code': "IDLE"
+                    }
                 }
             }
         }

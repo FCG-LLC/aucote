@@ -132,18 +132,20 @@ class Scanner(ScanAsyncTask):
 
         data = {
             'portdetection': {
-                'status': {
-                    'previous_scan_start': self.previous_scan,
-                    'next_scan_start': self.next_scan,
-                    'scan_start': self.scan_start,
-                    'previous_scan_duration': 0,
-                    'code': status.value
+                self.NAME: {
+                    'status': {
+                        'previous_scan_start': self.previous_scan,
+                        'next_scan_start': self.next_scan,
+                        'scan_start': self.scan_start,
+                        'previous_scan_duration': 0,
+                        'code': status.value
+                    }
                 }
             }
         }
 
         if status is ScanStatus.IDLE:
-            data['portdetection']['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
+            data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
 
         await cfg.toucan.push_config(data, overwrite=True)
 
