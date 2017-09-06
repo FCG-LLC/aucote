@@ -108,7 +108,7 @@ class Enum4linuxParser(Parser):
 
     def parse_shares_list(self, text):
         iterator = self.SHARE_REGEX_COMPILED.finditer(text)
-        try:
+        try:  # Omit two first rows: header and horizontal line
             next(iterator)
             next(iterator)
         except StopIteration:
