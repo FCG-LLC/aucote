@@ -152,11 +152,14 @@ class Aucote(object):
             ]
 
             if as_service:
-                for scanner in cfg['portdetection.security_scans'].cfg:
-                    self.scanners.append(ToolsScanner(aucote=self, name=scanner))
-
                 for scanner in self.scanners:
                     self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron)
+
+                for scanner_name in cfg['portdetection.security_scans'].cfg:
+                    scanner = ToolsScanner(aucote=self, name=scanner_name)
+                    self.scanners.append(scanner)
+                    self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron, event='tools')
+
                 self.async_task_manager.start()
             else:
                 self.async_task_manager.start()

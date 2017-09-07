@@ -16,13 +16,14 @@ class AsyncCrontabTask(object):
     If task is unfinishable, it would block executing new tasks.
 
     """
-    def __init__(self, cron, func):
+    def __init__(self, cron, func, event=None):
         self._cron = cron
         self._last_execute = None
         self._is_running = False
         self._started = False
         self._stop = False
         self.func = func
+        self._event = event
         self._loop = IOLoop.current().instance()
 
     @property
@@ -79,7 +80,18 @@ class AsyncCrontabTask(object):
             self._last_execute = current_cron_time
 
             log.debug("AsyncCrontabTask[%s]: Executing", self.name)
-            await self.func()
+            if self._event is not None and self._event.is_set():
+                log.warning("Cannot run scan because similar scan is already scanning")
+                return
+
+            if self._event is not None:
+                self._event.set()
+            try:
+                await self.func()
+            finally:
+                if self._event is not None:
+                    self._event.clear()
+
             log.debug("AsyncCrontabTask[%s]: Finished", self.name)
         except Exception:
             log.exception("AsyncCrontabTask[%s]: Exception", self.name)

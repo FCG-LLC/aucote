@@ -30,6 +30,7 @@ class AsyncTaskManager(object):
         self._parallel_tasks = parallel_tasks
         self._tasks = Queue()
         self._task_workers = []
+        self._events = {}
 
     @classmethod
     def instance(cls, *args, **kwargs):
@@ -68,7 +69,7 @@ class AsyncTaskManager(object):
         for number in range(self._parallel_tasks):
             self._task_workers.append(IOLoop.current().add_callback(partial(self.process_tasks, number)))
 
-    def add_crontab_task(self, task, cron):
+    def add_crontab_task(self, task, cron, event=None):
         """
         Add function to scheduler and execute at cron time
 
@@ -80,8 +81,9 @@ class AsyncTaskManager(object):
             None
 
         """
-
-        self._cron_tasks[task] = AsyncCrontabTask(cron, task)
+        if event is not None:
+            event = self._events.setdefault(event, Event())
+        self._cron_tasks[task] = AsyncCrontabTask(cron, task, event)
 
     @gen.coroutine
     def stop(self):
