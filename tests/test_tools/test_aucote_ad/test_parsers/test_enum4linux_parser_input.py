@@ -139,7 +139,7 @@ Group 'Domain Users' (RID: 513) has member: CS\jdoe
 Group 'Domain Users' (RID: 513) has member: CS\jkowalski
 Group 'Domain Admins' (RID: 512) has member: CS\Administrator"""
 
-GROUPS = fr""" ============================= 
+GROUPS = r""" ============================= 
 |    Groups on 10.12.2.175    |
  ============================= 
 
@@ -147,7 +147,7 @@ GROUPS = fr""" =============================
 
 {LOCAL_GROUPS}
 
-{DOMAIN_GROUPS}"""
+{DOMAIN_GROUPS}""".format(BUILTIN_GROUPS=BUILTIN_GROUPS, LOCAL_GROUPS=LOCAL_GROUPS, DOMAIN_GROUPS=DOMAIN_GROUPS)
 
 PASSWORD_POLICY = r""" =================================================== 
 |    Password Policy Information for 10.12.2.175    |
@@ -187,7 +187,7 @@ PASSWORD_POLICY = r""" ===================================================
 Password Complexity: Enabled
 Minimum Password Length: 7"""
 
-OUTPUT = fr"""WARNING: ldapsearch is not in your path.  Check that package is installed and your PATH is sane.
+OUTPUT = r"""WARNING: ldapsearch is not in your path.  Check that package is installed and your PATH is sane.
 Starting enum4linux v0.8.9 ( http://labs.portcullis.co.uk/application/enum4linux/ ) on Wed Aug 30 18:49:59 2017
 
  ========================== 
@@ -1182,4 +1182,4 @@ S-1-5-90-1050 *unknown*\*unknown* (8)
 
 enum4linux complete on Wed Aug 30 20:42:06 2017
 
-"""
+""".format(OS_INFORMATION=OS_INFORMATION, GROUPS=GROUPS, USERS=USERS, SHARES=SHARES, PASSWORD_POLICY=PASSWORD_POLICY)

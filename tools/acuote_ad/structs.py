@@ -11,22 +11,25 @@ class Enum4linuxResult(object):
     def __str__(self):
         return_value = ""
         if self.os_result:
-            return_value += f"Operating System: {self.os_result.server}\n\n"
+            return_value += "Operating System: {0}\n\n".format(self.os_result.server)
 
         if self.users:
-            return_value += "Users:\n{0}\n\n".format("\n".join(f" - {user}" for user in self.users))
+            return_value += "Users:\n{0}\n\n".format("\n".join(" - {0}".format(user) for user in self.users))
 
         if self.shares:
-            return_value += "Shares:\n{0}\n\n".format("\n".join(f" - {share}" for share in self.shares))
+            return_value += "Shares:\n{0}\n\n".format("\n".join(" - {0}".format(share) for share in self.shares))
 
         if self.local_groups:
-            return_value += "Local groups:\n{0}\n\n".format("\n".join(f" - {group}" for group in self.local_groups))
+            return_value += "Local groups:\n{0}\n\n".format("\n".join(" - {0}".format(group)
+                                                                      for group in self.local_groups))
         if self.domain_groups:
-            return_value += "Domain groups:\n{0}\n\n".format("\n".join(f" - {group}" for group in self.domain_groups))
+            return_value += "Domain groups:\n{0}\n\n".format("\n".join(" - {0}".format(group)
+                                                                       for group in self.domain_groups))
         if self.builtin_groups:
-            return_value += "Builtin groups:\n{0}\n\n".format("\n".join(f" - {group}" for group in self.builtin_groups))
+            return_value += "Builtin groups:\n{0}\n\n".format("\n".join(" - {0}".format(group)
+                                                                        for group in self.builtin_groups))
         if self.password_policy:
-            return_value += f"Password policy:\n{self.password_policy}\n\n"
+            return_value += "Password policy:\n{0}\n\n".format(self.password_policy)
 
         return return_value.strip("\n")
 
@@ -38,7 +41,7 @@ class Enum4linuxOS(object):
         self.os = os
 
     def __str__(self):
-        return f"OS for {self.domain} is {self.os}"
+        return "OS for {self.domain} is {self.os}"
 
     def __eq__(self, other):
         return isinstance(other, Enum4linuxOS) and self.server == other.server and self.domain == other.domain and \
@@ -130,9 +133,10 @@ class Enum4linuxPasswordPolicy(object):
         return hash(tuple(getattr(self, name) for name in self.UNIQUE_ATTRIBUTES))
 
     def __str__(self):
-        return f""" - Minimum password length: {self.min_length}
- - Password complexity: {self.complexity}
- - Password minimum age: {self.min_age}
- - Password maximum age: {self.max_age}
- - Password history length: {self.history}
-"""
+        return """ - Minimum password length: {min_length}
+ - Password complexity: {complexity}
+ - Password minimum age: {min_age}
+ - Password maximum age: {max_age}
+ - Password history length: {history}
+""".format(min_length=self.min_length, complexity=self.complexity, min_age=self.min_age, max_age=self.max_age,
+           history=self.history)

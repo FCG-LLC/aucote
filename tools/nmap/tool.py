@@ -307,4 +307,4 @@ class NmapTool(Tool):
         if not all([domain_names, username, password]):
             return ""
 
-        return [f"smbusername='{username}',smbpassword='{password}',smbdomain='{domain}'" for domain in domain_names]
+        return ["smbusername='{0}',smbpassword='{1}',smbdomain='{2}'".format(username, password, domain) for domain in domain_names]
