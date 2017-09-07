@@ -300,11 +300,11 @@ class NmapTool(Tool):
 
     @classmethod
     def custom_args_smb(cls):
-        domain_name = cfg['tools.aucote-active-directory.config.domain']
+        domain_names = cfg['tools.aucote-active-directory.config.domain'].cfg
         username = cfg['tools.aucote-active-directory.config.username']
         password = cfg['tools.aucote-active-directory.config.password']
 
-        if not all([domain_name, username, password]):
+        if not all([domain_names, username, password]):
             return ""
 
-        return "smbusername='{0}',smbpassword='{1}',smbdomain='{2}'".format(username, password, domain_name)
+        return [f"smbusername='{username}',smbpassword='{password}',smbdomain='{domain}'" for domain in domain_names]
