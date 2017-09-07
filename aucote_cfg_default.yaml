@@ -102,6 +102,7 @@ service:
 #                    - other - scripts which aren't in any categories
 
 portdetection:
+    security_scans: ['tools']
     tcp:
         scan_enabled: True
         scan_type: "LIVE"

@@ -20,7 +20,11 @@ class ToolsScanner(ScanAsyncTask):
 
     """
     PROTOCOL = None
-    NAME = 'tools'
+    NAME = None
+
+    def __init__(self, name, *args, **kwargs):
+        super(ToolsScanner, self).__init__(*args, **kwargs)
+        self.NAME = name
 
     async def run(self):
         """
