@@ -59,7 +59,7 @@ class CommandTask(PortTask):
             results = await self.command.async_call(args)
         except subprocess.CalledProcessError as exception:
             self._port.scan = Scan(0, 0)
-            self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port)
+            self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port, scan=self._scan)
             log.warning("Exiting process %s ", self.command.NAME, exc_info=exception)
             return None
 

@@ -181,5 +181,5 @@ EXECUTOR_CONFIG = {
             'class': AucoteActiveDirectory
         }
     },
-    'node_scan': ['cve-search']
+    'node_scan': ['cve-search', 'aucote-active-directory']
 }
