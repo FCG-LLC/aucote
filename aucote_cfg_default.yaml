@@ -98,7 +98,7 @@ portdetection:
         tcp:
             include:
                 - 0-65535 # TCP: full range
-            exclude: []
+            exclude: [9100]
         udp:
             include:
                 - 0-65535 # UDP: full range
