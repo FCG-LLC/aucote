@@ -126,7 +126,7 @@ class ScannerTest(AsyncTestCase):
         self.assertCountEqual(result, ports)
 
         mock_executor.assert_called_once_with(aucote=self.thread.aucote, nodes=nodes, ports=result, scan_only=False,
-                                              scan=scan)
+                                              scan=scan, scanner=self.thread)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
     @patch('scans.scanner.Scan')

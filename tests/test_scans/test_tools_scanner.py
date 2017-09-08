@@ -12,7 +12,7 @@ class ToolsScannerTest(AsyncTestCase):
     def setUp(self):
         super(ToolsScannerTest, self).setUp()
         self.aucote = MagicMock()
-        self.task = ToolsScanner(aucote=self.aucote)
+        self.task = ToolsScanner(aucote=self.aucote, name='tools')
 
     @patch('scans.tools_scanner.Scan')
     @patch('scans.tools_scanner.Executor')
@@ -30,7 +30,8 @@ class ToolsScannerTest(AsyncTestCase):
 
         await self.task.run()
 
-        mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=nodes, ports=ports, scan=scan())
+        mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=nodes, ports=ports, scan=scan(),
+                                              scanner=self.task)
         self.task.get_ports_for_scan.assert_called_once_with(nodes)
 
     @patch('scans.tools_scanner.Scan')
@@ -49,7 +50,8 @@ class ToolsScannerTest(AsyncTestCase):
 
         await self.task.run()
 
-        mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=None, ports=ports, scan=scan())
+        mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=None, ports=ports, scan=scan(),
+                                              scanner=self.task)
         self.task.get_ports_for_scan.assert_called_once_with(nodes)
 
     @patch('scans.tools_scanner.ToolsScanner.previous_scan', new_callable=PropertyMock)
