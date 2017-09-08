@@ -221,3 +221,21 @@ class ScanAsyncTask(object):
             return self.LIVE_SCAN_CRON
 
         return cfg['portdetection.{name}.periodic_scan.cron'.format(name=self.NAME)]
+
+    def is_exploit_allowed(self, exploit):
+        """
+        Check if exploit can be executed by scanner
+
+        Args:
+            exploit:
+
+        Returns:
+            bool
+
+        """
+        ids = cfg['portdetection.{0}.scripts'.format(self.NAME)]
+        if ids is None:
+            return True
+        if exploit.id in ids.cfg:
+            return True
+        return False

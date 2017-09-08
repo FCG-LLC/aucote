@@ -20,7 +20,7 @@ class TaskMapper(object):
 
     """
 
-    def __init__(self, aucote, scan):
+    def __init__(self, aucote, scan, scanner):
         """
         Args:
             executor (Executor): tasks executor
@@ -29,6 +29,7 @@ class TaskMapper(object):
         """
         self._aucote = aucote
         self._scan = scan
+        self.scanner = scanner
 
     async def assign_tasks(self, port, scripts=None):
         """
@@ -92,11 +93,12 @@ class TaskMapper(object):
     def _filter_exploits(self, app, exploits, node):
         return [exploit for exploit in exploits if self._is_exploit_allowed(exploit=exploit, app=app, node=node)]
 
-    @staticmethod
-    def _is_exploit_allowed(exploit, app, node):
+    def _is_exploit_allowed(self, exploit, app, node):
         script_networks = cfg.get('tools.{0}.script_networks.*'.format(app)).cfg
         app_networks = cfg.get('tools.{0}.networks'.format(app)).cfg or None
         categories = {ExploitCategory[cat.upper()] for cat in cfg.get('portdetection._internal.categories').cfg}
+        if not self.scanner.is_exploit_allowed(exploit):
+            return False
 
         if exploit.categories - categories:
             return False

@@ -104,7 +104,7 @@ class Scanner(ScanAsyncTask):
 
         ports.extend(self._get_special_ports())
 
-        await Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan_only=scan_only, scan=scan)()
+        await Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan_only=scan_only, scan=scan, scanner=self)()
 
     async def _clean_scan(self):
         """
