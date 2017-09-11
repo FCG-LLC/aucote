@@ -13,3 +13,4 @@ pyasn1==0.2.3
 ndg-httpsclient==0.4.2
 cpe==1.2.1
 ujson==1.35
+async-dns==1.0.0

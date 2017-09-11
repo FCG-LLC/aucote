@@ -1,6 +1,7 @@
 """
 Provides configuration for tools. Configuration is implicit and shouldn't be modified by end-user.
 """
+from tools.acuote_ad.tool import AucoteActiveDirectory
 from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
 from tools.cve_search.tool import CVESearchTool
@@ -71,7 +72,13 @@ EXECUTOR_CONFIG = {
                     'parser': NmapInfoParser,
                     'singular': True,  # http-iis-webdav-vuln, http-slowloris-check, http-webdav-scan,
                                        # http-email-harvest in some way influence on this script
-                }
+                },
+                **{name: {'args': NmapTool.custom_args_smb} for name in (
+                    'smb-vuln-cve2009-3103', 'smb-os-discovery', 'smb-vuln-ms06-025', 'smb-vuln-ms07-029',
+                    'smb-vuln-ms08-067', 'smb-vuln-ms10-061', 'smb-vuln-regsvc-dos', 'smb-enum-domains',
+                    'smb-enum-sessions', 'smb-enum-shares', 'smb-system-info', 'smb-vuln-conficker',
+                    'smb-vuln-ms10-054', 'smb-enum-users', 'smb-enum-groups', 'smb-vuln-ms17-010'
+                )},
             },
             'services': {
                 'http': {
@@ -169,7 +176,10 @@ EXECUTOR_CONFIG = {
         },
         'cve-search': {
             'class': CVESearchTool,
+        },
+        'aucote-active-directory': {
+            'class': AucoteActiveDirectory
         }
     },
-    'node_scan': ['cve-search']
+    'node_scan': ['cve-search', 'aucote-active-directory']
 }

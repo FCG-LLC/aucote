@@ -297,3 +297,14 @@ class NmapTool(Tool):
             ports.append("S:{0}".format(",".join(map(str, sctp))))
 
         return ",".join(ports)
+
+    @classmethod
+    def custom_args_smb(cls):
+        domain_names = cfg['tools.aucote-active-directory.config.domain'].cfg
+        username = cfg['tools.aucote-active-directory.config.username']
+        password = cfg['tools.aucote-active-directory.config.password']
+
+        if not all([domain_names, username, password]):
+            return ""
+
+        return ["smbusername='{0}',smbpassword='{1}',smbdomain='{2}'".format(username, password, domain) for domain in domain_names]

@@ -241,5 +241,16 @@ tools:
         networks: []
         script_networks: {}
         api: ''
+    aucote-active-directory:
+        enable: True
+        period: 0s
+        periods: {}
+        networks: []
+        script_networks: {}
+        config:
+            dns_server: null
+            domain: null
+            username: null
+            password: null
     common:
         rate: 50

@@ -282,5 +282,6 @@ class Aucote(object):
 
 if __name__ == "__main__":  # pragma: no cover
     chdir(dirname(realpath(__file__)))
+    IOLoop.configure('tornado.platform.asyncio.AsyncIOLoop')
     IOLoop.current().add_callback(main)
     IOLoop.current().start()
