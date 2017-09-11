@@ -248,9 +248,9 @@ tools:
         networks: []
         script_networks: {}
         config:
-            dns_server: None
-            domain: None
-            username: None
-            password: None
+            dns_server: null
+            domain: null
+            username: null
+            password: null
     common:
         rate: 50
