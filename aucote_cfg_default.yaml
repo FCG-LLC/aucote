@@ -323,9 +323,9 @@ tools:
         networks: []
         script_networks: {}
         config:
-            dns_server: null
-            domain: null
-            username: null
-            password: null
+            dns_server: []
+            domain: []
+            username: ''
+            password: ''
     common:
         rate: 50
