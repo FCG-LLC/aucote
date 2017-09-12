@@ -10,6 +10,7 @@ from netaddr import IPSet
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
+from fixtures.exploits import Exploit
 from scans.scan_async_task import ScanAsyncTask
 from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus, CPEType, VulnerabilityChange, \
     VulnerabilityChangeType, PortDetectionChange
@@ -524,3 +525,19 @@ class ScanAsyncTaskTest(AsyncTestCase):
         await self.thread()
 
         self.assertFalse(self.thread.run.called)
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_is_exploit_allowed_allowed(self, cfg):
+        self.thread.NAME = 'test_name'
+        cfg['portdetection.test_name.scripts'] = [1]
+
+        exploit = Exploit(exploit_id=1)
+        self.assertTrue(self.thread.is_exploit_allowed(exploit))
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_is_exploit_allowed_not_allowed(self, cfg):
+        self.thread.NAME = 'test_name'
+        cfg['portdetection.test_name.scripts'] = []
+
+        exploit = Exploit(exploit_id=1)
+        self.assertFalse(self.thread.is_exploit_allowed(exploit))

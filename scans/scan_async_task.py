@@ -234,8 +234,6 @@ class ScanAsyncTask(object):
 
         """
         ids = cfg['portdetection.{0}.scripts'.format(self.NAME)]
-        if ids is None:
-            return True
         if exploit.id in ids.cfg:
             return True
         return False
