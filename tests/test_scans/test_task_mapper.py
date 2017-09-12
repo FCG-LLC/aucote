@@ -290,8 +290,26 @@ class TaskMapperTest(AsyncTestCase):
         cfg._cfg = self.cfg
         cfg['portdetection._internal.categories'] = ['brute']
 
+        exploit = Exploit(exploit_id=13)
+        exploit.categories = {ExploitCategory.EXTERNAL}
+        self.exploits['test'].append(exploit)
+
         self.task_mapper.store_security_scan = MagicMock()
         expected = [self.exploits['test'][0], self.exploits['test'][1]]
+        await self.task_mapper.assign_tasks(self.UDP)
+        result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
+
+        self.assertEqual(result, expected)
+
+    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
+    @patch('scans.task_mapper.cfg', new_callable=Config)
+    @gen_test
+    async def test_restricted_by_scanner(self, cfg):
+        cfg._cfg = self.cfg
+        self.scanner.is_exploit_allowed.return_value = False
+
+        self.task_mapper.store_security_scan = MagicMock()
+        expected = []
         await self.task_mapper.assign_tasks(self.UDP)
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
 
@@ -350,3 +368,4 @@ class TaskMapperTest(AsyncTestCase):
 
         class_mock.assert_called_once_with(aucote=self.task_mapper._aucote, exploits=[exploit], node=node,
                                            config=self.EXECUTOR_CONFIG['apps']['test'], scan=self.scan)
+
