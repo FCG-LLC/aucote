@@ -76,3 +76,6 @@ class AucoteActiveDirectory(Tool):
                             nodes.append(node)
 
         return nodes
+
+    def __str__(self):
+        return "{name} on {port}".format(name=type(self).__name__, port=self.port if self.port else self.node)

@@ -253,7 +253,7 @@ class PhysicalPortTest(TestCase):
         self.port.interface = 'wlan0'
 
     def test_str(self):
-        expected = "phy:wlan0"
+        expected = "255.255.255.255:phy:wlan0"
         self.assertEqual(str(self.port), expected)
 
 

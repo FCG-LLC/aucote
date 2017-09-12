@@ -61,3 +61,6 @@ class Tool(Task):
     @port.setter
     def port(self, val):
         self._port = val
+
+    def __str__(self):
+        return "{name} on {port}".format(name=type(self).__name__, port=self.port)

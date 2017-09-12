@@ -76,3 +76,6 @@ class PortTask(Task):
 
         """
         return self._port
+
+    def __str__(self):
+        return "{name} on {port}".format(name=type(self).__name__, port=self.port)
