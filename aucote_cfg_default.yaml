@@ -115,7 +115,7 @@ portdetection:
         ports:
             include:
                 - 0-65535 # TCP: full range
-            exclude: []
+            exclude: [9100]
         scan_rate: 500
         host_timeout: 3600
         status:
