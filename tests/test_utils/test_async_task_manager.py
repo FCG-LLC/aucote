@@ -105,6 +105,29 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.assertIn(task, self.task_manager._cron_tasks.keys())
         self.assertIsInstance(self.task_manager._cron_tasks.get(task), AsyncCrontabTask)
 
+    @patch('utils.async_task_manager.Event')
+    def test_add_crontab_task_with_new_event(self, Event):
+        task = MagicMock()
+        task.__name__ = 'test_name'
+        self.task_manager.add_crontab_task(task, '* * * * *', event='test')
+
+        Event.assert_called_once_with()
+        self.assertIn(task, self.task_manager._cron_tasks.keys())
+        self.assertIsInstance(self.task_manager._cron_tasks.get(task), AsyncCrontabTask)
+        self.assertEqual(self.task_manager._cron_tasks.get(task)._event, Event.return_value)
+
+    def test_add_crontab_task_with_exists_event(self):
+        task = MagicMock()
+        task.__name__ = 'test_name'
+        event = MagicMock()
+        self.task_manager._events['test'] = event
+
+        self.task_manager.add_crontab_task(task, '* * * * *', event='test')
+
+        self.assertIn(task, self.task_manager._cron_tasks.keys())
+        self.assertIsInstance(self.task_manager._cron_tasks.get(task), AsyncCrontabTask)
+        self.assertEqual(self.task_manager._cron_tasks.get(task)._event, event)
+
     @gen_test
     def test_add_task(self):
         expected = MagicMock()

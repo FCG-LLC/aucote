@@ -76,6 +76,7 @@ class AsyncTaskManager(object):
         Args:
             task (function):
             cron (str): crontab value
+            event (Event): event which prevent from running task with similar aim, eg. security scans
 
         Returns:
             None
