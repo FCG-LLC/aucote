@@ -680,7 +680,7 @@ class StorageTest(TestCase):
 
         nodes = [self.node_1, self.node_2]
         result = self.storage.get_ports_by_nodes(nodes, pasttime=pasttime, protocol=TransportProtocol.UDP)
-        self.storage._get_ports_by_nodes.assert_called_once_with(nodes=nodes, timestamp=78,
+        self.storage._get_ports_by_nodes.assert_called_once_with(nodes=nodes, portdetection_only=False, timestamp=78,
                                                                  protocol=TransportProtocol.UDP)
         self.storage.execute.assert_called_once_with(self.storage._get_ports_by_nodes())
 

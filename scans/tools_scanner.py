@@ -59,7 +59,8 @@ class ToolsScanner(ScanAsyncTask):
             list
 
             """
-        return self.storage.get_ports_by_nodes(nodes=nodes, timestamp=timestamp, protocol=self.PROTOCOL)
+        return self.storage.get_ports_by_nodes(nodes=nodes, timestamp=timestamp, protocol=self.PROTOCOL,
+                                               portdetection_only=True)
 
     def get_last_scan_start(self):
         scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=1)

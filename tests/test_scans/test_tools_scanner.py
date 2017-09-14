@@ -68,4 +68,5 @@ class ToolsScannerTest(AsyncTestCase):
         result = self.task.get_ports_for_scan(nodes, timestamp=100)
 
         self.assertEqual(result, ports)
-        self.task.storage.get_ports_by_nodes.assert_called_once_with(nodes=nodes, timestamp=100, protocol=None)
+        self.task.storage.get_ports_by_nodes.assert_called_once_with(nodes=nodes, timestamp=100, protocol=None,
+                                                                     portdetection_only=True)

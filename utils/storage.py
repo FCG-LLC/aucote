@@ -9,6 +9,8 @@ import logging as log
 from fixtures.exploits import Exploit
 from structs import Port, Node, TransportProtocol, Scan, Vulnerability
 from utils.database_interface import DbInterface
+from scans.tcp_scanner import TCPScanner
+from scans.udp_scanner import UDPScanner
 
 
 class Storage(DbInterface):
@@ -77,6 +79,9 @@ class Storage(DbInterface):
                             "AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"
     SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where ({where}) "\
                                       "AND time > ?"
+    SELECT_PORTS_BY_NODES_PORTDETECTION = "SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN " \
+                                          "scans ON scan_id = scans.ROWID  where ({where}) AND time > ? AND " \
+                                          "(scans.scanner_name=? or scans.scanner_name=?)"
     CLEAR_SECURITY_SCANS = "DELETE FROM security_scans WHERE sec_scan_start >= sec_scan_end OR sec_scan_start IS NULL "\
                            "OR sec_scan_end IS NULL"
     CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, " \
@@ -455,7 +460,7 @@ class Storage(DbInterface):
         scan_id = self.get_scan_id(scan)
         return self.SELECT_PORTS_BY_NODE_AND_SCAN, (node.id, str(node.ip), scan_id)
 
-    def _get_ports_by_nodes(self, nodes, timestamp, protocol=None):
+    def _get_ports_by_nodes(self, nodes, timestamp, protocol=None, portdetection_only=False):
         """
         Query for port scan detail from scans from pasttime ago
 
@@ -479,6 +484,10 @@ class Storage(DbInterface):
             iana = self._protocol_to_iana(protocol)
             parameters.extend([iana, iana])
             query = self.SELECT_PORTS_BY_NODES
+
+        if portdetection_only is True:
+            query = self.SELECT_PORTS_BY_NODES_PORTDETECTION
+            parameters.extend((TCPScanner.NAME, UDPScanner.NAME))
 
         where = 'OR'.join([' (node_id=? AND node_ip=?) '] * len(nodes))
 
@@ -766,7 +775,7 @@ class Storage(DbInterface):
 
         return ports
 
-    def get_ports_by_nodes(self, nodes, pasttime=0, timestamp=None, protocol=None):
+    def get_ports_by_nodes(self, nodes, pasttime=0, timestamp=None, protocol=None, portdetection_only=False):
         """
         Get open ports of nodes since timestamp or from pasttime if timestamp is not given.
 
@@ -788,7 +797,8 @@ class Storage(DbInterface):
         if timestamp is None:
             timestamp = time.time() - pasttime
 
-        for row in self.execute(self._get_ports_by_nodes(nodes=nodes, timestamp=timestamp, protocol=protocol)):
+        for row in self.execute(self._get_ports_by_nodes(nodes=nodes, timestamp=timestamp, protocol=protocol,
+                                                         portdetection_only=portdetection_only)):
             node = nodes[nodes.index(Node(node_id=row[0], ip=ipaddress.ip_address(row[1])))]
             port = Port(node=node, number=row[2], transport_protocol=self._transport_protocol(row[3]))
             port.scan = Scan(start=port.node.scan.start)

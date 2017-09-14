@@ -49,7 +49,7 @@ class Scanner(ScanAsyncTask):
         log.info("Starting port scan")
         await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
-        scan = Scan(self.scan_start, protocol=self.PROTOCOL, scanner='scan')
+        scan = Scan(self.scan_start, protocol=self.PROTOCOL, scanner=self.NAME)
         self.storage.save_scan(scan)
 
         nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, scan=scan)
