@@ -27,12 +27,13 @@ class ToolsScannerTest(AsyncTestCase):
         self.task._get_nodes_for_scanning.return_value.set_result(nodes)
 
         self.task.get_ports_for_scan = MagicMock(return_value=ports)
+        self.task.get_last_scan_start = MagicMock()
 
         await self.task.run()
 
         mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=nodes, ports=ports, scan=scan(),
                                               scanner=self.task)
-        self.task.get_ports_for_scan.assert_called_once_with(nodes)
+        self.task.get_ports_for_scan.assert_called_once_with(nodes, timestamp=self.task.get_last_scan_start())
 
     @patch('scans.tools_scanner.Scan')
     @patch('scans.tools_scanner.Executor')
@@ -47,17 +48,16 @@ class ToolsScannerTest(AsyncTestCase):
         self.task._get_nodes_for_scanning.return_value.set_result(nodes)
 
         self.task.get_ports_for_scan = MagicMock(return_value=ports)
+        self.task.get_last_scan_start = MagicMock()
 
         await self.task.run()
 
         mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=None, ports=ports, scan=scan(),
                                               scanner=self.task)
-        self.task.get_ports_for_scan.assert_called_once_with(nodes)
+        self.task.get_ports_for_scan.assert_called_once_with(nodes, timestamp=self.task.get_last_scan_start())
 
-    @patch('scans.tools_scanner.ToolsScanner.previous_scan', new_callable=PropertyMock)
-    def test_get_ports_for_scan(self, mock_previous):
+    def test_get_ports_for_scan(self):
         nodes = [MagicMock(), MagicMock(), MagicMock()]
-        mock_previous.return_value = 100
         ports = [
             MagicMock(),
             MagicMock(),
@@ -65,7 +65,7 @@ class ToolsScannerTest(AsyncTestCase):
         ]
         self.task.storage.get_ports_by_nodes.return_value = ports
 
-        result = self.task.get_ports_for_scan(nodes)
+        result = self.task.get_ports_for_scan(nodes, timestamp=100)
 
         self.assertEqual(result, ports)
         self.task.storage.get_ports_by_nodes.assert_called_once_with(nodes=nodes, timestamp=100, protocol=None)
