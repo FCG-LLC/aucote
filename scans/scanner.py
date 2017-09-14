@@ -44,7 +44,7 @@ class Scanner(ScanAsyncTask):
 
         """
         self._shutdown_condition.clear()
-        self.scan_start = time.time()
+        self.scan_start = int(time.time())
         log.info("Starting port scan")
         await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
