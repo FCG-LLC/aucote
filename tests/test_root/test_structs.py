@@ -165,6 +165,15 @@ class PortTest(TestCase):
 
         self.assertEqual(port1.url, expected)
 
+    def test_get_url_http_proxy(self):
+        node1 = Node(ip=ipaddress.ip_address('::1'), node_id=1)
+        port1 = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
+        port1.protocol = 'http-proxy'
+
+        expected = "http://[::1]:1"
+
+        self.assertEqual(port1.url, expected)
+
     def test_copy(self):
         node1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         port = Port(node=node1, number=1, transport_protocol=TransportProtocol.TCP)
