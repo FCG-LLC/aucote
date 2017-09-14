@@ -25,12 +25,24 @@ class ScanAsyncTask(object):
     """
     LIVE_SCAN_CRON = '* * * * *'
     PROTOCOL = None
+    NAME = None
 
     def __init__(self, aucote):
         self._current_scan = []
         self.aucote = aucote
         self.scan_start = None
         self._shutdown_condition = Event()
+
+    async def __call__(self, *args, **kwargs):
+        if not cfg['portdetection.{name}.scan_enabled'.format(name=self.NAME)]:
+            log.info("Scanner %s is disabled", self.NAME)
+            return
+        log.info("Starting %s scanner", self.NAME)
+
+        return await self.run()
+
+    async def run(self):
+        raise NotImplementedError()
 
     @property
     def shutdown_condition(self):
@@ -108,8 +120,7 @@ class ScanAsyncTask(object):
         return [node for node in nodes if node.ip.exploded in include_networks
                 and node.ip.exploded not in exclude_networks]
 
-    @classmethod
-    def _get_networks_list(cls):
+    def _get_networks_list(self):
         """
         Returns list of networks from configuration file
 
@@ -118,13 +129,12 @@ class ScanAsyncTask(object):
 
         """
         try:
-            return IPSet(cfg['portdetection.networks.include'])
+            return IPSet(cfg['portdetection.{name}.networks.include'.format(name=self.NAME)])
         except KeyError:
-            log.error("Please set portdetection.networks.include in configuration file!")
+            log.error("Please set portdetection.%s.networks.include in configuration file!", self.NAME)
             exit()
 
-    @classmethod
-    def _get_excluded_networks_list(cls):
+    def _get_excluded_networks_list(self):
         """
         List of excluded networks from configuration file
 
@@ -133,7 +143,7 @@ class ScanAsyncTask(object):
 
         """
         try:
-            return IPSet(cfg['portdetection.networks.exclude'])
+            return IPSet(cfg['portdetection.{name}.networks.exclude'.format(name=self.NAME)])
         except KeyError:
             return []
 
@@ -194,10 +204,10 @@ class ScanAsyncTask(object):
             int
 
         """
-        if cfg['portdetection.scan_type'] == ScanType.PERIODIC.value:
+        if cfg['portdetection.{name}.scan_type'.format(name=self.NAME)] == ScanType.PERIODIC.value:
             return 0
 
-        return parse_period(cfg['portdetection.live_scan.min_time_gap'])
+        return parse_period(cfg['portdetection.{name}.live_scan.min_time_gap'.format(name=self.NAME)])
 
     def _scan_cron(self):
         """
@@ -207,7 +217,7 @@ class ScanAsyncTask(object):
             str
 
         """
-        if cfg['portdetection.scan_type'] == ScanType.LIVE.value:
+        if cfg['portdetection.{name}.scan_type'.format(name=self.NAME)] == ScanType.LIVE.value:
             return self.LIVE_SCAN_CRON
 
-        return cfg['portdetection.periodic_scan.cron']
+        return cfg['portdetection.{name}.periodic_scan.cron'.format(name=self.NAME)]

@@ -29,44 +29,61 @@ service:
 
 # This section contains port detection configuration
 # portdetection:
-#   scan_enabled: - Defines if scan is enable or not
-#   scan_type: <LIVE | PERIODIC> - Type of scan:
-#                                  - LIVE - scan host no more than live_scan.min_time_gap. New hosts will be scan when
-#                                           they appear in network, and next scan will be after at least
-#                                           live_scan.min_time_gap from previous scan
-#                                  - PERIODIC - scan all host at given periodic_scan.cron
-#   periodic_scan:
-#     cron: <cron-like format> - This options defines how often aucote should run scans. This time is in UTC!
-#                                Examples:
-#                                  "*/5 * * * *" - run every 5 minutes
-#                                  "1 2 3 4 5" - run every 3rd march at 2:01, if it is friday(5)
-#                                More information: http://www.nncron.ru/help/EN/working/cron-format.htm
+#   (tcp|udp|sctp|tools): - Type of scan
+#     scan_enabled: <bool> - Defines if scan is enable or not
+#     scan_type: <LIVE | PERIODIC> - Type of scan:
+#                                    - LIVE - scan host no more than live_scan.min_time_gap. New hosts will be scan when
+#                                             they appear in network, and next scan will be after at least
+#                                             live_scan.min_time_gap from previous scan
+#                                    - PERIODIC - scan all host at given periodic_scan.cron
+#     periodic_scan:
+#       cron: <cron-like format> - This options defines how often aucote should run scans. This time is in UTC!
+#                                  Examples:
+#                                    "*/5 * * * *" - run every 5 minutes
+#                                    "1 2 3 4 5" - run every 3rd march at 2:01, if it is friday(5)
+#                                  More information: http://www.nncron.ru/help/EN/working/cron-format.htm
 #                                                     https://en.wikipedia.org/wiki/Cron#CRON_expression
-#   live_scan:
-#     min_time_gap: <period> - minimum number of seconds between particular host scan. eg. 2d3g4m5s or 5m where:
-#                              - d - days
-#                              - h - hours
-#                              - m - minutes
-#                              - s - seconds
-#   networks: - list of networks in CIDR format (eg. 127.0.0.1/32), which should be or shouldn't be scanned
-#     include:
-#       - <network in CIDR format>
-#       - ...
-#     exclude:
-#       - <network in CIDR format>
-#       - ...
-#   ports: - Defines list of ports which should be or shouldn't be scanned
-#     tcp|udp|sctp:
-#       include|exclude: - Port range in NMAP ports format eg. T:0-65535 or list of ports this same format
-#         - <NMAP ports format>
+#     live_scan:
+#       min_time_gap: <period> - minimum number of seconds between particular host scan. eg. 2d3g4m5s or 5m where:
+#                                - d - days
+#                                - h - hours
+#                                - m - minutes
+#                                - s - seconds
+#     networks: - list of networks in CIDR format (eg. 127.0.0.1/32), which should be or shouldn't be scanned
+#       include:
+#         - <network in CIDR format>
 #         - ...
-#   port_scan_rate: <int> - Rate in packets per seconds for port scanning (banner scan, service detection, etc)
-#   network_scan_rate: <int> - Rate in packets per seconds for networks scan (mostly SynScan)
-#   _internal: - more advanced  configuration
-#     tools_cron: <cron-like format> - This options defines how often aucote should run tools scan (nmap, hydra, etc)
-#     nmap_udp: <bool> - Should UDP scan be performed by Nmap. Otherwise aucote will use Masscan
+#       exclude:
+#         - <network in CIDR format>
+#         - ...
+#     scan_rate: <int> - Rate in packets per seconds for networks scan
+#                        tools.scan_rate is used also during tcp and udp scan for obtaining banners, service detection
+#
+#     status: - Read only. This branch is used to communicate witch frontend
+#        code: ('IDLE'|'IN PROGRESS') - Is scan idle or in progress
+#        previous_scan_start: <int> - When previous scan started
+#        next_scan_start: <int> - When next scan is going to be started
+#        scan_start: <int> - When current scan started
+#        previous_scan_duration: <int> - Duration of previous scan
+#
+#   (tcp|udp|sctp):  Options related only to tcp, udp and sctp scans
+#     ports: - Defines list of ports which should be or shouldn't be scanned
+#       tcp|udp|sctp:
+#         include|exclude: - Port range in NMAP ports format eg. T:0-65535 or list of ports this same format
+#           - <NMAP ports format>
+#           - ...
+#
+#   tcp: - Additional options which are related only to TCP scan
 #     host_timeout: <int> - Number of seconds after which scanning particular host should be give up
-#     udp_retries: <int> - How many UDP scan retries is allowed by port detection
+#
+#   udp: - Additional options which are related only to UDP scan
+#     max_retries: <int> - How many UDP scan retries is allowed by port detection
+#     defeat_icmp_ratelimit: <bool> - If True, Nmap won't be waiting on ICMP Port Unreachable
+#
+#   tools: - Additional options for tools scan
+#     scan_nodes: <bool> - Define if exploits for node should be executed
+#
+#   _internal: - more advanced  configuration
 #     port_period: <period> - Minimal port scanning interval
 #     broadcast: <bool> - Enable broadcast scanning if True (default is False)
 #     categories: - List of allowed script categories
@@ -85,34 +102,92 @@ service:
 #                    - other - scripts which aren't in any categories
 
 portdetection:
-    scan_enabled: True
-    scan_type: "LIVE"
-    periodic_scan:
-        cron: "0 */2 * * *" # run every 2 hours
-    live_scan:
-         min_time_gap: 2h
-    networks: # Change it to proper values and uncomment
-        include: []
-        exclude: []
-    ports:
-        tcp:
+    tcp:
+        scan_enabled: True
+        scan_type: "LIVE"
+        periodic_scan:
+            cron: "0 */2 * * *" # run every 2 hours
+        live_scan:
+             min_time_gap: 2h
+        networks:
+            include: []
+            exclude: []
+        ports:
             include:
                 - 0-65535 # TCP: full range
             exclude: [9100]
-        udp:
-            include:
-                - 0-65535 # UDP: full range
-            exclude: []
-        sctp:
+        scan_rate: 500
+        host_timeout: 3600
+        status:
+            code: 'IDLE'
+            previous_scan_start: 0
+            next_scan_start: 0
+            scan_start: 0
+            previous_scan_duration: 0
+    udp:
+        scan_enabled: True
+        scan_type: "LIVE"
+        periodic_scan:
+            cron: "0 0 * * *" # run every 2 hours
+        live_scan:
+             min_time_gap: 20h
+        networks:
             include: []
             exclude: []
-    port_scan_rate: 10
-    network_scan_rate: 500
+        ports:
+            include:
+                - 0-65535 # TCP: full range
+            exclude: []
+        scan_rate: 50
+        defeat_icmp_ratelimit: False
+        max_retries: 5
+        status:
+            code: 'IDLE'
+            previous_scan_start: 0
+            next_scan_start: 0
+            scan_start: 0
+            previous_scan_duration: 0
+    tools:
+        scan_enabled: True
+        scan_type: "LIVE"
+        periodic_scan:
+            cron: "0 22 * * *" # run every day at 22:00 UTC
+        live_scan:
+             min_time_gap: 24h
+        networks:
+            include: [0.0.0.0/0] # all hosts found by other scans
+            exclude: []
+        scan_rate: 50
+        scan_nodes: True
+        status:
+            code: 'IDLE'
+            previous_scan_start: 0
+            next_scan_start: 0
+            scan_start: 0
+            previous_scan_duration: 0
+    sctp:
+        scan_enabled: False
+        scan_type: "LIVE"
+        periodic_scan:
+            cron: "0 */2 * * *" # run every 2 hours
+        live_scan:
+             min_time_gap: 2h
+        networks:
+            include: []
+            exclude: []
+        ports:
+            include:
+                - 0-65535 # TCP: full range
+            exclude: []
+            exclude: []
+        scan_rate: 500
+        status:
+            code: 'IDLE'
+            previous_scan_start: 0
+            next_scan_start: 0
+            scan_start: 0
+            previous_scan_duration: 0
     _internal:
-        tools_cron: "0 22 * * *" # run every day at 22:00 UTC
-        host_timeout: 600
-        udp_retries: 2
-        nmap_udp: True
         port_period: 0s
         broadcast: False
         categories: ['auth', 'exploit', 'fuzzer', 'intrusive', 'malware', 'safe', 'version', 'vuln']
@@ -248,9 +323,9 @@ tools:
         networks: []
         script_networks: {}
         config:
-            dns_server: null
-            domain: null
-            username: null
-            password: null
+            dns_server: []
+            domain: []
+            username: ''
+            password: ''
     common:
         rate: 50

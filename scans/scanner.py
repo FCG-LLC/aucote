@@ -35,7 +35,7 @@ class Scanner(ScanAsyncTask):
 
         self.as_service = as_service
 
-    async def __call__(self):
+    async def run(self):
         """
         Scan nodes for open ports
 
@@ -43,35 +43,30 @@ class Scanner(ScanAsyncTask):
             None
 
         """
-        if not cfg['portdetection.scan_enabled']:
-            return
-        log.info("Starting port scan")
-
         self._shutdown_condition.clear()
         self.scan_start = time.time()
         log.info("Starting port scan")
         await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
-        for protocol, scanners in self.scanners.items():
-            scan = Scan(self.scan_start, protocol=protocol, scanner='scan')
-            self.storage.save_scan(scan)
+        scan = Scan(self.scan_start, protocol=self.PROTOCOL, scanner='scan')
+        self.storage.save_scan(scan)
 
-            nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, scan=scan)
-            if not nodes:
-                log.warning("List of nodes is empty")
-                continue
-            log.debug("Found %i nodes for potential scanning", len(nodes))
+        nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, scan=scan)
+        if not nodes:
+            log.warning("List of nodes is empty")
+            return
+        log.debug("Found %i nodes for potential scanning", len(nodes))
 
-            self.storage.save_nodes(nodes, scan=scan)
-            self.current_scan = nodes
+        self.storage.save_nodes(nodes, scan=scan)
+        self.current_scan = nodes
 
-            await self.run_scan(nodes, scan_only=self.as_service, scanners=scanners, protocol=protocol, scan=scan)
+        await self.run_scan(nodes, scan_only=self.as_service, scanners=self.scanners, protocol=self.PROTOCOL, scan=scan)
 
-            self.current_scan = []
+        self.current_scan = []
 
-            scan.end = time.time()
-            self.storage.update_scan(scan)
-            self.diff_with_last_scan(scan)
+        scan.end = time.time()
+        self.storage.update_scan(scan)
+        self.diff_with_last_scan(scan)
 
         await self._clean_scan()
 
@@ -98,11 +93,11 @@ class Scanner(ScanAsyncTask):
                          ip_protocol)
                 ports.extend(await scanner.scan_ports(dict_nodes[ip_protocol]))
 
-        port_range_allow = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.include'],
-                                                    udp=cfg['portdetection.ports.udp.include'])
+        port_range_allow = NmapTool.ports_from_list(tcp=cfg['portdetection.tcp.ports.include'],
+                                                    udp=cfg['portdetection.udp.ports.include'])
 
-        port_range_deny = NmapTool.ports_from_list(tcp=cfg['portdetection.ports.tcp.exclude'],
-                                                   udp=cfg['portdetection.ports.udp.exclude'])
+        port_range_deny = NmapTool.ports_from_list(tcp=cfg['portdetection.tcp.ports.exclude'],
+                                                   udp=cfg['portdetection.udp.ports.exclude'])
 
         ports = [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
 
@@ -137,48 +132,34 @@ class Scanner(ScanAsyncTask):
 
         data = {
             'portdetection': {
-                'status': {
-                    'previous_scan_start': self.previous_scan,
-                    'next_scan_start': self.next_scan,
-                    'scan_start': self.scan_start,
-                    'previous_scan_duration': 0,
-                    'code': status.value
+                self.NAME: {
+                    'status': {
+                        'previous_scan_start': self.previous_scan,
+                        'next_scan_start': self.next_scan,
+                        'scan_start': self.scan_start,
+                        'previous_scan_duration': 0,
+                        'code': status.value
+                    }
                 }
             }
         }
 
         if status is ScanStatus.IDLE:
-            data['portdetection']['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
+            data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
 
         await cfg.toucan.push_config(data, overwrite=True)
 
     @property
     def scanners(self):
         """
-        Dictionary of scanners and protocol for scan in relation: {protocol: { ipv4: scanner, ...}, ...}
+        Scanners for port scanning. The return value should be dictionary with keys: self.IPv4, self.IPv6.
+        Values should be list of PortScanTasks
 
         Returns:
             dict
 
         """
-        return {
-            TransportProtocol.TCP: self._tcp_scanners,
-            TransportProtocol.UDP: self._udp_scanners
-        }
-
-    @property
-    def _tcp_scanners(self):
-        return {
-            self.IPV4: [MasscanPorts(udp=False)],
-            self.IPV6: [PortsScan(ipv6=True, tcp=True, udp=False)]
-        }
-
-    @property
-    def _udp_scanners(self):
-        return {
-            self.IPV4: [PortsScan(ipv6=False, tcp=False, udp=True)],
-            self.IPV6: [PortsScan(ipv6=True, tcp=False, udp=True)]
-        }
+        raise NotImplementedError()
 
     def _get_special_ports(self):
         return_value = []

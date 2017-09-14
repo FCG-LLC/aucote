@@ -62,7 +62,7 @@ def retry_if_fail(min_retry_time, max_retry_time, max_retries, exceptions):
                 try:
                     return await function(*args, **kwargs)
                 except exceptions as exception:
-                    log.warning("Cannot connect to Toucan: %s", str(exception))
+                    log.warning("Connection error: %s", str(exception))
                     log.warning("Retry in %s s", wait_time)
                     await gen.sleep(wait_time)
                     wait_time = min(wait_time*2, max_retry_time)

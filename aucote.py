@@ -17,8 +17,9 @@ from tornado.ioloop import IOLoop
 
 from fixtures.exploits import Exploits
 from scans.executor_config import EXECUTOR_CONFIG
-from scans.scanner import Scanner
+from scans.tcp_scanner import TCPScanner
 from scans.tools_scanner import ToolsScanner
+from scans.udp_scanner import UDPScanner
 from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
@@ -145,7 +146,10 @@ class Aucote(object):
             self._storage.init_schema()
             self.ioloop.add_callback(self.web_server.run)
 
-            self.scanners = [Scanner(aucote=self, as_service=as_service)]
+            self.scanners = [
+                TCPScanner(aucote=self, as_service=as_service),
+                UDPScanner(aucote=self, as_service=as_service)
+            ]
 
             if as_service:
                 self.scanners.append(ToolsScanner(aucote=self))

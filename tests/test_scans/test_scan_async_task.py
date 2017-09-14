@@ -207,9 +207,11 @@ class ScanAsyncTaskTest(AsyncTestCase):
         super(ScanAsyncTaskTest, self).setUp()
         self.cfg = {
             'portdetection': {
-                'scan_type': 'LIVE',
-                'live_scan': {
-                    'min_time_gap': 0,
+                'test_name': {
+                    'scan_type': 'LIVE',
+                    'live_scan': {
+                        'min_time_gap': 0,
+                    },
                 },
                 '_internal': {
                     'tools_cron': '* * * * *'
@@ -234,6 +236,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.aucote.async_task_manager.stop.return_value = atm_stop_future
 
         self.thread = ScanAsyncTask(aucote=self.aucote)
+        self.thread.NAME = 'test_name'
         self.thread._cron_tasks = {
             1: MagicMock(),
             2: MagicMock()
@@ -348,17 +351,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.parse_period', MagicMock(return_value=5))
     @gen_test
     async def test_get_nodes_for_scanning(self, cfg, mock_get_nodes):
-        cfg._cfg = {
-            'portdetection': {
-                'live_scan': {
-                    'min_time_gap': '5s'
-                },
-                'scan_type': 'LIVE',
-                'networks': {
-                    'include': ['127.0.0.2/31']
-                }
-            }
-        }
+        cfg._cfg = self.cfg
+        cfg['portdetection.test_name.networks.include'] = ['127.0.0.2/31']
+
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
         node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
@@ -381,11 +376,13 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_get_networks_list(self, cfg):
         cfg._cfg = {
             'portdetection': {
-                'networks': {
-                    'include': [
-                        '127.0.0.1/24',
-                        '128.0.0.1/13'
-                    ]
+                'test_name': {
+                    'networks': {
+                        'include': [
+                            '127.0.0.1/24',
+                            '128.0.0.1/13'
+                        ]
+                    }
                 }
             }
         }
@@ -422,16 +419,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.time.time', MagicMock(return_value=595))
-    def test_previous_scan(self, mock_cfg):
-        mock_cfg._cfg = {
-            'portdetection': {
-                'scan_type': 'PERIODIC',
-                'periodic_scan': {
-                    'cron': '* * * * *'
-                },
-                'tools_cron': '* * * * *',
-            }
-        }
+    def test_previous_scan(self, cfg):
+        cfg._cfg = self.cfg
+        cfg['portdetection.test_name.scan_type'] = 'PERIODIC'
+        cfg['portdetection.test_name.periodic_scan.cron'] = '* * * * *'
 
         expected = 480
         result = self.thread.previous_scan
@@ -440,16 +431,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.time.time', MagicMock(return_value=595))
-    def test_previous_scan_second_test(self, mock_cfg):
-        mock_cfg._cfg = {
-            'portdetection': {
-                'scan_type': 'PERIODIC',
-                'periodic_scan': {
-                    'cron': '*/12 * * * *'
-                },
-                'tools_cron': '*/12 * * * *'
-            }
-        }
+    def test_previous_scan_second_test(self, cfg):
+        cfg._cfg = self.cfg
+        cfg['portdetection.test_name.scan_type'] = 'PERIODIC'
+        cfg['portdetection.test_name.periodic_scan.cron'] = '*/12 * * * *'
 
         expected = 0
         result = self.thread.previous_scan
@@ -458,16 +443,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.time.time', MagicMock(return_value=595))
-    def test_next_scan(self, mock_cfg):
-        mock_cfg._cfg = {
-            'portdetection': {
-                'scan_type': 'PERIODIC',
-                'periodic_scan': {
-                    'cron': '*/5 * * * *'
-                },
-                'tools_cron': '*/12 * * * *'
-            }
-        }
+    def test_next_scan(self, cfg):
+        cfg._cfg = self.cfg
 
         expected = 600
         result = self.thread.next_scan
@@ -477,14 +454,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_scan_cron(self, cfg):
         expected = "* * * * */45"
-        cfg['portdetection.scan_type'] = "PERIODIC"
-        cfg['portdetection.periodic_scan.cron'] = expected
+        cfg['portdetection.test_name.scan_type'] = "PERIODIC"
+        cfg['portdetection.test_name.periodic_scan.cron'] = expected
         result = self.thread._scan_cron()
         self.assertEqual(result, expected)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_scan_interval_periodic(self, cfg):
-        cfg['portdetection.scan_type'] = "PERIODIC"
+        cfg['portdetection.test_name.scan_type'] = "PERIODIC"
 
         result = self.thread._scan_interval()
         expected = 0
@@ -493,8 +470,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_scan_interval_live(self, cfg):
-        cfg['portdetection.scan_type'] = "LIVE"
-        cfg['portdetection.live_scan.min_time_gap'] = "5m13s"
+        cfg['portdetection.test_name.scan_type'] = "LIVE"
+        cfg['portdetection.test_name.live_scan.min_time_gap'] = "5m13s"
 
         result = self.thread._scan_interval()
         expected = 313
@@ -503,8 +480,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_scan_cron_periodic(self, cfg):
-        cfg['portdetection.scan_type'] = "PERIODIC"
-        cfg['portdetection.periodic_scan.cron'] = "*/2 3 */5 * *"
+        cfg['portdetection.test_name.scan_type'] = "PERIODIC"
+        cfg['portdetection.test_name.periodic_scan.cron'] = "*/2 3 */5 * *"
 
         result = self.thread._scan_cron()
         expected = "*/2 3 */5 * *"
@@ -513,9 +490,37 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_scan_cron_live(self, cfg):
-        cfg['portdetection.scan_type'] = "LIVE"
+        cfg['portdetection.test_name.scan_type'] = "LIVE"
 
         result = self.thread._scan_cron()
         expected = '* * * * *'
 
         self.assertEqual(result, expected)
+
+    @gen_test
+    async def test_run(self):
+        with self.assertRaises(NotImplementedError):
+            await self.thread.run()
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_call(self, cfg):
+        self.thread.NAME = 'test_name'
+        cfg['portdetection.test_name.scan_enabled'] = True
+        self.thread.run = MagicMock(return_value=Future())
+        self.thread.run.return_value.set_result(True)
+
+        await self.thread()
+
+        self.thread.run.assert_called_once_with()
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_call_disabled(self, cfg):
+        self.thread.NAME = 'test_name'
+        cfg['portdetection.test_name.scan_enabled'] = False
+        self.thread.run = MagicMock()
+
+        await self.thread()
+
+        self.assertFalse(self.thread.run.called)

@@ -30,19 +30,24 @@ class PortScanTest(TestCase):
     def setUp(self):
         cfg = {
             'portdetection': {
-                'ports': {
-                    'tcp': {
+                'tcp': {
+                    'ports': {
                         'include': ['55'],
                         'exclude': [],
                     },
-                    'udp': {
+                    'scan_rate': 1030,
+                    'host_timeout': 600
+                },
+                'udp': {
+                    'ports': {
                         'include': [],
                         'exclude': []
-                    }
+                    },
+                    'scan_rate': 30,
+                    'defeat_icmp_ratelimit': False,
+                    'max_retries': 77
                 },
-                'network_scan_rate': 1030,
                 '_internal': {
-                    'host_timeout': 600,
                     'udp_retries': 2
                 }
             },
@@ -71,14 +76,14 @@ class PortScanTest(TestCase):
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     def test_no_scan_ports(self, cfg):
         cfg._cfg = self.cfg
-        cfg['portdetection.ports.tcp.include'] = []
+        cfg['portdetection.tcp.ports.include'] = []
 
         self.assertRaises(StopCommandException, self.scanner.prepare_args, nodes=self.nodes)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     def test_scan_ports_excluded(self, cfg):
         cfg._cfg = self.cfg
-        cfg['portdetection.ports.tcp.exclude'] = ['45-89']
+        cfg['portdetection.tcp.ports.exclude'] = ['45-89']
 
         result = self.scanner.prepare_args(nodes=self.nodes)
         expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '-p', 'T:55', '--exclude-ports', 'T:45-89',
@@ -113,11 +118,25 @@ class PortScanTest(TestCase):
         self.scanner.tcp = False
         self.scanner.ipv6 = False
         cfg._cfg = self.cfg
-        cfg['portdetection.ports.udp.include'] = ['12-16']
+        cfg['portdetection.udp.ports.include'] = ['12-16']
 
         result = self.scanner.prepare_args(self.nodes)
-        expected = ['-Pn', '-sU', '--min-rate', '1030', '--max-retries', '2',
-                    '--defeat-icmp-ratelimit', '-p', 'U:12-16', '--max-rate', '1030', '192.168.1.5']
+        expected = ['-Pn', '-sU', '--max-retries', '77',
+                    '-p', 'U:12-16', '--max-rate', '30', '192.168.1.5']
+        self.assertEqual(result, expected)
+
+    @patch('tools.nmap.ports.cfg', new_callable=Config)
+    def test_arguments_udp_defeat_icmp(self, cfg):
+        self.scanner.udp = True
+        self.scanner.tcp = False
+        self.scanner.ipv6 = False
+        cfg._cfg = self.cfg
+        cfg['portdetection.udp.ports.include'] = ['12-16']
+        cfg['portdetection.udp.defeat_icmp_ratelimit'] = True
+
+        result = self.scanner.prepare_args(self.nodes)
+        expected = ['-Pn', '--min-rate', '30', '--defeat-icmp-ratelimit', '-sU', '--max-retries', '77',
+                    '-p', 'U:12-16', '--max-rate', '30', '192.168.1.5']
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.ports.cfg', new_callable=Config)

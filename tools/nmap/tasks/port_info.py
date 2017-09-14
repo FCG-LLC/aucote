@@ -48,7 +48,7 @@ class NmapPortInfoTask(PortTask):
             '-p', str(self._port.number),
             '-sV', '-Pn',
             '--version-all',
-            '--max-rate', str(cfg['portdetection.port_scan_rate'])
+            '--max-rate', str(cfg['portdetection.tools.scan_rate'])
         ]
 
         if self._port.transport_protocol == TransportProtocol.TCP:

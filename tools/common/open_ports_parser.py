@@ -33,7 +33,7 @@ class OpenPortsParser:
                 continue
             for xml_port in ports.findall('port'):
                 state = xml_port.find('state').get('state')
-                if PortState.from_string(state) not in (PortState.OPEN, PortState.FILTERED, PortState.OPEN_FILTERED):
+                if PortState.from_string(state) not in (PortState.OPEN, ):
                     continue
 
                 number = int(xml_port.get('portid'))
