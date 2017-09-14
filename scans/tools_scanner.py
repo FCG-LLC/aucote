@@ -37,7 +37,7 @@ class ToolsScanner(ScanAsyncTask):
         log.info("Starting security scan")
         last_scan_start = self.get_last_scan_start()
 
-        scan = Scan(time.time(), protocol=self.PROTOCOL, scanner='tools scan')
+        scan = Scan(time.time(), protocol=self.PROTOCOL, scanner=self.NAME)
         self.storage.save_scan(scan)
 
         nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, scan=scan, filter_out_storage=False)
