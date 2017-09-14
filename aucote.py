@@ -26,6 +26,8 @@ from utils.kudu_queue import KuduQueue
 from utils.web_server import WebServer
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
+from tornado.platform.asyncio import AsyncIOMainLoop
+import asyncio
 
 VERSION = (0, 1, 0)
 APP_NAME = 'Automated Compliance Tests'
@@ -282,6 +284,6 @@ class Aucote(object):
 
 if __name__ == "__main__":  # pragma: no cover
     chdir(dirname(realpath(__file__)))
-    IOLoop.configure('tornado.platform.asyncio.AsyncIOLoop')
+    AsyncIOMainLoop().install()
     IOLoop.current().add_callback(main)
-    IOLoop.current().start()
+    asyncio.get_event_loop().run_forever()
