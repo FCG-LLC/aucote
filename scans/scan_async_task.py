@@ -13,7 +13,7 @@ from croniter import croniter
 from netaddr import IPSet
 
 from aucote_cfg import cfg
-from structs import Node, Scan, ScanType, TopisOSDiscoveryType, Service, CPEType
+from structs import Node, Scan, ScanType, TopisOSDiscoveryType, Service, CPEType, ScanStatus
 from utils.http_client import HTTPClient
 from utils.time import parse_period, parse_time_to_timestamp
 
@@ -237,3 +237,47 @@ class ScanAsyncTask(object):
         if exploit.id in ids.cfg:
             return True
         return False
+
+    async def _clean_scan(self):
+        """
+        Clean scan and update scan status
+
+        Returns:
+            None
+
+        """
+        await self.update_scan_status(ScanStatus.IDLE)
+        self._shutdown_condition.set()
+
+    async def update_scan_status(self, status):
+        """
+        Update scan status base on status value
+
+        Args:
+            status (ScanStatus):
+
+        Returns:
+            None
+
+        """
+        if not cfg.toucan:
+            return
+
+        data = {
+            'portdetection': {
+                self.NAME: {
+                    'status': {
+                        'previous_scan_start': self.previous_scan,
+                        'next_scan_start': self.next_scan,
+                        'scan_start': self.scan_start,
+                        'previous_scan_duration': 0,
+                        'code': status.value
+                    }
+                }
+            }
+        }
+
+        if status is ScanStatus.IDLE:
+            data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
+
+        await cfg.toucan.push_config(data, overwrite=True)

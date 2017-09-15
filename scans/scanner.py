@@ -44,32 +44,33 @@ class Scanner(ScanAsyncTask):
             None
 
         """
-        self._shutdown_condition.clear()
-        self.scan_start = int(time.time())
-        log.info("Starting port scan")
-        await self.update_scan_status(ScanStatus.IN_PROGRESS)
+        try:
+            self._shutdown_condition.clear()
+            self.scan_start = int(time.time())
+            log.info("Starting port scan")
+            await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
-        scan = Scan(self.scan_start, protocol=self.PROTOCOL, scanner=self.NAME)
-        self.storage.save_scan(scan)
+            scan = Scan(self.scan_start, protocol=self.PROTOCOL, scanner=self.NAME)
+            self.storage.save_scan(scan)
 
-        nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, scan=scan)
-        if not nodes:
-            log.warning("List of nodes is empty")
-            return
-        log.debug("Found %i nodes for potential scanning", len(nodes))
+            nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, scan=scan)
+            if not nodes:
+                log.warning("List of nodes is empty")
+                return
+            log.debug("Found %i nodes for potential scanning", len(nodes))
 
-        self.storage.save_nodes(nodes, scan=scan)
-        self.current_scan = nodes
+            self.storage.save_nodes(nodes, scan=scan)
+            self.current_scan = nodes
 
-        await self.run_scan(nodes, scan_only=self.as_service, scanners=self.scanners, protocol=self.PROTOCOL, scan=scan)
+            await self.run_scan(nodes, scan_only=self.as_service, scanners=self.scanners, protocol=self.PROTOCOL, scan=scan)
 
-        self.current_scan = []
+            self.current_scan = []
 
-        scan.end = time.time()
-        self.storage.update_scan(scan)
-        self.diff_with_last_scan(scan)
-
-        await self._clean_scan()
+            scan.end = time.time()
+            self.storage.update_scan(scan)
+            self.diff_with_last_scan(scan)
+        finally:
+            await self._clean_scan()
 
     async def run_scan(self, nodes, scanners, scan, protocol=PROTOCOL, scan_only=False):
         """
@@ -105,50 +106,6 @@ class Scanner(ScanAsyncTask):
         ports.extend(self._get_special_ports())
 
         await Executor(aucote=self.aucote, nodes=nodes, ports=ports, scan_only=scan_only, scan=scan, scanner=self)()
-
-    async def _clean_scan(self):
-        """
-        Clean scan and update scan status
-
-        Returns:
-            None
-
-        """
-        await self.update_scan_status(ScanStatus.IDLE)
-        self._shutdown_condition.set()
-
-    async def update_scan_status(self, status):
-        """
-        Update scan status base on status value
-
-        Args:
-            status (ScanStatus):
-
-        Returns:
-            None
-
-        """
-        if not cfg.toucan:
-            return
-
-        data = {
-            'portdetection': {
-                self.NAME: {
-                    'status': {
-                        'previous_scan_start': self.previous_scan,
-                        'next_scan_start': self.next_scan,
-                        'scan_start': self.scan_start,
-                        'previous_scan_duration': 0,
-                        'code': status.value
-                    }
-                }
-            }
-        }
-
-        if status is ScanStatus.IDLE:
-            data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
-
-        await cfg.toucan.push_config(data, overwrite=True)
 
     @property
     def scanners(self):

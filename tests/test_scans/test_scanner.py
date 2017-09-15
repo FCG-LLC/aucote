@@ -158,65 +158,6 @@ class ScannerTest(AsyncTestCase):
         self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True, scan=scan(),
                                                                     timestamp=None)
 
-    @patch('scans.scanner.Scanner.next_scan', 75)
-    @patch('scans.scanner.Scanner.previous_scan', 57)
-    @patch('scans.scanner.cfg', new_callable=Config)
-    @gen_test
-    async def test_update_scan_status_to_in_progress(self, cfg):
-        cfg.toucan = MagicMock()
-        cfg.toucan.push_config.return_value = Future()
-        cfg.toucan.push_config.return_value.set_result(MagicMock())
-
-        self.thread.scan_start = 17
-        self.thread.NAME = 'test_name'
-        await self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
-
-        expected = {
-            'portdetection': {
-                'test_name': {
-                    'status': {
-                        'previous_scan_start': 57,
-                        'next_scan_start': 75,
-                        'scan_start': 17,
-                        'previous_scan_duration': 0,
-                        'code': "IN PROGRESS"
-                    }
-                }
-            }
-        }
-
-        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True)
-
-    @patch('scans.scanner.Scanner.next_scan', 75)
-    @patch('scans.scanner.Scanner.previous_scan', 57)
-    @patch('scans.scanner.time.time', MagicMock(return_value=300))
-    @patch('scans.scanner.cfg', new_callable=Config)
-    @gen_test
-    async def test_update_scan_status_to_idle(self, cfg):
-        cfg.toucan = MagicMock()
-        cfg.toucan.push_config.return_value = Future()
-        cfg.toucan.push_config.return_value.set_result(MagicMock())
-
-        self.thread.scan_start = 17
-        self.thread.NAME = 'test_name'
-        await self.thread.update_scan_status(ScanStatus.IDLE)
-
-        expected = {
-            'portdetection': {
-                'test_name': {
-                    'status': {
-                        'previous_scan_start': 57,
-                        'next_scan_start': 75,
-                        'scan_start': 17,
-                        'previous_scan_duration': 283,
-                        'code': "IDLE"
-                    }
-                }
-            }
-        }
-
-        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True)
-
     def test_shutdown_condition(self):
         self.assertEqual(self.thread.shutdown_condition, self.thread._shutdown_condition)
 

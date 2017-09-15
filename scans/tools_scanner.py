@@ -34,22 +34,27 @@ class ToolsScanner(ScanAsyncTask):
             None
 
         """
-        log.info("Starting security scan")
-        last_scan_start = self.get_last_scan_start()
+        try:
+            self.scan_start = int(time.time())
+            self.shutdown_condition.clear()
+            log.info("Starting security scan")
+            last_scan_start = self.get_last_scan_start()
 
-        scan = Scan(time.time(), protocol=self.PROTOCOL, scanner=self.NAME)
-        self.storage.save_scan(scan)
+            scan = Scan(time.time(), protocol=self.PROTOCOL, scanner=self.NAME)
+            self.storage.save_scan(scan)
 
-        nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, scan=scan, filter_out_storage=False)
-        self.storage.save_nodes(nodes, scan=scan)
+            nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, scan=scan, filter_out_storage=False)
+            self.storage.save_nodes(nodes, scan=scan)
 
-        ports = self.get_ports_for_scan(nodes, timestamp=last_scan_start)
-        log.debug("Ports for security scan: %s", ports)
-        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes if cfg['portdetection.{0}.scan_nodes'.
-                                            format(self.NAME)] else None, ports=ports, scan=scan, scanner=self))
+            ports = self.get_ports_for_scan(nodes, timestamp=last_scan_start)
+            log.debug("Ports for security scan: %s", ports)
+            self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes if cfg['portdetection.{0}.scan_nodes'.
+                                                format(self.NAME)] else None, ports=ports, scan=scan, scanner=self))
 
-        scan.end = time.time()
-        self.storage.update_scan(scan)
+            scan.end = time.time()
+            self.storage.update_scan(scan)
+        finally:
+            self._clean_scan()
 
     def get_ports_for_scan(self, nodes, timestamp=None):
         """

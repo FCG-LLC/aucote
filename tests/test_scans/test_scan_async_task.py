@@ -541,3 +541,62 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         exploit = Exploit(exploit_id=1)
         self.assertFalse(self.thread.is_exploit_allowed(exploit))
+
+    @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
+    @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_update_scan_status_to_in_progress(self, cfg):
+        cfg.toucan = MagicMock()
+        cfg.toucan.push_config.return_value = Future()
+        cfg.toucan.push_config.return_value.set_result(MagicMock())
+
+        self.thread.scan_start = 17
+        self.thread.NAME = 'test_name'
+        await self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
+
+        expected = {
+            'portdetection': {
+                'test_name': {
+                    'status': {
+                        'previous_scan_start': 57,
+                        'next_scan_start': 75,
+                        'scan_start': 17,
+                        'previous_scan_duration': 0,
+                        'code': "IN PROGRESS"
+                    }
+                }
+            }
+        }
+
+        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True)
+
+    @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
+    @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
+    @patch('scans.scan_async_task.time.time', MagicMock(return_value=300))
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_update_scan_status_to_idle(self, cfg):
+        cfg.toucan = MagicMock()
+        cfg.toucan.push_config.return_value = Future()
+        cfg.toucan.push_config.return_value.set_result(MagicMock())
+
+        self.thread.scan_start = 17
+        self.thread.NAME = 'test_name'
+        await self.thread.update_scan_status(ScanStatus.IDLE)
+
+        expected = {
+            'portdetection': {
+                'test_name': {
+                    'status': {
+                        'previous_scan_start': 57,
+                        'next_scan_start': 75,
+                        'scan_start': 17,
+                        'previous_scan_duration': 283,
+                        'code': "IDLE"
+                    }
+                }
+            }
+        }
+
+        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True)
