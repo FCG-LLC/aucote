@@ -387,6 +387,10 @@ class Port(object):
     Port object
 
     """
+    PROTOCOLS_MAP = {
+        'http-proxy': 'http'
+    }
+
     def __init__(self, node, number, transport_protocol):
         """
         Args:
@@ -464,7 +468,8 @@ class Port(object):
             format_string = "{0}://[{1}]:{2}"
         else:
             format_string = "{0}://{1}:{2}"
-        return format_string.format(self.protocol, self.node.ip, self.number)
+
+        return format_string.format(self.PROTOCOLS_MAP.get(self.protocol, self.protocol), self.node.ip, self.number)
 
     def in_range(self, parsed_ports):
         """
