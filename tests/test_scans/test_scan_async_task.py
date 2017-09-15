@@ -562,7 +562,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
                         'previous_scan_start': 57,
                         'next_scan_start': 75,
                         'scan_start': 17,
-                        'previous_scan_duration': 0,
                         'code': "IN PROGRESS"
                     }
                 }

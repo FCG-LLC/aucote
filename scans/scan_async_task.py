@@ -249,7 +249,7 @@ class ScanAsyncTask(object):
         await self.update_scan_status(ScanStatus.IDLE)
         self._shutdown_condition.set()
 
-    async def update_scan_status(self, status):
+    async def update_scan_status(self, status=None):
         """
         Update scan status base on status value
 
@@ -270,12 +270,13 @@ class ScanAsyncTask(object):
                         'previous_scan_start': self.previous_scan,
                         'next_scan_start': self.next_scan,
                         'scan_start': self.scan_start,
-                        'previous_scan_duration': 0,
-                        'code': status.value
                     }
                 }
             }
         }
+
+        if status is not None:
+            data['portdetection'][self.NAME]['status']['code'] = status.value
 
         if status is ScanStatus.IDLE:
             data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan_start)

@@ -74,7 +74,11 @@ class AsyncCrontabTask(object):
                 log.error("AsyncCrontabTask[%s]: %s is invalid cron value. Skipping scan", self.name, self.cron)
                 return
 
-            if current_cron != current_cron_time or current_cron_time == self._last_execute:
+            if current_cron != current_cron_time:
+                self.func.update_scan_status()
+                return
+
+            if current_cron_time == self._last_execute:
                 return
 
             self._last_execute = current_cron_time
