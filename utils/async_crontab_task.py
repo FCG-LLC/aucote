@@ -85,8 +85,10 @@ class AsyncCrontabTask(object):
 
             log.debug("AsyncCrontabTask[%s]: Executing", self.name)
             if self._event is not None and self._event.is_set():
-                log.warning("Cannot run scan because similar scan is already scanning")
-                return
+                await self._event.wait()
+                if time.time() - current_cron_time > 60:
+                    log.warning("Cannot run scan because similar scan is already scanning")
+                    return
 
             if self._event is not None:
                 self._event.set()
