@@ -269,7 +269,7 @@ class ScanAsyncTask(object):
                     'status': {
                         'previous_scan_start': self.previous_scan,
                         'next_scan_start': self.next_scan,
-                        'scan_start': self.scan_start,
+                        'scan_start': self.scan_start if self.scan_start is not None else 0,
                     }
                 }
             }
