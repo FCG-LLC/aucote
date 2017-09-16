@@ -277,6 +277,7 @@ class ScanAsyncTask(object):
 
         if status is not None:
             data['portdetection'][self.NAME]['status']['code'] = status.value
+            log.debug('Updating status of %s to %s', self.NAME, status.value)
 
         if status is ScanStatus.IDLE:
             data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
