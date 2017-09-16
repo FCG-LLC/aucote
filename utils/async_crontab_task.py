@@ -75,7 +75,7 @@ class AsyncCrontabTask(object):
                 return
 
             if current_cron != current_cron_time:
-                self.func.update_scan_status()
+                await self.func.update_scan_status()
                 return
 
             if current_cron_time == self._last_execute:

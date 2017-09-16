@@ -54,7 +54,7 @@ class ToolsScanner(ScanAsyncTask):
             scan.end = time.time()
             self.storage.update_scan(scan)
         finally:
-            self._clean_scan()
+            await self._clean_scan()
 
     def get_ports_for_scan(self, nodes, timestamp=None):
         """
