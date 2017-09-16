@@ -279,7 +279,7 @@ class ScanAsyncTask(object):
             data['portdetection'][self.NAME]['status']['code'] = status.value
             log.debug('Updating status of %s to %s', self.NAME, status.value)
 
-        if status is ScanStatus.IDLE:
+        if status is ScanStatus.IDLE and self.scan_start is not None:
             data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
 
         await cfg.toucan.push_config(data, overwrite=True)

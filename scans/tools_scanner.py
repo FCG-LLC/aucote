@@ -11,7 +11,7 @@ from croniter import croniter
 from aucote_cfg import cfg
 from scans.executor import Executor
 from scans.scan_async_task import ScanAsyncTask
-from structs import Scan
+from structs import Scan, ScanStatus
 
 
 class ToolsScanner(ScanAsyncTask):
@@ -36,6 +36,7 @@ class ToolsScanner(ScanAsyncTask):
         """
         try:
             self.scan_start = int(time.time())
+            await self.update_scan_status(ScanStatus.IN_PROGRESS)
             self.shutdown_condition.clear()
             log.info("Starting security scan")
             last_scan_start = self.get_last_scan_start()

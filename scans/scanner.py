@@ -48,7 +48,6 @@ class Scanner(ScanAsyncTask):
             self._shutdown_condition.clear()
             self.scan_start = int(time.time())
             log.info("Starting port scan")
-            await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
             scan = Scan(self.scan_start, protocol=self.PROTOCOL, scanner=self.NAME)
             self.storage.save_scan(scan)
@@ -56,8 +55,10 @@ class Scanner(ScanAsyncTask):
             nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, scan=scan)
             if not nodes:
                 log.warning("List of nodes is empty")
+                self.scan_start = None
                 return
             log.debug("Found %i nodes for potential scanning", len(nodes))
+            await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
             self.storage.save_nodes(nodes, scan=scan)
             self.current_scan = nodes
