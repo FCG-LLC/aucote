@@ -27,10 +27,10 @@ class AucoteActiveDirectory(Tool):
         self.node = node
 
     async def call(self, *args, **kwargs):
-        dns_servers = cfg['tools.aucote-active-directory.config.dns_server']._cfg
-        domain_names = cfg['tools.aucote-active-directory.config.domain']._cfg
-        username = cfg['tools.aucote-active-directory.config.username']
-        password = cfg['tools.aucote-active-directory.config.password']
+        dns_servers = cfg['tools.common.active-directory.dns_servers']._cfg
+        domain_names = cfg['tools.common.active-directory.domains']._cfg
+        username = cfg['tools.common.active-directory.username']
+        password = cfg['tools.common.active-directory.password']
         exploits = [self.aucote.exploits.find('aucote-active-directory', 'enum4linux')]
 
         if not self.node:

@@ -41,12 +41,10 @@ class NmapToolTest(AsyncTestCase):
                     'disable_scripts': [],
                 },
                 'common': {
-                    'rate': 1337
-                }
-            },
-            'service': {
-                'scans': {
-                    'useragent': 'test_useragent'
+                    'rate': 1337,
+                    'http': {
+                        'useragent': 'test_useragent'
+                    }
                 }
             },
             'config_filename': ''
