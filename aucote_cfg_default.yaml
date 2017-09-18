@@ -163,7 +163,7 @@ portdetection:
         scan_rate: 50
         scan_nodes: True
         status:
-            code: 'IDLE'
+            code: 'PERIODIC'
             previous_scan_start: 0
             next_scan_start: 0
             scan_start: 0
@@ -182,7 +182,7 @@ portdetection:
         scan_rate: 50
         scan_nodes: True
         status:
-            code: 'IDLE'
+            code: 'PERIODIC'
             previous_scan_start: 0
             next_scan_start: 0
             scan_start: 0
