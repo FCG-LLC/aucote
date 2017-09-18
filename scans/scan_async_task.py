@@ -13,7 +13,7 @@ from croniter import croniter
 from netaddr import IPSet
 
 from aucote_cfg import cfg
-from structs import Node, Scan, ScanType, TopisOSDiscoveryType, Service, CPEType
+from structs import Node, Scan, ScanType, TopisOSDiscoveryType, Service, CPEType, ScanStatus
 from utils.http_client import HTTPClient
 from utils.time import parse_period, parse_time_to_timestamp
 
@@ -221,3 +221,65 @@ class ScanAsyncTask(object):
             return self.LIVE_SCAN_CRON
 
         return cfg['portdetection.{name}.periodic_scan.cron'.format(name=self.NAME)]
+
+    def is_exploit_allowed(self, exploit):
+        """
+        Check if exploit can be executed by scanner
+
+        Args:
+            exploit:
+
+        Returns:
+            bool
+
+        """
+        ids = cfg['portdetection.{0}.scripts'.format(self.NAME)]
+        if exploit.id in ids.cfg:
+            return True
+        return False
+
+    async def _clean_scan(self):
+        """
+        Clean scan and update scan status
+
+        Returns:
+            None
+
+        """
+        await self.update_scan_status(ScanStatus.IDLE)
+        self._shutdown_condition.set()
+
+    async def update_scan_status(self, status=None):
+        """
+        Update scan status base on status value
+
+        Args:
+            status (ScanStatus):
+
+        Returns:
+            None
+
+        """
+        if not cfg.toucan:
+            return
+
+        data = {
+            'portdetection': {
+                self.NAME: {
+                    'status': {
+                        'previous_scan_start': self.previous_scan,
+                        'next_scan_start': self.next_scan,
+                        'scan_start': self.scan_start if self.scan_start is not None else 0,
+                    }
+                }
+            }
+        }
+
+        if status is not None:
+            data['portdetection'][self.NAME]['status']['code'] = status.value
+            log.debug('Updating status of %s to %s', self.NAME, status.value)
+
+        if status is ScanStatus.IDLE and self.scan_start is not None:
+            data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
+
+        await cfg.toucan.push_config(data, overwrite=True)

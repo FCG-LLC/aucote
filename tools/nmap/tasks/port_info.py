@@ -21,7 +21,7 @@ class NmapPortInfoTask(PortTask):
 
     """
 
-    def __init__(self, scan_only=False, *args, **kwargs):
+    def __init__(self, scanner, scan_only=False, *args, **kwargs):
         """
         Initiazlize variables.
 
@@ -35,6 +35,7 @@ class NmapPortInfoTask(PortTask):
 
         self.command = NmapBase()
         self.scan_only = scan_only
+        self.scanner = scanner
 
     def prepare_args(self):
         """
@@ -48,7 +49,7 @@ class NmapPortInfoTask(PortTask):
             '-p', str(self._port.number),
             '-sV', '-Pn',
             '--version-all',
-            '--max-rate', str(cfg['portdetection.tools.scan_rate'])
+            '--max-rate', str(cfg['portdetection.{0}.scan_rate'.format(self.scanner.NAME)])
         ]
 
         if self._port.transport_protocol == TransportProtocol.TCP:
@@ -127,7 +128,7 @@ class NmapPortInfoTask(PortTask):
         self.diff_with_last_scan()
 
         if not self.scan_only:
-            await TaskMapper(aucote=self.aucote, scan=self._scan).assign_tasks(self._port)
+            await TaskMapper(aucote=self.aucote, scan=self._scan, scanner=self.scanner).assign_tasks(self._port)
 
     def diff_with_last_scan(self):
         """

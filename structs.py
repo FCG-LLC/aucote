@@ -518,7 +518,7 @@ class PhysicalPort(SpecialPort):
     PROTOCOL = TransportProtocol.PHY
 
     def __str__(self):
-        return 'phy:{0}'.format(self.interface)
+        return '{0}:phy:{1}'.format(self.node.ip, self.interface)
 
 
 class Vulnerability(object):

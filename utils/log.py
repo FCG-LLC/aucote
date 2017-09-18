@@ -5,6 +5,8 @@ import logging as log
 from logging.handlers import RotatingFileHandler
 import sys
 
+import time
+
 _LOG_LEVEL = {
     'critical': log.CRITICAL,
     'error': log.ERROR,
@@ -26,6 +28,7 @@ async def config(cfg):
     log.getLogger().addHandler(err_handler)
     file_handler = RotatingFileHandler(cfg['file'], maxBytes=cfg['max_file_size'], backupCount=cfg['max_files'])
     formatter = log.Formatter(cfg['format'])
+    formatter.converter = time.gmtime
     file_handler.setFormatter(formatter)
     log.getLogger().addHandler(file_handler)
     log_level = _LOG_LEVEL[cfg['level']]

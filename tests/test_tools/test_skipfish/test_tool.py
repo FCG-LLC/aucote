@@ -1,5 +1,4 @@
 import ipaddress
-from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from tornado.testing import gen_test, AsyncTestCase

@@ -163,7 +163,7 @@ class NmapTool(Tool):
             str
 
         """
-        config = cfg['service.scans.useragent']
+        config = cfg['tools.common.http.useragent']
         if config:
             return "http.useragent='{0}'".format(config)
 
@@ -300,9 +300,9 @@ class NmapTool(Tool):
 
     @classmethod
     def custom_args_smb(cls):
-        domain_names = cfg['tools.aucote-active-directory.config.domain'].cfg
-        username = cfg['tools.aucote-active-directory.config.username']
-        password = cfg['tools.aucote-active-directory.config.password']
+        domain_names = cfg['tools.common.active-directory.domains'].cfg
+        username = cfg['tools.common.active-directory.username']
+        password = cfg['tools.common.active-directory.password']
 
         if not all([domain_names, username, password]):
             return ""

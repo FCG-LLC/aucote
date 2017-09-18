@@ -25,6 +25,9 @@ class AucoteTest(AsyncTestCase):
 
         self.storage = mock_storage
         self.cfg._cfg = {
+            'portdetection': {
+                'security_scans': ['tools']
+            },
             'service': {
                 'scans': {
                     'threads': 30,
@@ -231,11 +234,11 @@ class AucoteTest(AsyncTestCase):
 
         tcp_scanner.assert_called_once_with(aucote=self.aucote, as_service=True)
         udp_scanner.assert_called_once_with(aucote=self.aucote, as_service=True)
-        tools_scanner.assert_called_once_with(aucote=self.aucote)
+        tools_scanner.assert_called_once_with(aucote=self.aucote, name='tools')
         self.aucote.async_task_manager.add_crontab_task.assert_has_calls((
             call(tcp_scanner(), tcp_scanner()._scan_cron),
             call(udp_scanner(), udp_scanner()._scan_cron),
-            call(tools_scanner(), tools_scanner()._scan_cron)))
+            call(tools_scanner(), tools_scanner()._scan_cron, event='tools')))
 
     @patch('utils.kudu_queue.KuduQueue.__exit__', MagicMock(return_value=False))
     @patch('utils.kudu_queue.KuduQueue.__enter__', MagicMock(return_value=MagicMock()))

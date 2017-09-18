@@ -1,7 +1,6 @@
 # This section provides configurations related to aucote as a service
 # service:
 #   scans:
-#     useragent: <str> - User-Agent string used by Aucote scripts.
 #     storage: <str> - Path to local storage. Local storage is a SQLite3 database file.
 #     parallel_tasks: <int> - Number of parallel task to be running
 #     physical: (True|False) - Enable scanning of aucote's host physical interfaces (e.g. eth0) if True (default)
@@ -16,7 +15,6 @@
 
 service:
     scans:
-        useragent: "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
         storage: "tmp/storage.sqlite3"
         parallel_tasks: 30
         physical: False
@@ -102,11 +100,12 @@ service:
 #                    - other - scripts which aren't in any categories
 
 portdetection:
+    security_scans: ['tools_basic', 'tools_advance']
     tcp:
         scan_enabled: True
         scan_type: "LIVE"
         periodic_scan:
-            cron: "0 */2 * * *" # run every 2 hours
+            cron: "0 */4 * * *" # run every 4 hours
         live_scan:
              min_time_gap: 2h
         networks:
@@ -124,11 +123,12 @@ portdetection:
             next_scan_start: 0
             scan_start: 0
             previous_scan_duration: 0
+        scripts: []
     udp:
         scan_enabled: True
         scan_type: "LIVE"
         periodic_scan:
-            cron: "0 0 * * *" # run every 2 hours
+            cron: "0 0 * * *" # run every day at midnight
         live_scan:
              min_time_gap: 20h
         networks:
@@ -147,11 +147,12 @@ portdetection:
             next_scan_start: 0
             scan_start: 0
             previous_scan_duration: 0
-    tools:
+        scripts: []
+    tools_basic:
         scan_enabled: True
-        scan_type: "LIVE"
+        scan_type: "PERIODIC"
         periodic_scan:
-            cron: "0 22 * * *" # run every day at 22:00 UTC
+            cron: "0 22 * * 1-5" # run every monday-friday at 22:00 UTC
         live_scan:
              min_time_gap: 24h
         networks:
@@ -165,6 +166,26 @@ portdetection:
             next_scan_start: 0
             scan_start: 0
             previous_scan_duration: 0
+        scripts: [3, 4, 5, 7, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 29, 30, 32, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 57, 58, 59, 61, 62, 63, 66, 67, 68, 69, 70, 72, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 103, 104, 105, 106, 107, 108, 111, 112, 113, 115, 116, 117, 118, 120, 121, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 136, 137, 138, 139, 140, 142, 143, 144, 145, 147, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 162, 163, 164, 165, 166, 168, 169, 170, 171, 172, 173, 174, 175]
+    tools_advance:
+        scan_enabled: True
+        scan_type: "PERIODIC"
+        periodic_scan:
+            cron: "0 22 * * 6" # run every saturday at 22:00 UTC
+        live_scan:
+             min_time_gap: 24h
+        networks:
+            include: [0.0.0.0/0] # all hosts found by other scans
+            exclude: []
+        scan_rate: 50
+        scan_nodes: True
+        status:
+            code: 'IDLE'
+            previous_scan_start: 0
+            next_scan_start: 0
+            scan_start: 0
+            previous_scan_duration: 0
+        scripts: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177]
     sctp:
         scan_enabled: False
         scan_type: "LIVE"
@@ -187,10 +208,11 @@ portdetection:
             next_scan_start: 0
             scan_start: 0
             previous_scan_duration: 0
+        scripts: []
     _internal:
         port_period: 0s
         broadcast: False
-        categories: ['auth', 'exploit', 'fuzzer', 'intrusive', 'malware', 'safe', 'version', 'vuln']
+        categories: ['auth', 'exploit', 'fuzzer', 'intrusive', 'malware', 'safe', 'version', 'vuln', 'brute', 'dos']
 
 
 # In this section there is configuration related to the tools used by the aucote
@@ -221,7 +243,13 @@ portdetection:
 #         - <address/mask>
 #   common: - Contains common configuration e.g. rates
 #     rate: <int> - rate in pps for tools scan
-#
+#     active-directory: - Configuration related to active directory scans
+#       dns_servers: [<str>] - list of dns servers ips
+#       domains: [<str>] - list of domain names
+#       username: <str> - active directory username
+#       password: <str> - active directory password
+#     http: - HTTP scans related configuration
+#       useragent: <str> - User-Agent string used by Aucote scripts.
 #
 # This subsection provides app-specific options
 #
@@ -322,10 +350,12 @@ tools:
         periods: {}
         networks: []
         script_networks: {}
-        config:
-            dns_server: []
-            domain: []
-            username: ''
-            password: ''
     common:
         rate: 50
+        active-directory:
+            dns_servers: []
+            domains: []
+            username: ''
+            password: ''
+        http:
+            useragent: "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
