@@ -2,7 +2,8 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 from xml.etree import ElementTree
 
-from tools.nmap.parsers import NmapBrutParser, NmapVulnParser, NmapParser, NmapInfoParser
+from tools.nmap.parsers import NmapBrutParser, NmapVulnParser, NmapParser, NmapInfoParser, \
+    NmapHTTPWebsphereConsoleParser
 
 
 class NmapBrutParserTest(TestCase):
@@ -186,3 +187,39 @@ class NmapParserTest(TestCase):
     def test_parse_implemented(self):
         script = MagicMock()
         self.assertRaises(NotImplementedError, self.parser.parse, script)
+
+
+class NmapHTTPWebsphereConsoleParserTest(TestCase):
+    CORRECT_OUTPUT = r"""<script output="&#xa;  consoles: &#xa;    WebSphere at /ibm/console/logon.jsp?action=OK">
+</script>"""
+
+    INCORRECT_OUTPUT = r"""<script output="&#xa;  consoles: &#xa;    Unknown at /ibm/console/logon.jsp?action=OK">
+</script>"""
+
+    MIXED_OUTPUT = r"""<script output="&#xa;  consoles: &#xa;    WebSphere at /ibm/console/logon.jsp?action=OK&#xa;    Unknown at /ibm/console/logon.jsp?action=OK">
+</script>"""
+
+    def setUp(self):
+        self.parser = NmapHTTPWebsphereConsoleParser()
+
+    def test_correct(self):
+        script = ElementTree.fromstring(self.CORRECT_OUTPUT)
+        result = self.parser.parse(script)
+        expected = """consoles: 
+    WebSphere at /ibm/console/logon.jsp?action=OK"""
+
+        self.assertEqual(result, expected)
+
+    def test_incorrect(self):
+        script = ElementTree.fromstring(self.INCORRECT_OUTPUT)
+        result = self.parser.parse(script)
+
+        self.assertIsNone(result)
+
+    def test_mixed(self):
+        script = ElementTree.fromstring(self.MIXED_OUTPUT)
+        result = self.parser.parse(script)
+        expected = """consoles: 
+    WebSphere at /ibm/console/logon.jsp?action=OK"""
+
+        self.assertEqual(result, expected)

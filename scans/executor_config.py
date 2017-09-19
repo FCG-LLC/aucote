@@ -6,7 +6,7 @@ from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
 from tools.cve_search.tool import CVESearchTool
 from tools.hydra.tool import HydraTool
-from tools.nmap.parsers import NmapBrutParser, NmapInfoParser
+from tools.nmap.parsers import NmapBrutParser, NmapInfoParser, NmapHTTPWebsphereConsoleParser
 from tools.nmap.tool import NmapTool
 from tools.skipfish.tool import SkipfishTool
 from tools.whatweb.tool import WhatWebTool
@@ -67,6 +67,9 @@ EXECUTOR_CONFIG = {
                 },
                 'http-trace': {
                     'parser': NmapInfoParser
+                },
+                'http-websphere-console': {
+                    'parser': NmapHTTPWebsphereConsoleParser
                 },
                 'struts2-scan': {
                     'parser': NmapInfoParser,
