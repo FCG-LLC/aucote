@@ -4,6 +4,7 @@ For every kind of output there are different parsers.
 
 """
 import logging as log
+import re
 
 
 class NmapParser(object):
@@ -90,3 +91,27 @@ class NmapBrutParser(NmapParser):
 
         return_value = "Accounts:\n{0}\n\nHashes:\n{1}".format("\n".join(accounts), "\n".join(hashes))
         return return_value
+
+
+class NmapHTTPWebsphereConsoleParser(NmapInfoParser):
+    REGEX = re.compile("(?P<name>^.*?)( at )(?P<path>.*)")
+    UNKNOWN = "Unknown"
+
+    def _parse(self, script):
+        output = super(NmapHTTPWebsphereConsoleParser, self)._parse(script=script)
+        consoles = []
+        for line in output.split("\n"):
+            regex_match = self.REGEX.match(line)
+            if not regex_match:
+                continue
+
+            regex_result = regex_match.groupdict()
+            if regex_result.get('name', '').strip() == self.UNKNOWN:
+                continue
+
+            consoles.append(line)
+
+        if not consoles:
+            return None
+
+        return "consoles: \n{0}".format("\n".join(consoles))
