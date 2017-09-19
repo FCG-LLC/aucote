@@ -1,6 +1,7 @@
 """
 Provides time related classes and functions
 """
+import re
 from datetime import timedelta, datetime
 
 import pytz
@@ -12,6 +13,8 @@ _MARKERS = {
     'm': 'minutes',
     's': 'seconds'
 }
+
+_INT_REGEX = re.compile('^\d+$')
 
 
 def parse_period(txt):
@@ -26,6 +29,8 @@ def parse_period(txt):
 
     """
     values = {}
+    if _INT_REGEX.match(txt):
+        return int(txt)
     while txt:
         for num, marker in enumerate(txt):
             if marker in _MARKERS:

@@ -116,7 +116,7 @@ portdetection:
                 - 0-65535 # TCP: full range
             exclude: [9100]
         scan_rate: 500
-        host_timeout: 3600
+        host_timeout: 1h
         status:
             code: 'IDLE'
             previous_scan_start: 0

@@ -6,6 +6,7 @@ from aucote_cfg import cfg
 from tools.nmap.tool import NmapTool
 from tools.common.port_scan_task import PortScanTask
 from utils.exceptions import StopCommandException
+from utils.time import parse_period
 from .base import NmapBase
 
 
@@ -29,7 +30,7 @@ class PortsScan(PortScanTask):
             args.append('-6')
 
         if self.tcp:
-            args.extend(['-sS', '--host-timeout', str(cfg['portdetection.tcp.host_timeout'])])
+            args.extend(['-sS', '--host-timeout', str(parse_period(str(cfg['portdetection.tcp.host_timeout'])))])
 
         if self.udp:
             if cfg['portdetection.udp.defeat_icmp_ratelimit']:
