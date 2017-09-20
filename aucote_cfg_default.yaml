@@ -160,6 +160,7 @@ portdetection:
             exclude: []
         scan_rate: 50
         scan_nodes: True
+        name: 'Basic scan'
         status:
             code: 'IDLE'
             previous_scan_start: 0
@@ -179,6 +180,7 @@ portdetection:
             exclude: []
         scan_rate: 50
         scan_nodes: True
+        name: 'Advanced scan'
         status:
             code: 'IDLE'
             previous_scan_start: 0
