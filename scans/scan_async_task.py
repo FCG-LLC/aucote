@@ -267,13 +267,17 @@ class ScanAsyncTask(object):
             'portdetection': {
                 self.NAME: {
                     'status': {
-                        'previous_scan_start': self.previous_scan,
                         'next_scan_start': self.next_scan,
-                        'scan_start': self.scan_start if self.scan_start is not None else 0,
                     }
                 }
             }
         }
+
+        if self.scan_start:
+            previous_scan_start = cfg['portdetection.{0}.status.scan_start'.format(self.NAME)]
+            if previous_scan_start != self.scan_start:
+                data['portdetection'][self.NAME]['status']['previous_scan_start'] = previous_scan_start
+            data['portdetection'][self.NAME]['status']['scan_start'] = self.scan_start
 
         if status is not None:
             data['portdetection'][self.NAME]['status']['code'] = status.value

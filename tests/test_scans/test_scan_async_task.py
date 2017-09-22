@@ -551,6 +551,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
         cfg.toucan.push_config.return_value = Future()
         cfg.toucan.push_config.return_value.set_result(MagicMock())
 
+        cfg.toucan.get.return_value = Future()
+        cfg.toucan.get.return_value.set_result({'portdetection.test_name.status.scan_start': 23})
+
         self.thread.scan_start = 17
         self.thread.NAME = 'test_name'
         await self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
@@ -559,7 +562,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
             'portdetection': {
                 'test_name': {
                     'status': {
-                        'previous_scan_start': 57,
+                        'previous_scan_start': 23,
                         'next_scan_start': 75,
                         'scan_start': 17,
                         'code': "IN PROGRESS"
@@ -580,6 +583,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
         cfg.toucan.push_config.return_value = Future()
         cfg.toucan.push_config.return_value.set_result(MagicMock())
 
+        cfg.toucan.get.return_value = Future()
+        cfg.toucan.get.return_value.set_result({'portdetection.test_name.status.scan_start': 23})
+
         self.thread.scan_start = 17
         self.thread.NAME = 'test_name'
         await self.thread.update_scan_status(ScanStatus.IDLE)
@@ -588,7 +594,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
             'portdetection': {
                 'test_name': {
                     'status': {
-                        'previous_scan_start': 57,
+                        'previous_scan_start': 23,
                         'next_scan_start': 75,
                         'scan_start': 17,
                         'previous_scan_duration': 283,
