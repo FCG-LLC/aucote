@@ -148,6 +148,9 @@ class Toucan(object):
         elif isinstance(data, list):
             return_value = {}
             for row in data:
+                if not row['key']:
+                    log.debug("No key: %s", row)
+                    continue
                 key = self._get_dot_separated_key(row['key'])
 
                 if row['status'] != "OK":
