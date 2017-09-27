@@ -1,14 +1,8 @@
-import ipaddress
 import json
 from unittest.mock import MagicMock, patch
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 from api.main_handler import MainHandler
-from fixtures.exploits import Exploit
-from scans.executor import Executor
-from structs import Port, Node
-from tools.base import Tool
-from tools.common.port_task import PortTask
 from utils import Config
 
 
