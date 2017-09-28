@@ -183,7 +183,7 @@ class ScanAsyncTask(object):
 
         """
 
-        return croniter(self._scan_cron(), time.time()).get_prev()
+        return int(croniter(self._scan_cron(), time.time()).get_prev())
 
     @property
     def next_scan(self):
@@ -194,7 +194,7 @@ class ScanAsyncTask(object):
             float
 
         """
-        return croniter(self._scan_cron(), time.time()).get_next()
+        return int(croniter(self._scan_cron(), time.time()).get_next())
 
     def _scan_interval(self):
         """
@@ -260,30 +260,39 @@ class ScanAsyncTask(object):
             None
 
         """
-        if not cfg.toucan:
+        if not cfg.toucan or cfg['portdetection.{name}.scan_type'.format(name=self.NAME)] == ScanType.LIVE.value:
             return
+
+        current_status = cfg.get('portdetection.{0}.status.*'.format(self.NAME), cache=False)
 
         data = {
             'portdetection': {
                 self.NAME: {
                     'status': {
-                        'next_scan_start': self.next_scan,
                     }
                 }
             }
         }
 
+        log.debug("Current status for %s is %s", self.NAME, current_status)
+        next_scan = round(current_status['next_scan_start'])
+        if next_scan != self.next_scan:
+            data['portdetection'][self.NAME]['status']['next_scan_start'] = self.next_scan
+
         if self.scan_start:
-            previous_scan_start = cfg['portdetection.{0}.status.scan_start'.format(self.NAME)]
+            previous_scan_start = current_status['scan_start']
             if previous_scan_start != self.scan_start:
                 data['portdetection'][self.NAME]['status']['previous_scan_start'] = previous_scan_start
             data['portdetection'][self.NAME]['status']['scan_start'] = self.scan_start
 
         if status is not None:
-            data['portdetection'][self.NAME]['status']['code'] = status.value
-            log.debug('Updating status of %s to %s', self.NAME, status.value)
+            current_status_code = current_status['code']
+            if current_status_code != status.value:
+                data['portdetection'][self.NAME]['status']['code'] = status.value
 
         if status is ScanStatus.IDLE and self.scan_start is not None:
             data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
 
-        await cfg.toucan.push_config(data, overwrite=True)
+        if data['portdetection'][self.NAME]['status']:
+            log.debug("Update toucan by %s with %s", self.NAME, data)
+            await cfg.toucan.push_config(data, overwrite=True)
