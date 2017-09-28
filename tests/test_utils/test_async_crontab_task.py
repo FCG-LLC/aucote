@@ -104,12 +104,13 @@ class AsyncCrontabTaskTest(AsyncTestCase):
         yield self.task()
         self.assertFalse(self.task._prepare_next_iteration.called)
 
+    @patch('utils.async_crontab_task.time.time', MagicMock(return_value=305))
     def test_prepare_next_iteration(self):
         self.task._is_running = True
         self.task._prepare_next_iteration()
 
         self.assertFalse(self.task._is_running)
-        self.task._loop.call_later.assert_called_once_with(1, self.task)
+        self.task._loop.call_later.assert_called_once_with(55, self.task)
 
     def test_cron_callable(self):
         self.task._cron = MagicMock()

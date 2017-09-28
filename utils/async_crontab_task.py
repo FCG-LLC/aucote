@@ -138,4 +138,4 @@ class AsyncCrontabTask(object):
 
     def _prepare_next_iteration(self):
         self._is_running = False
-        self._loop.call_later(1, self)
+        self._loop.call_later(60 - int(time.time()) % 60, self)
