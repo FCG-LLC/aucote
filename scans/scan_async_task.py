@@ -274,7 +274,7 @@ class ScanAsyncTask(object):
             }
         }
 
-        log.debug("Current status for %s is %s", self.NAME, current_status)
+        log.debug("Current status for %s is %s", self.NAME, current_status.cfg)
         next_scan = round(current_status['next_scan_start'])
         if next_scan != self.next_scan:
             data['portdetection'][self.NAME]['status']['next_scan_start'] = self.next_scan
@@ -283,7 +283,7 @@ class ScanAsyncTask(object):
             previous_scan_start = current_status['scan_start']
             if previous_scan_start != self.scan_start:
                 data['portdetection'][self.NAME]['status']['previous_scan_start'] = previous_scan_start
-            data['portdetection'][self.NAME]['status']['scan_start'] = self.scan_start
+                data['portdetection'][self.NAME]['status']['scan_start'] = self.scan_start
 
         if status is not None:
             current_status_code = current_status['code']
