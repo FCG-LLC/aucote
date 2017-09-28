@@ -43,7 +43,7 @@ class Config:
             return item in self._cfg
         return False
 
-    def get(self, key):
+    def get(self, key, cache=True):
         """
         Get configuration value basing on key.
 
@@ -62,7 +62,7 @@ class Config:
                 return_value = self._get(key)
 
             elif self.toucan:
-                if key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
+                if cache and key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
                     return_value = self._get(key)
 
                 elif self.toucan.is_special(key):
