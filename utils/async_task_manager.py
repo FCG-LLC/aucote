@@ -139,6 +139,7 @@ class AsyncTaskManager(object):
         async for item in self._tasks:
             try:
                 log.debug("Worker %s: starting %s", number, item)
+                self._task_workers[number] = item
                 await item()
             except:
                 log.exception("Worker %s: exception occurred", number)
@@ -146,6 +147,7 @@ class AsyncTaskManager(object):
                 log.debug("Worker %s: %s finished", number, item)
                 self._tasks.task_done()
                 log.debug("Tasks left in queue: %s", self.unfinished_tasks)
+                self._task_workers[number] = None
         log.info("Closing worker %s", number)
 
     def add_task(self, task):
