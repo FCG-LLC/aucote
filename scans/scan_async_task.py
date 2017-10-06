@@ -292,4 +292,4 @@ class ScanAsyncTask(object):
 
         if data['portdetection'][self.NAME]['status']:
             log.debug("Update toucan by %s with %s", self.NAME, data)
-            await cfg.toucan.push_config(data, overwrite=True)
+            await cfg.toucan.push_config(data, overwrite=True, keep_history=False)

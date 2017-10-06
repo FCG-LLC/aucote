@@ -273,7 +273,7 @@ class TestToucan(AsyncTestCase):
         self.toucan.get.return_value.set_result({})
 
         await self.toucan.push_config(config, overwrite=False)
-        self.toucan.put.assert_called_once_with("*", {'test.key.test_key': 'test_value'})
+        self.toucan.put.assert_called_once_with("*", {'test.key.test_key': 'test_value'}, keep_history=True)
 
     @gen_test
     async def test_push_config_non_exists_exception_without_overwrite(self):
@@ -289,7 +289,7 @@ class TestToucan(AsyncTestCase):
         self.toucan.get = MagicMock(side_effect=ToucanUnsetException)
 
         await self.toucan.push_config(config, overwrite=False)
-        self.toucan.put.assert_called_once_with("*", {'test.key.test_key': 'test_value'})
+        self.toucan.put.assert_called_once_with("*", {'test.key.test_key': 'test_value'}, keep_history=True)
 
     @gen_test
     async def test_push_config_with_overwrite(self):
@@ -307,8 +307,8 @@ class TestToucan(AsyncTestCase):
         self.toucan.put = MagicMock(return_value=Future())
         self.toucan.put.return_value.set_result(MagicMock())
 
-        await self.toucan.push_config(config, overwrite=True)
-        self.toucan.put.assert_called_once_with("*", put_json)
+        await self.toucan.push_config(config, overwrite=True, keep_history=False)
+        self.toucan.put.assert_called_once_with("*", put_json, keep_history=False)
 
     def test_prepare_config(self):
         config = {
@@ -344,7 +344,8 @@ class TestToucan(AsyncTestCase):
 
         expected_put_data = [{
             'key': '/aucote/test/key',
-            'value': 'test_value'
+            'value': 'test_value',
+            'keep_history': True
         }]
 
         self.toucan._http_client.put.return_value = Future()

@@ -80,13 +80,14 @@ class Toucan(object):
 
     @retry_if_fail(min_retry_time=min_retry_time, max_retry_time=max_retry_time, max_retries=max_retry_count,
                    exceptions=ToucanConnectionException)
-    async def put(self, key, values):
+    async def put(self, key, values, keep_history=True):
         """
         Put config into toucan
 
         Args:
             key (str): Key in dot separated format
             values (object):
+            keep_history (bool): Define if value should have history or no
 
         Returns:
             mixed - inserted value if success
@@ -100,13 +101,15 @@ class Toucan(object):
         if key != "*":
             data = {
                 "value": values,
+                "keep_history": keep_history
             }
         elif isinstance(values, dict):
             data = []
             for multikey, multivalue in values.items():
                 data.append({
                     'key': self._get_slash_separated_key(multikey),
-                    'value': multivalue
+                    'value': multivalue,
+                    'keep_history': keep_history
                 })
         else:
             raise ToucanException("Wrong value for special endpoint ({0})".format(key))
@@ -163,7 +166,7 @@ class Toucan(object):
         else:
             raise ToucanException(key)
 
-    async def push_config(self, config, prefix='', overwrite=False):
+    async def push_config(self, config, prefix='', overwrite=False, keep_history=True):
         """
         Push dict config to the toucan
 
@@ -178,7 +181,7 @@ class Toucan(object):
         """
         parsed_config = self.prepare_config(config, prefix)
         if overwrite:
-            await self.put("*", parsed_config)
+            await self.put("*", parsed_config, keep_history=keep_history)
             return
 
         try:
@@ -191,7 +194,7 @@ class Toucan(object):
                 del parsed_config[key]
 
         if parsed_config:
-            await self.put("*", parsed_config)
+            await self.put("*", parsed_config, keep_history=keep_history)
 
     def prepare_config(self, config, prefix=''):
         """
