@@ -535,6 +535,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertTrue(self.thread.is_exploit_allowed(exploit))
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_is_exploit_allowed_allowed_string(self, cfg):
+        self.thread.NAME = 'test_name'
+        cfg['portdetection.test_name.scripts'] = ["1"]
+
+        exploit = Exploit(exploit_id=1)
+        self.assertTrue(self.thread.is_exploit_allowed(exploit))
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_is_exploit_allowed_not_allowed(self, cfg):
         self.thread.NAME = 'test_name'
         cfg['portdetection.test_name.scripts'] = []

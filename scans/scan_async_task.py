@@ -233,8 +233,8 @@ class ScanAsyncTask(object):
             bool
 
         """
-        ids = cfg['portdetection.{0}.scripts'.format(self.NAME)]
-        if exploit.id in ids.cfg:
+        ids = map(int, cfg['portdetection.{0}.scripts'.format(self.NAME)])
+        if exploit.id in ids:
             return True
         return False
 
