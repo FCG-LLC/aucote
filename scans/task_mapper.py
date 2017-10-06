@@ -47,7 +47,7 @@ class TaskMapper(object):
             if not cfg['tools.{0}.enable'.format(app)]:
                 continue
 
-            log.info("Found %i exploits (%s) for %s", len(exploits), app)
+            log.info("Found %i exploits (%s) for %s", len(exploits), app, port)
             periods = cfg.get('tools.{0}.periods.*'.format(app)).cfg
 
             scans = self.storage.get_security_scan_info(port=port, app=app, scan=self._scan)
