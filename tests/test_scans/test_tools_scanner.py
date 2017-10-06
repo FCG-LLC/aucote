@@ -63,7 +63,7 @@ class ToolsScannerTest(AsyncTestCase):
             Port(node=nodes[1], number=14, transport_protocol=TransportProtocol.UDP),
             Port(node=nodes[0], number=13, transport_protocol=TransportProtocol.UDP),
         ]
-        expected = ports[:2]
+        expected = list(set(ports))
         self.task.storage.get_ports_by_nodes.return_value = ports
 
         result = self.task.get_ports_for_scan(nodes, timestamp=100)
