@@ -4,7 +4,7 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from scans.tools_scanner import ToolsScanner
-from structs import TransportProtocol
+from structs import TransportProtocol, Port
 from utils import Config
 
 
@@ -59,14 +59,15 @@ class ToolsScannerTest(AsyncTestCase):
     def test_get_ports_for_scan(self):
         nodes = [MagicMock(), MagicMock(), MagicMock()]
         ports = [
-            MagicMock(),
-            MagicMock(),
-            MagicMock()
+            Port(node=nodes[0], number=13, transport_protocol=TransportProtocol.UDP),
+            Port(node=nodes[1], number=14, transport_protocol=TransportProtocol.UDP),
+            Port(node=nodes[0], number=13, transport_protocol=TransportProtocol.UDP),
         ]
+        expected = list(set(ports))
         self.task.storage.get_ports_by_nodes.return_value = ports
 
         result = self.task.get_ports_for_scan(nodes, timestamp=100)
 
-        self.assertEqual(result, ports)
+        self.assertCountEqual(result, expected)
         self.task.storage.get_ports_by_nodes.assert_called_once_with(nodes=nodes, timestamp=100, protocol=None,
                                                                      portdetection_only=True)

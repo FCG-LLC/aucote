@@ -358,8 +358,9 @@ class ScanAsyncTaskTest(AsyncTestCase):
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
         node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
+        node_4 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)  # This same like node_3 for testing uniqueness
 
-        nodes = [node_1, node_2, node_3]
+        nodes = [node_1, node_2, node_3, node_4]
         future = Future()
         future.set_result(nodes)
         mock_get_nodes.return_value = future
@@ -530,6 +531,14 @@ class ScanAsyncTaskTest(AsyncTestCase):
     def test_is_exploit_allowed_allowed(self, cfg):
         self.thread.NAME = 'test_name'
         cfg['portdetection.test_name.scripts'] = [1]
+
+        exploit = Exploit(exploit_id=1)
+        self.assertTrue(self.thread.is_exploit_allowed(exploit))
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    def test_is_exploit_allowed_allowed_string(self, cfg):
+        self.thread.NAME = 'test_name'
+        cfg['portdetection.test_name.scripts'] = ["1"]
 
         exploit = Exploit(exploit_id=1)
         self.assertTrue(self.thread.is_exploit_allowed(exploit))
