@@ -47,7 +47,7 @@ class TaskMapper(object):
             if not cfg['tools.{0}.enable'.format(app)]:
                 continue
 
-            log.info("Found %i exploits (%s) for", len(exploits), app)
+            log.info("Found %i exploits (%s) for %s", len(exploits), app)
             periods = cfg.get('tools.{0}.periods.*'.format(app)).cfg
 
             scans = self.storage.get_security_scan_info(port=port, app=app, scan=self._scan)
@@ -112,7 +112,7 @@ class TaskMapper(object):
             networks = app_networks
 
         if networks is not None and node.ip.exploded not in IPSet(networks):
-            log.debug("Exploit %s is not allowed by networks(%s) configuration", str(exploit), networks)
+            log.debug("Exploit %s is not allowed by networks (%s) configuration", str(exploit), networks)
             return False
         return True
 
