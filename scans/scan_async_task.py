@@ -69,11 +69,7 @@ class ScanAsyncTask(object):
             list
 
         """
-        try:
-            nodes = await self.topdis.get_nodes()
-        except (HTTPError, ConnectionError) as exception:
-            log.error('Cannot connect to topdis: %s, %s', self.topdis.api, exception)
-            return []
+        nodes = await self.topdis.get_nodes()
 
         if filter_out_storage:
             storage_nodes = self.storage.get_nodes(pasttime=self._scan_interval(), timestamp=timestamp, scan=scan)

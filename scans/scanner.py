@@ -11,6 +11,8 @@ import time
 
 import netifaces
 
+from tornado.httpclient import HTTPError
+
 from aucote_cfg import cfg
 from database.serializer import Serializer
 from scans.executor import Executor
@@ -50,13 +52,13 @@ class Scanner(ScanAsyncTask):
             log.info("Starting port scan")
 
             scan = Scan(self.scan_start, protocol=self.PROTOCOL, scanner=self.NAME)
-            self.storage.save_scan(scan)
 
             nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, scan=scan)
             if not nodes:
                 log.warning("List of nodes is empty")
                 self.scan_start = None
                 return
+            self.storage.save_scan(scan)
             log.debug("Found %i nodes for potential scanning", len(nodes))
             await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
@@ -70,6 +72,8 @@ class Scanner(ScanAsyncTask):
             scan.end = time.time()
             self.storage.update_scan(scan)
             self.diff_with_last_scan(scan)
+        except (HTTPError, ConnectionError) as exception:
+            log.error('Cannot connect to topdis: %s, %s', self.topdis.api, exception)
         finally:
             await self._clean_scan()
 

@@ -92,21 +92,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.assertListEqual(result, expected)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
-    @patch('scans.scan_async_task.parse_period', MagicMock(return_value=5))
-    @gen_test
-    async def test_get_nodes_for_scanning_topdis_error(self, cfg):
-        cfg._cfg = self.cfg
-
-        self.aucote.topdis.get_nodes.side_effect = HTTPError(code=500)
-
-        scan = Scan()
-
-        result = await self.thread._get_nodes_for_scanning(scan)
-        expected = []
-
-        self.assertListEqual(result, expected)
-
-    @patch('scans.scan_async_task.cfg', new_callable=Config)
     def test_get_networks_list(self, cfg):
         cfg._cfg = {
             'portdetection': {

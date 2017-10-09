@@ -157,6 +157,14 @@ class ScannerTest(AsyncTestCase):
         self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True, scan=scan(),
                                                                     timestamp=None)
 
+    @gen_test
+    async def test_periodical_scan_with_topdis_error(self):
+        self.thread._get_nodes_for_scanning = MagicMock(side_effect=ConnectionError)
+
+        await self.thread.run()
+
+        self.assertFalse(self.thread.storage.save_scan.called)
+
     def test_shutdown_condition(self):
         self.assertEqual(self.thread.shutdown_condition, self.thread._shutdown_condition)
 
