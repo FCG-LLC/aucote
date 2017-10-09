@@ -87,7 +87,7 @@ class Toucan(object):
         Args:
             key (str): Key in dot separated format
             values (object):
-            keep_history (bool): Define if value should have history or no
+            keep_history(bool): determine if Toucan should keep the history of changes
 
         Returns:
             mixed - inserted value if success
@@ -174,6 +174,7 @@ class Toucan(object):
             config(dict):
             prefix(str): base key
             overwrite(bool): determine if config should be overwrite or not
+            keep_history(bool): determine if Toucan should keep the history of changes
 
         Returns:
             None
