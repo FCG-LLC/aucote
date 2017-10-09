@@ -583,7 +583,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
             }
         }
 
-        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True)
+        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True, keep_history=False)
 
     @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
     @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
@@ -619,4 +619,4 @@ class ScanAsyncTaskTest(AsyncTestCase):
             }
         }
 
-        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True)
+        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True, keep_history=False)
