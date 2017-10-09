@@ -9,7 +9,6 @@ from utils.async_task_manager import AsyncTaskManager
 
 
 class ScannerTest(AsyncTestCase):
-    @patch('scans.scanner.Scanner._get_topdis_nodes', MagicMock(return_value=[]))
     @patch('scans.scanner.cfg', new_callable=Config)
     def setUp(self, cfg):
         super(ScannerTest, self).setUp()

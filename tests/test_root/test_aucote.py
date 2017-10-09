@@ -53,7 +53,13 @@ class AucoteTest(AsyncTestCase):
                     'filename': None
                 }
             },
-            'config_filename': 'test'
+            'config_filename': 'test',
+            'topdis': {
+                'api': {
+                    'host': 'localhost',
+                    'port': '1234'
+                }
+            }
         }
         self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=MagicMock())
         self.aucote.ioloop = MagicMock()
