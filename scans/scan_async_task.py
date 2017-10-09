@@ -14,7 +14,7 @@ from netaddr import IPSet
 
 from aucote_cfg import cfg
 from structs import Node, Scan, ScanType, TopisOSDiscoveryType, Service, CPEType, ScanStatus
-from utils.http_client import HTTPClient
+from utils.http_client import HTTPClient, retry_if_fail
 from utils.time import parse_period, parse_time_to_timestamp
 
 
@@ -26,6 +26,10 @@ class ScanAsyncTask(object):
     LIVE_SCAN_CRON = '* * * * *'
     PROTOCOL = None
     NAME = None
+
+    TOPDIS_MIN_TIME = 5
+    TOPDIS_MAX_TIME = 30
+    TOPDIS_RETRIES = 5
 
     def __init__(self, aucote):
         self._current_scan = []
@@ -56,18 +60,14 @@ class ScanAsyncTask(object):
         return self._shutdown_condition
 
     @classmethod
+    @retry_if_fail(TOPDIS_MIN_TIME, TOPDIS_MAX_TIME, TOPDIS_RETRIES, HTTPError)
     async def _get_topdis_nodes(cls):
         """
         Get nodes from todis application
 
         """
         url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg['topdis.api.host'], cfg['topdis.api.port'])
-        try:
-            resource = await HTTPClient.instance().get(url)
-        except (HTTPError, ConnectionError) as exception:
-            log.error('Cannot connect to topdis: %s:%s, %s', cfg['topdis.api.host'], cfg['topdis.api.port'],
-                      str(exception))
-            return []
+        resource = await HTTPClient.instance().get(url)
 
         nodes_cfg = json.loads(resource.body)
 
