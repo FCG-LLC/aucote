@@ -3,7 +3,6 @@ Toucan is centralized node manager. Aucote uses it to obtain user configuration.
 
 """
 import logging as log
-import time
 import ujson
 from tornado.httpclient import HTTPError
 

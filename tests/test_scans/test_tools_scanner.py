@@ -56,6 +56,15 @@ class ToolsScannerTest(AsyncTestCase):
                                               scanner=self.task)
         self.task.get_ports_for_scan.assert_called_once_with(nodes, timestamp=self.task.get_last_scan_start())
 
+    @gen_test
+    async def test_run_disable_nodes_topdis_error(self):
+        self.task._get_nodes_for_scanning = MagicMock(side_effect=ConnectionError)
+        self.task.get_last_scan_start = MagicMock()
+
+        await self.task.run()
+
+        self.assertFalse(self.task.storage.save_scan.called)
+
     def test_get_ports_for_scan(self):
         nodes = [MagicMock(), MagicMock(), MagicMock()]
         ports = [

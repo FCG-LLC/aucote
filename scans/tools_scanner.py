@@ -7,6 +7,7 @@ import logging as log
 
 import time
 from croniter import croniter
+from tornado.httpclient import HTTPError
 
 from aucote_cfg import cfg
 from scans.executor import Executor
@@ -42,9 +43,9 @@ class ToolsScanner(ScanAsyncTask):
             last_scan_start = self.get_last_scan_start()
 
             scan = Scan(time.time(), protocol=self.PROTOCOL, scanner=self.NAME)
-            self.storage.save_scan(scan)
 
             nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, scan=scan, filter_out_storage=False)
+            self.storage.save_scan(scan)
             self.storage.save_nodes(nodes, scan=scan)
 
             ports = self.get_ports_for_scan(nodes, timestamp=last_scan_start)
@@ -54,6 +55,8 @@ class ToolsScanner(ScanAsyncTask):
 
             scan.end = time.time()
             self.storage.update_scan(scan)
+        except (HTTPError, ConnectionError) as exception:
+            log.error('Cannot connect to topdis: %s, %s', self.topdis.api, exception)
         finally:
             await self._clean_scan()
 

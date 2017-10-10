@@ -24,6 +24,7 @@ from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
 from utils.kudu_queue import KuduQueue
+from utils.topdis import Topdis
 from utils.web_server import WebServer
 from database.serializer import Serializer
 from aucote_cfg import cfg, load as cfg_load
@@ -120,6 +121,7 @@ class Aucote(object):
         self._storage = Storage(filename=cfg['service.scans.storage'])
 
         self.ioloop = IOLoop.current()
+        self.topdis = Topdis(cfg['topdis.api.host'], cfg['topdis.api.port'])
         self.async_task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
         self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'])
         self.scanners = []

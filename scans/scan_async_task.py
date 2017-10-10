@@ -2,20 +2,17 @@
 This module contains class responsible scanning tasks.
 
 """
-import ipaddress
 import logging as log
 import time
 from tornado.httpclient import HTTPError
 from tornado.locks import Event
-import ujson as json
 
 from croniter import croniter
 from netaddr import IPSet
 
 from aucote_cfg import cfg
-from structs import Node, Scan, ScanType, TopisOSDiscoveryType, Service, CPEType, ScanStatus
-from utils.http_client import HTTPClient
-from utils.time import parse_period, parse_time_to_timestamp
+from structs import ScanType, ScanStatus
+from utils.time import parse_period
 
 
 class ScanAsyncTask(object):
@@ -26,6 +23,10 @@ class ScanAsyncTask(object):
     LIVE_SCAN_CRON = '* * * * *'
     PROTOCOL = None
     NAME = None
+
+    TOPDIS_MIN_TIME = 5
+    TOPDIS_MAX_TIME = 30
+    TOPDIS_RETRIES = 5
 
     def __init__(self, aucote):
         self._current_scan = []
@@ -55,46 +56,6 @@ class ScanAsyncTask(object):
         """
         return self._shutdown_condition
 
-    @classmethod
-    async def _get_topdis_nodes(cls):
-        """
-        Get nodes from todis application
-
-        """
-        url = 'http://%s:%s/api/v1/nodes?ip=t' % (cfg['topdis.api.host'], cfg['topdis.api.port'])
-        try:
-            resource = await HTTPClient.instance().get(url)
-        except (HTTPError, ConnectionError) as exception:
-            log.error('Cannot connect to topdis: %s:%s, %s', cfg['topdis.api.host'], cfg['topdis.api.port'],
-                      str(exception))
-            return []
-
-        nodes_cfg = json.loads(resource.body)
-
-        timestamp = parse_time_to_timestamp(nodes_cfg['meta']['requestTime'])
-        nodes = []
-        for node_struct in nodes_cfg['nodes']:
-            for node_ip in node_struct['ips']:
-                node = Node(ip=ipaddress.ip_address(node_ip), node_id=node_struct['id'])
-                node.name = node_struct['displayName']
-                node.scan = Scan(start=timestamp)
-
-                software = node_struct.get('software', {})
-                os = software.get('os', {})
-
-                if os.get('discoveryType') in (TopisOSDiscoveryType.DIRECT.value,):
-                    node.os.name, node.os.version = os.get('name'), os.get('version')
-
-                    try:
-                        node.os.cpe = Service.build_cpe(product=node.os.name, version=node.os.version, part=CPEType.OS)
-                    except:
-                        node.os.cpe = None
-
-                nodes.append(node)
-
-        log.debug('Got %i nodes from topdis', len(nodes))
-        return nodes
-
     async def _get_nodes_for_scanning(self, scan, timestamp=None, filter_out_storage=True):
         """
         Get nodes for scan since timestamp.
@@ -108,7 +69,7 @@ class ScanAsyncTask(object):
             list
 
         """
-        nodes = await self._get_topdis_nodes()
+        nodes = await self.topdis.get_nodes()
 
         if filter_out_storage:
             storage_nodes = self.storage.get_nodes(pasttime=self._scan_interval(), timestamp=timestamp, scan=scan)
@@ -293,3 +254,14 @@ class ScanAsyncTask(object):
         if data['portdetection'][self.NAME]['status']:
             log.debug("Update toucan by %s with %s", self.NAME, data)
             await cfg.toucan.push_config(data, overwrite=True, keep_history=False)
+
+    @property
+    def topdis(self):
+        """
+        Topdis API object
+
+        Returns:
+            Topdis
+
+        """
+        return self.aucote.topdis
