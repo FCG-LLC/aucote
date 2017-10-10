@@ -20,7 +20,7 @@ class Topdis(object):
 
     """
     min_retry_time = 5
-    max_retry_time = 300
+    max_retry_time = 30
     max_retry_count = 20
 
     def __init__(self, hostname, port):
