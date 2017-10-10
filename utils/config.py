@@ -171,7 +171,7 @@ class Config:
             defaults = {}
 
         defaults = self._simplify_defaults(defaults)
-        cfg = yaml.load(open(file_name, 'r'))
+        cfg = yaml.safe_load(open(file_name, 'r'))
         self.push_config(self._recursive_merge(cfg, defaults), immutable=immutable)
         self['config_filename'] = file_name
 
