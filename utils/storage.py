@@ -18,8 +18,8 @@ class Storage(DbInterface):
     This class provides local storage funxtionality
 
     """
-    SAVE_NODE_QUERY = "INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)"
-    SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) "\
+    SAVE_NODE_QUERY = "INSERT OR REPLACE INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)"
+    SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports_scans (scan_id, node_id, node_ip, port, port_protocol, time) "\
                       "VALUES (?, ?, ?, ?, ?, ?)"
     SAVE_SCAN_QUERY = "INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)"
     UPDATE_SCAN_END_QUERY = "UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) "\
@@ -42,10 +42,10 @@ class Storage(DbInterface):
                              "vulnerability_subid, cve, cvss, output, time, ROWID FROM vulnerabilities WHERE node_id=?"\
                              " AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"\
                              " AND vulnerability_id=? AND scan_id=?"
-    SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? " \
-                   "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
+    SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes_scans INNER JOIN scans ON scan_id = scans.ROWID WHERE" \
+                   " time>? AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
     SELECT_SCANS_BY_NODE = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans "\
-                           "LEFT JOIN nodes ON scans.ROWID = nodes.scan_id WHERE node_id=? AND node_ip=? "\
+                           "LEFT JOIN nodes_scans ON scans.ROWID = nodes_scans.scan_id WHERE node_id=? AND node_ip=? "\
                            " AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"\
                            "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
     SELECT_SCANS_BY_SEC_SCAN = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans " \
@@ -53,11 +53,11 @@ class Storage(DbInterface):
                                "node_ip=? AND port_number=? AND (port_protocol=? OR (? IS NULL " \
                                "AND port_protocol IS NULL))AND exploit_id=? AND exploit_app=? AND exploit_name=?" \
                                "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
-    SELECT_SCAN_NODES = "SELECT node_id, node_ip, time, scan_id FROM nodes WHERE scan_id=?"
-    SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN scans ON "\
+    SELECT_SCAN_NODES = "SELECT node_id, node_ip, time, scan_id FROM nodes_scans WHERE scan_id=?"
+    SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans INNER JOIN scans ON "\
                    "scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND "\
                    "scans.protocol IS NULL)) AND scans.scanner_name=?"
-    SELECT_PORTS_BY_ID = "SELECT node_id, node_ip, port, port_protocol, time FROM ports WHERE ROWID=?"
+    SELECT_PORTS_BY_ID = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans WHERE ROWID=?"
     SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
                    "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
                    "LIMIT {limit} OFFSET {offset}"
@@ -69,28 +69,28 @@ class Storage(DbInterface):
                             "scan_id=scans.ROWID WHERE exploit_app=? AND node_id=? AND node_ip=? "\
                             "AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? "\
                             "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
-    SELECT_PORTS_BY_NODE_AND_SCAN = "SELECT node_id, node_ip, port, port_protocol, time, ROWID FROM ports where "\
+    SELECT_PORTS_BY_NODE_AND_SCAN = "SELECT node_id, node_ip, port, port_protocol, time, ROWID FROM ports_scans where "\
                                     "node_id=? AND node_ip=? AND scan_id=?"
-    SELECT_PORTS_BY_NODE = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? "\
+    SELECT_PORTS_BY_NODE = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans where node_id=? "\
                            "AND node_ip=? AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"
-    SELECT_PORTS_BY_NODE_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? "\
-                                     "AND node_ip=? AND time > ?"
-    SELECT_PORTS_BY_NODES = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where ({where}) " \
+    SELECT_PORTS_BY_NODE_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans where"\
+                                     " node_id=? AND node_ip=? AND time > ?"
+    SELECT_PORTS_BY_NODES = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans where ({where}) " \
                             "AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"
-    SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where ({where}) "\
-                                      "AND time > ?"
-    SELECT_PORTS_BY_NODES_PORTDETECTION = "SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN " \
-                                          "scans ON scan_id = scans.ROWID  where ({where}) AND time > ? AND " \
-                                          "(scans.scanner_name=? or scans.scanner_name=?)"
+    SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans where"\
+                                      " ({where}) AND time > ?"
+    SELECT_PORTS_BY_NODES_PORTDETECTION = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans" \
+                                          " INNER JOIN scans ON scan_id = scans.ROWID  where ({where}) AND time > ?" \
+                                          " AND (scans.scanner_name=? or scans.scanner_name=?)"
     CLEAR_SECURITY_SCANS = "DELETE FROM security_scans WHERE sec_scan_start >= sec_scan_end OR sec_scan_start IS NULL "\
                            "OR sec_scan_end IS NULL"
     CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, " \
                                   "exploit_app text, exploit_name text, node_id int, node_ip text, port_protocol int, "\
                                   "port_number int, sec_scan_start float, sec_scan_end float, PRIMARY KEY (scan_id, "\
                                   "exploit_id, node_id, node_ip, port_protocol, port_number))"
-    CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports (scan_id int, node_id int, node_ip text, port int, " \
+    CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports_scans (scan_id int, node_id int, node_ip text, port int, " \
                          "port_protocol int, time int, primary key (scan_id, node_id, node_ip, port, port_protocol))"
-    CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes(scan_id int, node_id int, node_ip text, time int, " \
+    CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes_scans(scan_id int, node_id int, node_ip text, time int, " \
                          "primary key (scan_id, node_id, node_ip))"
     CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
                          "scan_end int, UNIQUE (protocol, scanner_name, scan_start))"
