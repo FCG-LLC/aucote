@@ -38,7 +38,7 @@ function check_status {
 set_git_status pending "${BUILD_URL}" "Status checks executed" "status checks"
 
 check_status .ci/unit_tests.sh "${BUILD_URL}/testReport/" "Performs unit tests" "unit tests" || { EXIT_VALUE=1; echo "UNIT TESTS FAILED"; }
-check_status .ci/security.sh "${BUILD_URL}/console" "Checks code security" "code security" || { EXIT_VALUE=1; echo "SECURITY CHECKS FAILED"; }
+check_status .ci/security.sh "${BUILD_URL}/console" "Checks code security" "code security"
 check_status .ci/pylint.sh "${BUILD_URL}/testReport/" "Checks code quality" "code quality"
 
 set_git_status success "${BUILD_URL}" "Status checks executed" "status checks"
