@@ -2,7 +2,7 @@
 Provides set of common parsers
 
 """
-from xml.etree import ElementTree
+from defusedxml import ElementTree
 
 from utils.exceptions import NonXMLOutputException
 
