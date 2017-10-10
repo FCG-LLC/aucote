@@ -63,7 +63,7 @@ def retry_if_fail(min_retry_time, max_retry_time, max_retries, exceptions):
                     return await function(*args, **kwargs)
                 except exceptions as exception:
                     log.warning("Connection error for %s.%s: %s", args[0].__class__.__name__,
-                                function.__name__, str(exception))
+                                function.__name__, exception)
                     log.warning("Retry in %s s", wait_time)
                     await gen.sleep(wait_time)
                     wait_time = min(wait_time*2, max_retry_time)
