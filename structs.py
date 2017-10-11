@@ -137,6 +137,21 @@ class Node:
         return "<{id}, {ip}>".format(id=self.id, ip=self.ip)
 
 
+class NodeScan(object):
+    """
+    Represents node scan
+
+    """
+    def __init__(self, node, scan, timestamp, rowid=None):
+        self.node = node
+        self.scan = scan
+        self.timestamp = timestamp
+        self.rowid = rowid
+
+    def __eq__(self, other):
+        return isinstance(self, NodeScan) and all((self.node == other.node, self.scan == other.scan))
+
+
 class TransportProtocol(Enum):
     """
     Transport protocol object consist of db_val and IANA val

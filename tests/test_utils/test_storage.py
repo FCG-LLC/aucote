@@ -87,7 +87,7 @@ class StorageTest(TestCase):
     def test__save_node(self):
         self.storage.get_scan_id = MagicMock(return_value=16)
         result = self.storage._save_node(self.node_1, scan=self.scan)
-        expected = ("INSERT OR REPLACE INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)",
+        expected = ("INSERT INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)",
                     (16, 1, '127.0.0.1', 7))
 
         self.assertCountEqual(result, expected)
@@ -98,9 +98,9 @@ class StorageTest(TestCase):
         nodes = [self.node_1, self.node_2, self.node_3]
         result = self.storage._save_nodes(nodes, scan=self.scan)
         expected = (
-            ("INSERT OR REPLACE INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 1, '127.0.0.1', 17)),
-            ("INSERT OR REPLACE INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 2, '127.0.0.2', 17)),
-            ("INSERT OR REPLACE INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 3, '127.0.0.3', 17)),
+            ("INSERT INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 1, '127.0.0.1', 17)),
+            ("INSERT INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 2, '127.0.0.2', 17)),
+            ("INSERT INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 3, '127.0.0.3', 17)),
         )
 
         self.assertCountEqual(result, expected)
