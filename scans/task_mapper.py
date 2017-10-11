@@ -1,4 +1,4 @@
-"""make install
+"""
 Class responsible for mapping scans and port, service
 
 """

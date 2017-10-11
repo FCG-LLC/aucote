@@ -59,7 +59,11 @@ class Storage(DbInterface):
     SELECT_PORTS_BY_NODES_PORTDETECTION = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans" \
                                           " INNER JOIN scans ON scan_id = scans.ROWID  where ({where}) AND time > ?" \
                                           " AND (scans.scanner_name=? or scans.scanner_name=?)"
-    
+
+    CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, " \
+                                  "exploit_app text, exploit_name text, node_id int, node_ip text, port_protocol int, "\
+                                  "port_number int, sec_scan_start float, sec_scan_end float, PRIMARY KEY (scan_id, "\
+                                  "exploit_id, node_id, node_ip, port_protocol, port_number))"
     SAVE_SECURITY_SCAN_DETAIL = "INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name,"\
                                 " node_id, node_ip, port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     SAVE_SECURITY_SCAN_DETAIL_START = "UPDATE security_scans SET sec_scan_start=? WHERE exploit_id=? AND "\
@@ -69,6 +73,14 @@ class Storage(DbInterface):
     SAVE_SECURITY_SCAN_DETAIL_END = "UPDATE security_scans SET sec_scan_end=? WHERE exploit_id=? AND exploit_app=? " \
                                     "AND exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL"\
                                     " AND port_protocol IS NULL)) AND port_number=? AND scan_id=?"
+    SELECT_SECURITY_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, " \
+                            "port_number, sec_scan_start, sec_scan_end FROM security_scans INNER JOIN scans ON " \
+                            "scan_id=scans.ROWID WHERE exploit_app=? AND node_id=? AND node_ip=? "\
+                            "AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? "\
+                            "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
+    CLEAR_SECURITY_SCANS = "DELETE FROM security_scans WHERE sec_scan_start >= sec_scan_end OR sec_scan_start IS NULL "\
+                           "OR sec_scan_end IS NULL"
+
     SAVE_VULNERABILITY = "INSERT OR REPLACE INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
                          "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
@@ -83,17 +95,6 @@ class Storage(DbInterface):
                                "node_ip=? AND port_number=? AND (port_protocol=? OR (? IS NULL " \
                                "AND port_protocol IS NULL))AND exploit_id=? AND exploit_app=? AND exploit_name=?" \
                                "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
-    SELECT_SECURITY_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, " \
-                            "port_number, sec_scan_start, sec_scan_end FROM security_scans INNER JOIN scans ON " \
-                            "scan_id=scans.ROWID WHERE exploit_app=? AND node_id=? AND node_ip=? "\
-                            "AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? "\
-                            "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
-    CLEAR_SECURITY_SCANS = "DELETE FROM security_scans WHERE sec_scan_start >= sec_scan_end OR sec_scan_start IS NULL "\
-                           "OR sec_scan_end IS NULL"
-    CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, " \
-                                  "exploit_app text, exploit_name text, node_id int, node_ip text, port_protocol int, "\
-                                  "port_number int, sec_scan_start float, sec_scan_end float, PRIMARY KEY (scan_id, "\
-                                  "exploit_id, node_id, node_ip, port_protocol, port_number))"
     CREATE_VULNERABILITIES_TABLE = "CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, "\
                                    "port_protocol int, port int, vulnerability_id int, vulnerability_subid int, "\
                                    "cve text, cvss text, output text, time int, primary key(scan_id, node_id, "\
