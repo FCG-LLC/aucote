@@ -77,6 +77,9 @@ class Scan(object):
         return isinstance(other, Scan) and all((self.scanner == other.scanner, self.start == other.start,
                                                 self.protocol == other.protocol))
 
+    def __hash__(self):
+        return hash((self.scanner, self.start, self.protocol))
+
 
 class Node:
     """
@@ -149,7 +152,29 @@ class NodeScan(object):
         self.rowid = rowid
 
     def __eq__(self, other):
-        return isinstance(self, NodeScan) and all((self.node == other.node, self.scan == other.scan))
+        return isinstance(other, NodeScan) and all((self.node == other.node, self.scan == other.scan))
+
+
+class PortScan(object):
+    """
+    Represents node scan
+
+    """
+    def __init__(self, port, scan, timestamp=None, rowid=None):
+        self.port = port
+        self.scan = scan
+        self.timestamp = timestamp
+        self.rowid = rowid
+
+    def __eq__(self, other):
+        return isinstance(other, PortScan) and all((self.port == other.port, self.scan == other.scan))
+
+    @property
+    def node(self):
+        return self.port.node
+
+    def __hash__(self):
+        return hash((self.port, self.scan))
 
 
 class TransportProtocol(Enum):
@@ -846,7 +871,7 @@ class PortDetectionChange(VulnerabilityChangeBase):
 
     @property
     def port(self):
-        return self.finding
+        return self.finding.port
 
     @property
     def previous_scan(self):

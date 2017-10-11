@@ -163,21 +163,21 @@ class Scanner(ScanAsyncTask):
 
         for node in nodes:
             last_scans = self.storage.get_scans_by_node(node=node, scan=scan)
-            current_ports = set(self.storage.get_ports_by_scan_and_node(node=node, scan=scan))
+            current_ports_scans = set(self.storage.get_ports_by_scan_and_node(node=node, scan=scan))
 
             if len(last_scans) < 2:
-                previous_ports = set()
+                previous_ports_scans = set()
             else:
-                previous_ports = set(self.storage.get_ports_by_scan_and_node(node=node, scan=last_scans[1]))
+                previous_ports_scans = set(self.storage.get_ports_by_scan_and_node(node=node, scan=last_scans[1]))
 
-            new_ports = current_ports - previous_ports
-            removed_ports = previous_ports - current_ports
+            new_ports_scans = current_ports_scans - previous_ports_scans
+            removed_ports_scans = previous_ports_scans - current_ports_scans
 
             changes.extend(PortDetectionChange(change_time=time.time(), previous_finding=None,
-                                               current_finding=port) for port in new_ports)
+                                               current_finding=port_scan) for port_scan in new_ports_scans)
 
             changes.extend(PortDetectionChange(current_finding=None, change_time=time.time(),
-                                               previous_finding=port) for port in removed_ports)
+                                               previous_finding=port_scan) for port_scan in removed_ports_scans)
 
         self.storage.save_changes(changes)
         for change in changes:

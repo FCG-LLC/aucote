@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from cpe import CPE
 
 from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState, \
-    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange
+    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange, PortScan
 from structs import TransportProtocol
 
 
@@ -371,17 +371,21 @@ class PortDetectionChangeTest(TestCase):
         self.port_1 = Port(transport_protocol=TransportProtocol.TCP, number=80, node=self.node)
         self.port_1.scan = self.scan_1
 
+        self.port_scan_1 = PortScan(port=self.port_1, scan=self.scan_1)
+
         self.port_2 = Port(transport_protocol=TransportProtocol.UDP, number=19, node=self.node)
         self.port_2.scan = self.scan_2
 
+        self.port_scan_2 = PortScan(port=self.port_2, scan=self.scan_2)
+
         self.type = VulnerabilityChangeType.PORTDETECTION
 
-        self.change_1 = PortDetectionChange(change_time=159986, current_finding=self.port_1, previous_finding=None)
-        self.change_2 = PortDetectionChange(change_time=159911, current_finding=None, previous_finding=self.port_2)
+        self.change_1 = PortDetectionChange(change_time=159986, current_finding=self.port_scan_1, previous_finding=None)
+        self.change_2 = PortDetectionChange(change_time=159911, current_finding=None, previous_finding=self.port_scan_2)
 
     def test_init_change_1(self):
         expected = {
-            'current_finding': self.port_1,
+            'current_finding': self.port_scan_1,
             'previous_finding': None,
             'type': VulnerabilityChangeType.PORTDETECTION,
             'time': 159986,
@@ -397,7 +401,7 @@ class PortDetectionChangeTest(TestCase):
     def test_init_change_2(self):
         expected = {
             'current_finding': None,
-            'previous_finding': self.port_2,
+            'previous_finding': self.port_scan_2,
             'type': VulnerabilityChangeType.PORTDETECTION,
             'time': 159911,
             'score': 0,
