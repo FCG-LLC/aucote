@@ -18,12 +18,21 @@ class Storage(DbInterface):
     This class provides local storage funxtionality
 
     """
+    GET_LAST_ROWID = "SELECT last_insert_rowid()"
+
+    CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
+                         "scan_end int, UNIQUE (protocol, scanner_name, scan_start))"
+    SAVE_SCAN_QUERY = "INSERT INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)"
+    UPDATE_SCAN_END_QUERY = "UPDATE scans set scan_end = ? WHERE ROWID=?"
+    SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
+                   "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
+                   "LIMIT {limit} OFFSET {offset}"
+    SELECT_SCAN = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
+                  "(? IS NULL AND protocol IS NULL)) AND scanner_name=? AND scan_start=? LIMIT 1"
+
     SAVE_NODE_QUERY = "INSERT OR REPLACE INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)"
     SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports_scans (scan_id, node_id, node_ip, port, port_protocol, time) "\
                       "VALUES (?, ?, ?, ?, ?, ?)"
-    SAVE_SCAN_QUERY = "INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)"
-    UPDATE_SCAN_END_QUERY = "UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) "\
-                            "AND scanner_name=? and scan_start=?"
     SAVE_SECURITY_SCAN_DETAIL = "INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name,"\
                                 " node_id, node_ip, port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     SAVE_SECURITY_SCAN_DETAIL_START = "UPDATE security_scans SET sec_scan_start=? WHERE exploit_id=? AND "\
@@ -58,11 +67,6 @@ class Storage(DbInterface):
                    "scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND "\
                    "scans.protocol IS NULL)) AND scans.scanner_name=?"
     SELECT_PORTS_BY_ID = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans WHERE ROWID=?"
-    SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
-                   "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
-                   "LIMIT {limit} OFFSET {offset}"
-    SELECT_SCAN = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
-                  "(? IS NULL AND protocol IS NULL)) AND scanner_name=? AND scan_start=? LIMIT 1"
     SELECT_SCAN_BY_ID = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE scan_id=?"
     SELECT_SECURITY_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, " \
                             "port_number, sec_scan_start, sec_scan_end FROM security_scans INNER JOIN scans ON " \
@@ -92,8 +96,6 @@ class Storage(DbInterface):
                          "port_protocol int, time int, primary key (scan_id, node_id, node_ip, port, port_protocol))"
     CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes_scans(scan_id int, node_id int, node_ip text, time int, " \
                          "primary key (scan_id, node_id, node_ip))"
-    CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
-                         "scan_end int, UNIQUE (protocol, scanner_name, scan_start))"
     CREATE_VULNERABILITIES_TABLE = "CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, "\
                                    "port_protocol int, port int, vulnerability_id int, vulnerability_subid int, "\
                                    "cve text, cvss text, output text, time int, primary key(scan_id, node_id, "\
@@ -125,6 +127,9 @@ class Storage(DbInterface):
         """
         self.execute(self._create_tables())
         self.execute(self._clear_security_scans())
+
+    def get_last_rowid(self):
+        return self.execute((self.GET_LAST_ROWID,))[0][0] or None
 
     def connect(self):
         self.conn = sqlite3.connect(self.filename, check_same_thread=True)
@@ -852,8 +857,7 @@ class Storage(DbInterface):
         return self.SAVE_SCAN_QUERY, (self._protocol_to_iana(scan.protocol), scan.scanner, scan.start, scan.end)
 
     def _update_scan(self, scan):
-        iana = self._protocol_to_iana(scan.protocol)
-        return self.UPDATE_SCAN_END_QUERY, (scan.end, iana, iana, scan.scanner, scan.start)
+        return self.UPDATE_SCAN_END_QUERY, (scan.end, scan.rowid)
 
     def _get_scans(self, protocol, scanner_name, limit=2, offset=0):
         iana = self._protocol_to_iana(protocol)
@@ -876,7 +880,9 @@ class Storage(DbInterface):
         Returns:
 
         """
-        return self.execute(self._save_scan(scan=scan))
+        self.execute(self._save_scan(scan=scan))
+        scan.rowid = self.get_last_rowid()
+        return scan
 
     def update_scan(self, scan):
         """
@@ -901,6 +907,9 @@ class Storage(DbInterface):
             int
 
         """
+        if scan.rowid:
+            return scan.rowid
+
         data = self.execute(self._get_scan(scan=scan))
         if not data:
             return None
@@ -1005,4 +1014,4 @@ class Storage(DbInterface):
         return self.execute(self._save_vulnerabilities(vulnerabilities=vulnerabilities, scan=scan))
 
     def _scan_from_row(self, row):
-        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]), scanner=row[2])
+        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]), scanner=row[2], rowid=row[0])

@@ -216,18 +216,15 @@ class PortTest(TestCase):
 
 class ScanTest(TestCase):
     def setUp(self):
-        self.start = 13
-        self.end = 14.6
-        self.protocol = TransportProtocol.ICMP
-        self.scanner = "test_scanner"
-        self.scan = Scan(start=self.start, end=self.end, protocol=self.protocol, scanner=self.scanner)
+        self.scan = Scan(start=13, end=14.6, protocol=TransportProtocol.ICMP, scanner="test_scanner", rowid=16)
 
     def test_init(self):
         expected = {
             "_start": 13,
             "end": 14.6,
             "_protocol": TransportProtocol.ICMP,
-            "_scanner": "test_scanner"
+            "_scanner": "test_scanner",
+            "rowid": 16
         }
 
         result = self.scan.__dict__

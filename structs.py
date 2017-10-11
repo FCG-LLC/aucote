@@ -17,7 +17,7 @@ class Scan(object):
 
     """
 
-    def __init__(self, start=None, end=None, protocol=None, scanner=''):
+    def __init__(self, start=None, end=None, protocol=None, scanner='', rowid=None):
         """
         Args:
             protocol TransportProtocol: scan protocol
@@ -26,6 +26,7 @@ class Scan(object):
             scanner (str): scanner name
 
         """
+        self.rowid = rowid
         self._start = start or time.time()
         self.end = end
         self._protocol = protocol
@@ -62,6 +63,19 @@ class Scan(object):
 
         """
         return self._scanner
+
+    def __eq__(self, other):
+        """
+
+        Args:
+            other (Scan):
+
+        Returns:
+            bool
+
+        """
+        return isinstance(other, Scan) and all((self.scanner == other.scanner, self.start == other.start,
+                                                self.protocol == other.protocol))
 
 
 class Node:

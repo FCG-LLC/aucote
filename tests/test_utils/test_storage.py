@@ -18,6 +18,9 @@ class StorageTest(TestCase):
         self.storage = Storage(filename=":memory:")
         self.scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
 
+        self.scan_1 = Scan(rowid=56, protocol=TransportProtocol.UDP, scanner='test_name', start=13, end=19)
+        self.scan_2 = Scan(rowid=79, protocol=TransportProtocol.UDP, scanner='test_name', start=2, end=18)
+
         self.node_1 = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         self.node_1.name = 'test_node_1'
         self.node_1.scan = Scan(start=15)
@@ -55,6 +58,12 @@ class StorageTest(TestCase):
                                              cve='CVE-2017', cvss=6.7, subid=1, vuln_time=13)
         self.vulnerability_2 = Vulnerability(port=self.port_1, output='test_output_2', exploit=self.exploit_2,
                                              cve='CWE-14', cvss=8.9, subid=2, vuln_time=98)
+
+    def prepare_scans(self):
+        self.storage.execute(('INSERT INTO scans(ROWID, protocol, scanner_name, scan_start, scan_end) '
+                              'VALUES '
+                              '(56, 17, "test_name", 13, 19), '
+                              '(79, 17, "test_name", 2, 18)',))
 
     def test_init(self):
         self.assertEqual(self.storage.filename, ":memory:")
@@ -737,18 +746,13 @@ class StorageTest(TestCase):
 
     def test__save_scan(self):
         result = self.storage._save_scan(scan=self.scan)
-        expected = 'INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)', (17, 'test_name', 1, 17)
+        expected = 'INSERT INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)', (17, 'test_name', 1, 17)
         self.assertCountEqual(result, expected)
 
     def test__update_scan(self):
+        self.scan.rowid = 1
         result = self.storage._update_scan(scan=self.scan)
-        expected = 'UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND scanner_name=? and scan_start=?', (17, 17, 17, 'test_name', 1)
-        self.assertCountEqual(result, expected)
-
-    def test__get_scans(self):
-        result = self.storage._get_scans(protocol=TransportProtocol.ICMP, scanner_name='test_name', limit=3, offset=17)
-        expected = 'SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND '\
-                   'scanner_name=? ORDER BY scan_end DESC, scan_start ASC LIMIT 3 OFFSET 17', (1, 1, 'test_name')
+        expected = 'UPDATE scans set scan_end = ? WHERE ROWID=?', (17, 1)
         self.assertCountEqual(result, expected)
 
     def test__get_scans_by_security_scan(self):
@@ -767,61 +771,69 @@ class StorageTest(TestCase):
         self.assertCountEqual(result, expected)
 
     def test_save_scan(self):
-        scan = MagicMock()
-        self.storage._save_scan = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.save_scan(scan=scan)
-        self.storage._save_scan.assert_called_once_with(scan=scan)
-        self.storage.execute.assert_called_once_with(self.storage._save_scan())
+        self.storage.connect()
+        self.storage.init_schema()
+
+        expected = [(1, 1, 17, 17, 'test_name')]
+        self.storage.save_scan(scan=self.scan)
+        result = self.storage.execute(("SELECT ROWID, scan_start, scan_end, protocol, scanner_name FROM scans",))
+
+        self.assertEqual(result, expected)
 
     def test_update_scan(self):
-        scan = MagicMock()
-        self.storage._update_scan = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.update_scan(scan=scan)
-        self.storage._update_scan.assert_called_once_with(scan=scan)
-        self.storage.execute.assert_called_once_with(self.storage._update_scan())
+        self.storage.connect()
+        self.storage.init_schema()
+        self.prepare_scans()
+
+        self.scan_1.end = 456
+        self.storage.update_scan(self.scan_1)
+
+        expected = [(456,)]
+
+        result = self.storage.execute(("SELECT scan_end FROM scans WHERE ROWID=56",))
+
+        self.assertEqual(result, expected)
 
     def test_get_scan_id(self):
-        self.storage.execute = MagicMock(return_value=((1, 17, 'test_name', 13, 19),))
-        self.storage._get_scan = MagicMock()
+        expected = 56
+        result = self.storage.get_scan_id(self.scan_1)
+        self.assertEqual(result, expected)
 
-        result = self.storage.get_scan_id(scan=self.scan)
+    def test_get_scan_id(self):
+        self.storage.connect()
+        self.storage.init_schema()
+        self.prepare_scans()
 
-        self.storage._get_scan.assert_called_once_with(scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._get_scan())
-        self.assertEqual(result, 1)
+        expected = self.scan_1.rowid
+        self.scan_1.rowid = None
+
+        result = self.storage.get_scan_id(self.scan_1)
+
+        self.assertEqual(result, expected)
 
     def test_get_scan_id_without_results(self):
-        self.storage.execute = MagicMock(return_value=tuple())
-        self.storage._get_scan = MagicMock()
+        self.storage.connect()
+        self.storage.init_schema()
+        self.prepare_scans()
 
-        result = self.storage.get_scan_id(scan=self.scan)
+        expected = None
+        self.scan_1.rowid = None
+        self.scan_1._scanner = None
 
-        self.storage._get_scan.assert_called_once_with(scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._get_scan())
-        self.assertIsNone(result)
+        result = self.storage.get_scan_id(self.scan_1)
+
+        self.assertEqual(result, expected)
 
     def test_get_scans(self):
-        self.storage._get_scans = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, 17, 'test_name', 13, 19),
-            (2, 6, 'test_name', 2, 18),
-        ))
+        self.storage.connect()
+        self.storage.init_schema()
+        self.prepare_scans()
 
         result = self.storage.get_scans(scanner_name='test_name', protocol=TransportProtocol.UDP, amount=2)
 
-        self.storage._get_scans.assert_called_once_with(scanner_name='test_name', protocol=TransportProtocol.UDP,
-                                                        limit=2, offset=0)
-        self.storage.execute.assert_called_once_with(self.storage._get_scans())
-
-        self.assertEqual(result[0].protocol, TransportProtocol.UDP)
-        self.assertEqual(result[0].start, 13)
-        self.assertEqual(result[0].end, 19)
-
-        self.assertEqual(result[1].protocol, TransportProtocol.TCP)
-        self.assertEqual(result[1].start, 2)
-        self.assertEqual(result[1].end, 18)
+        self.assertCountEqual([self.scan_1, self.scan_2], result)
+        for obj in self.scan_1, self.scan_2:
+            self.assertEqual(result[result.index(obj)].rowid, obj.rowid)
 
     def test_get_scans_by_node(self):
         self.storage._get_scans_by_node = MagicMock()
@@ -914,3 +926,9 @@ class StorageTest(TestCase):
         self.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self.scan)
         self.storage._save_vulnerabilities.assert_called_once_with(vulnerabilities=vulnerabilities, scan=self.scan)
         self.storage.execute.assert_called_once_with(self.storage._save_vulnerabilities())
+
+    def test_get_last_rowid(self):
+        self.storage.connect()
+        self.storage.execute(("CREATE TABLE test(test int)",))
+        self.storage.execute(("INSERT INTO test(test) VALUES (5), (6), (7)",))
+        self.assertEqual(self.storage.get_last_rowid(), 3)
