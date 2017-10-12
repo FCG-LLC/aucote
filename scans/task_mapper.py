@@ -53,12 +53,12 @@ class TaskMapper(object):
             scans = self.storage.get_security_scan_info(port=port, app=app, scan=self._scan)
 
             for scan in scans:
-                period = parse_period(periods.get(scan['exploit_name'], None) or
+                period = parse_period(periods.get(scan.exploit.name, None) or
                                       cfg.get('tools.{0}.period'.format(app)))
 
-                if scan['scan_end'] + period > time.time() and scan['exploit'] in exploits:
-                    log.debug('Omitting %s due to recent scan (%s)', scan['exploit'], scan['scan_end'])
-                    exploits.remove(scan['exploit'])
+                if scan.scan_end + period > time.time() and scan.exploit in exploits:
+                    log.debug('Omitting %s due to recent scan (%s)', scan.exploit, scan.scan_end)
+                    exploits.remove(scan.exploit)
 
             if not isinstance(port, SpecialPort):
                 exploits = self._filter_exploits(app, exploits, port.node)

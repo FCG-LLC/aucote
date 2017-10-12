@@ -7,7 +7,7 @@ from tornado.testing import gen_test, AsyncTestCase
 from fixtures.exploits import Exploit
 from fixtures.exploits.exploit import ExploitCategory
 from scans.task_mapper import TaskMapper
-from structs import Port, TransportProtocol, Scan, Node
+from structs import Port, TransportProtocol, Scan, Node, SecurityScan
 from utils import Config
 
 
@@ -78,20 +78,12 @@ class TaskMapperTest(AsyncTestCase):
         }
 
         self.executor.storage.get_security_scan_info.return_value = [
-            {
-                "exploit": self.exploits['test'][0],
-                "port": self.UDP,
-                "scan_start": 17.0,
-                "scan_end": 26.0,
-                "exploit_name": "test_1"
-            },
-            {
-                "exploit": self.exploits['test'][1],
-                "port": self.UDP,
-                "scan_start": 12.0,
-                "scan_end": 17.0,
-                "exploit_name": "test_2"
-            },
+            SecurityScan(port=self.UDP,
+                         exploit=self.exploits['test'][0],
+                         scan_start=17, scan_end=26, scan=None),
+            SecurityScan(port=self.UDP,
+                         exploit=self.exploits['test'][1],
+                         scan_start=12, scan_end=17, scan=None)
         ]
 
     def tearDown(self):
@@ -325,20 +317,8 @@ class TaskMapperTest(AsyncTestCase):
 
         exploit = Exploit(exploit_id=3, name='test_3')
         self.executor.storage.get_security_scan_info.return_value = [
-            {
-                "exploit": exploit,
-                "port": self.UDP,
-                "scan_start": 17.0,
-                "scan_end": 26.0,
-                "exploit_name": "test_3"
-            },
-            {
-                "exploit": self.exploits['test'][1],
-                "port": self.UDP,
-                "scan_start": 12.0,
-                "scan_end": 17.0,
-                "exploit_name": "test_2"
-            }
+            SecurityScan(exploit=exploit, scan_start=17, scan_end=26, port=self.UDP, scan=None),
+            SecurityScan(exploit=self.exploits['test'][1], scan_start=12, scan_end=17, port=self.UDP, scan=None)
         ]
 
         self.EXECUTOR_CONFIG['apps']['test']['class'] = MagicMock()

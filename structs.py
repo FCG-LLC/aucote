@@ -145,6 +145,7 @@ class NodeScan(object):
     Represents node scan
 
     """
+
     def __init__(self, node, scan, timestamp, rowid=None):
         self.node = node
         self.scan = scan
@@ -160,6 +161,7 @@ class PortScan(object):
     Represents node scan
 
     """
+
     def __init__(self, port, scan, timestamp=None, rowid=None):
         self.port = port
         self.scan = scan
@@ -175,6 +177,26 @@ class PortScan(object):
 
     def __hash__(self):
         return hash((self.port, self.scan))
+
+
+class SecurityScan(object):
+    def __init__(self, scan, port, exploit, scan_start=None, scan_end=None):
+        self.port = port
+        self.exploit = exploit
+        self.scan_start = scan_start
+        self.scan = scan
+        self.scan_end = scan_end
+
+    @property
+    def node(self):
+        return self.port.node
+
+    def __eq__(self, other):
+        return isinstance(other, SecurityScan) and all((self.port == other.port, self.exploit == other.exploit,
+                                                        self.scan == other.scan))
+
+    def __hash__(self):
+        return hash((self.port, self.exploit, self.scan))
 
 
 class TransportProtocol(Enum):
@@ -683,11 +705,11 @@ class VulnerabilityChangeType(Enum):
 
 
 class VulnerabilityChangeBase(metaclass=ABCMeta):
-
     """
     Represents change between two port or severity scans
 
     """
+
     def __init__(self, change_type, vulnerability_id, vulnerability_subid, current_finding, previous_finding,
                  change_time=None, score=0):
         """
@@ -710,7 +732,7 @@ class VulnerabilityChangeBase(metaclass=ABCMeta):
         self.score = score
 
     def __eq__(self, other):
-        return isinstance(other, VulnerabilityChangeBase) and self.vulnerability_subid == other.vulnerability_subid\
+        return isinstance(other, VulnerabilityChangeBase) and self.vulnerability_subid == other.vulnerability_subid \
                and self.vulnerability_id == other.vulnerability_id and self.previous_finding == other.previous_finding \
                and self.type == other.type and self.current_finding == other.current_finding
 
@@ -850,6 +872,7 @@ class PortDetectionChange(VulnerabilityChangeBase):
     Represents change between two port detection scans
 
     """
+
     def __init__(self, *args, **kwargs):
         """
 
@@ -895,6 +918,7 @@ class VulnerabilityChange(VulnerabilityChangeBase):
     Represents change between two vulnerability scans for specific node and port
 
     """
+
     def __init__(self, *args, **kwargs):
         super(VulnerabilityChange, self).__init__(change_type=VulnerabilityChangeType.VULNERABILITIES,
                                                   vulnerability_id=None, vulnerability_subid=None, *args, **kwargs)
