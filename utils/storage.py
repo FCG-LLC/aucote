@@ -689,7 +689,7 @@ class Storage(DbInterface):
                                                        number=row[6],
                                                        transport_protocol=self._transport_protocol(row[5])),
                                              exploit=Exploit(exploit_id=row[0], name=row[2], app=row[1]),
-                                             scan_start=row[7], scan_end=row[8], scan=self.get_scan(row[9])))
+                                             scan_start=row[7] or 0, scan_end=row[8] or 0, scan=self.get_scan(row[9])))
 
         return return_value
 
