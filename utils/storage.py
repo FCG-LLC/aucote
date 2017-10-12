@@ -86,19 +86,20 @@ class Storage(DbInterface):
                                "AND port_protocol IS NULL)) AND exploit_id=? AND exploit_app=? AND exploit_name=?" \
                                "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
 
-    SAVE_VULNERABILITY = "INSERT OR REPLACE INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
-                         "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
-                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    SAVE_CHANGE = "INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
-                  "current_id, time) VALUES (?, ?, ?, ?, ?, ?)"
-    SELECT_VULNERABILITIES = "SELECT scan_id, node_id, node_ip, port_protocol, port, vulnerability_id, " \
-                             "vulnerability_subid, cve, cvss, output, time, ROWID FROM vulnerabilities WHERE node_id=?"\
-                             " AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"\
-                             " AND vulnerability_id=? AND scan_id=?"
     CREATE_VULNERABILITIES_TABLE = "CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, "\
                                    "port_protocol int, port int, vulnerability_id int, vulnerability_subid int, "\
                                    "cve text, cvss text, output text, time int, primary key(scan_id, node_id, "\
                                    "node_ip, port_protocol, port, vulnerability_subid))"
+    SAVE_VULNERABILITY = "INSERT OR REPLACE INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
+                         "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
+                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    SELECT_VULNERABILITIES = "SELECT scan_id, node_id, node_ip, port_protocol, port, vulnerability_id, " \
+                             "vulnerability_subid, cve, cvss, output, time, ROWID FROM vulnerabilities WHERE node_id=?"\
+                             " AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"\
+                             " AND vulnerability_id=? AND scan_id=?"
+
+    SAVE_CHANGE = "INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
+                  "current_id, time) VALUES (?, ?, ?, ?, ?, ?)"
     CREATE_CHANGES_TABLE = "CREATE TABLE IF NOT EXISTS changes(type int, vulnerability_id int, "\
                            "vulnerability_subid int, previous_id int, current_id int, time int, PRIMARY KEY(type, " \
                            "vulnerability_id, vulnerability_subid, previous_id, current_id, time))"
@@ -553,14 +554,9 @@ class Storage(DbInterface):
         Returns:
             list - list of nodes
         """
-        vulnerabilities = []
-
-        for row in self.execute(self._get_vulnerabilities(port=port, exploit=exploit, scan=scan)):
-            vulnerability = Vulnerability(port=port, exploit=exploit, cve=row[7], cvss=row[8], output=row[9],
-                                          subid=row[6], vuln_time=row[10])
-            vulnerability.rowid = row[11]
-            vulnerabilities.append(vulnerability)
-        return vulnerabilities
+        return [Vulnerability(port=port, exploit=exploit, cve=row[7], cvss=row[8], output=row[9],
+                              subid=row[6], vuln_time=row[10], rowid=row[11])
+                for row in self.execute(self._get_vulnerabilities(port=port, exploit=exploit, scan=scan))]
 
     def save_port(self, port, scan):
         """

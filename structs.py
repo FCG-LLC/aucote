@@ -609,7 +609,8 @@ class Vulnerability(object):
     SERVICE_BANNER = 4
     SERVICE_CPE = 5
 
-    def __init__(self, exploit=None, port=None, output=None, cve=None, cvss=None, subid=None, vuln_time=None):
+    def __init__(self, exploit=None, port=None, output=None, cve=None, cvss=0, subid=None, vuln_time=None,
+                 rowid=None, scan=None):
         """
         Init values
 
@@ -624,9 +625,11 @@ class Vulnerability(object):
         self.exploit = exploit
         self.port = port
         self.cve = cve
-        self.cvss = cvss
+        self.cvss = float(cvss)
         self.subid = subid
         self.time = vuln_time or time.time()
+        self.rowid = rowid
+        self.scan = scan
 
     def __eq__(self, other):
         return isinstance(other, Vulnerability) and self.port == other.port and self.exploit == other.exploit and \
