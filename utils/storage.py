@@ -98,11 +98,11 @@ class Storage(DbInterface):
                              " AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"\
                              " AND vulnerability_id=? AND scan_id=?"
 
-    SAVE_CHANGE = "INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
-                  "current_id, time) VALUES (?, ?, ?, ?, ?, ?)"
     CREATE_CHANGES_TABLE = "CREATE TABLE IF NOT EXISTS changes(type int, vulnerability_id int, "\
                            "vulnerability_subid int, previous_id int, current_id int, time int, PRIMARY KEY(type, " \
                            "vulnerability_id, vulnerability_subid, previous_id, current_id, time))"
+    SAVE_CHANGE = "INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
+                  "current_id, time) VALUES (?, ?, ?, ?, ?, ?)"
 
     def __init__(self, filename="storage.sqlite3"):
 
