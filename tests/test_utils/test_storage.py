@@ -13,6 +13,14 @@ from utils.storage import Storage
 
 
 class StorageTest(TestCase):
+    SEL_SEC_SCAN = ("SELECT scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, "
+                     "port_number, sec_scan_start, sec_scan_end FROM security_scans", )
+    SEL_NOD_SCAN = ("SELECT scan_id, node_id, node_ip, time from nodes_scans",)
+    SEL_POR_SCAN = ("SELECT scan_id, node_id, node_ip, port, port_protocol, time from ports_scans",)
+    SEL_CHANGE = ("SELECT type, vulnerability_id, vulnerability_subid, previous_id, current_id, time FROM changes", )
+    SEL_SCANS = ("SELECT ROWID, scan_start, scan_end, protocol, scanner_name FROM scans",)
+    SEL_VULNS = ("SELECT scan_id, node_id, node_ip, port_protocol, port, vulnerability_id, vulnerability_subid, cve, cvss, output, time FROM vulnerabilities", )
+
     def setUp(self):
         self.maxDiff = None
         self.storage = Storage(filename=":memory:")
@@ -90,6 +98,15 @@ class StorageTest(TestCase):
         self.vulnerability_4 = Vulnerability(port=self.port_1, output='test_output_4', exploit=self.exploit_2,
                                              cve='CWE-15', cvss=2.9, subid=1, vuln_time=124, rowid=169,
                                              scan=self.scan_2)
+
+    def prepare_tables(self):
+        self.storage.connect()
+        self.storage.init_schema()
+        self.prepare_scans()
+        self.prepare_nodes_scans()
+        self.prepare_ports_scans()
+        self.prepare_vulnerabilities()
+        self.prepare_security_scans()
 
     def prepare_scans(self):
         self.storage.execute(('INSERT INTO scans(ROWID, protocol, scanner_name, scan_start, scan_end) '
@@ -210,7 +227,7 @@ class StorageTest(TestCase):
 
         self.storage.save_node(node=self.node_1, scan=self.scan_1)
 
-        result = self.storage.execute(("SELECT * from nodes_scans",))
+        result = self.storage.execute(self.SEL_NOD_SCAN)
 
         self.assertEqual(result, expected)
 
@@ -225,16 +242,13 @@ class StorageTest(TestCase):
 
         self.storage.save_nodes(nodes=[self.node_1, self.node_2, self.node_3], scan=self.scan_1)
 
-        result = self.storage.execute(("SELECT * from nodes_scans",))
+        result = self.storage.execute(self.SEL_NOD_SCAN)
 
         self.assertEqual(result, expected)
 
     @patch('utils.storage.time.time', MagicMock(return_value=60))
     def test_get_nodes(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
-        self.prepare_nodes_scans()
+        self.prepare_tables()
 
         expected = [self.node_2, self.node_3, self.node_3]
 
@@ -243,10 +257,7 @@ class StorageTest(TestCase):
         self.assertCountEqual(result, expected)
 
     def test_get_vulnerabilities(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
-        self.prepare_vulnerabilities()
+        self.prepare_tables()
 
         expected = [self.vulnerability_1]
 
@@ -255,10 +266,7 @@ class StorageTest(TestCase):
         self.assertCountEqual(result, expected)
 
     def test_get_nodes_by_scan(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
-        self.prepare_nodes_scans()
+        self.prepare_tables()
 
         expected = [self.node_1, self.node_2, self.node_3]
 
@@ -275,7 +283,7 @@ class StorageTest(TestCase):
 
         self.storage.save_port(port=self.port_1, scan=self.scan_1)
 
-        result = self.storage.execute(("SELECT * from ports_scans",))
+        result = self.storage.execute(self.SEL_POR_SCAN)
 
         self.assertEqual(result, expected)
 
@@ -290,16 +298,13 @@ class StorageTest(TestCase):
 
         self.storage.save_ports(ports=[self.port_1, self.port_2, self.port_3], scan=self.scan_1)
 
-        result = self.storage.execute(("SELECT * from ports_scans",))
+        result = self.storage.execute(self.SEL_POR_SCAN)
 
         self.assertEqual(result, expected)
 
     @patch('utils.storage.time.time', MagicMock(return_value=1000))
     def test_get_ports(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
-        self.prepare_ports_scans()
+        self.prepare_tables()
 
         expected = [self.port_scan_2.port, self.port_scan_3.port, self.port_scan_4.port]
 
@@ -308,9 +313,7 @@ class StorageTest(TestCase):
         self.assertCountEqual(result, expected)
 
     def test_get_ports_by_scan_and_node(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_ports_scans()
+        self.prepare_tables()
 
         expected = [self.port_scan_1, self.port_scan_4]
 
@@ -326,7 +329,7 @@ class StorageTest(TestCase):
 
         self.storage.save_security_scan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_1)
 
-        result = self.storage.execute(("SELECT * FROM security_scans", ))
+        result = self.storage.execute(self.SEL_SEC_SCAN)
 
         self.assertEqual(result, expected)
 
@@ -339,7 +342,7 @@ class StorageTest(TestCase):
 
         self.storage.save_security_scan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_1)
 
-        result = self.storage.execute(("SELECT * FROM security_scans", ))
+        result = self.storage.execute(self.SEL_SEC_SCAN)
 
         self.assertEqual(result, expected)
 
@@ -350,7 +353,7 @@ class StorageTest(TestCase):
 
         self.storage.save_security_scan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_1)
 
-        result = self.storage.execute(("SELECT * FROM security_scans", ))
+        result = self.storage.execute(self.SEL_SEC_SCAN)
 
         self.assertEqual(result, expected)
 
@@ -365,16 +368,12 @@ class StorageTest(TestCase):
         self.storage.save_security_scans(exploits=[self.exploit_1, self.exploit_2, self.exploit_3], port=self.port_1,
                                          scan=self.scan_1)
 
-        result = self.storage.execute(("SELECT * FROM security_scans", ))
+        result = self.storage.execute(self.SEL_SEC_SCAN)
 
         self.assertEqual(result, expected)
 
     def test_get_security_scan_info(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_ports_scans()
-        self.prepare_scans()
-        self.prepare_security_scans()
+        self.prepare_tables()
 
         expected = [self.security_scan_1, self.security_scan_3]
 
@@ -390,7 +389,7 @@ class StorageTest(TestCase):
 
         self.storage.save_changes(changes=[self.vuln_change_1, self.vuln_change_2])
 
-        result = self.storage.execute(("SELECT * FROM changes", ))
+        result = self.storage.execute(self.SEL_CHANGE)
 
         self.assertEqual(result, expected)
 
@@ -417,10 +416,7 @@ class StorageTest(TestCase):
 
     @patch('utils.storage.time.time', MagicMock(return_value=1000))
     def test_get_ports_by_nodes(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
-        self.prepare_ports_scans()
+        self.prepare_tables()
 
         expected = [self.port_scan_2.port, self.port_scan_4.port]
 
@@ -468,14 +464,12 @@ class StorageTest(TestCase):
 
         expected = [(1, 13, 19, 17, 'test_name')]
         self.storage.save_scan(scan=self.scan_1)
-        result = self.storage.execute(("SELECT ROWID, scan_start, scan_end, protocol, scanner_name FROM scans",))
+        result = self.storage.execute(self.SEL_SCANS)
 
         self.assertEqual(result, expected)
 
     def test_update_scan(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
+        self.prepare_tables()
 
         self.scan_1.end = 456
         self.storage.update_scan(self.scan_1)
@@ -492,9 +486,7 @@ class StorageTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_get_scan_id(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
+        self.prepare_tables()
 
         expected = self.scan_1.rowid
         self.scan_1.rowid = None
@@ -504,9 +496,7 @@ class StorageTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_get_scan_id_without_results(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
+        self.prepare_tables()
 
         expected = None
         self.scan_1.rowid = None
@@ -517,9 +507,7 @@ class StorageTest(TestCase):
         self.assertEqual(result, expected)
 
     def test_get_scans(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
+        self.prepare_tables()
 
         result = self.storage.get_scans(scanner_name='test_name', protocol=TransportProtocol.UDP, amount=2)
 
@@ -528,10 +516,7 @@ class StorageTest(TestCase):
             self.assertEqual(result[result.index(obj)].rowid, obj.rowid)
 
     def test_get_scans_by_node(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
-        self.prepare_nodes_scans()
+        self.prepare_tables()
 
         expected = [self.scan_1, self.scan_2]
 
@@ -540,10 +525,7 @@ class StorageTest(TestCase):
         self.assertCountEqual(result, expected)
 
     def test_get_scans_by_sec_scan(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
-        self.prepare_security_scans()
+        self.prepare_tables()
 
         expected = [self.scan_1, self.scan_3]
 
@@ -552,9 +534,7 @@ class StorageTest(TestCase):
         self.assertCountEqual(result, expected)
 
     def test_get_scan_by_id(self):
-        self.storage.connect()
-        self.storage.init_schema()
-        self.prepare_scans()
+        self.prepare_tables()
 
         expected = self.scan_1
 
@@ -579,7 +559,7 @@ class StorageTest(TestCase):
 
         self.storage.save_vulnerabilities(vulnerabilities=[self.vulnerability_1, self.vulnerability_3], scan=self.scan_1)
 
-        result = self.storage.execute(("SELECT * FROM vulnerabilities", ))
+        result = self.storage.execute(self.SEL_VULNS)
 
         self.assertCountEqual(result, expected)
 
