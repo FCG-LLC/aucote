@@ -1,5 +1,4 @@
 import ipaddress
-from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from tornado.testing import gen_test, AsyncTestCase
@@ -8,7 +7,6 @@ from fixtures.exploits import Exploit
 from structs import RiskLevel, Port, Scan, Node, TransportProtocol
 from tools.hydra.tool import HydraTool
 from utils import Config
-from utils.storage import Storage
 
 
 class HydraToolTest(AsyncTestCase):
