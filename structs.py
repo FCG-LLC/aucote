@@ -13,7 +13,7 @@ from cpe import CPE
 
 class Scan(object):
     """
-    Scan object
+    Scan object. Contains rowid for identification in storage.
 
     """
 
@@ -142,7 +142,7 @@ class Node:
 
 class NodeScan(object):
     """
-    Represents node scan
+    Represents node scan. Contains rowid for identification in storage.
 
     """
 
@@ -158,7 +158,7 @@ class NodeScan(object):
 
 class PortScan(object):
     """
-    Represents node scan
+    Represents node scan. Contains rowid for identification in storage.
 
     """
 
@@ -173,6 +173,13 @@ class PortScan(object):
 
     @property
     def node(self):
+        """
+        Node on which PortScan is performed
+
+        Returns:
+            Node
+
+        """
         return self.port.node
 
     def __hash__(self):
@@ -180,6 +187,10 @@ class PortScan(object):
 
 
 class SecurityScan(object):
+    """
+    SecurityScan is a single scan performed by given exploit on given port during specific global scan (e.g. TCP scan)
+
+    """
     def __init__(self, scan, port, exploit, scan_start=None, scan_end=None):
         self.port = port
         self.exploit = exploit
@@ -189,6 +200,13 @@ class SecurityScan(object):
 
     @property
     def node(self):
+        """
+        Node for which security scan wis performed
+
+        Returns:
+            Node
+
+        """
         return self.port.node
 
     def __eq__(self, other):
@@ -335,6 +353,13 @@ class Service(object):
 
     @property
     def name_with_version(self):
+        """
+        Service name with version included
+
+        Returns:
+            str
+
+        """
         if self.version is None or self.name is None:
             return None
         return "{name} {version}".format(name=self.name, version=self.version)
@@ -599,7 +624,7 @@ class PhysicalPort(SpecialPort):
 
 class Vulnerability(object):
     """
-    Vulnerability object
+    Vulnerability object. Contains rowid for identification in storage.
 
     """
     PORTDETECTION = 0
@@ -695,6 +720,16 @@ class PortState(Enum):
 
     @classmethod
     def from_string(cls, text):
+        """
+        Return PortState based on string
+
+        Args:
+            text (str):
+
+        Returns:
+            PortState
+
+        """
         return cls[text.replace('|', '_').upper()]
 
 
