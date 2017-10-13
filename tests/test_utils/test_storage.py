@@ -511,7 +511,7 @@ class StorageTest(TestCase):
 
         result = self.storage.get_scans(scanner_name='test_name', protocol=TransportProtocol.UDP, amount=2)
 
-        self.assertCountEqual([self.scan_1, self.scan_2], result)
+        self.assertEqual([self.scan_1, self.scan_2], result)
         for obj in self.scan_1, self.scan_2:
             self.assertEqual(result[result.index(obj)].rowid, obj.rowid)
 
@@ -522,16 +522,16 @@ class StorageTest(TestCase):
 
         result = self.storage.get_scans_by_node(node=self.node_3, scan=self.scan_1)
 
-        self.assertCountEqual(result, expected)
+        self.assertEqual(result, expected)
 
     def test_get_scans_by_sec_scan(self):
         self.prepare_tables()
 
-        expected = [self.scan_1, self.scan_3]
+        expected = [self.scan_3, self.scan_1]
 
         result = self.storage.get_scans_by_security_scan(port=self.port_1, exploit=self.exploit_1)
 
-        self.assertCountEqual(result, expected)
+        self.assertEqual(result, expected)
 
     def test_get_scan_by_id(self):
         self.prepare_tables()
