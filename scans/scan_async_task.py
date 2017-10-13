@@ -219,10 +219,11 @@ class ScanAsyncTask(object):
             None
 
         """
+        self.status = status
+
         if not cfg.toucan or cfg['portdetection.{name}.scan_type'.format(name=self.NAME)] == ScanType.LIVE.value:
             return
 
-        self.status = status
         current_status = cfg.get('portdetection.{0}.status.*'.format(self.NAME), cache=False)
 
         data = {

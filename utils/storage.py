@@ -34,6 +34,8 @@ class Storage(DbInterface):
                    "LIMIT {limit} OFFSET {offset}"
     SELECT_SCAN = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
                   "(? IS NULL AND protocol IS NULL)) AND scanner_name=? AND scan_start=? LIMIT 1"
+    SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans " \
+            "ORDER BY scan_start DESC, scan_end DESC LIMIT {limit} OFFSET {offset}"
 
     CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes_scans(scan_id int, node_id int, node_ip text, time int, " \
                          "primary key (scan_id, node_id, node_ip))"
@@ -63,6 +65,7 @@ class Storage(DbInterface):
     SELECT_PORTS_BY_NODES_PORTDETECTION = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans" \
                                           " INNER JOIN scans ON scan_id = scans.ROWID  where ({where}) AND time > ?" \
                                           " AND (scans.scanner_name=? or scans.scanner_name=?)"
+    SELECT_PORTS_BY_SCAN = "SELECT node_id, node_ip, port, port_protocol, time, ROWID FROM ports_scans where  scan_id=?"
 
     CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, " \
                                   "exploit_app text, exploit_name text, node_id int, node_ip text, port_protocol int, "\
@@ -986,3 +989,26 @@ class Storage(DbInterface):
 
     def _scan_from_row(self, row):
         return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]), scanner=row[2], rowid=row[0])
+
+    def scans(self, limit=10, page=0):
+        return [self._scan_from_row(row) for row in self.execute((self.SCANS.format(limit=int(limit), offset=int(limit)*int(page)), ))]
+
+    def get_ports_scans_by_scan(self, scan):
+        """
+        Get ports from database for given scan.
+
+        Args:
+            scan(Scan):
+
+        Returns:
+            list - list of Ports
+
+        """
+        ports_scans = []
+
+        for row in self.execute((self.SELECT_PORTS_BY_SCAN, (scan.rowid, ))):
+            storage_port = Port(node=Node(node_id=row[0], ip=ipaddress.ip_address(row[1])),
+                                transport_protocol=self._transport_protocol(row[3]), number=row[2])
+            ports_scans.append(PortScan(port=storage_port, rowid=row[5], scan=scan, timestamp=row[4]))
+
+        return ports_scans

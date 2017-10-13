@@ -2,10 +2,7 @@
 Handler responsible for returning status of aucote
 
 """
-import time
-
 from api.handler import Handler
-from aucote_cfg import cfg
 from scans.tools_scanner import ToolsScanner
 
 
@@ -72,5 +69,11 @@ class ScannersHandler(Handler):
 
         """
         return {
-            'scanners': [scan.NAME for scan in self.aucote.scanners],
+            'scanners': [self.pretty_scanner(scanner) for scanner in self.aucote.scanners],
+        }
+
+    def pretty_scanner(self, scanner):
+        return {
+            "name": scanner.NAME,
+            "url": self.url_scanner(scanner.NAME)
         }

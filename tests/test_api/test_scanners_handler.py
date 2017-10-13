@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, patch
 import ipaddress
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
-from api.main_handler import MainHandler
 from api.scanners_handler import ScannersHandler
 from scans.tcp_scanner import TCPScanner
 from scans.tools_scanner import ToolsScanner
@@ -15,7 +14,7 @@ from utils import Config
 class ScannersHandlerTest(AsyncHTTPTestCase):
     def setUp(self):
         super(ScannersHandlerTest, self).setUp()
-        self.handler = MainHandler(self.app, MagicMock(), aucote=self.aucote)
+        self.handler = ScannersHandler(self.app, MagicMock(), aucote=self.aucote)
 
     def get_app(self):
         self.aucote = MagicMock()
@@ -30,7 +29,19 @@ class ScannersHandlerTest(AsyncHTTPTestCase):
         return self.app
 
     def test_scanners(self):
-        expected = {"scanners": ['test_name', 'tools']}
+        expected = {
+            "scanners":
+                [
+                    {
+                        'name': 'test_name',
+                        'url': self.get_url('/api/v1/scanner/test_name')
+                    },
+                    {
+                        'name': 'tools',
+                        'url': self.get_url('/api/v1/scanner/tools')
+                    }
+            ]
+        }
         response = self.fetch('/api/v1/scanners', method='GET')
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")

@@ -13,6 +13,9 @@ class Handler(RequestHandler):
     Defines common properties for handler
 
     """
+    SCANNER_URL = "/api/v1/scanner/{scanner_name}"
+    SCAN_URL = '/api/v1/scan/{scan_id}'
+
     def initialize(self, aucote):
         """
         Integrates Handlers with aucote
@@ -88,3 +91,12 @@ class Handler(RequestHandler):
 
         handler_class._execute = wrap_execute(handler_class._execute)
         return handler_class
+
+    def format_url(self, url):
+        return "{0}://{1}{2}".format(self.request.protocol, self.request.host, url)
+
+    def url_scanner(self, scanner_name):
+        return self.format_url(self.SCANNER_URL.format(scanner_name=scanner_name))
+
+    def url_scan(self, scan_id):
+        return self.format_url(self.SCAN_URL.format(scan_id=scan_id))
