@@ -74,5 +74,5 @@ class ToolsScanner(ScanAsyncTask):
     def get_last_scan_start(self):
         scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=1)
         if not scans:
-            return None
+            return 0
         return scans[0].start
