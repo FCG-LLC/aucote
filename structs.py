@@ -31,6 +31,7 @@ class Scan(object):
         self.end = end
         self._protocol = protocol
         self._scanner = scanner
+        self.scanner_task = None
 
     @property
     def start(self):

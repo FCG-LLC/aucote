@@ -42,6 +42,7 @@ class ToolsScanner(ScanAsyncTask):
             last_scan_start = self.get_last_scan_start()
 
             scan = Scan(time.time(), protocol=self.PROTOCOL, scanner=self.NAME)
+            scan.scanner_task = self
 
             nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, scan=scan, filter_out_storage=False)
             self.storage.save_scan(scan)
@@ -73,5 +74,5 @@ class ToolsScanner(ScanAsyncTask):
     def get_last_scan_start(self):
         scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=1)
         if not scans:
-            return None
+            return 0
         return scans[0].start
