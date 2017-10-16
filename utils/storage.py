@@ -7,7 +7,7 @@ import time
 import logging as log
 
 from fixtures.exploits import Exploit
-from structs import Port, Node, TransportProtocol, Scan, Vulnerability
+from structs import Port, Node, TransportProtocol, Scan, Vulnerability, PortScan, SecurityScan
 from utils.database_interface import DbInterface
 from scans.tcp_scanner import TCPScanner
 from scans.udp_scanner import UDPScanner
@@ -18,12 +18,52 @@ class Storage(DbInterface):
     This class provides local storage funxtionality
 
     """
-    SAVE_NODE_QUERY = "INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)"
-    SAVE_PORT_QUERY = "INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) "\
+    GET_LAST_ROWID = "SELECT last_insert_rowid()"
+
+    CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
+                         "scan_end int, UNIQUE (protocol, scanner_name, scan_start))"
+    SAVE_SCAN_QUERY = "INSERT INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)"
+    UPDATE_SCAN_END_QUERY = "UPDATE scans set scan_end = ? WHERE ROWID=?"
+    SELECT_SCAN_BY_ID = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE ROWID=?"
+    SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
+                   "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
+                   "LIMIT {limit} OFFSET {offset}"
+    SELECT_SCAN = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
+                  "(? IS NULL AND protocol IS NULL)) AND scanner_name=? AND scan_start=? LIMIT 1"
+
+    CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes_scans(scan_id int, node_id int, node_ip text, time int, " \
+                         "primary key (scan_id, node_id, node_ip))"
+    SAVE_NODE_QUERY = "INSERT INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)"
+    SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes_scans INNER JOIN scans ON scan_id = scans.ROWID WHERE" \
+                   " time>? AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
+    SELECT_SCANS_BY_NODE = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans "\
+                           "LEFT JOIN nodes_scans ON scans.ROWID = nodes_scans.scan_id WHERE node_id=? AND node_ip=? "\
+                           " AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"\
+                           "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
+    SELECT_SCAN_NODES = "SELECT node_id, node_ip, time, scan_id FROM nodes_scans WHERE scan_id=?"
+
+    CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports_scans (scan_id int, node_id int, node_ip text, port int, " \
+                         "port_protocol int, time int, primary key (scan_id, node_id, node_ip, port, port_protocol))"
+    SAVE_PORT_QUERY = "INSERT INTO ports_scans (scan_id, node_id, node_ip, port, port_protocol, time) "\
                       "VALUES (?, ?, ?, ?, ?, ?)"
-    SAVE_SCAN_QUERY = "INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)"
-    UPDATE_SCAN_END_QUERY = "UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) "\
-                            "AND scanner_name=? and scan_start=?"
+    SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans INNER JOIN scans ON "\
+                   "scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND "\
+                   "scans.protocol IS NULL)) AND scans.scanner_name=?"
+    SELECT_PORTS_BY_ID = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans WHERE ROWID=?"
+    SELECT_PORTS_BY_NODE_AND_SCAN = "SELECT node_id, node_ip, port, port_protocol, time, ROWID FROM ports_scans where "\
+                                    "node_id=? AND node_ip=? AND scan_id=?"
+    SELECT_PORTS_BY_NODES = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans where ({where}) " \
+                            "AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"
+    SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans where"\
+                                      " ({where}) AND time > ?"
+    SELECT_PORTS_BY_NODES_PORTDETECTION = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans" \
+                                          " INNER JOIN scans ON scan_id = scans.ROWID  where ({where}) AND time > ?" \
+                                          " AND (scans.scanner_name=? or scans.scanner_name=?)"
+
+    CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, " \
+                                  "exploit_app text, exploit_name text, node_id int, node_ip text, port_protocol int, "\
+                                  "port_number int, sec_scan_start float, sec_scan_end float, PRIMARY KEY (scan_id, "\
+                                  "exploit_id, node_id, node_ip, port_protocol, port_number))"
     SAVE_SECURITY_SCAN_DETAIL = "INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name,"\
                                 " node_id, node_ip, port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     SAVE_SECURITY_SCAN_DETAIL_START = "UPDATE security_scans SET sec_scan_start=? WHERE exploit_id=? AND "\
@@ -33,74 +73,36 @@ class Storage(DbInterface):
     SAVE_SECURITY_SCAN_DETAIL_END = "UPDATE security_scans SET sec_scan_end=? WHERE exploit_id=? AND exploit_app=? " \
                                     "AND exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL"\
                                     " AND port_protocol IS NULL)) AND port_number=? AND scan_id=?"
-    SAVE_VULNERABILITY = "INSERT OR REPLACE INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
-                         "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
-                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    SAVE_CHANGE = "INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
-                  "current_id, time) VALUES (?, ?, ?, ?, ?, ?)"
-    SELECT_VULNERABILITIES = "SELECT scan_id, node_id, node_ip, port_protocol, port, vulnerability_id, " \
-                             "vulnerability_subid, cve, cvss, output, time, ROWID FROM vulnerabilities WHERE node_id=?"\
-                             " AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"\
-                             " AND vulnerability_id=? AND scan_id=?"
-    SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? " \
-                   "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
-    SELECT_SCANS_BY_NODE = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans "\
-                           "LEFT JOIN nodes ON scans.ROWID = nodes.scan_id WHERE node_id=? AND node_ip=? "\
-                           " AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"\
-                           "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
+    SELECT_SECURITY_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, " \
+                            "port_number, sec_scan_start, sec_scan_end, scan_id FROM security_scans" \
+                            " INNER JOIN scans ON scan_id=scans.ROWID WHERE exploit_app=? AND node_id=? AND node_ip=? "\
+                            "AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? "\
+                            "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
+    CLEAR_SECURITY_SCANS = "DELETE FROM security_scans WHERE sec_scan_start >= sec_scan_end OR sec_scan_start IS NULL "\
+                           "OR sec_scan_end IS NULL"
     SELECT_SCANS_BY_SEC_SCAN = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans " \
                                "LEFT JOIN security_scans ON scans.ROWID = security_scans.scan_id WHERE node_id=? AND " \
                                "node_ip=? AND port_number=? AND (port_protocol=? OR (? IS NULL " \
-                               "AND port_protocol IS NULL))AND exploit_id=? AND exploit_app=? AND exploit_name=?" \
+                               "AND port_protocol IS NULL)) AND exploit_id=? AND exploit_app=? AND exploit_name=?" \
                                "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
-    SELECT_SCAN_NODES = "SELECT node_id, node_ip, time, scan_id FROM nodes WHERE scan_id=?"
-    SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN scans ON "\
-                   "scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND "\
-                   "scans.protocol IS NULL)) AND scans.scanner_name=?"
-    SELECT_PORTS_BY_ID = "SELECT node_id, node_ip, port, port_protocol, time FROM ports WHERE ROWID=?"
-    SELECT_SCANS = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
-                   "(? IS NULL AND protocol IS NULL)) AND scanner_name=? ORDER BY scan_end DESC, scan_start ASC "\
-                   "LIMIT {limit} OFFSET {offset}"
-    SELECT_SCAN = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR "\
-                  "(? IS NULL AND protocol IS NULL)) AND scanner_name=? AND scan_start=? LIMIT 1"
-    SELECT_SCAN_BY_ID = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE scan_id=?"
-    SELECT_SECURITY_SCANS = "SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, " \
-                            "port_number, sec_scan_start, sec_scan_end FROM security_scans INNER JOIN scans ON " \
-                            "scan_id=scans.ROWID WHERE exploit_app=? AND node_id=? AND node_ip=? "\
-                            "AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? "\
-                            "AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
-    SELECT_PORTS_BY_NODE_AND_SCAN = "SELECT node_id, node_ip, port, port_protocol, time, ROWID FROM ports where "\
-                                    "node_id=? AND node_ip=? AND scan_id=?"
-    SELECT_PORTS_BY_NODE = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? "\
-                           "AND node_ip=? AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"
-    SELECT_PORTS_BY_NODE_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? "\
-                                     "AND node_ip=? AND time > ?"
-    SELECT_PORTS_BY_NODES = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where ({where}) " \
-                            "AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"
-    SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where ({where}) "\
-                                      "AND time > ?"
-    SELECT_PORTS_BY_NODES_PORTDETECTION = "SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN " \
-                                          "scans ON scan_id = scans.ROWID  where ({where}) AND time > ? AND " \
-                                          "(scans.scanner_name=? or scans.scanner_name=?)"
-    CLEAR_SECURITY_SCANS = "DELETE FROM security_scans WHERE sec_scan_start >= sec_scan_end OR sec_scan_start IS NULL "\
-                           "OR sec_scan_end IS NULL"
-    CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, " \
-                                  "exploit_app text, exploit_name text, node_id int, node_ip text, port_protocol int, "\
-                                  "port_number int, sec_scan_start float, sec_scan_end float, PRIMARY KEY (scan_id, "\
-                                  "exploit_id, node_id, node_ip, port_protocol, port_number))"
-    CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports (scan_id int, node_id int, node_ip text, port int, " \
-                         "port_protocol int, time int, primary key (scan_id, node_id, node_ip, port, port_protocol))"
-    CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes(scan_id int, node_id int, node_ip text, time int, " \
-                         "primary key (scan_id, node_id, node_ip))"
-    CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
-                         "scan_end int, UNIQUE (protocol, scanner_name, scan_start))"
+
     CREATE_VULNERABILITIES_TABLE = "CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, "\
                                    "port_protocol int, port int, vulnerability_id int, vulnerability_subid int, "\
                                    "cve text, cvss text, output text, time int, primary key(scan_id, node_id, "\
                                    "node_ip, port_protocol, port, vulnerability_subid))"
+    SAVE_VULNERABILITY = "INSERT INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
+                         "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
+                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    SELECT_VULNERABILITIES = "SELECT scan_id, node_id, node_ip, port_protocol, port, vulnerability_id, " \
+                             "vulnerability_subid, cve, cvss, output, time, ROWID FROM vulnerabilities WHERE node_id=?"\
+                             " AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"\
+                             " AND vulnerability_id=? AND scan_id=?"
+
     CREATE_CHANGES_TABLE = "CREATE TABLE IF NOT EXISTS changes(type int, vulnerability_id int, "\
                            "vulnerability_subid int, previous_id int, current_id int, time int, PRIMARY KEY(type, " \
                            "vulnerability_id, vulnerability_subid, previous_id, current_id, time))"
+    SAVE_CHANGE = "INSERT INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
+                  "current_id, time) VALUES (?, ?, ?, ?, ?, ?)"
 
     def __init__(self, filename="storage.sqlite3"):
 
@@ -125,6 +127,9 @@ class Storage(DbInterface):
         """
         self.execute(self._create_tables())
         self.execute(self._clear_security_scans())
+
+    def get_last_rowid(self):
+        return self.execute((self.GET_LAST_ROWID,))[0][0] or None
 
     def connect(self):
         self.conn = sqlite3.connect(self.filename, check_same_thread=True)
@@ -381,8 +386,8 @@ class Storage(DbInterface):
 
         """
         return self.SAVE_CHANGE, (change.type.value, change.vulnerability_id, change.vulnerability_subid,
-                                  change.previous_finding.row_id if change.previous_finding else None,
-                                  change.current_finding.row_id if change.current_finding else None, change.time)
+                                  change.previous_finding.rowid if change.previous_finding else None,
+                                  change.current_finding.rowid if change.current_finding else None, change.time)
 
     def _save_changes(self, changes):
         """
@@ -424,25 +429,6 @@ class Storage(DbInterface):
                    (self.CREATE_CHANGES_TABLE,)]
 
         return queries
-
-    def _get_ports_by_node(self, node, timestamp, protocol=None):
-        """
-        Query for port scan detail from scans from pasttime ago
-
-        Args:
-            port (Port):
-            app (str): app name
-            protocol (TransportProtocol):
-
-        Returns:
-            tuple
-
-        """
-        if protocol is None:
-            return self.SELECT_PORTS_BY_NODE_ALL_PROTS, (node.id, str(node.ip), timestamp)
-        iana = self._protocol_to_iana(protocol)
-
-        return self.SELECT_PORTS_BY_NODE, (node.id, str(node.ip), timestamp, iana, iana)
 
     def _get_ports_by_node_and_scan(self, node, scan):
         """
@@ -568,14 +554,9 @@ class Storage(DbInterface):
         Returns:
             list - list of nodes
         """
-        vulnerabilities = []
-
-        for row in self.execute(self._get_vulnerabilities(port=port, exploit=exploit, scan=scan)):
-            vulnerability = Vulnerability(port=port, exploit=exploit, cve=row[7], cvss=row[8], output=row[9],
-                                          subid=row[6], vuln_time=row[10])
-            vulnerability.row_id = row[11]
-            vulnerabilities.append(vulnerability)
-        return vulnerabilities
+        return [Vulnerability(port=port, exploit=exploit, cve=row[7], cvss=row[8], output=row[9],
+                              subid=row[6], vuln_time=row[10], rowid=row[11])
+                for row in self.execute(self._get_vulnerabilities(port=port, exploit=exploit, scan=scan))]
 
     def save_port(self, port, scan):
         """
@@ -633,15 +614,13 @@ class Storage(DbInterface):
             list - list of Ports
 
         """
-        ports = []
+        ports_scans = []
 
-        for port in self.execute(self._get_ports_by_node_and_scan(node=node, scan=scan)):
-            storage_port = Port(node=Node(node_id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
-                                transport_protocol=self._transport_protocol(port[3]))
-            storage_port.row_id = port[5]
-            storage_port.scan = scan
-            ports.append(storage_port)
-        return ports
+        for row in self.execute(self._get_ports_by_node_and_scan(node=node, scan=scan)):
+            storage_port = Port(node=Node(node_id=row[0], ip=ipaddress.ip_address(row[1])),
+                                transport_protocol=self._transport_protocol(row[3]), number=row[2])
+            ports_scans.append(PortScan(port=storage_port, rowid=row[5], scan=scan, timestamp=row[4]))
+        return ports_scans
 
     def get_nodes_by_scan(self, scan):
         """
@@ -706,14 +685,11 @@ class Storage(DbInterface):
         return_value = []
 
         for row in self.execute(self._get_security_scan_info(port=port, app=app, scan=scan)):
-            return_value.append({
-                "exploit": Exploit(exploit_id=row[0]),
-                "port": Port(node=Node(node_id=row[3], ip=ipaddress.ip_address(row[4])), number=row[6],
-                             transport_protocol=self._transport_protocol(row[5])),
-                "scan_start": row[7] or 0.,
-                "scan_end": row[8] or 0.,
-                "exploit_name": row[2]
-            })
+            return_value.append(SecurityScan(port=Port(node=Node(node_id=row[3], ip=ipaddress.ip_address(row[4])),
+                                                       number=row[6],
+                                                       transport_protocol=self._transport_protocol(row[5])),
+                                             exploit=Exploit(exploit_id=row[0], name=row[2], app=row[1]),
+                                             scan_start=row[7] or 0, scan_end=row[8] or 0, scan=self.get_scan(row[9])))
 
         return return_value
 
@@ -749,31 +725,6 @@ class Storage(DbInterface):
 
         """
         return self.execute(self._create_tables())
-
-    def get_ports_by_node(self, node, pasttime=0, timestamp=None, protocol=None):
-        """
-        Get open ports of node since timestamp or from pasttime if timestamp is not given.
-
-        Args:
-            node (Node):
-            pasttime (int):
-            timestamp (int):
-            protocol (int):
-
-        Returns:
-            list - list of Nodes
-
-        """
-        ports = []
-        if timestamp is None:
-            timestamp = time.time() - pasttime
-
-        for row in self.execute(self._get_ports_by_node(node=node, timestamp=timestamp, protocol=protocol)):
-            port = Port(node=node, number=row[2], transport_protocol=self._transport_protocol(row[3]))
-            port.scan = Scan(start=port.node.scan.start)
-            ports.append(port)
-
-        return ports
 
     def get_ports_by_nodes(self, nodes, pasttime=0, timestamp=None, protocol=None, portdetection_only=False):
         """
@@ -852,8 +803,7 @@ class Storage(DbInterface):
         return self.SAVE_SCAN_QUERY, (self._protocol_to_iana(scan.protocol), scan.scanner, scan.start, scan.end)
 
     def _update_scan(self, scan):
-        iana = self._protocol_to_iana(scan.protocol)
-        return self.UPDATE_SCAN_END_QUERY, (scan.end, iana, iana, scan.scanner, scan.start)
+        return self.UPDATE_SCAN_END_QUERY, (scan.end, scan.rowid)
 
     def _get_scans(self, protocol, scanner_name, limit=2, offset=0):
         iana = self._protocol_to_iana(protocol)
@@ -876,7 +826,9 @@ class Storage(DbInterface):
         Returns:
 
         """
-        return self.execute(self._save_scan(scan=scan))
+        self.execute(self._save_scan(scan=scan))
+        scan.rowid = self.get_last_rowid()
+        return scan
 
     def update_scan(self, scan):
         """
@@ -890,6 +842,13 @@ class Storage(DbInterface):
         """
         return self.execute(self._update_scan(scan=scan))
 
+    def get_scan(self, scan_id):
+        rows = self.execute((self.SELECT_SCAN_BY_ID, (scan_id, )))
+
+        if not rows:
+            return None
+        return self._scan_from_row(rows[0])
+
     def get_scan_id(self, scan):
         """
         Get scan_id
@@ -901,6 +860,9 @@ class Storage(DbInterface):
             int
 
         """
+        if scan.rowid:
+            return scan.rowid
+
         data = self.execute(self._get_scan(scan=scan))
         if not data:
             return None
@@ -1005,4 +967,4 @@ class Storage(DbInterface):
         return self.execute(self._save_vulnerabilities(vulnerabilities=vulnerabilities, scan=scan))
 
     def _scan_from_row(self, row):
-        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]), scanner=row[2])
+        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]), scanner=row[2], rowid=row[0])

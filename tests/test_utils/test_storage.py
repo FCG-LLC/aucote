@@ -8,15 +8,27 @@ from unittest.mock import MagicMock, patch, call
 
 from fixtures.exploits import Exploit
 from structs import Node, Port, TransportProtocol, Scan, Vulnerability, VulnerabilityChangeBase, \
-    VulnerabilityChangeType, PortDetectionChange
+    VulnerabilityChangeType, PortDetectionChange, PortScan, SecurityScan, NodeScan
 from utils.storage import Storage
 
 
 class StorageTest(TestCase):
+    SEL_SEC_SCAN = ("SELECT scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, "
+                     "port_number, sec_scan_start, sec_scan_end FROM security_scans", )
+    SEL_NOD_SCAN = ("SELECT scan_id, node_id, node_ip, time from nodes_scans",)
+    SEL_POR_SCAN = ("SELECT scan_id, node_id, node_ip, port, port_protocol, time from ports_scans",)
+    SEL_CHANGE = ("SELECT type, vulnerability_id, vulnerability_subid, previous_id, current_id, time FROM changes", )
+    SEL_SCANS = ("SELECT ROWID, scan_start, scan_end, protocol, scanner_name FROM scans",)
+    SEL_VULNS = ("SELECT scan_id, node_id, node_ip, port_protocol, port, vulnerability_id, vulnerability_subid, cve, cvss, output, time FROM vulnerabilities", )
+
     def setUp(self):
         self.maxDiff = None
         self.storage = Storage(filename=":memory:")
         self.scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
+
+        self.scan_1 = Scan(rowid=56, protocol=TransportProtocol.UDP, scanner='test_name', start=13, end=19)
+        self.scan_2 = Scan(rowid=79, protocol=TransportProtocol.UDP, scanner='test_name', start=2, end=18)
+        self.scan_3 = Scan(rowid=80, protocol=TransportProtocol.UDP, scanner='test_name_2', start=20, end=45)
 
         self.node_1 = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         self.node_1.name = 'test_node_1'
@@ -30,31 +42,111 @@ class StorageTest(TestCase):
         self.node_3.name = 'test_node_3'
         self.node_3.scan = Scan(start=98)
 
-        self.port_1 = Port(node=self.node_1, number=45, transport_protocol=TransportProtocol.UDP)
-        self.port_1.scan = Scan(start=17)
-        self.port_1.row_id = 124
+        self.node_scan_1 = NodeScan(node=self.node_1, rowid=13, scan=self.scan_1, timestamp=15)
+        self.node_scan_2 = NodeScan(node=self.node_2, rowid=15, scan=self.scan_1, timestamp=56)
+        self.node_scan_3 = NodeScan(node=self.node_3, rowid=16, scan=self.scan_1, timestamp=98)
+        self.node_scan_3 = NodeScan(node=self.node_3, rowid=17, scan=self.scan_2, timestamp=90)
 
-        self.port_2 = Port(node=self.node_2, transport_protocol=TransportProtocol.TCP, number=65)
+        self.port_1 = Port(node=self.node_1, number=45, transport_protocol=TransportProtocol.UDP)
+        self.port_1.scan = self.scan_1
+
+        self.port_scan_1 = PortScan(port=self.port_1, scan=self.scan_1, timestamp=176, rowid=124)
+
+        self.port_2 = Port(node=self.node_2, transport_protocol=TransportProtocol.UDP, number=65)
         self.port_2.scan = Scan(start=3, end=45)
-        self.port_2.row_id = 15
+
+        self.port_scan_2 = PortScan(port=self.port_2, scan=self.scan_1, timestamp=987, rowid=15)
 
         self.port_3 = Port(node=self.node_3, transport_protocol=TransportProtocol.ICMP, number=99)
         self.port_3.scan = Scan(start=43, end=180)
-        self.port_3.row_id = 13
+
+        self.port_scan_3 = PortScan(port=self.port_3, scan=self.scan_1, timestamp=619, rowid=13)
+
+        self.port_4 = Port(node=self.node_1, number=80, transport_protocol=TransportProtocol.UDP)
+        self.port_4.scan = self.scan_1
+
+        self.port_scan_4 = PortScan(port=self.port_4, scan=self.scan_1, timestamp=650, rowid=480)
 
         self.exploit_1 = Exploit(exploit_id=14, name='test_name', app='test_app')
         self.exploit_2 = Exploit(exploit_id=2, name='test_name_2', app='test_app_2')
+        self.exploit_3 = Exploit(exploit_id=56, name='test_name_2', app='test_app')
 
-        self.vuln_change_1 = PortDetectionChange(change_time=124445, current_finding=self.port_1,
-                                                 previous_finding=self.port_2)
+        self.security_scan_1 = SecurityScan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_1, scan_start=178,
+                                            scan_end=851)
+        self.security_scan_2 = SecurityScan(exploit=self.exploit_2, port=self.port_1, scan=self.scan_1, scan_start=109,
+                                            scan_end=775)
+        self.security_scan_3 = SecurityScan(exploit=self.exploit_3, port=self.port_1, scan=self.scan_1, scan_start=113,
+                                            scan_end=353)
+        self.security_scan_4 = SecurityScan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_3, scan_start=180,
+                                            scan_end=222)
 
-        self.vuln_change_2 = PortDetectionChange(change_time=32434, current_finding=self.port_2,
-                                                 previous_finding=self.port_3)
+        self.vuln_change_1 = PortDetectionChange(change_time=124445, current_finding=self.port_scan_1,
+                                                 previous_finding=self.port_scan_2)
+
+        self.vuln_change_2 = PortDetectionChange(change_time=32434, current_finding=self.port_scan_2,
+                                                 previous_finding=self.port_scan_3)
 
         self.vulnerability_1 = Vulnerability(port=self.port_1, output='test_output_1', exploit=self.exploit_1,
-                                             cve='CVE-2017', cvss=6.7, subid=1, vuln_time=13)
+                                             cve='CVE-2017', cvss=6.7, subid=1, vuln_time=13, rowid=134,
+                                             scan=self.scan_1)
         self.vulnerability_2 = Vulnerability(port=self.port_1, output='test_output_2', exploit=self.exploit_2,
-                                             cve='CWE-14', cvss=8.9, subid=2, vuln_time=98)
+                                             cve='CWE-14', cvss=8.9, subid=2, vuln_time=98, rowid=152,
+                                             scan=self.scan_1)
+        self.vulnerability_3 = Vulnerability(port=self.port_1, output='test_output_3', exploit=self.exploit_1,
+                                             cve='CVE-2016', cvss=3.7, subid=2, vuln_time=15, rowid=153,
+                                             scan=self.scan_2)
+        self.vulnerability_4 = Vulnerability(port=self.port_1, output='test_output_4', exploit=self.exploit_2,
+                                             cve='CWE-15', cvss=2.9, subid=1, vuln_time=124, rowid=169,
+                                             scan=self.scan_2)
+
+    def prepare_tables(self):
+        self.storage.connect()
+        self.storage.init_schema()
+        self.prepare_scans()
+        self.prepare_nodes_scans()
+        self.prepare_ports_scans()
+        self.prepare_vulnerabilities()
+        self.prepare_security_scans()
+
+    def prepare_scans(self):
+        self.storage.execute(('INSERT INTO scans(ROWID, protocol, scanner_name, scan_start, scan_end) '
+                              'VALUES '
+                              '(56, 17, "test_name", 13, 19), '
+                              '(80, 17, "test_name_2", 20, 45), '
+                              '(79, 17, "test_name", 2, 18)',))
+
+    def prepare_nodes_scans(self):
+        self.storage.execute(("INSERT INTO nodes_scans (ROWID, scan_id, node_id, node_ip, time) VALUES "
+                              "(13, 56, 1, '127.0.0.1', 15), "
+                              "(15, 56, 2, '127.0.0.2', 56), "
+                              "(16, 56, 3, '127.0.0.3', 98), "
+                              "(17, 79, 3, '127.0.0.3', 90) "
+                              "",))
+
+    def prepare_ports_scans(self):
+        self.storage.execute(('INSERT INTO ports_scans(ROWID, scan_id, node_id, node_ip, port, port_protocol, time) '
+                              'VALUES '
+                              '(124, 56, 1, "127.0.0.1", 45, 17, 176), '
+                              '(480, 56, 1, "127.0.0.1", 80, 17, 650), '
+                              '(13, 56, 3, "127.0.0.3", 99, 1, 619), '
+                              '(15, 56, 2, "127.0.0.2", 65, 17, 987)',))
+
+    def prepare_security_scans(self):
+        self.storage.execute(("INSERT INTO security_scans(exploit_id, exploit_name, exploit_app, scan_id, node_id, "
+                              "node_ip, port_number, port_protocol, sec_scan_start, sec_scan_end) VALUES "
+                              "(14, 'test_name', 'test_app', 56, 1, '127.0.0.1', 45, 17, 178, 851), "
+                              "(56, 'test_name_2', 'test_app', 56, 1, '127.0.0.1', 45, 17, 113, 353), "
+                              "(14, 'test_name', 'test_app', 80, 1, '127.0.0.1', 45, 17, 180, 222), "
+                              "(2, 'test_name_2', 'test_app_2', 56, 1, '127.0.0.1', 45, 17, 109, 775)",))
+
+    def prepare_vulnerabilities(self):
+        self.storage.execute(("INSERT INTO vulnerabilities (ROWID, scan_id, node_id, node_ip, port_protocol, port, "
+                              "vulnerability_id, vulnerability_subid, cve, cvss, output, time) VALUES "
+                              "(134, 56, 1, '127.0.0.1', 17, 45, 14, 1, 'CVE-2017', 6.7, 'test_output_1', 13),"
+                              "(152, 56, 1, '127.0.0.1', 17, 45, 2, 2, 'CWE-14', 8.9, 'test_output_2', 98),"
+                              "(153, 79, 1, '127.0.0.1', 17, 45, 14, 1, 'CVE-2016', 3.7, 'test_output_3', 15),"
+                              "(169, 79, 1, '127.0.0.1', 17, 45, 2, 2, 'CWE-15', 2.9, 'test_output_4', 124)"
+                              "",))
 
     def test_init(self):
         self.assertEqual(self.storage.filename, ":memory:")
@@ -74,230 +166,6 @@ class StorageTest(TestCase):
 
         self.assertEqual(self.storage.conn, None)
 
-    @patch("time.time", MagicMock(return_value=7))
-    def test__save_node(self):
-        self.storage.get_scan_id = MagicMock(return_value=16)
-        result = self.storage._save_node(self.node_1, scan=self.scan)
-        expected = ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)",
-                    (16, 1, '127.0.0.1', 7))
-
-        self.assertCountEqual(result, expected)
-
-    @patch("time.time", MagicMock(return_value=17))
-    def test__save_nodes(self):
-        self.storage.get_scan_id = MagicMock(return_value=16)
-        nodes = [self.node_1, self.node_2, self.node_3]
-        result = self.storage._save_nodes(nodes, scan=self.scan)
-        expected = (
-            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 1, '127.0.0.1', 17)),
-            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 2, '127.0.0.2', 17)),
-            ("INSERT OR REPLACE INTO nodes (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)", (16, 3, '127.0.0.3', 17)),
-        )
-
-        self.assertCountEqual(result, expected)
-        self.assertIsInstance(result, list)
-
-    @patch('utils.storage.time.time', MagicMock(return_value=140000))
-    def test__get_nodes(self):
-        result = self.storage._get_nodes(pasttime=700, timestamp=None, scan=self.scan)
-
-        expected = 'SELECT node_id, node_ip, time FROM nodes INNER JOIN scans ON scan_id = scans.ROWID WHERE time>? '\
-                   'AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?', (139300, 17, 17, 'test_name')
-        self.assertEqual(result, expected)
-
-    def test__get_vulnerabilities(self):
-        self.storage.get_scan_id = MagicMock(return_value=16)
-        result = self.storage._get_vulnerabilities(port=self.port_1, scan=self.scan, exploit=self.exploit_1)
-        expected = 'SELECT scan_id, node_id, node_ip, port_protocol, port, vulnerability_id, ' \
-                   'vulnerability_subid, cve, cvss, output, time, ROWID FROM vulnerabilities ' \
-                   'WHERE node_id=? AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL ' \
-                   'AND port_protocol IS NULL)) AND vulnerability_id=? AND scan_id=?',\
-                   (1, '127.0.0.1', 45, 17, 17, 14, 16),
-
-        self.assertEqual(result, expected)
-
-    @patch('time.time', MagicMock(return_value=13))
-    def test__save_port(self):
-        self.storage.get_scan_id = MagicMock(return_value=16)
-
-        result = self.storage._save_port(self.port_1, scan=self.scan)
-
-        expected = ("INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) VALUES (?, ?, ?, ?, ?, ?)",
-                    (16, 1, '127.0.0.1', 45, 17, 13))
-
-        self.assertCountEqual(result, expected)
-
-    @patch('time.time', MagicMock(return_value=122))
-    def test__save_ports(self):
-        ports = [self.port_1, self.port_2, self.port_3]
-
-        self.storage.get_scan_id = MagicMock(return_value=34)
-
-        result = self.storage._save_ports(ports, self.scan)
-        self.storage.get_scan_id.assert_called_once_with(self.scan)
-
-        expected = [
-            ("INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) VALUES (?, ?, ?, ?, ?, ?)",
-             (34, 1, '127.0.0.1', 45, 17, 122)),
-            ("INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) VALUES (?, ?, ?, ?, ?, ?)",
-             (34, 2, '127.0.0.2', 65, 6, 122)),
-            ("INSERT OR REPLACE INTO ports (scan_id, node_id, node_ip, port, port_protocol, time) VALUES (?, ?, ?, ?, ?, ?)",
-             (34, 3, '127.0.0.3', 99, 1, 122)),
-        ]
-
-        self.assertCountEqual(result, expected)
-        self.assertIsInstance(result, list)
-
-    @patch('utils.storage.time.time', MagicMock(return_value=140000))
-    def test__get_ports(self):
-        self.storage.get_scan_id = MagicMock(return_value=87)
-        result = self.storage._get_ports(700, scan=self.scan)
-        expected = 'SELECT node_id, node_ip, port, port_protocol, time FROM ports INNER JOIN scans '\
-                   'ON scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?',\
-                   (139300, 17, 17, 'test_name')
-        self.assertEqual(result, expected)
-
-    def test__get_scan_nodes(self):
-        self.storage.get_scan_id = MagicMock(return_value=87)
-        expected = 'SELECT node_id, node_ip, time, scan_id FROM nodes WHERE scan_id=?', (87, )
-
-        result = self.storage._get_scan_nodes(self.scan)
-
-        self.assertEqual(result, expected)
-
-    def test__get_scans_by_node(self):
-        expected = "SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans " \
-                   "LEFT JOIN nodes ON scans.ROWID = nodes.scan_id WHERE node_id=? AND node_ip=? " \
-                   " AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"\
-                   "ORDER BY scan_end DESC, scan_start ASC LIMIT 13 OFFSET 45", (1, '127.0.0.1', 17, 17, 'test_name')
-
-        result = self.storage._get_scans_by_node(node=self.node_1, scan=self.scan, limit=13, offset=45)
-
-        self.assertEqual(result, expected)
-
-    def test__get_ports_by_node_and_scan(self):
-        self.storage.get_scan_id = MagicMock(return_value=87)
-        expected = "SELECT node_id, node_ip, port, port_protocol, time, ROWID FROM ports where "\
-                   "node_id=? AND node_ip=? AND scan_id=?", (1, '127.0.0.1', 87)
-
-        result = self.storage._get_ports_by_node_and_scan(node=self.node_1, scan=self.scan)
-
-        self.assertEqual(result, expected)
-
-    def test__get_scan_by_id(self):
-        scan_id = 77
-        expected = "SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE scan_id=?", (77,)
-
-        result = self.storage._get_scan_by_id(scan_id)
-
-        self.assertEqual(result, expected)
-
-    def test__save_security_scan(self):
-        self.storage.get_scan_id = MagicMock(return_value=7)
-        expected = [
-            ("INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, "
-              "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-              (7, 14, 'test_app', 'test_name', 2, '127.0.0.2', 6, 65)),
-            ("UPDATE security_scans SET sec_scan_start=? WHERE exploit_id=? AND exploit_app=? AND "
-              "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
-              (3, 14, 'test_app', 'test_name', 2, '127.0.0.2', 6, 6, 65, 7))
-        ]
-
-        result = self.storage._save_security_scan(exploit=self.exploit_1, port=self.port_2, scan=self.scan)
-
-        self.storage.get_scan_id.assert_called_once_with(self.scan)
-        self.assertCountEqual(result[0], expected[0])
-        self.assertCountEqual(result[1], expected[1])
-
-    def test__save_security_scans(self):
-        self.storage.get_scan_id = MagicMock(return_value=7)
-        exploits = [self.exploit_1, self.exploit_2]
-        expected = [
-            ("INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, "
-             "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-             (7, 14, 'test_app', 'test_name', 2, '127.0.0.2', 6, 65)),
-
-            ("UPDATE security_scans SET sec_scan_start=? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
-             (3, 14, 'test_app', 'test_name', 2, '127.0.0.2', 6, 6, 65, 7)),
-
-            ("UPDATE security_scans SET sec_scan_end=? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
-             (45, 14, 'test_app', 'test_name', 2, '127.0.0.2', 6, 6, 65, 7)),
-
-            ("INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, "
-             "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-             (7, 2, 'test_app_2', 'test_name_2', 2, '127.0.0.2', 6, 65)),
-
-            ("UPDATE security_scans SET sec_scan_start=? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
-             (3, 2, 'test_app_2', 'test_name_2', 2, '127.0.0.2', 6, 6, 65, 7)),
-
-            ("UPDATE security_scans SET sec_scan_end=? WHERE exploit_id=? AND exploit_app=? AND "
-             "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
-             (45, 2, 'test_app_2', 'test_name_2', 2, '127.0.0.2', 6, 6, 65, 7))
-        ]
-
-        result = self.storage._save_security_scans(exploits=exploits, port=self.port_2, scan=self.scan)
-
-        self.storage.get_scan_id.has_calls((call(self.scan), call(self.scan)))
-        self.assertCountEqual(result, expected)
-        self.assertIsInstance(result, list)
-
-    def test__save_security_scan_without_changing_start_scan(self):
-        self.storage.get_scan_id = MagicMock(return_value=7)
-        expected = [
-            ("INSERT OR IGNORE INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name, node_id, node_ip, "
-              "port_protocol, port_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-              (7, 14, 'test_app', 'test_name', 2, '127.0.0.2', 6, 65)),
-            ("UPDATE security_scans SET sec_scan_start=? WHERE exploit_id=? AND exploit_app=? AND "
-              "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
-              (3, 14, 'test_app', 'test_name', 2, '127.0.0.2', 6, 6, 65, 7)),
-            ("UPDATE security_scans SET sec_scan_end=? WHERE exploit_id=? AND exploit_app=? AND "
-              "exploit_name=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? AND scan_id=?",
-              (45, 14, 'test_app', 'test_name', 2, '127.0.0.2', 6, 6, 65, 7))
-        ]
-
-        result = self.storage._save_security_scan(exploit=self.exploit_1, port=self.port_2, scan=self.scan)
-
-        self.storage.get_scan_id.assert_called_once_with(self.scan)
-        self.assertCountEqual(result, expected)
-
-    @patch('utils.storage.time.time', MagicMock(return_value=140000))
-    def test__get_scan_info(self):
-        expected = ('SELECT exploit_id, exploit_app, exploit_name, node_id, node_ip, port_protocol, port_number, '
-                    'sec_scan_start, sec_scan_end FROM security_scans INNER JOIN scans ON scan_id=scans.ROWID '
-                    'WHERE exploit_app=? AND node_id=? AND node_ip=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL)) AND port_number=? '\
-                    'AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?', ('test_app', 2, '127.0.0.2', 6, 6, 65, 17, 17, 'test_name'))
-
-        result = self.storage._get_security_scan_info(port=self.port_2, app='test_app', scan=self.scan)
-
-        self.assertCountEqual(result, expected)
-
-    def test__save_change(self):
-        expected = ("INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
-                    "current_id, time) VALUES (?, ?, ?, ?, ?, ?)",
-                    (VulnerabilityChangeType.PORTDETECTION.value, 0, 0, 15, 124, 124445))
-
-        result = self.storage._save_change(self.vuln_change_1)
-
-        self.assertCountEqual(result, expected)
-
-    def test__save_changes(self):
-        changes = [self.vuln_change_1, self.vuln_change_2]
-
-        expected = [("INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
-                    "current_id, time) VALUES (?, ?, ?, ?, ?, ?)",
-                     (VulnerabilityChangeType.PORTDETECTION.value, 0, 0, 15, 124, 124445)),
-                    ("INSERT OR REPLACE INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
-                     "current_id, time) VALUES (?, ?, ?, ?, ?, ?)",
-                     (VulnerabilityChangeType.PORTDETECTION.value, 0, 0, 13, 15, 32434))
-                    ]
-
-        result = self.storage._save_changes(changes)
-
-        self.assertCountEqual(result, expected)
-
     def test__create_table(self):
         result = self.storage._create_tables()
         expected = [
@@ -305,10 +173,10 @@ class StorageTest(TestCase):
               "exploit_name text, node_id int, node_ip text, port_protocol int, port_number int, sec_scan_start float, "
               "sec_scan_end float, PRIMARY KEY (scan_id, exploit_id, node_id, node_ip, port_protocol, port_number))",),
 
-            ("CREATE TABLE IF NOT EXISTS ports (scan_id int, node_id int, node_ip text, port int, port_protocol int,"
+            ("CREATE TABLE IF NOT EXISTS ports_scans (scan_id int, node_id int, node_ip text, port int, port_protocol int,"
               " time int, primary key (scan_id, node_id, node_ip, port, port_protocol))",),
 
-            ('CREATE TABLE IF NOT EXISTS nodes(scan_id int, node_id int, node_ip text, time int, primary key (scan_id, node_id, node_ip))',),
+            ('CREATE TABLE IF NOT EXISTS nodes_scans(scan_id int, node_id int, node_ip text, time int, primary key (scan_id, node_id, node_ip))',),
 
             (
             'CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, scan_end int, UNIQUE '\
@@ -332,42 +200,6 @@ class StorageTest(TestCase):
     def test_cursor_property(self):
         self.assertEqual(self.storage.cursor, self.storage._cursor)
 
-    def test__get_ports_by_node(self):
-        result = self.storage._get_ports_by_node(self.node_1, 1200, protocol=TransportProtocol.TCP)
-        expected = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? AND node_ip=? AND "\
-                   "time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))", (1, '127.0.0.1', 1200, 6, 6)
-
-        self.assertEqual(result, expected)
-
-    def test__get_ports_by_node_all_protocols(self):
-        result = self.storage._get_ports_by_node(self.node_1, 1200, protocol=None)
-        expected = "SELECT node_id, node_ip, port, port_protocol, time FROM ports where node_id=? AND node_ip=? AND time > ?", (1, '127.0.0.1', 1200)
-
-        self.assertEqual(result, expected)
-
-    def test__get_ports_by_nodes(self):
-        nodes = [ self.node_1, self.node_2]
-
-        result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=TransportProtocol.UDP)
-        expected = (
-            "SELECT node_id, node_ip, port, port_protocol, time FROM ports where ( (node_id=? AND node_ip=?) OR "\
-            "(node_id=? AND node_ip=?) ) AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))",
-            [1, '127.0.0.1', 2, '127.0.0.2', 1200, 17, 17]
-        )
-
-        self.assertEqual(result, expected)
-
-    def test__get_ports_by_nodes_all_protocols(self):
-        nodes = [ self.node_1, self.node_2]
-
-        result = self.storage._get_ports_by_nodes(nodes, 1200, protocol=None)
-        expected = (
-            "SELECT node_id, node_ip, port, port_protocol, time FROM ports where ( (node_id=? AND node_ip=?) OR (node_id=? AND node_ip=?) ) AND time > ?",
-            [1, '127.0.0.1', 2, '127.0.0.2', 1200]
-        )
-
-        self.assertEqual(result, expected)
-
     def test__clear_security_scans(self):
         expected = "DELETE FROM security_scans WHERE sec_scan_start >= sec_scan_end OR sec_scan_start IS NULL OR sec_scan_end IS NULL",
 
@@ -386,230 +218,180 @@ class StorageTest(TestCase):
         self.storage._clear_security_scans.assert_called_once_with()
         self.storage._create_tables.assert_called_once_with()
 
+    @patch('utils.storage.time.time', MagicMock(return_value=134))
     def test_save_node(self):
-        node = MagicMock()
-        self.storage._save_node = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.save_node(node=node, scan=self.scan)
-        self.storage._save_node.assert_called_once_with(node=node, scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._save_node())
+        self.storage.connect()
+        self.storage.init_schema()
 
+        expected = [(56, 1, '127.0.0.1', 134)]
+
+        self.storage.save_node(node=self.node_1, scan=self.scan_1)
+
+        result = self.storage.execute(self.SEL_NOD_SCAN)
+
+        self.assertEqual(result, expected)
+
+    @patch('utils.storage.time.time', MagicMock(return_value=134))
     def test_save_nodes(self):
-        nodes = MagicMock()
-        self.storage._save_nodes = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.save_nodes(nodes=nodes, scan=self.scan)
-        self.storage._save_nodes.assert_called_once_with(nodes=nodes, scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._save_nodes())
+        self.storage.connect()
+        self.storage.init_schema()
 
+        expected = [(56, 1, '127.0.0.1', 134),
+                    (56, 2, '127.0.0.2', 134),
+                    (56, 3, '127.0.0.3', 134)]
+
+        self.storage.save_nodes(nodes=[self.node_1, self.node_2, self.node_3], scan=self.scan_1)
+
+        result = self.storage.execute(self.SEL_NOD_SCAN)
+
+        self.assertEqual(result, expected)
+
+    @patch('utils.storage.time.time', MagicMock(return_value=60))
     def test_get_nodes(self):
-        self.storage._get_nodes = MagicMock()
-        timestamp = MagicMock()
-        pasttime = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, '127.0.0.1'),
-            (2, '::1'),
-        ))
+        self.prepare_tables()
 
-        result = self.storage.get_nodes(pasttime=pasttime, timestamp=timestamp, scan=self.scan)
+        expected = [self.node_2, self.node_3, self.node_3]
 
-        self.storage._get_nodes.assert_called_once_with(pasttime=pasttime, timestamp=timestamp, scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._get_nodes())
+        result = self.storage.get_nodes(pasttime=10, scan=self.scan_1)
 
-        self.assertEqual(result[0].id, 1)
-        self.assertEqual(result[1].id, 2)
-
-        self.assertEqual(result[0].ip, ipaddress.ip_address('127.0.0.1'))
-        self.assertEqual(result[1].ip, ipaddress.ip_address('::1'))
+        self.assertCountEqual(result, expected)
 
     def test_get_vulnerabilities(self):
-        self.storage._get_vulnerabilities = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, 1, '127.0.0.1', 17, 33, 2, 1, 'CVE-1', 5.5, 'output_1', 13, 33),
-            (3, 2, '127.0.0.2', 6, 44, 3, 5, 'CVE-2', 4.4, 'output_2', 15, 44)
-        ))
+        self.prepare_tables()
 
-        result = self.storage.get_vulnerabilities(port=self.port_1, scan=self.scan, exploit=self.exploit_1)
+        expected = [self.vulnerability_1]
 
-        self.storage._get_vulnerabilities.assert_called_once_with(port=self.port_1, scan=self.scan, exploit=self.exploit_1)
-        self.assertEqual(result[0].port, self.port_1)
-        self.assertEqual(result[1].port, self.port_1)
+        result = self.storage.get_vulnerabilities(port=self.port_1, scan=self.scan_1, exploit=self.exploit_1)
 
-        self.assertEqual(result[0].row_id, 33)
-        self.assertEqual(result[1].row_id, 44)
-
-        self.assertEqual(result[0].exploit, self.exploit_1)
-        self.assertEqual(result[1].exploit, self.exploit_1)
-
-        self.assertEqual(result[0].cvss, 5.5)
-        self.assertEqual(result[1].cvss, 4.4)
-
-        self.assertEqual(result[0].output, 'output_1')
-        self.assertEqual(result[1].output, 'output_2')
-
-        self.assertEqual(result[0].cve, 'CVE-1')
-        self.assertEqual(result[1].cve, 'CVE-2')
-
-        self.assertEqual(result[0].time, 13)
-        self.assertEqual(result[1].time, 15)
+        self.assertCountEqual(result, expected)
 
     def test_get_nodes_by_scan(self):
-        self.storage._get_scan_nodes = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, '127.0.0.1'),
-            (2, '::1'),
-        ))
+        self.prepare_tables()
 
-        result = self.storage.get_nodes_by_scan(scan=self.scan)
+        expected = [self.node_1, self.node_2, self.node_3]
 
-        self.storage._get_scan_nodes.assert_called_once_with(scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._get_scan_nodes())
+        result = self.storage.get_nodes_by_scan(scan=self.scan_1)
 
-        self.assertEqual(result[0].id, 1)
-        self.assertEqual(result[1].id, 2)
+        self.assertCountEqual(result, expected)
 
-        self.assertEqual(result[0].scan, self.scan)
-        self.assertEqual(result[1].scan, self.scan)
-
-        self.assertEqual(result[0].ip, ipaddress.ip_address('127.0.0.1'))
-        self.assertEqual(result[1].ip, ipaddress.ip_address('::1'))
-
+    @patch('utils.storage.time.time', MagicMock(return_value=167))
     def test_save_port(self):
-        port = MagicMock()
-        self.storage._save_port = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.save_port(port=port, scan=self.scan)
-        self.storage._save_port.assert_called_once_with(port=port, scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._save_port())
+        self.storage.connect()
+        self.storage.init_schema()
 
+        expected = [(56, 1, '127.0.0.1', 45, 17, 167)]
+
+        self.storage.save_port(port=self.port_1, scan=self.scan_1)
+
+        result = self.storage.execute(self.SEL_POR_SCAN)
+
+        self.assertEqual(result, expected)
+
+    @patch('utils.storage.time.time', MagicMock(return_value=167))
     def test_save_ports(self):
-        self.storage.scan = MagicMock()
-        ports = MagicMock()
-        self.storage._save_ports = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.save_ports(ports=ports, scan=self.storage.scan)
-        self.storage.execute.assert_called_once_with(self.storage._save_ports())
+        self.storage.connect()
+        self.storage.init_schema()
 
+        expected = [(56, 1, '127.0.0.1', 45, 17, 167),
+                    (56, 2, '127.0.0.2', 65, 17, 167),
+                    (56, 3, '127.0.0.3', 99, 1, 167)]
+
+        self.storage.save_ports(ports=[self.port_1, self.port_2, self.port_3], scan=self.scan_1)
+
+        result = self.storage.execute(self.SEL_POR_SCAN)
+
+        self.assertEqual(result, expected)
+
+    @patch('utils.storage.time.time', MagicMock(return_value=1000))
     def test_get_ports(self):
-        self.storage.scan = MagicMock()
-        self.storage._get_ports = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, '127.0.0.1', 20, 6),
-            (2, '::1', 23, 17),
-        ))
+        self.prepare_tables()
 
-        result = self.storage.get_ports(pasttime=100, scan=self.storage.scan)
-        self.storage.execute.assert_called_once_with(self.storage._get_ports(pasttime=100))
+        expected = [self.port_scan_2.port, self.port_scan_3.port, self.port_scan_4.port]
 
-        self.assertEqual(result[0].node.id, 1)
-        self.assertEqual(result[1].node.id, 2)
+        result = self.storage.get_ports(pasttime=400, scan=self.scan_1)
 
-        self.assertEqual(result[0].node.ip, ipaddress.ip_address('127.0.0.1'))
-        self.assertEqual(result[1].node.ip, ipaddress.ip_address('::1'))
-
-        self.assertEqual(result[0].number, 20)
-        self.assertEqual(result[1].number, 23)
-
-        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
-
-        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
+        self.assertCountEqual(result, expected)
 
     def test_get_ports_by_scan_and_node(self):
-        self.storage.get_scan_id = MagicMock(return_value=87)
-        self.storage._get_ports_by_node_and_scan = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, '127.0.0.1', 20, 6, 78, 67),
-            (2, '127.0.0.2', 23, 17, 89, 98),
-        ))
+        self.prepare_tables()
 
-        result = self.storage.get_ports_by_scan_and_node(node=self.node_1, scan=self.scan)
+        expected = [self.port_scan_1, self.port_scan_4]
 
-        self.storage.execute.assert_called_once_with(self.storage._get_ports_by_node_and_scan(node=self.node_1,
-                                                                                              scan=self.scan))
+        result = self.storage.get_ports_by_scan_and_node(node=self.node_1, scan=self.scan_1)
 
-        self.assertEqual(result[0].node.id, 1)
-        self.assertEqual(result[1].node.id, 2)
-
-        self.assertEqual(result[0].row_id, 67)
-        self.assertEqual(result[1].row_id, 98)
-
-        self.assertEqual(result[0].node.ip, ipaddress.ip_address('127.0.0.1'))
-        self.assertEqual(result[1].node.ip, ipaddress.ip_address('127.0.0.2'))
-
-        self.assertEqual(result[0].number, 20)
-        self.assertEqual(result[1].number, 23)
-
-        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
-
-        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
+        self.assertCountEqual(result, expected)
 
     def test_save_security_scan(self):
-        exploit = MagicMock()
-        port = MagicMock()
-        self.storage._save_security_scan = MagicMock()
-        self.storage.execute = MagicMock()
+        self.storage.connect()
+        self.storage.init_schema()
 
-        self.storage.save_security_scan(exploit=exploit, port=port, scan=self.scan)
+        expected = [(56, 14, 'test_app', 'test_name', 1, '127.0.0.1', 17, 45, 13.0, 19.0)]
 
-        self.storage._save_security_scan.assert_called_once_with(exploit=exploit, port=port, scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._save_security_scan())
+        self.storage.save_security_scan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_1)
+
+        result = self.storage.execute(self.SEL_SEC_SCAN)
+
+        self.assertEqual(result, expected)
+
+    def test_save_security_scan_twice(self):
+        self.storage.connect()
+        self.storage.init_schema()
+        self.port_1.scan._start = None
+
+        expected = [(56, 14, 'test_app', 'test_name', 1, '127.0.0.1', 17, 45, None, 19.0)]
+
+        self.storage.save_security_scan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_1)
+
+        result = self.storage.execute(self.SEL_SEC_SCAN)
+
+        self.assertEqual(result, expected)
+
+        self.port_1.scan._start = 13
+        self.port_1.scan.end = None
+
+        expected = [(56, 14, 'test_app', 'test_name', 1, '127.0.0.1', 17, 45, 13.0, 19.0)]
+
+        self.storage.save_security_scan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_1)
+
+        result = self.storage.execute(self.SEL_SEC_SCAN)
+
+        self.assertEqual(result, expected)
 
     def test_save_security_scans(self):
-        exploits = [self.exploit_1, self.exploit_2]
-        port = [self.port_1, self.port_2, self.port_3]
-        self.storage._save_security_scans = MagicMock()
-        self.storage.execute = MagicMock()
+        self.storage.connect()
+        self.storage.init_schema()
 
-        self.storage.save_security_scans(exploits=exploits, port=port, scan=self.scan)
+        expected = [(56, 14, 'test_app', 'test_name', 1, '127.0.0.1', 17, 45, 13.0, 19.0),
+                    (56, 2, 'test_app_2', 'test_name_2', 1, '127.0.0.1', 17, 45, 13.0, 19.0),
+                    (56, 56, 'test_app', 'test_name_2', 1, '127.0.0.1', 17, 45, 13.0, 19.0)]
 
-        self.storage._save_security_scans.assert_called_once_with(exploits=exploits, port=port, scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._save_security_scans())
+        self.storage.save_security_scans(exploits=[self.exploit_1, self.exploit_2, self.exploit_3], port=self.port_1,
+                                         scan=self.scan_1)
+
+        result = self.storage.execute(self.SEL_SEC_SCAN)
+
+        self.assertEqual(result, expected)
 
     def test_get_security_scan_info(self):
-        port = MagicMock()
-        app = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (11, None, 'test_name', 1, '127.0.0.1', 6, 11, 10., 10.),
-            (22, None, 'test_name_2', 2, '::1', 17, 22, None, None),
-        ))
-        self.storage._get_security_scan_info = MagicMock()
+        self.prepare_tables()
 
-        result = self.storage.get_security_scan_info(port, app, scan=self.scan)
+        expected = [self.security_scan_1, self.security_scan_3]
 
-        self.storage._get_security_scan_info.assert_called_once_with(port=port, app=app, scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._get_security_scan_info())
+        result = self.storage.get_security_scan_info(self.port_1, 'test_app', scan=self.scan_1)
 
-        self.assertEqual(result[0]['port'].node.id, 1)
-        self.assertEqual(result[1]['port'].node.id, 2)
-
-        self.assertEqual(result[0]['port'].node.ip, ipaddress.ip_address('127.0.0.1'))
-        self.assertEqual(result[1]['port'].node.ip, ipaddress.ip_address('::1'))
-
-        self.assertEqual(result[0]['port'].number, 11)
-        self.assertEqual(result[1]['port'].number, 22)
-
-        self.assertEqual(result[0]['port'].transport_protocol, TransportProtocol.TCP)
-        self.assertEqual(result[1]['port'].transport_protocol, TransportProtocol.UDP)
-
-        self.assertEqual(result[0]['exploit_name'], 'test_name')
-        self.assertEqual(result[1]['exploit_name'], 'test_name_2')
-
-        self.assertEqual(result[0]['scan_start'], 10.)
-        self.assertEqual(result[1]['scan_start'], 0.)
-
-        self.assertEqual(result[0]['scan_end'], 10.)
-        self.assertEqual(result[1]['scan_end'], 0.)
-
-        self.assertEqual(result[0]['exploit'].id, 11)
-        self.assertEqual(result[1]['exploit'].id, 22)
+        self.assertCountEqual(result, expected)
 
     def test_save_changes(self):
-        changes = MagicMock()
-        self.storage._save_changes = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.save_changes(changes=changes)
-        self.storage._save_changes.assert_called_once_with(changes=changes)
-        self.storage.execute.assert_called_once_with(self.storage._save_changes())
+        self.storage.connect()
+        self.storage.init_schema()
+
+        expected = [(1, 0, 0, 15, 124, 124445), (1, 0, 0, 13, 15, 32434)]
+
+        self.storage.save_changes(changes=[self.vuln_change_1, self.vuln_change_2])
+
+        result = self.storage.execute(self.SEL_CHANGE)
+
+        self.assertEqual(result, expected)
 
     def test_clear_security_scans(self):
         self.storage._clear_security_scans = MagicMock()
@@ -625,82 +407,23 @@ class StorageTest(TestCase):
         self.storage._create_tables.assert_called_once_with()
         self.storage.execute.assert_called_once_with(self.storage._create_tables())
 
-    def test_get_ports_by_node(self):
-        node = MagicMock()
-        self.storage._get_ports_by_node = MagicMock()
-        timestamp = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, '127.0.0.1', 20, 6),
-            (1, '127.0.0.1', 23, 17),
-        ))
-
-        result = self.storage.get_ports_by_node(node=node, timestamp=timestamp, protocol=TransportProtocol.UDP)
-
-        self.storage._get_ports_by_node.assert_called_once_with(node=node, timestamp=timestamp,
-                                                                protocol=TransportProtocol.UDP)
-        self.storage.execute.assert_called_once_with(self.storage._get_ports_by_node())
-
-        self.assertEqual(result[0].node, node)
-        self.assertEqual(result[1].node, node)
-
-        self.assertEqual(result[0].number, 20)
-        self.assertEqual(result[1].number, 23)
-
-        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
-        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
-
-
-    @patch('utils.storage.time.time', MagicMock(return_value=37))
-    def test_get_ports_by_node_without_timestamp(self):
-        node = MagicMock()
-        pasttime = 30
-        self.storage._get_ports_by_node = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.get_ports_by_node(node=node, pasttime=pasttime, protocol=TransportProtocol.UDP)
-        self.storage._get_ports_by_node.assert_called_once_with(node=node, timestamp=7, protocol=TransportProtocol.UDP)
-        self.storage.execute.assert_called_once_with(self.storage._get_ports_by_node())
-
     def test_get_ports_by_nodes_without_nodes(self):
-        nodes = []
         expected = []
 
-        result = self.storage.get_ports_by_nodes(nodes)
+        result = self.storage.get_ports_by_nodes([])
 
         self.assertEqual(result, expected)
 
-    @patch('utils.storage.time.time', MagicMock(return_value=108))
+    @patch('utils.storage.time.time', MagicMock(return_value=1000))
     def test_get_ports_by_nodes(self):
-        pasttime = 30
-        self.storage._get_ports_by_nodes = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, '127.0.0.1', 20, 6),
-            (2, '127.0.0.2', 23, 17),
-            (1, '127.0.0.1', 14, 17),
-        ))
+        self.prepare_tables()
 
-        nodes = [self.node_1, self.node_2]
-        result = self.storage.get_ports_by_nodes(nodes, pasttime=pasttime, protocol=TransportProtocol.UDP)
-        self.storage._get_ports_by_nodes.assert_called_once_with(nodes=nodes, portdetection_only=False, timestamp=78,
-                                                                 protocol=TransportProtocol.UDP)
-        self.storage.execute.assert_called_once_with(self.storage._get_ports_by_nodes())
+        expected = [self.port_scan_2.port, self.port_scan_4.port]
 
-        self.assertEqual(result[0].node, self.node_1)
-        self.assertEqual(result[0].node.name, self.node_1.name)
-        self.assertEqual(result[1].node, self.node_2)
-        self.assertEqual(result[1].node.name, self.node_2.name)
-        self.assertEqual(result[2].node, self.node_1)
+        result = self.storage.get_ports_by_nodes(nodes=[self.node_1, self.node_2], pasttime=400,
+                                                protocol=TransportProtocol.UDP)
 
-        self.assertEqual(result[0].number, 20)
-        self.assertEqual(result[1].number, 23)
-        self.assertEqual(result[2].number, 14)
-
-        self.assertEqual(result[0].transport_protocol, TransportProtocol.TCP)
-        self.assertEqual(result[1].transport_protocol, TransportProtocol.UDP)
-        self.assertEqual(result[2].transport_protocol, TransportProtocol.UDP)
-
-        self.assertEqual(result[0].scan.start, self.node_1.scan.start)
-        self.assertEqual(result[1].scan.start, self.node_2.scan.start)
-        self.assertEqual(result[2].scan.start, self.node_1.scan.start)
+        self.assertCountEqual(result, expected)
 
     def test_execute_query(self):
         query = "part_1", "arg_1", "arg_2"
@@ -735,182 +458,113 @@ class StorageTest(TestCase):
         result = self.storage._protocol_to_iana(protocol)
         self.assertIsNone(result)
 
-    def test__save_scan(self):
-        result = self.storage._save_scan(scan=self.scan)
-        expected = 'INSERT OR REPLACE INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (?, ?, ?, ?)', (17, 'test_name', 1, 17)
-        self.assertCountEqual(result, expected)
-
-    def test__update_scan(self):
-        result = self.storage._update_scan(scan=self.scan)
-        expected = 'UPDATE scans set scan_end = ? WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND scanner_name=? and scan_start=?', (17, 17, 17, 'test_name', 1)
-        self.assertCountEqual(result, expected)
-
-    def test__get_scans(self):
-        result = self.storage._get_scans(protocol=TransportProtocol.ICMP, scanner_name='test_name', limit=3, offset=17)
-        expected = 'SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND '\
-                   'scanner_name=? ORDER BY scan_end DESC, scan_start ASC LIMIT 3 OFFSET 17', (1, 1, 'test_name')
-        self.assertCountEqual(result, expected)
-
-    def test__get_scans_by_security_scan(self):
-        result = self.storage._get_scans_by_security_scan(port=self.port_1, exploit=self.exploit_1, limit=3, offset=17)
-        expected = 'SELECT scans.ROWID, protocol, scanner_name, scan_start, scan_end FROM scans LEFT JOIN security_scans ' \
-                   'ON scans.ROWID = security_scans.scan_id WHERE node_id=? AND node_ip=? AND port_number=? AND ' \
-                   '(port_protocol=? OR (? IS NULL AND port_protocol IS NULL))AND exploit_id=? AND exploit_app=? ' \
-                   'AND exploit_name=?ORDER BY scan_end DESC, scan_start ASC LIMIT 3 OFFSET 17', \
-                   (1, '127.0.0.1', 45, 17, 17, 14, 'test_app', 'test_name')
-        self.assertCountEqual(result, expected)
-
-    def test__get_scan(self):
-        result = self.storage._get_scan(self.scan)
-        expected = 'SELECT ROWID, protocol, scanner_name, scan_start, scan_end FROM scans WHERE (protocol=? OR (? IS NULL AND protocol IS NULL)) AND '\
-                   'scanner_name=? AND scan_start=? LIMIT 1', (17, 17, 'test_name', 1)
-        self.assertCountEqual(result, expected)
-
     def test_save_scan(self):
-        scan = MagicMock()
-        self.storage._save_scan = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.save_scan(scan=scan)
-        self.storage._save_scan.assert_called_once_with(scan=scan)
-        self.storage.execute.assert_called_once_with(self.storage._save_scan())
+        self.storage.connect()
+        self.storage.init_schema()
+
+        expected = [(1, 13, 19, 17, 'test_name')]
+        self.storage.save_scan(scan=self.scan_1)
+        result = self.storage.execute(self.SEL_SCANS)
+
+        self.assertEqual(result, expected)
 
     def test_update_scan(self):
-        scan = MagicMock()
-        self.storage._update_scan = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.update_scan(scan=scan)
-        self.storage._update_scan.assert_called_once_with(scan=scan)
-        self.storage.execute.assert_called_once_with(self.storage._update_scan())
+        self.prepare_tables()
+
+        self.scan_1.end = 456
+        self.storage.update_scan(self.scan_1)
+
+        expected = [(456,)]
+
+        result = self.storage.execute(("SELECT scan_end FROM scans WHERE ROWID=56",))
+
+        self.assertEqual(result, expected)
 
     def test_get_scan_id(self):
-        self.storage.execute = MagicMock(return_value=((1, 17, 'test_name', 13, 19),))
-        self.storage._get_scan = MagicMock()
+        expected = 56
+        result = self.storage.get_scan_id(self.scan_1)
+        self.assertEqual(result, expected)
 
-        result = self.storage.get_scan_id(scan=self.scan)
+    def test_get_scan_id(self):
+        self.prepare_tables()
 
-        self.storage._get_scan.assert_called_once_with(scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._get_scan())
-        self.assertEqual(result, 1)
+        expected = self.scan_1.rowid
+        self.scan_1.rowid = None
+
+        result = self.storage.get_scan_id(self.scan_1)
+
+        self.assertEqual(result, expected)
 
     def test_get_scan_id_without_results(self):
-        self.storage.execute = MagicMock(return_value=tuple())
-        self.storage._get_scan = MagicMock()
+        self.prepare_tables()
 
-        result = self.storage.get_scan_id(scan=self.scan)
+        expected = None
+        self.scan_1.rowid = None
+        self.scan_1._scanner = None
 
-        self.storage._get_scan.assert_called_once_with(scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._get_scan())
-        self.assertIsNone(result)
+        result = self.storage.get_scan_id(self.scan_1)
+
+        self.assertEqual(result, expected)
 
     def test_get_scans(self):
-        self.storage._get_scans = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, 17, 'test_name', 13, 19),
-            (2, 6, 'test_name', 2, 18),
-        ))
+        self.prepare_tables()
 
         result = self.storage.get_scans(scanner_name='test_name', protocol=TransportProtocol.UDP, amount=2)
 
-        self.storage._get_scans.assert_called_once_with(scanner_name='test_name', protocol=TransportProtocol.UDP,
-                                                        limit=2, offset=0)
-        self.storage.execute.assert_called_once_with(self.storage._get_scans())
-
-        self.assertEqual(result[0].protocol, TransportProtocol.UDP)
-        self.assertEqual(result[0].start, 13)
-        self.assertEqual(result[0].end, 19)
-
-        self.assertEqual(result[1].protocol, TransportProtocol.TCP)
-        self.assertEqual(result[1].start, 2)
-        self.assertEqual(result[1].end, 18)
+        self.assertEqual([self.scan_1, self.scan_2], result)
+        for obj in self.scan_1, self.scan_2:
+            self.assertEqual(result[result.index(obj)].rowid, obj.rowid)
 
     def test_get_scans_by_node(self):
-        self.storage._get_scans_by_node = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, 17, 'test_name', 13, 19),
-            (2, 6, 'test_name', 2, 18),
-        ))
+        self.prepare_tables()
 
-        result = self.storage.get_scans_by_node(node=self.node_1, scan=self.scan)
+        expected = [self.scan_1, self.scan_2]
 
-        self.storage._get_scans_by_node.assert_called_once_with(node=self.node_1, scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._get_scans_by_node())
+        result = self.storage.get_scans_by_node(node=self.node_3, scan=self.scan_1)
 
-        self.assertEqual(result[0].protocol, TransportProtocol.UDP)
-        self.assertEqual(result[0].start, 13)
-        self.assertEqual(result[0].end, 19)
-
-        self.assertEqual(result[1].protocol, TransportProtocol.TCP)
-        self.assertEqual(result[1].start, 2)
-        self.assertEqual(result[1].end, 18)
+        self.assertEqual(result, expected)
 
     def test_get_scans_by_sec_scan(self):
-        self.storage._get_scans_by_security_scan = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, 17, 'test_name', 13, 19),
-            (2, 6, 'test_name', 2, 18),
-        ))
+        self.prepare_tables()
+
+        expected = [self.scan_3, self.scan_1]
 
         result = self.storage.get_scans_by_security_scan(port=self.port_1, exploit=self.exploit_1)
 
-        self.storage._get_scans_by_security_scan.assert_called_once_with(port=self.port_1, exploit=self.exploit_1)
-        self.storage.execute.assert_called_once_with(self.storage._get_scans_by_security_scan())
-
-        self.assertEqual(result[0].protocol, TransportProtocol.UDP)
-        self.assertEqual(result[0].start, 13)
-        self.assertEqual(result[0].end, 19)
-
-        self.assertEqual(result[1].protocol, TransportProtocol.TCP)
-        self.assertEqual(result[1].start, 2)
-        self.assertEqual(result[1].end, 18)
+        self.assertEqual(result, expected)
 
     def test_get_scan_by_id(self):
-        self.storage._get_scan_by_id = MagicMock()
-        self.storage.execute = MagicMock(return_value=(
-            (1, 17, 'test_name', 13, 19),
-        ))
+        self.prepare_tables()
 
-        result = self.storage.get_scan_by_id(15)
+        expected = self.scan_1
 
-        self.storage._get_scan_by_id.assert_called_once_with(15)
-        self.storage.execute.assert_called_once_with(self.storage._get_scan_by_id())
+        result = self.storage.get_scan_by_id(56)
 
-        self.assertEqual(result.protocol, TransportProtocol.UDP)
-        self.assertEqual(result.start, 13)
-        self.assertEqual(result.end, 19)
+        self.assertEqual(result, expected)
 
     def test_get_scan_by_id_no_results(self):
-        self.storage._get_scan_by_id = MagicMock()
-        self.storage.execute = MagicMock(return_value=tuple())
+        self.storage.connect()
+        self.storage.init_schema()
 
         result = self.storage.get_scan_by_id(15)
 
         self.assertEqual(result, None)
 
-    def test__save_vulnerabilities(self):
-        vulnerabilities = [self.vulnerability_1, self.vulnerability_2]
-        self.storage.get_scan_id = MagicMock(return_value=16)
-
-        expected = [
-            ("INSERT OR REPLACE INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
-             "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
-             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-             (16, 1, '127.0.0.1', 17, 45, 14, 1, 'CVE-2017', 6.7, 'test_output_1', 13)),
-
-            ("INSERT OR REPLACE INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
-             "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
-             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-             (16, 1, '127.0.0.1', 17, 45, 2, 2, 'CWE-14', 8.9, 'test_output_2', 98))
-        ]
-
-        result = self.storage._save_vulnerabilities(vulnerabilities, self.scan)
-
-        self.storage.get_scan_id.assert_called_once_with(self.scan)
-        self.assertEqual(result, expected)
-
     def test_save_vulnerabilities(self):
-        vulnerabilities = MagicMock()
-        self.storage._save_vulnerabilities = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self.scan)
-        self.storage._save_vulnerabilities.assert_called_once_with(vulnerabilities=vulnerabilities, scan=self.scan)
-        self.storage.execute.assert_called_once_with(self.storage._save_vulnerabilities())
+        self.storage.connect()
+        self.storage.init_schema()
+
+        expected = [(56, 1, '127.0.0.1', 17, 45, 14, 1, 'CVE-2017', '6.7', 'test_output_1', 13),
+                    (56, 1, '127.0.0.1', 17, 45, 14, 2, 'CVE-2016', '3.7', 'test_output_3', 15)]
+
+        self.storage.save_vulnerabilities(vulnerabilities=[self.vulnerability_1, self.vulnerability_3], scan=self.scan_1)
+
+        result = self.storage.execute(self.SEL_VULNS)
+
+        self.assertCountEqual(result, expected)
+
+    def test_get_last_rowid(self):
+        self.storage.connect()
+        self.storage.execute(("CREATE TABLE test(test int)",))
+        self.storage.execute(("INSERT INTO test(test) VALUES (5), (6), (7)",))
+        self.assertEqual(self.storage.get_last_rowid(), 3)

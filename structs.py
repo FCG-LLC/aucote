@@ -13,11 +13,11 @@ from cpe import CPE
 
 class Scan(object):
     """
-    Scan object
+    Scan object. Contains rowid for identification in storage.
 
     """
 
-    def __init__(self, start=None, end=None, protocol=None, scanner=''):
+    def __init__(self, start=None, end=None, protocol=None, scanner='', rowid=None):
         """
         Args:
             protocol TransportProtocol: scan protocol
@@ -26,6 +26,7 @@ class Scan(object):
             scanner (str): scanner name
 
         """
+        self.rowid = rowid
         self._start = start or time.time()
         self.end = end
         self._protocol = protocol
@@ -62,6 +63,22 @@ class Scan(object):
 
         """
         return self._scanner
+
+    def __eq__(self, other):
+        """
+
+        Args:
+            other (Scan):
+
+        Returns:
+            bool
+
+        """
+        return isinstance(other, Scan) and all((self.scanner == other.scanner, self.start == other.start,
+                                                self.protocol == other.protocol))
+
+    def __hash__(self):
+        return hash((self.scanner, self.start, self.protocol))
 
 
 class Node:
@@ -121,6 +138,83 @@ class Node:
             str
         """
         return "<{id}, {ip}>".format(id=self.id, ip=self.ip)
+
+
+class NodeScan(object):
+    """
+    Represents node scan. Contains rowid for identification in storage.
+
+    """
+
+    def __init__(self, node, scan, timestamp, rowid=None):
+        self.node = node
+        self.scan = scan
+        self.timestamp = timestamp
+        self.rowid = rowid
+
+    def __eq__(self, other):
+        return isinstance(other, NodeScan) and all((self.node == other.node, self.scan == other.scan))
+
+
+class PortScan(object):
+    """
+    Represents node scan. Contains rowid for identification in storage.
+
+    """
+
+    def __init__(self, port, scan, timestamp=None, rowid=None):
+        self.port = port
+        self.scan = scan
+        self.timestamp = timestamp
+        self.rowid = rowid
+
+    def __eq__(self, other):
+        return isinstance(other, PortScan) and all((self.port == other.port, self.scan == other.scan))
+
+    @property
+    def node(self):
+        """
+        Node on which PortScan is performed
+
+        Returns:
+            Node
+
+        """
+        return self.port.node
+
+    def __hash__(self):
+        return hash((self.port, self.scan))
+
+
+class SecurityScan(object):
+    """
+    SecurityScan is a single scan performed by given exploit on given port during specific global scan (e.g. TCP scan)
+
+    """
+    def __init__(self, scan, port, exploit, scan_start=None, scan_end=None):
+        self.port = port
+        self.exploit = exploit
+        self.scan_start = scan_start
+        self.scan = scan
+        self.scan_end = scan_end
+
+    @property
+    def node(self):
+        """
+        Node for which security scan wis performed
+
+        Returns:
+            Node
+
+        """
+        return self.port.node
+
+    def __eq__(self, other):
+        return isinstance(other, SecurityScan) and all((self.port == other.port, self.exploit == other.exploit,
+                                                        self.scan == other.scan))
+
+    def __hash__(self):
+        return hash((self.port, self.exploit, self.scan))
 
 
 class TransportProtocol(Enum):
@@ -259,6 +353,13 @@ class Service(object):
 
     @property
     def name_with_version(self):
+        """
+        Service name with version included
+
+        Returns:
+            str
+
+        """
         if self.version is None or self.name is None:
             return None
         return "{name} {version}".format(name=self.name, version=self.version)
@@ -523,7 +624,7 @@ class PhysicalPort(SpecialPort):
 
 class Vulnerability(object):
     """
-    Vulnerability object
+    Vulnerability object. Contains rowid for identification in storage.
 
     """
     PORTDETECTION = 0
@@ -533,7 +634,8 @@ class Vulnerability(object):
     SERVICE_BANNER = 4
     SERVICE_CPE = 5
 
-    def __init__(self, exploit=None, port=None, output=None, cve=None, cvss=None, subid=None, vuln_time=None):
+    def __init__(self, exploit=None, port=None, output=None, cve=None, cvss=0, subid=None, vuln_time=None,
+                 rowid=None, scan=None):
         """
         Init values
 
@@ -548,9 +650,11 @@ class Vulnerability(object):
         self.exploit = exploit
         self.port = port
         self.cve = cve
-        self.cvss = cvss
+        self.cvss = float(cvss)
         self.subid = subid
         self.time = vuln_time or time.time()
+        self.rowid = rowid
+        self.scan = scan
 
     def __eq__(self, other):
         return isinstance(other, Vulnerability) and self.port == other.port and self.exploit == other.exploit and \
@@ -616,6 +720,16 @@ class PortState(Enum):
 
     @classmethod
     def from_string(cls, text):
+        """
+        Return PortState based on string
+
+        Args:
+            text (str):
+
+        Returns:
+            PortState
+
+        """
         return cls[text.replace('|', '_').upper()]
 
 
@@ -629,11 +743,11 @@ class VulnerabilityChangeType(Enum):
 
 
 class VulnerabilityChangeBase(metaclass=ABCMeta):
-
     """
     Represents change between two port or severity scans
 
     """
+
     def __init__(self, change_type, vulnerability_id, vulnerability_subid, current_finding, previous_finding,
                  change_time=None, score=0):
         """
@@ -656,7 +770,7 @@ class VulnerabilityChangeBase(metaclass=ABCMeta):
         self.score = score
 
     def __eq__(self, other):
-        return isinstance(other, VulnerabilityChangeBase) and self.vulnerability_subid == other.vulnerability_subid\
+        return isinstance(other, VulnerabilityChangeBase) and self.vulnerability_subid == other.vulnerability_subid \
                and self.vulnerability_id == other.vulnerability_id and self.previous_finding == other.previous_finding \
                and self.type == other.type and self.current_finding == other.current_finding
 
@@ -796,6 +910,7 @@ class PortDetectionChange(VulnerabilityChangeBase):
     Represents change between two port detection scans
 
     """
+
     def __init__(self, *args, **kwargs):
         """
 
@@ -817,7 +932,7 @@ class PortDetectionChange(VulnerabilityChangeBase):
 
     @property
     def port(self):
-        return self.finding
+        return self.finding.port
 
     @property
     def previous_scan(self):
@@ -841,6 +956,7 @@ class VulnerabilityChange(VulnerabilityChangeBase):
     Represents change between two vulnerability scans for specific node and port
 
     """
+
     def __init__(self, *args, **kwargs):
         super(VulnerabilityChange, self).__init__(change_type=VulnerabilityChangeType.VULNERABILITIES,
                                                   vulnerability_id=None, vulnerability_subid=None, *args, **kwargs)

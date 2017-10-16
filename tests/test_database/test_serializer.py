@@ -7,7 +7,7 @@ from database.serializer import Serializer
 from fixtures.exploits import Exploit
 from fixtures.exploits.exploit import ExploitMetric
 from structs import Vulnerability, Port, Node, Scan, TransportProtocol, RiskLevel, VulnerabilityChangeType, \
-    VulnerabilityChange, PortDetectionChange
+    VulnerabilityChange, PortDetectionChange, PortScan
 from tests.time.test_utils import UTC
 
 utc = UTC()
@@ -67,12 +67,10 @@ class SerializerTest(TestCase):
         scan_1 = Scan(start=1178603, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
         scan_2 = Scan(start=187213, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
         node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
-        previous_finding = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
-        previous_finding.scan = scan_1
-        previous_finding.row_id = 124
-        current_finding = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
-        current_finding.row_id = 15
-        current_finding.scan = scan_2
+        port_1 = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
+        port_2 = Port(node, transport_protocol=TransportProtocol.TCP, number=88)
+        previous_finding = PortScan(port=port_1, scan=scan_1, rowid=124)
+        current_finding = PortScan(port=port_2, scan=scan_2, rowid=15)
         change = PortDetectionChange(current_finding=current_finding, change_time=124445,
                                      previous_finding=previous_finding)
         expected = bytearray(b'\x02\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00X\x00\x06\x00\x00'

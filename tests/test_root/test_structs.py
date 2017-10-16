@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from cpe import CPE
 
 from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState, \
-    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange
+    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange, PortScan
 from structs import TransportProtocol
 
 
@@ -216,18 +216,15 @@ class PortTest(TestCase):
 
 class ScanTest(TestCase):
     def setUp(self):
-        self.start = 13
-        self.end = 14.6
-        self.protocol = TransportProtocol.ICMP
-        self.scanner = "test_scanner"
-        self.scan = Scan(start=self.start, end=self.end, protocol=self.protocol, scanner=self.scanner)
+        self.scan = Scan(start=13, end=14.6, protocol=TransportProtocol.ICMP, scanner="test_scanner", rowid=16)
 
     def test_init(self):
         expected = {
             "_start": 13,
             "end": 14.6,
             "_protocol": TransportProtocol.ICMP,
-            "_scanner": "test_scanner"
+            "_scanner": "test_scanner",
+            "rowid": 16
         }
 
         result = self.scan.__dict__
@@ -374,17 +371,21 @@ class PortDetectionChangeTest(TestCase):
         self.port_1 = Port(transport_protocol=TransportProtocol.TCP, number=80, node=self.node)
         self.port_1.scan = self.scan_1
 
+        self.port_scan_1 = PortScan(port=self.port_1, scan=self.scan_1)
+
         self.port_2 = Port(transport_protocol=TransportProtocol.UDP, number=19, node=self.node)
         self.port_2.scan = self.scan_2
 
+        self.port_scan_2 = PortScan(port=self.port_2, scan=self.scan_2)
+
         self.type = VulnerabilityChangeType.PORTDETECTION
 
-        self.change_1 = PortDetectionChange(change_time=159986, current_finding=self.port_1, previous_finding=None)
-        self.change_2 = PortDetectionChange(change_time=159911, current_finding=None, previous_finding=self.port_2)
+        self.change_1 = PortDetectionChange(change_time=159986, current_finding=self.port_scan_1, previous_finding=None)
+        self.change_2 = PortDetectionChange(change_time=159911, current_finding=None, previous_finding=self.port_scan_2)
 
     def test_init_change_1(self):
         expected = {
-            'current_finding': self.port_1,
+            'current_finding': self.port_scan_1,
             'previous_finding': None,
             'type': VulnerabilityChangeType.PORTDETECTION,
             'time': 159986,
@@ -400,7 +401,7 @@ class PortDetectionChangeTest(TestCase):
     def test_init_change_2(self):
         expected = {
             'current_finding': None,
-            'previous_finding': self.port_2,
+            'previous_finding': self.port_scan_2,
             'type': VulnerabilityChangeType.PORTDETECTION,
             'time': 159911,
             'score': 0,

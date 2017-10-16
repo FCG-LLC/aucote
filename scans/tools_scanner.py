@@ -6,7 +6,6 @@ Scanner dedicated for tools.
 import logging as log
 
 import time
-from croniter import croniter
 from tornado.httpclient import HTTPError
 
 from aucote_cfg import cfg
@@ -50,7 +49,7 @@ class ToolsScanner(ScanAsyncTask):
 
             ports = self.get_ports_for_scan(nodes, timestamp=last_scan_start)
             log.debug("Ports for security scan: %s", ports)
-            self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes if cfg['portdetection.{0}.scan_nodes'.
+            self.aucote.add_async_task(Executor(aucote=self.aucote,nodes=nodes if cfg['portdetection.{0}.scan_nodes'.
                                                 format(self.NAME)] else None, ports=ports, scan=scan, scanner=self))
 
             scan.end = time.time()
