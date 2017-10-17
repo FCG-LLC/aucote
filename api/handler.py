@@ -15,6 +15,7 @@ class Handler(RequestHandler):
     """
     SCANNER_URL = "/api/v1/scanner/{scanner_name}"
     SCAN_URL = '/api/v1/scan/{scan_id}'
+    NODES_SCAN_URL = '/api/v1/node/{node_scan_id}'
 
     def initialize(self, aucote):
         """
@@ -100,3 +101,43 @@ class Handler(RequestHandler):
 
     def url_scan(self, scan_id):
         return self.format_url(self.SCAN_URL.format(scan_id=scan_id))
+
+    def url_nodes_scan(self, node_scan_id):
+        return self.format_url(self.NODES_SCAN_URL.format(node_scan_id=node_scan_id))
+
+    def pretty_scan(self, scan):
+        """
+
+        Args:
+            scan (Scan):
+
+        Returns:
+
+        """
+        return {
+            "id": scan.rowid,
+            "url": self.url_scan(scan.rowid),
+            "start": scan.start,
+            "end": scan.end,
+            "protocol": scan.protocol.db_val if scan.protocol else None,
+            "scanner": scan._scanner,
+            "scanner_url": self.url_scanner(scan._scanner)
+        }
+
+    def pretty_node(self, node_scan):
+        """
+
+        Args:
+            node (Node):
+
+        Returns:
+
+        """
+        return {
+            "id": node_scan.rowid,
+            "url": self.url_nodes_scan(node_scan.rowid),
+            "node_id": node_scan.node.id,
+            "ip": str(node_scan.node.ip),
+            "scan": node_scan.scan.rowid,
+            "scan_url": self.url_scan(node_scan.scan.rowid)
+        }

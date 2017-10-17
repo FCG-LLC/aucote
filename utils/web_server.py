@@ -8,6 +8,7 @@ from tornado.web import Application
 
 from api.kill_handler import KillHandler
 from api.main_handler import MainHandler
+from api.nodes_handler import NodesHandler
 from api.scanners_handler import ScannersHandler
 from api.scans_handler import ScansHandler
 from api.tasks_handler import TasksHandler
@@ -66,4 +67,6 @@ class WebServer(object):
             (r"/api/v1/tasks", TasksHandler, {'aucote': self.aucote}),
             (r"/api/v1/scans", ScansHandler, {'aucote': self.aucote}),
             (r"/api/v1/scan/([\d]+)", ScansHandler, {'aucote': self.aucote}),
+            (r"/api/v1/nodes", NodesHandler, {'aucote': self.aucote}),
+            (r"/api/v1/node/([\d]+)", NodesHandler, {'aucote': self.aucote}),
         ])

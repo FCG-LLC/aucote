@@ -7,7 +7,7 @@ from tornado.web import Application
 from api.scans_handler import ScansHandler
 from scans.tcp_scanner import TCPScanner
 from scans.tools_scanner import ToolsScanner
-from structs import Node, Scan, TransportProtocol, Port, PortScan
+from structs import Node, Scan, TransportProtocol, Port, PortScan, NodeScan
 from utils import Config
 
 
@@ -24,8 +24,11 @@ class ScansHandlerTest(AsyncHTTPTestCase):
 
         node_1 = Node(node_id=13, ip=ipaddress.ip_address("10.156.67.18"))
         node_2 = Node(node_id=75, ip=ipaddress.ip_address("10.156.67.34"))
-        self.nodes = [node_1, node_2]
-        self.aucote.storage.get_nodes_by_scan.return_value = self.nodes
+        self.nodes = [
+            NodeScan(node=node_1, scan=scan_1, rowid=13, timestamp=45),
+            NodeScan(node=node_2, scan=scan_2, rowid=91, timestamp=88)
+        ]
+        self.aucote.storage.nodes_scans_by_scan.return_value = self.nodes
 
         self.port_1 = Port(node=node_1, number=34, transport_protocol=TransportProtocol.UDP)
         self.port_2 = Port(node=node_2, number=78, transport_protocol=TransportProtocol.TCP)
@@ -73,10 +76,28 @@ class ScansHandlerTest(AsyncHTTPTestCase):
         self.assertCountEqual(json.loads(response.body.decode()), expected)
 
     def test_scan(self):
+        self.maxDiff = None
         expected = {
             "scan": 3,
             "url": self.get_url('/api/v1/scan/3'),
-            "nodes": ['10.156.67.18[13]', '10.156.67.34[75]'],
+            "nodes": [
+                {
+                    'id': 13,
+                    'ip': '10.156.67.18',
+                    "url": self.get_url('/api/v1/node/13'),
+                    "node_id": 13,
+                    "scan": 3,
+                    "scan_url": self.get_url('/api/v1/scan/3')
+                },
+                {
+                    'id': 91,
+                    'ip': '10.156.67.34',
+                    'node_id': 75,
+                    'scan': 5,
+                    'scan_url': self.get_url('/api/v1/scan/5'),
+                    'url': self.get_url('/api/v1/node/91')
+                }
+            ],
             "ports": ['10.156.67.18:34', '10.156.67.34:78']
         }
         response = self.fetch('/api/v1/scan/3', method='GET')

@@ -11,7 +11,7 @@ from math import ceil
 
 from aucote_cfg import cfg
 from fixtures.exploits import Exploit
-from structs import Port, Node, TransportProtocol, Scan, Vulnerability, PortScan, SecurityScan
+from structs import Port, Node, TransportProtocol, Scan, Vulnerability, PortScan, SecurityScan, NodeScan
 from utils.database_interface import DbInterface
 from scans.tcp_scanner import TCPScanner
 from scans.udp_scanner import UDPScanner
@@ -23,6 +23,13 @@ class Storage(DbInterface):
 
     """
     GET_LAST_ROWID = "SELECT last_insert_rowid()"
+    SCANS_COLUMNS = "scans.ROWID, scans.protocol, scans.scanner_name, scans.scan_start, scans.scan_end"
+    NODES_SCANS_COLUMNS = "nodes_scans.ROWID, nodes_scans.node_id, nodes_scans.node_ip, nodes_scans.scan_id, " \
+                          "nodes_scans.time"
+
+    LIMIT = "LIMIT {limit} OFFSET {offset}"
+
+    SCANS_ORDER = "ORDER BY scan_start DESC, scan_end DESC"
 
     CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
                          "scan_end int, UNIQUE (protocol, scanner_name, scan_start))"
@@ -47,6 +54,11 @@ class Storage(DbInterface):
                            " AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"\
                            "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
     SELECT_SCAN_NODES = "SELECT node_id, node_ip, time, scan_id FROM nodes_scans WHERE scan_id=?"
+    NODES_SCANS = "SELECT {} FROM nodes_scans ORDER BY time DESC {}".format(NODES_SCANS_COLUMNS, LIMIT)
+    NODE_SCAN_BY_ID = "SELECT {} FROM nodes_scans WHERE ROWID=?".format(NODES_SCANS_COLUMNS, LIMIT)
+    SCANS_BY_NODE = "SELECT {} FROM scans INNER JOIN nodes_scans ON scans.ROWID = nodes_scans.scan_id " \
+                    "WHERE node_id=? and node_ip=? {} {}".format(SCANS_COLUMNS, SCANS_ORDER, LIMIT)
+    NODES_SCANS_BY_SCAN = "SELECT {} FROM nodes_scans WHERE scan_id=?".format(NODES_SCANS_COLUMNS)
 
     CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports_scans (scan_id int, node_id int, node_ip text, port int, " \
                          "port_protocol int, time int, primary key (scan_id, node_id, node_ip, port, port_protocol))"
@@ -1012,3 +1024,30 @@ class Storage(DbInterface):
             ports_scans.append(PortScan(port=storage_port, rowid=row[5], scan=scan, timestamp=row[4]))
 
         return ports_scans
+
+    def _nodes_scan_from_row(self, row):
+        return NodeScan(node=Node(node_id=row[1], ip=ipaddress.ip_address(row[2])), rowid=row[0], timestamp=row[4],
+                        scan=self.get_scan_by_id(row[3]))
+
+    def nodes_scans(self, limit=10, page=0):
+        return [
+            self._nodes_scan_from_row(row) for
+            row in self.execute((self.NODES_SCANS.format(limit=int(limit), offset=int(limit)*int(page)),))
+            ]
+
+    def node_scan_by_id(self, node_scan_id):
+        for row in self.execute((self.NODE_SCAN_BY_ID, (node_scan_id, ))):
+            return self._nodes_scan_from_row(row)
+        return None
+
+    def scans_by_node_scan(self, node_scan):
+        return [self._scan_from_row(row)
+                for row in self.execute((self.SCANS_BY_NODE.format(limit=30, offset=0),
+                                         (node_scan.node.id, str(node_scan.node.ip))))]
+
+    def nodes_scans_by_scan(self, scan):
+        return [
+            self._nodes_scan_from_row(row) for
+            row in self.execute((self.NODES_SCANS_BY_SCAN, (scan.rowid, )))
+            ]
+
