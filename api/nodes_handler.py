@@ -30,6 +30,9 @@ class NodesHandler(Handler):
 
     def node_details(self, node_scan_id):
         node_scan = self.aucote.storage.node_scan_by_id(node_scan_id)
+        if node_scan is None:
+            self.set_status(404, 'Security scans are unsupported right now')
+            return {"code": "Node scan not found"}
 
         return {
             "id": node_scan.rowid,

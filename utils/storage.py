@@ -171,7 +171,7 @@ class Storage(DbInterface):
         """
         return self._cursor
 
-    def _save_node(self, node, scan, scan_id=None):
+    def _save_node(self, node, scan, scan_id=None, timestamp=None):
         """
         Saves node into to the storage
 
@@ -184,7 +184,8 @@ class Storage(DbInterface):
         """
         if not scan_id:
             scan_id = self.get_scan_id(scan)
-        return self.SAVE_NODE_QUERY, (scan_id, node.id, str(node.ip), time.time())
+
+        return self.SAVE_NODE_QUERY, (scan_id, node.id, str(node.ip), timestamp or time.time())
 
     def _save_nodes(self, nodes, scan):
         """
@@ -237,7 +238,7 @@ class Storage(DbInterface):
         return self.SELECT_VULNERABILITIES, (port.node.id, str(port.node.ip), port.number, iana, iana, exploit.id,
                                              scan_id)
 
-    def _save_port(self, port, scan, scan_id=None):
+    def _save_port(self, port, scan, scan_id=None, timestamp=None):
         """
         Query for saving port scan into database
 
@@ -251,7 +252,7 @@ class Storage(DbInterface):
         if not scan_id:
             scan_id = self.get_scan_id(scan)
         return self.SAVE_PORT_QUERY, (scan_id, port.node.id, str(port.node.ip), port.number,
-                                      self._protocol_to_iana(port.transport_protocol), time.time())
+                                      self._protocol_to_iana(port.transport_protocol), timestamp or time.time())
 
     def _save_ports(self, ports, scan):
         """
@@ -1051,3 +1052,30 @@ class Storage(DbInterface):
             row in self.execute((self.NODES_SCANS_BY_SCAN, (scan.rowid, )))
             ]
 
+    def save_node_scan(self, node_scan):
+        """
+        Save node scan to the storage. Returns node scan with updated ROWID
+
+        Args:
+            node_scan (NodeScan):
+
+        Returns:
+            NodeScan
+
+        """
+        self.execute(self._save_node(node_scan.node, node_scan.scan, timestamp=node_scan.timestamp))
+        node_scan.rowid = self.get_last_rowid()
+        return node_scan
+
+    def save_port_scan(self, port_scan):
+        """
+        Save port scan to the storage. Returns port scan with updated ROWID
+
+        Args:
+            port_scan (PortScan):
+
+        Returns:
+            PortScan
+
+        """
+        self.execute(self._save_port(port_scan.port, port_scan.scan, timestamp=port_scan.timestamp))
