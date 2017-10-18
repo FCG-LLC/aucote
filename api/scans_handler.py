@@ -41,5 +41,5 @@ class ScansHandler(Handler):
             "scan": scan_id,
             "url": self.url_scan(scan_id),
             "nodes": [self.pretty_node(nodes_scans) for nodes_scans in self.aucote.storage.nodes_scans_by_scan(scan)],
-            "ports": [str(port_scan.port) for port_scan in self.aucote.storage.get_ports_scans_by_scan(scan)]
+            "ports": [self.pretty_port(port_scan) for port_scan in self.aucote.storage.ports_scans_by_scan(scan)]
         }

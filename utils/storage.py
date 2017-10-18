@@ -26,6 +26,8 @@ class Storage(DbInterface):
     SCANS_COLUMNS = "scans.ROWID, scans.protocol, scans.scanner_name, scans.scan_start, scans.scan_end"
     NODES_SCANS_COLUMNS = "nodes_scans.ROWID, nodes_scans.node_id, nodes_scans.node_ip, nodes_scans.scan_id, " \
                           "nodes_scans.time"
+    PORTS_SCANS_COLUMNS = "ports_scans.ROWID, ports_scans.node_id, ports_scans.node_ip, ports_scans.scan_id, " \
+                          "ports_scans.port, ports_scans.port_protocol, ports_scans.time"
 
     LIMIT = "LIMIT {limit} OFFSET {offset}"
 
@@ -55,7 +57,7 @@ class Storage(DbInterface):
                            "ORDER BY scan_end DESC, scan_start ASC LIMIT {limit} OFFSET {offset}"
     SELECT_SCAN_NODES = "SELECT node_id, node_ip, time, scan_id FROM nodes_scans WHERE scan_id=?"
     NODES_SCANS = "SELECT {} FROM nodes_scans ORDER BY time DESC {}".format(NODES_SCANS_COLUMNS, LIMIT)
-    NODE_SCAN_BY_ID = "SELECT {} FROM nodes_scans WHERE ROWID=?".format(NODES_SCANS_COLUMNS, LIMIT)
+    NODE_SCAN_BY_ID = "SELECT {} FROM nodes_scans WHERE ROWID=?".format(NODES_SCANS_COLUMNS)
     SCANS_BY_NODE = "SELECT {} FROM scans INNER JOIN nodes_scans ON scans.ROWID = nodes_scans.scan_id " \
                     "WHERE node_id=? and node_ip=? {} {}".format(SCANS_COLUMNS, SCANS_ORDER, LIMIT)
     NODES_SCANS_BY_SCAN = "SELECT {} FROM nodes_scans WHERE scan_id=?".format(NODES_SCANS_COLUMNS)
@@ -77,7 +79,12 @@ class Storage(DbInterface):
     SELECT_PORTS_BY_NODES_PORTDETECTION = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans" \
                                           " INNER JOIN scans ON scan_id = scans.ROWID  where ({where}) AND time > ?" \
                                           " AND (scans.scanner_name=? or scans.scanner_name=?)"
-    SELECT_PORTS_BY_SCAN = "SELECT node_id, node_ip, port, port_protocol, time, ROWID FROM ports_scans where  scan_id=?"
+    PORTS_SCANS = "SELECT {} FROM ports_scans ORDER BY time DESC {}".format(PORTS_SCANS_COLUMNS, LIMIT)
+    PORT_SCAN_BY_ID = "SELECT {} FROM ports_scans WHERE ROWID=?".format(PORTS_SCANS_COLUMNS)
+    SCANS_BY_PORT = "SELECT {} FROM scans INNER JOIN ports_scans ON scans.ROWID = ports_scans.scan_id " \
+                    "WHERE node_id=? and node_ip=? and port=? and port_protocol=? {} {}".format(SCANS_COLUMNS,
+                                                                                                SCANS_ORDER, LIMIT)
+    PORTS_SCANS_BY_SCAN = "SELECT {} FROM PORTS_scans WHERE scan_id=?".format(PORTS_SCANS_COLUMNS)
 
     CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, " \
                                   "exploit_app text, exploit_name text, node_id int, node_ip text, port_protocol int, "\
@@ -1006,28 +1013,15 @@ class Storage(DbInterface):
     def scans(self, limit=10, page=0):
         return [self._scan_from_row(row) for row in self.execute((self.SCANS.format(limit=int(limit), offset=int(limit)*int(page)), ))]
 
-    def get_ports_scans_by_scan(self, scan):
-        """
-        Get ports from database for given scan.
-
-        Args:
-            scan(Scan):
-
-        Returns:
-            list - list of Ports
-
-        """
-        ports_scans = []
-
-        for row in self.execute((self.SELECT_PORTS_BY_SCAN, (scan.rowid, ))):
-            storage_port = Port(node=Node(node_id=row[0], ip=ipaddress.ip_address(row[1])),
-                                transport_protocol=self._transport_protocol(row[3]), number=row[2])
-            ports_scans.append(PortScan(port=storage_port, rowid=row[5], scan=scan, timestamp=row[4]))
-
-        return ports_scans
-
     def _nodes_scan_from_row(self, row):
         return NodeScan(node=Node(node_id=row[1], ip=ipaddress.ip_address(row[2])), rowid=row[0], timestamp=row[4],
+                        scan=self.get_scan_by_id(row[3]))
+
+    def _port_scan_from_row(self, row):
+        return PortScan(port=Port(node=Node(node_id=row[1], ip=ipaddress.ip_address(row[2])),
+                                  number=row[4], transport_protocol=TransportProtocol.from_iana(row[5])),
+                        rowid=row[0],
+                        timestamp=row[6],
                         scan=self.get_scan_by_id(row[3]))
 
     def nodes_scans(self, limit=10, page=0):
@@ -1036,9 +1030,20 @@ class Storage(DbInterface):
             row in self.execute((self.NODES_SCANS.format(limit=int(limit), offset=int(limit)*int(page)),))
             ]
 
+    def ports_scans(self, limit=10, page=0):
+        return [
+            self._port_scan_from_row(row) for
+            row in self.execute((self.PORTS_SCANS.format(limit=int(limit), offset=int(limit)*int(page)),))
+            ]
+
     def node_scan_by_id(self, node_scan_id):
         for row in self.execute((self.NODE_SCAN_BY_ID, (node_scan_id, ))):
             return self._nodes_scan_from_row(row)
+        return None
+
+    def port_scan_by_id(self, port_scan_id):
+        for row in self.execute((self.PORT_SCAN_BY_ID, (port_scan_id, ))):
+            return self._port_scan_from_row(row)
         return None
 
     def scans_by_node_scan(self, node_scan):
@@ -1046,10 +1051,22 @@ class Storage(DbInterface):
                 for row in self.execute((self.SCANS_BY_NODE.format(limit=30, offset=0),
                                          (node_scan.node.id, str(node_scan.node.ip))))]
 
+    def scans_by_port_scan(self, port_scan):
+        return [self._scan_from_row(row)
+                for row in self.execute((self.SCANS_BY_PORT.format(limit=30, offset=0),
+                                         (port_scan.node.id, str(port_scan.node.ip), port_scan.port.number,
+                                          self._protocol_to_iana(port_scan.port.transport_protocol))))]
+
     def nodes_scans_by_scan(self, scan):
         return [
             self._nodes_scan_from_row(row) for
             row in self.execute((self.NODES_SCANS_BY_SCAN, (scan.rowid, )))
+            ]
+
+    def ports_scans_by_scan(self, scan):
+        return [
+            self._port_scan_from_row(row) for
+            row in self.execute((self.PORTS_SCANS_BY_SCAN, (scan.rowid, )))
             ]
 
     def save_node_scan(self, node_scan):

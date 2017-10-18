@@ -578,9 +578,9 @@ class StorageTest(TestCase):
         self.assertEqual(self.storage.scans(2, 0), [self.scan_3, self.scan_1])
         self.assertEqual(self.storage.scans(2, 1), [self.scan_2])
 
-    def test_ports_scans_by_scan(self):
+    def ports_scans_by_scan(self):
         self.prepare_tables()
 
         expected = [self.port_scan_1, self.port_scan_2, self.port_scan_3, self.port_scan_4]
 
-        result = self.storage.get_ports_scans_by_scan(self.scan_1)
+        result = self.storage.ports_scans_by_scan(self.scan_1)

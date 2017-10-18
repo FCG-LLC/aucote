@@ -16,6 +16,7 @@ class Handler(RequestHandler):
     SCANNER_URL = "/api/v1/scanner/{scanner_name}"
     SCAN_URL = '/api/v1/scan/{scan_id}'
     NODES_SCAN_URL = '/api/v1/node/{node_scan_id}'
+    PORTS_SCAN_URL = '/api/v1/port/{port_scan_id}'
 
     def initialize(self, aucote):
         """
@@ -105,6 +106,9 @@ class Handler(RequestHandler):
     def url_nodes_scan(self, node_scan_id):
         return self.format_url(self.NODES_SCAN_URL.format(node_scan_id=node_scan_id))
 
+    def url_ports_scan(self, port_scan_id):
+        return self.format_url(self.PORTS_SCAN_URL.format(port_scan_id=port_scan_id))
+
     def pretty_scan(self, scan):
         """
 
@@ -140,4 +144,24 @@ class Handler(RequestHandler):
             "ip": str(node_scan.node.ip),
             "scan": node_scan.scan.rowid,
             "scan_url": self.url_scan(node_scan.scan.rowid)
+        }
+
+    def pretty_port(self, port_scan):
+        """
+
+        Args:
+            port_scan (PortScan):
+
+        Returns:
+            PortScan
+        """
+        return {
+            'id': port_scan.rowid,
+            'url': self.url_ports_scan(port_scan.rowid),
+            'timestamp': port_scan.timestamp,
+            'port_number': port_scan.port.number,
+            'protocol': port_scan.port.transport_protocol.db_val,
+            'node_id': port_scan.node.id,
+            'node_ip': str(port_scan.node.ip),
+            "scan": port_scan.scan.rowid,
         }
