@@ -50,7 +50,7 @@ class ScansHandlerTest(APITest):
         expected = {
             "scan": 1,
             "url": self.get_url('/api/v1/scan/1'),
-            "nodes": [
+            "nodes_scans": [
                 {
                     'id': 1,
                     'ip': '10.156.67.18',
@@ -60,17 +60,31 @@ class ScansHandlerTest(APITest):
                     "scan_url": self.get_url('/api/v1/scan/1')
                 }
             ],
-            "ports":
+            "ports_scans":
                 [
                     {
                         'id': 1,
-                        'node_id': 13,
-                        'node_ip': '10.156.67.18',
-                        'port_number': 34,
-                        'protocol': 'UDP',
+                        'port': {
+                            'node_id': 13,
+                            'node_ip': '10.156.67.18',
+                            'port_number': 34,
+                            'protocol': 'UDP',
+                        },
                         'scan': 1,
                         'timestamp': 1234,
                         'url': self.get_url('/api/v1/port/1')
+                    },
+                    {
+                        'id': 2,
+                        'port': {
+                            'node_id': 75,
+                            'node_ip': '10.156.67.34',
+                            'port_number': 78,
+                            'protocol': 'TCP'
+                        },
+                        'scan': 1,
+                        'timestamp': 2345,
+                        'url': self.get_url('/api/v1/port/2')
                     }
                 ]
         }

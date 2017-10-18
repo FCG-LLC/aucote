@@ -10,10 +10,12 @@ from api.nodes_handler import NodesHandler
 from api.ports_handler import PortsHandler
 from api.scanners_handler import ScannersHandler
 from api.scans_handler import ScansHandler
+from api.security_scans_handler import SecurityScansHandler
 from api.tasks_handler import TasksHandler
+from fixtures.exploits import Exploit
 from scans.tcp_scanner import TCPScanner
 from scans.tools_scanner import ToolsScanner
-from structs import Scan, TransportProtocol, Node, NodeScan, Port, PortScan
+from structs import Scan, TransportProtocol, Node, NodeScan, Port, PortScan, SecurityScan
 from utils.storage import Storage
 
 
@@ -32,25 +34,39 @@ class APITest(AsyncHTTPTestCase):
         self.scan_1 = Scan(start=123, end=446, protocol=TransportProtocol.TCP, scanner='tcp')
         self.scan_2 = Scan(start=230, end=447, protocol=TransportProtocol.UDP, scanner='udp')
 
-        self.storage.save_scan(self.scan_1)
-        self.storage.save_scan(self.scan_2)
+        for scan in (self.scan_1, self.scan_2):
+            self.storage.save_scan(scan)
 
         self.node_1 = Node(node_id=13, ip=ipaddress.ip_address("10.156.67.18"))
         self.node_2 = Node(node_id=75, ip=ipaddress.ip_address("10.156.67.34"))
+
         self.node_scan_1 = NodeScan(node=self.node_1, scan=self.scan_1, timestamp=45)
         self.node_scan_2 = NodeScan(node=self.node_2, scan=self.scan_2, timestamp=88)
         self.node_scan_3 = NodeScan(node=self.node_1, scan=self.scan_2, timestamp=67)
 
-        self.storage.save_node_scan(self.node_scan_1)
-        self.storage.save_node_scan(self.node_scan_2)
-        self.storage.save_node_scan(self.node_scan_3)
+        for node_scan in (self.node_scan_1, self.node_scan_2, self.node_scan_3):
+            self.storage.save_node_scan(node_scan)
 
         self.port_1 = Port(node=self.node_1, number=34, transport_protocol=TransportProtocol.UDP)
         self.port_2 = Port(node=self.node_2, number=78, transport_protocol=TransportProtocol.TCP)
         self.port_scan_1 = PortScan(port=self.port_1, timestamp=1234, scan=self.scan_1, rowid=13)
         self.port_scan_2 = PortScan(port=self.port_2, timestamp=2345, scan=self.scan_1, rowid=15)
 
-        self.storage.save_port_scan(self.port_scan_1)
+        for port_scan in (self.port_scan_1, self.port_scan_2):
+            self.storage.save_port_scan(port_scan)
+
+        self.exploit_1 = Exploit(exploit_id=14, name='test_name', app='test_app')
+        self.exploit_2 = Exploit(exploit_id=2, name='test_name_2', app='test_app_2')
+
+        self.security_scan_1 = SecurityScan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_1, scan_start=178,
+                                            scan_end=851)
+        self.security_scan_2 = SecurityScan(exploit=self.exploit_2, port=self.port_1, scan=self.scan_1, scan_start=109,
+                                            scan_end=775)
+        self.security_scan_3 = SecurityScan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_2, scan_start=114,
+                                            scan_end=981)
+
+        for scan in (self.security_scan_1, self.security_scan_2, self.security_scan_3):
+            self.storage.save_sec_scan(scan)
 
         self.scanner = TCPScanner(aucote=self.aucote)
         self.scanner.NAME = 'test_name'
@@ -69,6 +85,8 @@ class APITest(AsyncHTTPTestCase):
             (r"/api/v1/node/([\d]+)", NodesHandler, {'aucote': self.aucote}),
             (r"/api/v1/ports", PortsHandler, {'aucote': self.aucote}),
             (r"/api/v1/port/([\d]+)", PortsHandler, {'aucote': self.aucote}),
+            (r"/api/v1/sec_scans", SecurityScansHandler, {'aucote': self.aucote}),
+            (r"/api/v1/sec_scan/([\d]+)", SecurityScansHandler, {'aucote': self.aucote}),
         ])
 
         return self.app

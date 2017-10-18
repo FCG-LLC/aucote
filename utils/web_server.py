@@ -12,6 +12,7 @@ from api.nodes_handler import NodesHandler
 from api.ports_handler import PortsHandler
 from api.scanners_handler import ScannersHandler
 from api.scans_handler import ScansHandler
+from api.security_scans_handler import SecurityScansHandler
 from api.tasks_handler import TasksHandler
 
 
@@ -72,4 +73,6 @@ class WebServer(object):
             (r"/api/v1/node/([\d]+)", NodesHandler, {'aucote': self.aucote}),
             (r"/api/v1/ports", PortsHandler, {'aucote': self.aucote}),
             (r"/api/v1/port/([\d]+)", PortsHandler, {'aucote': self.aucote}),
+            (r"/api/v1/sec_scans", SecurityScansHandler, {'aucote': self.aucote}),
+            (r"/api/v1/sec_scan/([\d]+)", SecurityScansHandler, {'aucote': self.aucote}),
         ])

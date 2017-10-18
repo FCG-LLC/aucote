@@ -192,12 +192,13 @@ class SecurityScan(object):
     SecurityScan is a single scan performed by given exploit on given port during specific global scan (e.g. TCP scan)
 
     """
-    def __init__(self, scan, port, exploit, scan_start=None, scan_end=None):
+    def __init__(self, scan, port, exploit, scan_start=None, scan_end=None, rowid=None):
         self.port = port
         self.exploit = exploit
         self.scan_start = scan_start
         self.scan = scan
         self.scan_end = scan_end
+        self.rowid = rowid
 
     @property
     def node(self):

@@ -17,7 +17,7 @@ class PortsHandler(Handler):
 
         """
         return {
-            'ports': [self.pretty_port(port_scan) for port_scan in self.aucote.storage.ports_scans()],
+            'ports': [self.pretty_port_scan(port_scan) for port_scan in self.aucote.storage.ports_scans()],
         }
 
     def ports_details(self, port_scan_id):
