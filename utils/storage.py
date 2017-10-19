@@ -23,15 +23,21 @@ class Storage(DbInterface):
 
     """
     GET_LAST_ROWID = "SELECT last_insert_rowid()"
-    SCANS_COLUMNS = "scans.ROWID, scans.protocol, scans.scanner_name, scans.scan_start, scans.scan_end"
-    NODES_SCANS_COLUMNS = "nodes_scans.ROWID, nodes_scans.node_id, nodes_scans.node_ip, nodes_scans.scan_id, " \
-                          "nodes_scans.time"
-    PORTS_SCANS_COLUMNS = "ports_scans.ROWID, ports_scans.node_id, ports_scans.node_ip, ports_scans.scan_id, " \
-                          "ports_scans.port, ports_scans.port_protocol, ports_scans.time"
-    SECURITY_SCANS_COLUMNS = "security_scans.ROWID, security_scans.scan_id, security_scans.exploit_id," \
-                             "security_scans.exploit_app, security_scans.exploit_name, security_scans.node_id, " \
-                             "security_scans.node_ip, security_scans.port_protocol, security_scans.port_number," \
-                             "security_scans.sec_scan_start, security_scans.sec_scan_end"
+    SCANS_COLUMNS = ", ".join("{}.{}".format('scans', column)
+                              for column in ['ROWID', 'protocol', 'scanner_name', 'scan_start', 'scan_end'])
+    NODES_SCANS_COLUMNS = ", ".join("{}.{}".format('nodes_scans', column)
+                                    for column in ['ROWID', 'node_id', 'node_ip', 'scan_id', 'time'])
+    PORTS_SCANS_COLUMNS = ", ".join("{}.{}".format('ports_scans', column)
+                                    for column in ['ROWID', 'node_id', 'node_ip', 'scan_id', 'port', 'port_protocol',
+                                                   'time'])
+    SECURITY_SCANS_COLUMNS = ", ".join("{}.{}".format('security_scans', column)
+                                       for column in ['ROWID', 'scan_id', 'exploit_id', 'exploit_app', 'exploit_name',
+                                                      'node_id', 'node_ip', 'port_protocol', 'port_number',
+                                                      'sec_scan_start', 'sec_scan_end'])
+    VULNERABILITIES_COLUMNS = ", ".join("{}.{}".format('vulnerabilities', column)
+                                        for column in ['ROWID', 'scan_id', 'node_id', 'node_ip', 'port_protocol',
+                                                       'port', 'vulnerability_id', 'vulnerability_subid', 'cve', 'cvss',
+                                                       'output', 'time'])
 
     LIMIT = "LIMIT {limit} OFFSET {offset}"
 
@@ -136,6 +142,12 @@ class Storage(DbInterface):
                              "vulnerability_subid, cve, cvss, output, time, ROWID FROM vulnerabilities WHERE node_id=?"\
                              " AND node_ip=? AND port=? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"\
                              " AND vulnerability_id=? AND scan_id=?"
+    VULNERABILITIES = "SELECT {} FROM vulnerabilities ORDER BY time DESC {}".format(VULNERABILITIES_COLUMNS, LIMIT)
+    VULNERABILITY_BY_ID = "SELECT {} FROM vulnerabilities WHERE ROWID=?".format(VULNERABILITIES_COLUMNS)
+    SCANS_BY_VULNERABILITY = "SELECT {} FROM scans INNER JOIN vulnerabilities ON scans.ROWID = vulnerabilities.scan_id"\
+                             " WHERE node_id=? AND node_ip=? AND port=? AND port_protocol=? AND " \
+                             "vulnerability_id=? AND vulnerability_subid=? {} {}".format(SCANS_COLUMNS,
+                                                                                         SCANS_ORDER, LIMIT)
 
     CREATE_CHANGES_TABLE = "CREATE TABLE IF NOT EXISTS changes(type int, vulnerability_id int, "\
                            "vulnerability_subid int, previous_id int, current_id int, time int, PRIMARY KEY(type, " \
@@ -1037,6 +1049,12 @@ class Storage(DbInterface):
                         timestamp=row[6],
                         scan=self.get_scan_by_id(row[3]))
 
+    def _vulnerability_from_row(self, row):
+        return Vulnerability(port=Port(transport_protocol=self._transport_protocol(row[4]), number=row[5],
+                                       node=Node(node_id=row[2], ip=ipaddress.ip_address(row[3]))),
+                             exploit=Exploit(exploit_id=row[6]), subid=row[7], cve=row[8], cvss=row[9], output=row[10],
+                             vuln_time=row[11], rowid=row[0], scan=self.get_scan_by_id(row[1]))
+
     def _sec_scan_from_row(self, row):
         return SecurityScan(port=Port(node=Node(node_id=row[5], ip=ipaddress.ip_address(row[6])),
                                       transport_protocol=self._transport_protocol(row[7]), number=row[8]),
@@ -1141,3 +1159,27 @@ class Storage(DbInterface):
                                          (sec_scan.node.id, str(sec_scan.node.ip), sec_scan.port.number,
                                           self._protocol_to_iana(sec_scan.port.transport_protocol), sec_scan.exploit.id,
                                           sec_scan.exploit.app, sec_scan.exploit.name)))]
+
+    def scans_by_vulnerability(self, vuln):
+        return [self._scan_from_row(row)
+                for row in self.execute((self.SCANS_BY_VULNERABILITY.format(limit=30, offset=0),
+                                         (vuln.port.node.id, str(vuln.port.node.ip), vuln.port.number,
+                                          self._protocol_to_iana(vuln.port.transport_protocol), vuln.exploit.id,
+                                          vuln.subid)))]
+
+    def vulnerabilities(self, limit=10, page=0):
+        return [
+            self._vulnerability_from_row(row) for
+            row in self.execute((self.VULNERABILITIES.format(limit=int(limit), offset=int(limit)*int(page)),))
+            ]
+
+    def vulnerability_by_id(self, vuln_id):
+        for row in self.execute((self.VULNERABILITY_BY_ID, (vuln_id, ))):
+            return self._vulnerability_from_row(row)
+        return None
+
+    def save_vulnerability(self, vuln):
+        self.execute((self.SAVE_VULNERABILITY, (vuln.scan.rowid, vuln.port.node.id, str(vuln.port.node.ip),
+                                                self._protocol_to_iana(vuln.port.transport_protocol), vuln.port.number,
+                                                vuln.exploit.id, vuln.subid, vuln.cve, vuln.cvss, vuln.output,
+                                                vuln.time)))

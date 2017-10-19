@@ -12,10 +12,11 @@ from api.scanners_handler import ScannersHandler
 from api.scans_handler import ScansHandler
 from api.security_scans_handler import SecurityScansHandler
 from api.tasks_handler import TasksHandler
+from api.vulnerabilitites_handler import VulnerabilitiesHandler
 from fixtures.exploits import Exploit
 from scans.tcp_scanner import TCPScanner
 from scans.tools_scanner import ToolsScanner
-from structs import Scan, TransportProtocol, Node, NodeScan, Port, PortScan, SecurityScan
+from structs import Scan, TransportProtocol, Node, NodeScan, Port, PortScan, SecurityScan, Vulnerability
 from utils.storage import Storage
 
 
@@ -68,6 +69,14 @@ class APITest(AsyncHTTPTestCase):
         for scan in (self.security_scan_1, self.security_scan_2, self.security_scan_3):
             self.storage.save_sec_scan(scan)
 
+        self.vulnerability_1 = Vulnerability(exploit=self.exploit_1, port=self.port_1, cvss="6.8", cve="CVE-2017-1231",
+                                             scan=self.scan_1, output="Vulnerable stuff", vuln_time=134, subid=34)
+        self.vulnerability_2 = Vulnerability(exploit=self.exploit_1, port=self.port_1, cvss="6.8", cve="CVE-2017-1231",
+                                             scan=self.scan_2, output="Vulnerable stuff", vuln_time=718, subid=34)
+
+        for vulnerability in (self.vulnerability_1, self.vulnerability_2):
+            self.storage.save_vulnerability(vulnerability)
+
         self.scanner = TCPScanner(aucote=self.aucote)
         self.scanner.NAME = 'test_name'
         self.scanner.scan_start = 1290
@@ -87,6 +96,8 @@ class APITest(AsyncHTTPTestCase):
             (r"/api/v1/port/([\d]+)", PortsHandler, {'aucote': self.aucote}),
             (r"/api/v1/sec_scans", SecurityScansHandler, {'aucote': self.aucote}),
             (r"/api/v1/sec_scan/([\d]+)", SecurityScansHandler, {'aucote': self.aucote}),
+            (r"/api/v1/vulnerabilities", VulnerabilitiesHandler, {'aucote': self.aucote}),
+            (r"/api/v1/vulnerability/([\d]+)", VulnerabilitiesHandler, {'aucote': self.aucote}),
         ])
 
         return self.app

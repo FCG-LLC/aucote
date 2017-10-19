@@ -18,6 +18,7 @@ class Handler(RequestHandler):
     NODES_SCAN_URL = '/api/v1/node/{node_scan_id}'
     PORTS_SCAN_URL = '/api/v1/port/{port_scan_id}'
     SECURITY_SCAN_URL = '/api/v1/sec_scan/{sec_scan_id}'
+    VULNERABILITY_URL = '/api/v1/vulnerability/{vuln_id}'
 
     def initialize(self, aucote):
         """
@@ -112,6 +113,9 @@ class Handler(RequestHandler):
 
     def url_security_scan(self, sec_scan_id):
         return self.format_url(self.SECURITY_SCAN_URL.format(sec_scan_id=sec_scan_id))
+
+    def url_vulnerability(self, vuln_id):
+        return self.format_url(self.VULNERABILITY_URL.format(vuln_id=vuln_id))
 
     def pretty_scan(self, scan):
         """

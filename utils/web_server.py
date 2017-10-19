@@ -14,6 +14,7 @@ from api.scanners_handler import ScannersHandler
 from api.scans_handler import ScansHandler
 from api.security_scans_handler import SecurityScansHandler
 from api.tasks_handler import TasksHandler
+from api.vulnerabilitites_handler import VulnerabilitiesHandler
 
 
 class WebServer(object):
@@ -75,4 +76,6 @@ class WebServer(object):
             (r"/api/v1/port/([\d]+)", PortsHandler, {'aucote': self.aucote}),
             (r"/api/v1/sec_scans", SecurityScansHandler, {'aucote': self.aucote}),
             (r"/api/v1/sec_scan/([\d]+)", SecurityScansHandler, {'aucote': self.aucote}),
+            (r"/api/v1/vulnerabilitites", VulnerabilitiesHandler, {'aucote': self.aucote}),
+            (r"/api/v1/vulnerability/([\d]+)", VulnerabilitiesHandler, {'aucote': self.aucote}),
         ])
