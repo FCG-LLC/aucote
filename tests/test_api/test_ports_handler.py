@@ -6,7 +6,7 @@ class PortsHandlerTest(APITest):
     def setUp(self):
         super(PortsHandlerTest, self).setUp()
 
-    def test_nodes_scans(self):
+    def test_ports_scans(self):
         self.maxDiff = None
         expected = {
             'ports':
@@ -44,7 +44,7 @@ class PortsHandlerTest(APITest):
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         self.assertEqual(json.loads(response.body.decode()), expected)
 
-    def test_node_details(self):
+    def test_port_details(self):
         expected = {
             'id': 1,
             'node_id': 13,
