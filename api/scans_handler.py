@@ -40,6 +40,8 @@ class ScansHandler(Handler):
         return {
             "scan": scan_id,
             "url": self.url_scan(scan_id),
+            "start": scan.start,
+            "end": scan.end,
             "nodes_scans": [self.pretty_node(nodes_scans)
                             for nodes_scans in self.aucote.storage.nodes_scans_by_scan(scan)],
             "ports_scans": [self.pretty_port_scan(port_scan)

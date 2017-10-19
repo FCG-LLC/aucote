@@ -50,6 +50,8 @@ class ScansHandlerTest(APITest):
         expected = {
             "scan": 1,
             "url": self.get_url('/api/v1/scan/1'),
+            "end": 446,
+            "start": 123,
             "nodes_scans": [
                 {
                     'id': 1,
