@@ -76,6 +76,6 @@ class WebServer(object):
             (r"/api/v1/port/([\d]+)", PortsHandler, {'aucote': self.aucote}),
             (r"/api/v1/sec_scans", SecurityScansHandler, {'aucote': self.aucote}),
             (r"/api/v1/sec_scan/([\d]+)", SecurityScansHandler, {'aucote': self.aucote}),
-            (r"/api/v1/vulnerabilitites", VulnerabilitiesHandler, {'aucote': self.aucote}),
+            (r"/api/v1/vulnerabilities", VulnerabilitiesHandler, {'aucote': self.aucote}),
             (r"/api/v1/vulnerability/([\d]+)", VulnerabilitiesHandler, {'aucote': self.aucote}),
         ])
