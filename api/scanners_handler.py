@@ -11,6 +11,7 @@ class ScannersHandler(Handler):
     Handler responsible for returning status of aucote
 
     """
+
     def get(self, scan=None):
         """
         Handle get method and returns aucote status in JSON

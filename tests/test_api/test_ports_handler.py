@@ -14,8 +14,10 @@ class PortsHandlerTest(APITest):
                     {
                         'id': 2,
                         'port': {
-                            'node_id': 75,
-                            'node_ip': '10.156.67.34',
+                            'node': {
+                                'id': 75,
+                                'ip': '10.156.67.34'
+                            },
                             'port_number': 78,
                             'protocol': 'TCP'
                         },
@@ -27,8 +29,10 @@ class PortsHandlerTest(APITest):
                     {
                         'id': 1,
                         'port': {
-                            'node_id': 13,
-                            'node_ip': '10.156.67.18',
+                            'node': {
+                                'id': 13,
+                                'ip': '10.156.67.18'
+                            },
                             'port_number': 34,
                             'protocol': 'UDP'
                         },
@@ -41,7 +45,7 @@ class PortsHandlerTest(APITest):
         }
 
         response = self.fetch('/api/v1/ports', method='GET')
-        
+
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         result = json.loads(response.body.decode())
@@ -52,8 +56,10 @@ class PortsHandlerTest(APITest):
     def test_port_details(self):
         expected = {
             'id': 1,
-            'node_id': 13,
-            'node_ip': '10.156.67.18',
+            'node': {
+                'id': 13,
+                'ip': '10.156.67.18'
+            },
             'port_number': 34,
             'protocol': 'UDP',
             'scan': 1,

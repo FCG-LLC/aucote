@@ -192,6 +192,8 @@ class Handler(RequestHandler):
         return {
             'port_number': port.number,
             'protocol': port.transport_protocol.db_val,
-            'node_id': port.node.id,
-            'node_ip': str(port.node.ip)
+            'node': {
+                'id': port.node.id,
+                'ip': str(port.node.ip)
+            }
         }

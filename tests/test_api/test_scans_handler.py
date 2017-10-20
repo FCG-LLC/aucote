@@ -43,7 +43,7 @@ class ScansHandlerTest(APITest):
                         'scanner': 'tcp',
                         'scanner_url': self.get_url('/api/v1/scanner/tcp')
                     }
-            ]
+                ]
         }
         response = self.fetch('/api/v1/scans', method='GET')
         self.assertEqual(response.code, 200)
@@ -74,8 +74,10 @@ class ScansHandlerTest(APITest):
                     {
                         'id': 2,
                         'port': {
-                            'node_id': 75,
-                            'node_ip': '10.156.67.34',
+                            'node': {
+                                'id': 75,
+                                'ip': '10.156.67.34'
+                            },
                             'port_number': 78,
                             'protocol': 'TCP'
                         },
@@ -87,8 +89,10 @@ class ScansHandlerTest(APITest):
                     {
                         'id': 1,
                         'port': {
-                            'node_id': 13,
-                            'node_ip': '10.156.67.18',
+                            'node': {
+                                'id': 13,
+                                'ip': '10.156.67.18'
+                            },
                             'port_number': 34,
                             'protocol': 'UDP',
                         },

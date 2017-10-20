@@ -32,8 +32,10 @@ class PortsHandler(StorageHandler):
             'human_timestamp': parse_timestamp_to_time(port_scan.timestamp),
             'port_number': port_scan.port.number,
             'protocol': port_scan.port.transport_protocol.db_val,
-            'node_id': port_scan.node.id,
-            'node_ip': str(port_scan.node.ip),
+            'node': {
+                'id': port_scan.node.id,
+                'ip': str(port_scan.node.ip)
+            },
             'scan': port_scan.scan.rowid,
             "scan_url": self.url_scan(port_scan.scan.rowid),
             "scans": [self.pretty_scan(scan) for scan in self.aucote.storage.scans_by_port_scan(port_scan)]

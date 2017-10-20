@@ -68,10 +68,12 @@ class VulnerabilitiesHandlerTest(APITest):
             'exploit': 14,
             'id': 1,
             'output': 'Vulnerable stuff',
-            'port': {'node_id': 13,
-                     'node_ip': '10.156.67.18',
-                     'port_number': 34,
-                     'protocol': 'UDP'},
+            'port': {'node': {
+                'id': 13,
+                'ip': '10.156.67.18'
+            },
+                'port_number': 34,
+                'protocol': 'UDP'},
             'scan': {'end': 446,
                      'end_human': '1970-01-01T00:07:26+00:00',
                      'id': 1,
