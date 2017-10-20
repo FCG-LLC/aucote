@@ -174,8 +174,8 @@ class Storage(DbInterface):
         for key, value in args.items():
             # For operator key, value is a dict of args
             if key == 'operator':
-                for operator, val in value.items():
-                    stmt = self._select_where(table, val, operator)
+                for op, val in value.items():
+                    stmt = self._select_where(table, val, op)
                     where.extend(stmt[0])
                     arguments.extend(stmt[1])
                 continue
