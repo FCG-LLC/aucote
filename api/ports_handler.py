@@ -1,4 +1,5 @@
 from api.storage_handler import StorageHandler
+from utils.time import parse_timestamp_to_time
 
 
 class PortsHandler(StorageHandler):
@@ -28,6 +29,7 @@ class PortsHandler(StorageHandler):
             'id': port_scan.rowid,
             'url': self.url_ports_scan(port_scan.rowid),
             'timestamp': port_scan.timestamp,
+            'human_timestamp': parse_timestamp_to_time(port_scan.timestamp),
             'port_number': port_scan.port.number,
             'protocol': port_scan.port.transport_protocol.db_val,
             'node_id': port_scan.node.id,

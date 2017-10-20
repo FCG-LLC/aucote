@@ -27,6 +27,8 @@ class ScansHandlerTest(APITest):
                         'protocol': 'UDP',
                         'start': 230,
                         'end': 447,
+                        'end_human': '1970-01-01T00:07:27+00:00',
+                        'start_human': '1970-01-01T00:03:50+00:00',
                         'scanner': 'udp',
                         'scanner_url': self.get_url('/api/v1/scanner/udp')
                     },
@@ -34,6 +36,8 @@ class ScansHandlerTest(APITest):
                         'id': 1,
                         'url': self.get_url('/api/v1/scan/1'),
                         'protocol': 'TCP',
+                        'end_human': '1970-01-01T00:07:26+00:00',
+                        'start_human': '1970-01-01T00:02:03+00:00',
                         'start': 123,
                         'end': 446,
                         'scanner': 'tcp',
@@ -77,6 +81,7 @@ class ScansHandlerTest(APITest):
                         },
                         'scan': 1,
                         'timestamp': 2345,
+                        'timestamp_human': '1970-01-01T00:39:05+00:00',
                         'url': self.get_url('/api/v1/port/2')
                     },
                     {
@@ -89,6 +94,7 @@ class ScansHandlerTest(APITest):
                         },
                         'scan': 1,
                         'timestamp': 1234,
+                        'timestamp_human': '1970-01-01T00:20:34+00:00',
                         'url': self.get_url('/api/v1/port/1')
                     }
                 ]

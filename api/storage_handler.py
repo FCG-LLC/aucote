@@ -1,6 +1,7 @@
 import time
 
 from api.handler import Handler
+from utils.time import parse_timestamp_to_time
 
 
 class StorageHandler(Handler):
@@ -27,8 +28,11 @@ class StorageHandler(Handler):
         else:
             result = self.details(int(rowid))
 
+        timestamp = time.time()
+
         result['meta'] = {
-            'timestamp': time.time()
+            'timestamp': timestamp,
+            'human_timestamp': parse_timestamp_to_time(timestamp)
         }
         self.write(result)
 

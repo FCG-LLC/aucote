@@ -1,4 +1,5 @@
 from api.storage_handler import StorageHandler
+from utils.time import parse_timestamp_to_time
 
 
 class SecurityScansHandler(StorageHandler):
@@ -25,7 +26,9 @@ class SecurityScansHandler(StorageHandler):
             'port': self.pretty_port(sec_scan.port),
             'scan': self.pretty_scan(sec_scan.scan),
             'scan_end': sec_scan.scan_end,
+            'scan_end_human': parse_timestamp_to_time(sec_scan.scan_end),
             'scan_start': sec_scan.scan_start,
+            'scan_start_human': parse_timestamp_to_time(sec_scan.scan_start),
             'exploit': {
                 'id': sec_scan.exploit.id,
                 'app': sec_scan.exploit.app,
@@ -45,7 +48,9 @@ class SecurityScansHandler(StorageHandler):
             'port': self.pretty_port(sec_scan.port),
             'scan': self.pretty_scan(sec_scan.scan),
             'scan_end': sec_scan.scan_end,
+            'scan_end_human': parse_timestamp_to_time(sec_scan.scan_end),
             'scan_start': sec_scan.scan_start,
+            'scan_start_human': parse_timestamp_to_time(sec_scan.scan_start),
             'exploit': {
                 'id': sec_scan.exploit.id,
                 'app': sec_scan.exploit.app,

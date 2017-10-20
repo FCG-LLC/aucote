@@ -57,6 +57,8 @@ class NodesHandlerTest(APITest):
             'scans': [
                 {
                     'end': 447,
+                    'end_human': '1970-01-01T00:07:27+00:00',
+                    'start_human': '1970-01-01T00:03:50+00:00',
                     'id': 2,
                     'protocol': 'UDP',
                     'scanner': 'udp',
@@ -65,6 +67,8 @@ class NodesHandlerTest(APITest):
                     'url': self.get_url('/api/v1/scan/2')
                 },
                 {
+                    'end_human': '1970-01-01T00:07:26+00:00',
+                    'start_human': '1970-01-01T00:02:03+00:00',
                     'end': 446,
                     'id': 1,
                     'protocol': 'TCP',

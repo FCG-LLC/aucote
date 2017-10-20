@@ -21,6 +21,7 @@ class PortsHandlerTest(APITest):
                         },
                         'scan': 1,
                         'timestamp': 2345,
+                        'timestamp_human': '1970-01-01T00:39:05+00:00',
                         'url': self.get_url('/api/v1/port/2')
                     },
                     {
@@ -33,6 +34,7 @@ class PortsHandlerTest(APITest):
                         },
                         'scan': 1,
                         'timestamp': 1234,
+                        'timestamp_human': '1970-01-01T00:20:34+00:00',
                         'url': self.get_url('/api/v1/port/1')
                     }
                 ]
@@ -59,6 +61,8 @@ class PortsHandlerTest(APITest):
             'scans':
                 [
                     {
+                        'end_human': '1970-01-01T00:07:26+00:00',
+                        'start_human': '1970-01-01T00:02:03+00:00',
                         'end': 446,
                         'id': 1,
                         'protocol': 'TCP',
@@ -69,6 +73,7 @@ class PortsHandlerTest(APITest):
                     }
                 ],
             'timestamp': 1234,
+            'human_timestamp': '1970-01-01T00:20:34+00:00',
             'url': self.get_url('/api/v1/port/1')
         }
 

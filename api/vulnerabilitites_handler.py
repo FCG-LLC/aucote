@@ -1,4 +1,5 @@
 from api.storage_handler import StorageHandler
+from utils.time import parse_timestamp_to_time
 
 
 class VulnerabilitiesHandler(StorageHandler):
@@ -28,6 +29,7 @@ class VulnerabilitiesHandler(StorageHandler):
             'exploit': vulnerability.exploit.id,
             'vuln_subid': vulnerability.subid,
             'time': vulnerability.time,
+            'time_human': parse_timestamp_to_time(vulnerability.time),
             'cvss': vulnerability.cvss
         }
 
@@ -43,6 +45,7 @@ class VulnerabilitiesHandler(StorageHandler):
             'port': self.pretty_port(vulnerability.port),
             'scan': self.pretty_scan(vulnerability.scan),
             'time': vulnerability.time,
+            'time_human': parse_timestamp_to_time(vulnerability.time),
             'exploit': vulnerability.exploit.id,
             'output': vulnerability.output,
             "scans": [self.pretty_scan(scan)

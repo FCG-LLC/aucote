@@ -6,6 +6,7 @@ import hashlib
 from tornado.web import RequestHandler
 
 from aucote_cfg import cfg
+from utils.time import parse_timestamp_to_time
 
 
 class Handler(RequestHandler):
@@ -143,7 +144,9 @@ class Handler(RequestHandler):
             "id": scan.rowid,
             "url": self.url_scan(scan.rowid),
             "start": scan.start,
+            "start_human": parse_timestamp_to_time(scan.start),
             "end": scan.end,
+            "end_human": parse_timestamp_to_time(scan.end),
             "protocol": scan.protocol.db_val if scan.protocol else None,
             "scanner": scan._scanner,
             "scanner_url": self.url_scanner(scan._scanner)
@@ -181,6 +184,7 @@ class Handler(RequestHandler):
             'url': self.url_ports_scan(port_scan.rowid),
             'port': self.pretty_port(port_scan.port),
             'timestamp': port_scan.timestamp,
+            'timestamp_human': parse_timestamp_to_time(port_scan.timestamp),
             "scan": port_scan.scan.rowid,
         }
 
