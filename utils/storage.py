@@ -69,13 +69,6 @@ class Storage(DbInterface):
                          "port_protocol int, time int, primary key (scan_id, node_id, node_ip, port, port_protocol))"
     SAVE_PORT_QUERY = "INSERT INTO ports_scans (scan_id, node_id, node_ip, port, port_protocol, time) "\
                       "VALUES (?, ?, ?, ?, ?, ?)"
-    SELECT_PORTS_BY_NODES = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans where ({where}) " \
-                            "AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"
-    SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans where"\
-                                      " ({where}) AND time > ?"
-    SELECT_PORTS_BY_NODES_PORTDETECTION = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans" \
-                                          " INNER JOIN scans ON scan_id = scans.ROWID  where ({where}) AND time > ?" \
-                                          " AND (scans.scanner_name=? or scans.scanner_name=?)"
 
     CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, " \
                                   "exploit_app text, exploit_name text, node_id int, node_ip text, port_protocol int, "\
@@ -174,6 +167,15 @@ class Storage(DbInterface):
                     arguments.extend(stmt[1])
                 continue
 
+            if key == 'or':
+                _or = []
+                for query in value:
+                    stmt = self._select_where(table, query, operator)
+                    arguments.extend(stmt[1])
+                    _or.append(" ({}) ".format(" AND ".join(stmt[0])))
+                where.append("({})".format(" OR ".join(_or)))
+                continue
+
             if key in self.TABLES[table]['columns']:
                 if value is None:
                     if operator == '=':
@@ -197,12 +199,14 @@ class Storage(DbInterface):
 
         return where, arguments
 
-    def select(self, table, limit=None, page=0, special=None, join=None, **kwargs):
+    def select(self, table, limit=None, page=0, where=None, special=None, join=None, **kwargs):
         arguments = []
         _where = []
         join_stmt = ''
         limit_stmt = "LIMIT {} OFFSET {}".format(int(limit), int(limit)*int(page)) if limit else ''
 
+        if isinstance(where, dict):
+            kwargs.update(where)
         stmt = self._select_where(table, kwargs)
         _where.extend(stmt[0])
         arguments.extend(stmt[1])
@@ -429,39 +433,6 @@ class Storage(DbInterface):
                    (self.CREATE_CHANGES_TABLE,)]
 
         return queries
-
-    def _get_ports_by_nodes(self, nodes, timestamp, protocol=None, portdetection_only=False):
-        """
-        Query for port scan detail from scans from pasttime ago
-
-        Args:
-            nodes (list):
-            timestamp (int):
-            protocol (TransportProtocol):
-
-        Returns:
-            tuple
-
-        """
-        parameters = []
-        for node in nodes:
-            parameters.extend((node.id, str(node.ip)))
-
-        parameters.append(timestamp)
-        query = self.SELECT_PORTS_BY_NODES_ALL_PROTS
-
-        if protocol is not None:
-            iana = self._protocol_to_iana(protocol)
-            parameters.extend([iana, iana])
-            query = self.SELECT_PORTS_BY_NODES
-
-        if portdetection_only is True:
-            query = self.SELECT_PORTS_BY_NODES_PORTDETECTION
-            parameters.extend((TCPScanner.NAME, UDPScanner.NAME))
-
-        where = 'OR'.join([' (node_id=? AND node_ip=?) '] * len(nodes))
-
-        return query.format(where=where), parameters
 
     def execute(self, query):
         """
@@ -721,27 +692,47 @@ class Storage(DbInterface):
             list - list of Ports
 
         """
-        ports = []
-
         if not nodes:
             return []
 
         if timestamp is None:
             timestamp = time.time() - pasttime
 
-        max_queries = cfg['storage.max_nodes_query']
+        where = {'or': [{'node_ip': node.ip, 'node_id': node.id} for node in nodes]}
 
-        for i in range(ceil(len(nodes)/max_queries)):
-            for row in self.execute(
-                    self._get_ports_by_nodes(nodes=nodes[i*max_queries:(i+1)*max_queries],
-                                             timestamp=timestamp, protocol=protocol,
-                                             portdetection_only=portdetection_only)):
-                node = nodes[nodes.index(Node(node_id=row[0], ip=ipaddress.ip_address(row[1])))]
-                port = Port(node=node, number=row[2], transport_protocol=self._transport_protocol(row[3]))
-                port.scan = Scan(start=port.node.scan.start)
-                ports.append(port)
+        if portdetection_only is True:
+            ports_scans = self.select(
+                table='ports_scans',
+                where=where,
+                special={'>': {'time': timestamp}},
+                join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'kwargs': {
+                    'or': [
+                        {'scanner_name': TCPScanner.NAME},
+                        {'scanner_name': UDPScanner.NAME}
+                    ]}})
 
-        return ports
+        elif protocol is None:
+            ports_scans = self.select(
+                table='ports_scans',
+                where=where,
+                special={'>': {'time': timestamp}}
+            )
+
+        else:
+            ports_scans = self.select(
+                table='ports_scans',
+                port_protocol=protocol,
+                where=where,
+                special={'>': {'time': timestamp}}
+            )
+
+        return_value = []
+        for port_scan in ports_scans:
+            node = nodes[nodes.index(port_scan.node)]
+            port_scan.port.scan = Scan(start=node.scan.start)
+            return_value.append(port_scan.port)
+
+        return return_value
 
     def _transport_protocol(self, number):
         """
