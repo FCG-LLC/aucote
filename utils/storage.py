@@ -199,7 +199,7 @@ class Storage(DbInterface):
 
         return where, arguments
 
-    def select(self, table, limit=None, page=0, where=None, special=None, join=None, **kwargs):
+    def select(self, table, limit=None, page=0, where=None, join=None, **kwargs):
         arguments = []
         _where = []
         join_stmt = ''
@@ -215,15 +215,9 @@ class Storage(DbInterface):
             _table = join['table']
             join_stmt = " INNER JOIN {} ON {}.{} = {}.{}".format(_table, table, join['from'], _table, join['to'])
 
-            stmt = self._select_where(_table, join['kwargs'])
+            stmt = self._select_where(_table, join['where'])
             _where.extend(stmt[0])
             arguments.extend(stmt[1])
-
-        if isinstance(special, dict):
-            for key, value in special.items():
-                stmt = self._select_where(table, value, operator=key)
-                _where.extend(stmt[0])
-                arguments.extend(stmt[1])
 
         where = '' if not _where else " WHERE {}".format(" AND ".join(_where))
 
@@ -503,8 +497,8 @@ class Storage(DbInterface):
             timestamp = time.time() - pasttime
 
         return [node_scan.node for node_scan in self.select(
-            'nodes_scans', special={'>': {'time': timestamp}},
-            join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'kwargs': {
+            'nodes_scans', where={'special': {'>': {'time': timestamp}}},
+            join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where': {
                 'protocol': scan.protocol, 'scanner_name': scan.scanner}})]
 
     def get_vulnerabilities(self, port, exploit, scan):
@@ -560,8 +554,8 @@ class Storage(DbInterface):
         """
         timestamp = time.time() - pasttime
         return [port_scan.port for port_scan in self.select(
-            'ports_scans', special={'>': {'time': timestamp}},
-            join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'kwargs': {
+            'ports_scans', where={'special': {'>': {'time': timestamp}}},
+            join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where': {
                 'protocol': scan.protocol,
                 'scanner_name': scan.scanner
             }}
@@ -642,7 +636,7 @@ class Storage(DbInterface):
         """
         return self.select("security_scans", exploit_app=app, node_id=port.node.id, node_ip=port.node.ip,
                            port_protocol=port.transport_protocol, port_number=port.number,
-                           join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'kwargs':
+                           join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where':
                                {'protocol': scan.protocol, 'scanner_name': scan.scanner}})
 
     def save_changes(self, changes):
@@ -698,14 +692,14 @@ class Storage(DbInterface):
         if timestamp is None:
             timestamp = time.time() - pasttime
 
-        where = {'or': [{'node_ip': node.ip, 'node_id': node.id} for node in nodes]}
+        where = {'or': [{'node_ip': node.ip, 'node_id': node.id} for node in nodes],
+                 'special': {'>': {'time': timestamp}}}
 
         if portdetection_only is True:
             ports_scans = self.select(
                 table='ports_scans',
                 where=where,
-                special={'>': {'time': timestamp}},
-                join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'kwargs': {
+                join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where': {
                     'or': [
                         {'scanner_name': TCPScanner.NAME},
                         {'scanner_name': UDPScanner.NAME}
@@ -714,16 +708,14 @@ class Storage(DbInterface):
         elif protocol is None:
             ports_scans = self.select(
                 table='ports_scans',
-                where=where,
-                special={'>': {'time': timestamp}}
+                where=where
             )
 
         else:
             ports_scans = self.select(
                 table='ports_scans',
                 port_protocol=protocol,
-                where=where,
-                special={'>': {'time': timestamp}}
+                where=where
             )
 
         return_value = []
@@ -860,7 +852,7 @@ class Storage(DbInterface):
             'table': 'nodes_scans',
             'from': 'rowid',
             'to': 'scan_id',
-            'kwargs': {'node_id': node.id, 'node_ip': node.ip}
+            'where': {'node_id': node.id, 'node_ip': node.ip}
         })
 
     def get_scans_by_security_scan(self, exploit, port):
@@ -876,7 +868,7 @@ class Storage(DbInterface):
             list - list of scans
 
         """
-        return self.select(table='scans', join={'table': 'security_scans', 'from': 'rowid', 'to': 'scan_id', 'kwargs':{
+        return self.select(table='scans', join={'table': 'security_scans', 'from': 'rowid', 'to': 'scan_id', 'where':{
             'node_id': port.node.id, 'node_ip': port.node.ip, 'port_number': port.number,
             'port_protocol': port.transport_protocol, 'exploit_id': exploit.id, 'exploit_app': exploit.app,
             'exploit_name': exploit.name
@@ -956,13 +948,13 @@ class Storage(DbInterface):
                             exploit=Exploit(exploit_id=row[2], app=row[3], name=row[4]))
 
     def scans_by_node_scan(self, node_scan):
-        return self.select('scans', 30, 0, join={'from': 'rowid', 'to': 'scan_id', 'table': 'nodes_scans', 'kwargs': {
+        return self.select('scans', 30, 0, join={'from': 'rowid', 'to': 'scan_id', 'table': 'nodes_scans', 'where': {
             'node_id': node_scan.node.id,
             'node_ip': str(node_scan.node.ip),
         }})
 
     def scans_by_port_scan(self, port_scan):
-        return self.select('scans', 30, 0, join={'from': 'rowid', 'to': 'scan_id', 'table': 'ports_scans', 'kwargs': {
+        return self.select('scans', 30, 0, join={'from': 'rowid', 'to': 'scan_id', 'table': 'ports_scans', 'where': {
             'node_id': port_scan.node.id,
             'node_ip': port_scan.node.ip,
             'port': port_scan.port.number,
@@ -1013,7 +1005,7 @@ class Storage(DbInterface):
 
     def scans_by_security_scan(self, sec_scan):
         return self.select('scans', 30, 0,
-                           join={'from': 'rowid', 'to': 'scan_id', 'table': 'security_scans', 'kwargs': {
+                           join={'from': 'rowid', 'to': 'scan_id', 'table': 'security_scans', 'where': {
                                     'node_id': sec_scan.node.id,
                                     'node_ip': sec_scan.node.ip,
                                     'port_number': sec_scan.port.number,
@@ -1025,7 +1017,7 @@ class Storage(DbInterface):
 
     def scans_by_vulnerability(self, vuln):
         return self.select('scans', 30, 0,
-                           join={'from': 'rowid', 'to': 'scan_id', 'table': 'vulnerabilities', 'kwargs': {
+                           join={'from': 'rowid', 'to': 'scan_id', 'table': 'vulnerabilities', 'where': {
                                     'node_id': vuln.port.node.id,
                                     'node_ip': vuln.port.node.ip,
                                     'port': vuln.port.number,
