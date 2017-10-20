@@ -1,14 +1,10 @@
-from api.handler import Handler
+from api.storage_handler import StorageHandler
 
 
-class VulnerabilitiesHandler(Handler):
-    def get(self, vulnerability=None):
-        if not vulnerability:
-            self.write(self.vulnerabilitites())
-            return
-        self.write(self.vulnerability_details(int(vulnerability)))
+class VulnerabilitiesHandler(StorageHandler):
+    LIST_NAME = 'vulnerabilities'
 
-    def vulnerabilitites(self):
+    def list(self, limit, page):
         """
         Get current status of aucote nodes
 
@@ -17,7 +13,9 @@ class VulnerabilitiesHandler(Handler):
 
         """
         return {
-            'vulnerabilitites': [self.pretty_vulnerability(vuln) for vuln in self.aucote.storage.vulnerabilities()],
+            'vulnerabilitites': [self.pretty_vulnerability(vuln) for vuln in self.aucote.storage.vulnerabilities(
+                limit, page
+            )],
         }
 
     def pretty_vulnerability(self, vulnerability):
@@ -33,8 +31,8 @@ class VulnerabilitiesHandler(Handler):
             'cvss': vulnerability.cvss
         }
 
-    def vulnerability_details(self, vuln_id):
-        vulnerability = self.aucote.storage.vulnerability_by_id(vuln_id)
+    def details(self, rowid):
+        vulnerability = self.aucote.storage.vulnerability_by_id(rowid)
         if vulnerability is None:
             self.set_status(404, 'Vulnerability not found')
             return {"code": "Vulnerability not found"}

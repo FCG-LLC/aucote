@@ -105,7 +105,10 @@ class SecurityScansHandlerTest(APITest):
         
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
-        self.assertEqual(json.loads(response.body.decode()), expected)
+        result = json.loads(response.body.decode())
+        del result['navigation']
+        del result['meta']
+        self.assertEqual(result, expected)
 
     def test_node_details(self):
         expected = {
@@ -157,4 +160,6 @@ class SecurityScansHandlerTest(APITest):
         response = self.fetch('/api/v1/sec_scan/1', method='GET')
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
-        self.assertEqual(json.loads(response.body.decode()), expected)
+        result = json.loads(response.body.decode())
+        del result['meta']
+        self.assertEqual(result, expected)

@@ -1,15 +1,10 @@
-from api.handler import Handler
+from api.storage_handler import StorageHandler
 
 
-class PortsHandler(Handler):
-    @Handler.limit
-    def get(self, port_scan=None, limit=10, page=0):
-        if not port_scan:
-            self.write(self.ports_scans(limit, page))
-            return
-        self.write(self.ports_details(int(port_scan)))
+class PortsHandler(StorageHandler):
+    LIST_NAME = 'ports'
 
-    def ports_scans(self, limit, page):
+    def list(self, limit, page):
         """
         Get current status of aucote nodes
 
@@ -18,11 +13,13 @@ class PortsHandler(Handler):
 
         """
         return {
-            'ports': [self.pretty_port_scan(port_scan) for port_scan in self.aucote.storage.ports_scans()],
+            'ports': [self.pretty_port_scan(port_scan) for port_scan in self.aucote.storage.ports_scans(
+                limit, page
+            )],
         }
 
-    def ports_details(self, port_scan_id):
-        port_scan = self.aucote.storage.port_scan_by_id(port_scan_id)
+    def details(self, rowid):
+        port_scan = self.aucote.storage.port_scan_by_id(rowid)
         if port_scan is None:
             self.set_status(404, 'Port scan not found')
             return {"code": "Port scan not found"}

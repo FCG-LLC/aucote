@@ -1,15 +1,10 @@
-from api.handler import Handler
+from api.storage_handler import StorageHandler
 
 
-class SecurityScansHandler(Handler):
-    @Handler.limit
-    def get(self, sec_scan=None, limit=10, page=0):
-        if not sec_scan:
-            self.write(self.sec_scans(limit, page))
-            return
-        self.write(self.sec_scan_details(int(sec_scan)))
+class SecurityScansHandler(StorageHandler):
+    LIST_NAME = 'security_scans'
 
-    def sec_scans(self, limit, page):
+    def list(self, limit, page):
         """
         Get current status of aucote nodes
 
@@ -18,7 +13,9 @@ class SecurityScansHandler(Handler):
 
         """
         return {
-            'security_scans': [self.pretty_sec_scan(sec_scan) for sec_scan in self.aucote.storage.security_scans()],
+            'security_scans': [self.pretty_sec_scan(sec_scan) for sec_scan in self.aucote.storage.security_scans(
+                limit, page
+            )],
         }
 
     def pretty_sec_scan(self, sec_scan):
@@ -36,8 +33,8 @@ class SecurityScansHandler(Handler):
             }
         }
 
-    def sec_scan_details(self, sec_scan_id):
-        sec_scan = self.aucote.storage.security_scan_by_id(sec_scan_id)
+    def details(self, rowid):
+        sec_scan = self.aucote.storage.security_scan_by_id(rowid)
         if sec_scan is None:
             self.set_status(404, 'Security scan not found')
             return {"code": "Security scan not found"}

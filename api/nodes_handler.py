@@ -2,21 +2,17 @@
 Handler responsible for returning status of aucote
 
 """
-from api.handler import Handler
+from api.storage_handler import StorageHandler
 
 
-class NodesHandler(Handler):
+class NodesHandler(StorageHandler):
     """
     Handler responsible for returning nodes
 
     """
-    def get(self, node_scan=None, limit=10, page=0):
-        if not node_scan:
-            self.write(self.nodes_scans(limit, page))
-            return
-        self.write(self.node_details(int(node_scan)))
+    LIST_NAME = 'nodes'
 
-    def nodes_scans(self, limit, page):
+    def list(self, limit, page):
         """
         Get current status of aucote nodes
 
@@ -25,11 +21,13 @@ class NodesHandler(Handler):
 
         """
         return {
-            'nodes': [self.pretty_node(node_scan) for node_scan in self.aucote.storage.nodes_scans()],
+            'nodes': [self.pretty_node(node_scan) for node_scan in self.aucote.storage.nodes_scans(
+                limit, page
+            )],
         }
 
-    def node_details(self, node_scan_id):
-        node_scan = self.aucote.storage.node_scan_by_id(node_scan_id)
+    def details(self, rowid):
+        node_scan = self.aucote.storage.node_scan_by_id(rowid)
         if node_scan is None:
             self.set_status(404, "Node scan not found")
             return {"code": "Node scan not found"}

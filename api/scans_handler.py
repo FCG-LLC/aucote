@@ -2,29 +2,17 @@
 Handler responsible for returning status of aucote
 
 """
-from api.handler import Handler
+from api.storage_handler import StorageHandler
 
 
-class ScansHandler(Handler):
+class ScansHandler(StorageHandler):
     """
     Handler responsible for returning status of aucote
 
     """
-    @Handler.limit
-    def get(self, scan=None, limit=10, page=0):
-        """
-        Handle get method and returns aucote status in JSON
+    LIST_NAME = 'scans'
 
-        Returns:
-            None - writes aucote status in JSON
-
-        """
-        if not scan:
-            self.write(self.scans(limit, page))
-            return
-        self.write(self.scan_history(int(scan)))
-
-    def scans(self, limit, page):
+    def list(self, limit, page):
         """
         Get current status of aucote tasks
 
@@ -36,11 +24,11 @@ class ScansHandler(Handler):
             'scans': [self.pretty_scan(scan) for scan in self.aucote.storage.scans(limit, page)],
         }
 
-    def scan_history(self, scan_id):
-        scan = self.aucote.storage.get_scan_by_id(scan_id)
+    def details(self, rowid):
+        scan = self.aucote.storage.get_scan_by_id(rowid)
         return {
-            "scan": scan_id,
-            "url": self.url_scan(scan_id),
+            "scan": rowid,
+            "url": self.url_scan(rowid),
             "start": scan.start,
             "end": scan.end,
             "nodes_scans": [self.pretty_node(nodes_scans)
