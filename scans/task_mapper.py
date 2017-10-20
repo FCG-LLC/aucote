@@ -56,7 +56,7 @@ class TaskMapper(object):
                 period = parse_period(periods.get(scan.exploit.name, None) or
                                       cfg.get('tools.{0}.period'.format(app)))
 
-                if scan.scan_end + period > time.time() and scan.exploit in exploits:
+                if scan.scan_end or 0 + period > time.time() and scan.exploit in exploits:
                     log.debug('Omitting %s due to recent scan (%s)', scan.exploit, scan.scan_end)
                     exploits.remove(scan.exploit)
 
