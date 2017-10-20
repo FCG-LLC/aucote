@@ -96,6 +96,19 @@ class Handler(RequestHandler):
         handler_class._execute = wrap_execute(handler_class._execute)
         return handler_class
 
+    @staticmethod
+    def limit(function):
+        def return_value(self, *args, **kwargs):
+            for key in ('limit', 'page'):
+                value = self.get_query_arguments(key)
+
+                if value and value[0].isdecimal():
+                    kwargs[key] = int(value[0])
+
+            return function(self, *args, **kwargs)
+
+        return return_value
+
     def format_url(self, url):
         return "{0}://{1}{2}".format(self.request.protocol, self.request.host, url)
 

@@ -10,13 +10,13 @@ class NodesHandler(Handler):
     Handler responsible for returning nodes
 
     """
-    def get(self, node_scan=None):
+    def get(self, node_scan=None, limit=10, page=0):
         if not node_scan:
-            self.write(self.nodes_scans())
+            self.write(self.nodes_scans(limit, page))
             return
         self.write(self.node_details(int(node_scan)))
 
-    def nodes_scans(self):
+    def nodes_scans(self, limit, page):
         """
         Get current status of aucote nodes
 

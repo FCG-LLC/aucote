@@ -2,13 +2,14 @@ from api.handler import Handler
 
 
 class SecurityScansHandler(Handler):
-    def get(self, sec_scan=None):
+    @Handler.limit
+    def get(self, sec_scan=None, limit=10, page=0):
         if not sec_scan:
-            self.write(self.sec_scans())
+            self.write(self.sec_scans(limit, page))
             return
         self.write(self.sec_scan_details(int(sec_scan)))
 
-    def sec_scans(self):
+    def sec_scans(self, limit, page):
         """
         Get current status of aucote nodes
 

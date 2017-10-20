@@ -10,7 +10,8 @@ class ScansHandler(Handler):
     Handler responsible for returning status of aucote
 
     """
-    def get(self, scan=None):
+    @Handler.limit
+    def get(self, scan=None, limit=10, page=0):
         """
         Handle get method and returns aucote status in JSON
 
@@ -19,11 +20,11 @@ class ScansHandler(Handler):
 
         """
         if not scan:
-            self.write(self.scans())
+            self.write(self.scans(limit, page))
             return
         self.write(self.scan_history(int(scan)))
 
-    def scans(self):
+    def scans(self, limit, page):
         """
         Get current status of aucote tasks
 
@@ -32,7 +33,7 @@ class ScansHandler(Handler):
 
         """
         return {
-            'scans': [self.pretty_scan(scan) for scan in self.aucote.storage.scans()],
+            'scans': [self.pretty_scan(scan) for scan in self.aucote.storage.scans(limit, page)],
         }
 
     def scan_history(self, scan_id):

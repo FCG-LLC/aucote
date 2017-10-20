@@ -2,13 +2,14 @@ from api.handler import Handler
 
 
 class PortsHandler(Handler):
-    def get(self, port_scan=None):
+    @Handler.limit
+    def get(self, port_scan=None, limit=10, page=0):
         if not port_scan:
-            self.write(self.ports_scans())
+            self.write(self.ports_scans(limit, page))
             return
         self.write(self.ports_details(int(port_scan)))
 
-    def ports_scans(self):
+    def ports_scans(self, limit, page):
         """
         Get current status of aucote nodes
 
