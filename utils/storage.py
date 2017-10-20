@@ -64,16 +64,11 @@ class Storage(DbInterface):
     CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes_scans(scan_id int, node_id int, node_ip text, time int, " \
                          "primary key (scan_id, node_id, node_ip))"
     SAVE_NODE_QUERY = "INSERT INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (?, ?, ?, ?)"
-    SELECT_NODES = "SELECT node_id, node_ip, time FROM nodes_scans INNER JOIN scans ON scan_id = scans.ROWID WHERE" \
-                   " time>? AND (scans.protocol=? OR (? IS NULL AND scans.protocol IS NULL)) AND scans.scanner_name=?"
 
     CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports_scans (scan_id int, node_id int, node_ip text, port int, " \
                          "port_protocol int, time int, primary key (scan_id, node_id, node_ip, port, port_protocol))"
     SAVE_PORT_QUERY = "INSERT INTO ports_scans (scan_id, node_id, node_ip, port, port_protocol, time) "\
                       "VALUES (?, ?, ?, ?, ?, ?)"
-    SELECT_PORTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans INNER JOIN scans ON "\
-                   "scan_id = scans.ROWID where time > ? AND (scans.protocol=? OR (? IS NULL AND "\
-                   "scans.protocol IS NULL)) AND scans.scanner_name=?"
     SELECT_PORTS_BY_NODES = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans where ({where}) " \
                             "AND time > ? AND (port_protocol=? OR (? IS NULL AND port_protocol IS NULL))"
     SELECT_PORTS_BY_NODES_ALL_PROTS = "SELECT node_id, node_ip, port, port_protocol, time FROM ports_scans where"\
@@ -164,7 +159,7 @@ class Storage(DbInterface):
         """
         return self._cursor
 
-    def _select_where(self, table, args):
+    def _select_where(self, table, args, operator='='):
         arguments = []
         where = []
 
@@ -172,11 +167,23 @@ class Storage(DbInterface):
             return where, arguments
 
         for key, value in args.items():
+            if key == 'special':
+                for operator, val in value.items():
+                    stmt = self._select_where(table, val, operator)
+                    where.extend(stmt[0])
+                    arguments.extend(stmt[1])
+                continue
+
             if key in self.TABLES[table]['columns']:
                 if value is None:
-                    where.append("{}.{} IS ?".format(table, key))
+                    if operator == '=':
+                        where.append("{}.{} IS ?".format(table, key))
+                    elif operator == '!=':
+                        where.append("{}.{} IS NOT ?".format(table, key))
+                    else:
+                        raise AttributeError("Trying to compare NULL by '{}' with `{}`".format(operator, key))
                 else:
-                    where.append("{}.{} = ?".format(table, key))
+                    where.append("{}.{} {} ?".format(table, key, operator))
 
                 if isinstance(value, TransportProtocol):
                     arguments.append(self._protocol_to_iana(value))
@@ -185,9 +192,12 @@ class Storage(DbInterface):
                 else:
                     arguments.append(value)
 
+            else:
+                raise AttributeError("Unknown column `{}` for `{}`".format(key, table))
+
         return where, arguments
 
-    def select(self, table, limit=None, page=0, offset=None, join=None, **kwargs):
+    def select(self, table, limit=None, page=0, special=None, join=None, **kwargs):
         arguments = []
         _where = []
         join_stmt = ''
@@ -204,6 +214,12 @@ class Storage(DbInterface):
             stmt = self._select_where(_table, join['kwargs'])
             _where.extend(stmt[0])
             arguments.extend(stmt[1])
+
+        if isinstance(special, dict):
+            for key, value in special.items():
+                stmt = self._select_where(table, value, operator=key)
+                _where.extend(stmt[0])
+                arguments.extend(stmt[1])
 
         where = '' if not _where else " WHERE {}".format(" AND ".join(_where))
 
@@ -279,24 +295,6 @@ class Storage(DbInterface):
         scan_id = self.get_scan_id(scan)
         return [self._save_node(node=node, scan=scan, scan_id=scan_id) for node in nodes]
 
-    def _get_nodes(self, pasttime, timestamp, scan):
-        """
-        Returns all nodes from local storage
-
-        Args:
-            pasttime (int):
-            timestamp (int):
-            scan (Scan):
-
-        Returns:
-            tuple
-
-        """
-        if timestamp is None:
-            timestamp = time.time() - pasttime
-        iana = self._protocol_to_iana(scan.protocol)
-        return self.SELECT_NODES, (timestamp, iana, iana, scan.scanner)
-
     def _save_port(self, port, scan, scan_id=None, timestamp=None):
         """
         Query for saving port scan into database
@@ -326,23 +324,6 @@ class Storage(DbInterface):
         """
         scan_id = self.get_scan_id(scan)
         return [self._save_port(port=port, scan=scan, scan_id=scan_id) for port in ports]
-
-    def _get_ports(self, pasttime, scan):
-        """
-        Query for port scan detail from scans from pasttime ago
-
-        Args:
-            pasttime(int)
-            scan (Scan):
-
-        Returns:
-            tuple
-
-        """
-        timestamp = time.time() - pasttime
-        iana = self._protocol_to_iana(scan.protocol)
-
-        return self.SELECT_PORTS, (timestamp, iana, iana, scan.scanner)
 
     def _save_security_scan(self, exploit, port, scan):
         """
@@ -547,11 +528,13 @@ class Storage(DbInterface):
         Returns:
             list - list of nodes
         """
-        nodes = []
+        if timestamp is None:
+            timestamp = time.time() - pasttime
 
-        for node in self.execute(self._get_nodes(pasttime=pasttime, timestamp=timestamp, scan=scan)):
-            nodes.append(Node(node_id=node[0], ip=ipaddress.ip_address(node[1])))
-        return nodes
+        return [node_scan.node for node_scan in self.select(
+            'nodes_scans', special={'>': {'time': timestamp}},
+            join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'kwargs': {
+                'protocol': scan.protocol, 'scanner_name': scan.scanner}})]
 
     def get_vulnerabilities(self, port, exploit, scan):
         """
@@ -604,12 +587,14 @@ class Storage(DbInterface):
             list - list of Ports
 
         """
-        ports = []
-
-        for port in self.execute(self._get_ports(pasttime=pasttime, scan=scan)):
-            ports.append(Port(node=Node(node_id=port[0], ip=ipaddress.ip_address(port[1])), number=port[2],
-                              transport_protocol=self._transport_protocol(port[3])))
-        return ports
+        timestamp = time.time() - pasttime
+        return [port_scan.port for port_scan in self.select(
+            'ports_scans', special={'>': {'time': timestamp}},
+            join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'kwargs': {
+                'protocol': scan.protocol,
+                'scanner_name': scan.scanner
+            }}
+        )]
 
     def get_ports_by_scan_and_node(self, node, scan):
         """
