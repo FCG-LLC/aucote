@@ -153,6 +153,18 @@ class Storage(DbInterface):
         return self._cursor
 
     def _select_where(self, table, args, operator='='):
+        """
+        Prepares list of AND conditions for WHERE, and list of arguments to pass for prepare statement
+
+        Args:
+            table (str):
+            args (dict): dict of args. Every key is treat as column name except `operator` and `or`
+            operator (str): Operator which is used for comparison
+
+        Returns:
+            list, list
+
+        """
         arguments = []
         where = []
 
@@ -160,13 +172,15 @@ class Storage(DbInterface):
             return where, arguments
 
         for key, value in args.items():
-            if key == 'special':
+            # For operator key, value is a dict of args
+            if key == 'operator':
                 for operator, val in value.items():
                     stmt = self._select_where(table, val, operator)
                     where.extend(stmt[0])
                     arguments.extend(stmt[1])
                 continue
 
+            # For or, value contains list of dicts (args)
             if key == 'or':
                 _or = []
                 for query in value:
@@ -176,6 +190,7 @@ class Storage(DbInterface):
                 where.append("({})".format(" OR ".join(_or)))
                 continue
 
+            # Every other key is treat as column name
             if key in self.TABLES[table]['columns']:
                 if value is None:
                     if operator == '=':
@@ -200,6 +215,30 @@ class Storage(DbInterface):
         return where, arguments
 
     def select(self, table, limit=None, page=0, where=None, join=None, **kwargs):
+        """
+        Builder for select function.
+
+        Args:
+            table (str): table name
+            limit (int): LIMIT value
+            page (int): OFFSET = page*limit
+            where (dict): dict which should contains special conditions like `or` or comparisons other than `=`.
+                          list of special keys:
+                           - or - contains list of `where` dicts
+                           - operator - operator:value dict, where value is a `where` dict and operator is SQL operator
+                                        e.g. `<`, `!=`
+                          all other keys are treat as column names
+            join (dict): It requires 4 keys:
+             - table - which table should be joined
+             - from - column name from base table for join
+             - to - column name from joining table
+             - where - this same like where
+            **kwargs (dict): dict of column_name: value, which is treat as list of conditions for query
+
+        Returns:
+            object base on table type
+
+        """
         arguments = []
         _where = []
         join_stmt = ''
@@ -497,7 +536,7 @@ class Storage(DbInterface):
             timestamp = time.time() - pasttime
 
         return [node_scan.node for node_scan in self.select(
-            'nodes_scans', where={'special': {'>': {'time': timestamp}}},
+            'nodes_scans', where={'operator': {'>': {'time': timestamp}}},
             join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where': {
                 'protocol': scan.protocol, 'scanner_name': scan.scanner}})]
 
@@ -554,7 +593,7 @@ class Storage(DbInterface):
         """
         timestamp = time.time() - pasttime
         return [port_scan.port for port_scan in self.select(
-            'ports_scans', where={'special': {'>': {'time': timestamp}}},
+            'ports_scans', where={'operator': {'>': {'time': timestamp}}},
             join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where': {
                 'protocol': scan.protocol,
                 'scanner_name': scan.scanner
@@ -693,7 +732,7 @@ class Storage(DbInterface):
             timestamp = time.time() - pasttime
 
         where = {'or': [{'node_ip': node.ip, 'node_id': node.id} for node in nodes],
-                 'special': {'>': {'time': timestamp}}}
+                 'operator': {'>': {'time': timestamp}}}
 
         if portdetection_only is True:
             ports_scans = self.select(
