@@ -3,6 +3,7 @@ Handler responsible for returning status of aucote
 
 """
 from api.storage_handler import StorageHandler
+from utils.time import parse_timestamp_to_time
 
 
 class ScansHandler(StorageHandler):
@@ -30,7 +31,9 @@ class ScansHandler(StorageHandler):
             "scan": rowid,
             "url": self.url_scan(rowid),
             "start": scan.start,
+            "start_human": parse_timestamp_to_time(scan.start),
             "end": scan.end,
+            "end_human": parse_timestamp_to_time(scan.end),
             "nodes_scans": [self.pretty_node(nodes_scans)
                             for nodes_scans in self.aucote.storage.nodes_scans_by_scan(scan)],
             "ports_scans": [self.pretty_port_scan(port_scan)

@@ -58,7 +58,9 @@ class ScansHandlerTest(APITest):
             "scan": 1,
             "url": self.get_url('/api/v1/scan/1'),
             "end": 446,
+            'end_human': '1970-01-01T00:07:26+00:00',
             "start": 123,
+            'start_human': '1970-01-01T00:02:03+00:00',
             "nodes_scans": [
                 {
                     'id': 1,

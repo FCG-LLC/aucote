@@ -15,7 +15,7 @@ of password.
 ### Request
 
 ```
-curl -X POST -H 'Authorization: Bearer <password>'
+curl -X POST -H 'Authorization: Bearer <password>' http://localhost:1235/api/v1/kill
 ```
 
 
