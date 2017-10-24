@@ -83,21 +83,20 @@ class APITest(AsyncHTTPTestCase):
         self.scanner.nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))]
         self.aucote.scanners = [self.scanner, ToolsScanner(name='tools', aucote=self.aucote)]
         self.app = Application([
-            (r"/api/v1/status", MainHandler, {'aucote': self.aucote}),
             (r"/api/v1/kill", KillHandler, {'aucote': self.aucote}),
-            (r"/api/v1/scanner/([\w_]+)", ScannersHandler, {'aucote': self.aucote}),
+            (r"/api/v1/scanners/([\w_]+)", ScannersHandler, {'aucote': self.aucote}),
             (r"/api/v1/scanners", ScannersHandler, {'aucote': self.aucote}),
             (r"/api/v1/tasks", TasksHandler, {'aucote': self.aucote}),
             (r"/api/v1/scans", ScansHandler, {'aucote': self.aucote}),
-            (r"/api/v1/scan/([\d]+)", ScansHandler, {'aucote': self.aucote}),
+            (r"/api/v1/scans/([\d]+)", ScansHandler, {'aucote': self.aucote}),
             (r"/api/v1/nodes", NodesHandler, {'aucote': self.aucote}),
-            (r"/api/v1/node/([\d]+)", NodesHandler, {'aucote': self.aucote}),
+            (r"/api/v1/nodes/([\d]+)", NodesHandler, {'aucote': self.aucote}),
             (r"/api/v1/ports", PortsHandler, {'aucote': self.aucote}),
-            (r"/api/v1/port/([\d]+)", PortsHandler, {'aucote': self.aucote}),
+            (r"/api/v1/ports/([\d]+)", PortsHandler, {'aucote': self.aucote}),
             (r"/api/v1/sec_scans", SecurityScansHandler, {'aucote': self.aucote}),
-            (r"/api/v1/sec_scan/([\d]+)", SecurityScansHandler, {'aucote': self.aucote}),
+            (r"/api/v1/sec_scans/([\d]+)", SecurityScansHandler, {'aucote': self.aucote}),
             (r"/api/v1/vulnerabilities", VulnerabilitiesHandler, {'aucote': self.aucote}),
-            (r"/api/v1/vulnerability/([\d]+)", VulnerabilitiesHandler, {'aucote': self.aucote}),
+            (r"/api/v1/vulnerabilities/([\d]+)", VulnerabilitiesHandler, {'aucote': self.aucote}),
         ])
 
         return self.app

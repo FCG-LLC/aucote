@@ -34,11 +34,11 @@ class ScannersHandlerTest(AsyncHTTPTestCase):
                 [
                     {
                         'name': 'test_name',
-                        'url': self.get_url('/api/v1/scanner/test_name')
+                        'url': self.get_url('/api/v1/scanners/test_name')
                     },
                     {
                         'name': 'tools',
-                        'url': self.get_url('/api/v1/scanner/tools')
+                        'url': self.get_url('/api/v1/scanners/tools')
                     }
             ]
         }

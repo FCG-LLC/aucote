@@ -37,14 +37,14 @@ class SecurityScansHandlerTest(APITest):
                                 'id': 2,
                                 'protocol': 'UDP',
                                 'scanner': 'udp',
-                                'scanner_url': self.get_url('/api/v1/scanner/udp'),
+                                'scanner_url': self.get_url('/api/v1/scanners/udp'),
                                 'start': 230,
                                 'start_human': '1970-01-01T00:03:50+00:00',
-                                'url': self.get_url('/api/v1/scan/2')
+                                'url': self.get_url('/api/v1/scans/2')
                             },
                         'scan_end': 981.0,
                         'scan_end_human': '1970-01-01T00:16:21+00:00',
-                        'url': self.get_url('/api/v1/sec_scan/3')
+                        'url': self.get_url('/api/v1/sec_scans/3')
                     },
                     {
                         'exploit':
@@ -69,14 +69,14 @@ class SecurityScansHandlerTest(APITest):
                                 'id': 1,
                                 'protocol': 'TCP',
                                 'scanner': 'tcp',
-                                'scanner_url': self.get_url('/api/v1/scanner/tcp'),
+                                'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                                 'start': 123,
                                 'start_human': '1970-01-01T00:02:03+00:00',
-                                'url': self.get_url('/api/v1/scan/1')
+                                'url': self.get_url('/api/v1/scans/1')
                             },
                         'scan_end': 851.0,
                         'scan_end_human': '1970-01-01T00:14:11+00:00',
-                        'url': self.get_url('/api/v1/sec_scan/1')
+                        'url': self.get_url('/api/v1/sec_scans/1')
                     },
                     {
                         'exploit':
@@ -101,14 +101,14 @@ class SecurityScansHandlerTest(APITest):
                                 'id': 1,
                                 'protocol': 'TCP',
                                 'scanner': 'tcp',
-                                'scanner_url': self.get_url('/api/v1/scanner/tcp'),
+                                'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                                 'start': 123,
                                 'start_human': '1970-01-01T00:02:03+00:00',
-                                'url': self.get_url('/api/v1/scan/1')
+                                'url': self.get_url('/api/v1/scans/1')
                             },
                         'scan_end': 775.0,
                         'scan_end_human': '1970-01-01T00:12:55+00:00',
-                        'url': self.get_url('/api/v1/sec_scan/2')
+                        'url': self.get_url('/api/v1/sec_scans/2')
                     }
                 ]
         }
@@ -144,14 +144,14 @@ class SecurityScansHandlerTest(APITest):
                 'id': 1,
                 'protocol': 'TCP',
                 'scanner': 'tcp',
-                'scanner_url': self.get_url('/api/v1/scanner/tcp'),
+                'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                 'start': 123,
-                'url': self.get_url('/api/v1/scan/1')
+                'url': self.get_url('/api/v1/scans/1')
             },
             'scan_end': 851.0,
             'scan_end_human': '1970-01-01T00:14:11+00:00',
             'scan_start_human': '1970-01-01T00:02:58+00:00',
-            'scan_url': self.get_url('/api/v1/scan/1'),
+            'scan_url': self.get_url('/api/v1/scans/1'),
             'scans': [
                 {
                     'end_human': '1970-01-01T00:07:27+00:00',
@@ -160,9 +160,9 @@ class SecurityScansHandlerTest(APITest):
                     'id': 2,
                     'protocol': 'UDP',
                     'scanner': 'udp',
-                    'scanner_url': self.get_url('/api/v1/scanner/udp'),
+                    'scanner_url': self.get_url('/api/v1/scanners/udp'),
                     'start': 230,
-                    'url': self.get_url('/api/v1/scan/2')
+                    'url': self.get_url('/api/v1/scans/2')
                 },
                 {
                     'end_human': '1970-01-01T00:07:26+00:00',
@@ -171,15 +171,15 @@ class SecurityScansHandlerTest(APITest):
                     'id': 1,
                     'protocol': 'TCP',
                     'scanner': 'tcp',
-                    'scanner_url': self.get_url('/api/v1/scanner/tcp'),
+                    'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                     'start': 123,
-                    'url': self.get_url('/api/v1/scan/1')
+                    'url': self.get_url('/api/v1/scans/1')
                 }
             ],
-            'url': self.get_url('/api/v1/sec_scan/1')
+            'url': self.get_url('/api/v1/sec_scans/1')
         }
 
-        response = self.fetch('/api/v1/sec_scan/1', method='GET')
+        response = self.fetch('/api/v1/sec_scans/1', method='GET')
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         result = json.loads(response.body.decode())

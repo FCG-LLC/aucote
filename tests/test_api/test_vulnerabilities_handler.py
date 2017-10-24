@@ -21,14 +21,14 @@ class VulnerabilitiesHandlerTest(APITest):
                          'id': 2,
                          'protocol': 'UDP',
                          'scanner': 'udp',
-                         'scanner_url': self.get_url('/api/v1/scanner/udp'),
+                         'scanner_url': self.get_url('/api/v1/scanners/udp'),
                          'start': 230,
                          'start_human': '1970-01-01T00:03:50+00:00',
-                         'url': self.get_url('/api/v1/scan/2')
+                         'url': self.get_url('/api/v1/scans/2')
                      },
                      'time': 718,
                      'time_human': '1970-01-01T00:11:58+00:00',
-                     'url': self.get_url('/api/v1/vulnerability/2'),
+                     'url': self.get_url('/api/v1/vulnerabilities/2'),
                      'vuln_subid': 34},
                     {'cvss': 6.8,
                      'exploit': 14,
@@ -41,14 +41,14 @@ class VulnerabilitiesHandlerTest(APITest):
                          'id': 1,
                          'protocol': 'TCP',
                          'scanner': 'tcp',
-                         'scanner_url': self.get_url('/api/v1/scanner/tcp'),
+                         'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                          'start': 123,
                          'start_human': '1970-01-01T00:02:03+00:00',
-                         'url': self.get_url('/api/v1/scan/1')
+                         'url': self.get_url('/api/v1/scans/1')
                      },
                      'time': 134,
                      'time_human': '1970-01-01T00:02:14+00:00',
-                     'url': self.get_url('/api/v1/vulnerability/1'),
+                     'url': self.get_url('/api/v1/vulnerabilities/1'),
                      'vuln_subid': 34
                      }
                 ]
@@ -79,33 +79,33 @@ class VulnerabilitiesHandlerTest(APITest):
                      'id': 1,
                      'protocol': 'TCP',
                      'scanner': 'tcp',
-                     'scanner_url': self.get_url('/api/v1/scanner/tcp'),
+                     'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                      'start': 123,
                      'start_human': '1970-01-01T00:02:03+00:00',
-                     'url': self.get_url('/api/v1/scan/1')},
+                     'url': self.get_url('/api/v1/scans/1')},
             'scans': [{'end': 447,
                        'end_human': '1970-01-01T00:07:27+00:00',
                        'id': 2,
                        'protocol': 'UDP',
                        'scanner': 'udp',
-                       'scanner_url': self.get_url('/api/v1/scanner/udp'),
+                       'scanner_url': self.get_url('/api/v1/scanners/udp'),
                        'start': 230,
                        'start_human': '1970-01-01T00:03:50+00:00',
-                       'url': self.get_url('/api/v1/scan/2')},
+                       'url': self.get_url('/api/v1/scans/2')},
                       {'end': 446,
                        'end_human': '1970-01-01T00:07:26+00:00',
                        'id': 1,
                        'protocol': 'TCP',
                        'scanner': 'tcp',
-                       'scanner_url': self.get_url('/api/v1/scanner/tcp'),
+                       'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                        'start': 123,
                        'start_human': '1970-01-01T00:02:03+00:00',
-                       'url': self.get_url('/api/v1/scan/1')}],
+                       'url': self.get_url('/api/v1/scans/1')}],
             'time': 134,
             'time_human': '1970-01-01T00:02:14+00:00',
-            'url': self.get_url('/api/v1/sec_scan/1')}
+            'url': self.get_url('/api/v1/sec_scans/1')}
 
-        response = self.fetch('/api/v1/vulnerability/1', method='GET')
+        response = self.fetch('/api/v1/vulnerabilities/1', method='GET')
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         result = json.loads(response.body.decode())

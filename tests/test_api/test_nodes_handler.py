@@ -16,24 +16,24 @@ class NodesHandlerTest(APITest):
                         'ip': '10.156.67.34',
                         'node_id': 75,
                         'scan': 2,
-                        'scan_url': self.get_url('/api/v1/scan/2'),
-                        'url': self.get_url('/api/v1/node/2')
+                        'scan_url': self.get_url('/api/v1/scans/2'),
+                        'url': self.get_url('/api/v1/nodes/2')
                     },
                     {
                         'id': 3,
                         'ip': '10.156.67.18',
                         'node_id': 13,
                         'scan': 2,
-                        'scan_url': self.get_url('/api/v1/scan/2'),
-                        'url': self.get_url('/api/v1/node/3')
+                        'scan_url': self.get_url('/api/v1/scans/2'),
+                        'url': self.get_url('/api/v1/nodes/3')
                     },
                     {
                         'id': 1,
                         'ip': '10.156.67.18',
                         'node_id': 13,
                         'scan': 1,
-                        'scan_url': self.get_url('/api/v1/scan/1'),
-                        'url': self.get_url('/api/v1/node/1')
+                        'scan_url': self.get_url('/api/v1/scans/1'),
+                        'url': self.get_url('/api/v1/nodes/1')
                     }
                 ]
         }
@@ -53,7 +53,7 @@ class NodesHandlerTest(APITest):
             'ip': '10.156.67.18',
             'node_id': 13,
             'scan': 1,
-            'scan_url': self.get_url('/api/v1/scan/1'),
+            'scan_url': self.get_url('/api/v1/scans/1'),
             'scans': [
                 {
                     'end': 447,
@@ -62,9 +62,9 @@ class NodesHandlerTest(APITest):
                     'id': 2,
                     'protocol': 'UDP',
                     'scanner': 'udp',
-                    'scanner_url': self.get_url('/api/v1/scanner/udp'),
+                    'scanner_url': self.get_url('/api/v1/scanners/udp'),
                     'start': 230,
-                    'url': self.get_url('/api/v1/scan/2')
+                    'url': self.get_url('/api/v1/scans/2')
                 },
                 {
                     'end_human': '1970-01-01T00:07:26+00:00',
@@ -73,15 +73,15 @@ class NodesHandlerTest(APITest):
                     'id': 1,
                     'protocol': 'TCP',
                     'scanner': 'tcp',
-                    'scanner_url': self.get_url('/api/v1/scanner/tcp'),
+                    'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                     'start': 123,
-                    'url': self.get_url('/api/v1/scan/1')
+                    'url': self.get_url('/api/v1/scans/1')
                 }
             ],
-            'url': self.get_url('/api/v1/node/1')
+            'url': self.get_url('/api/v1/nodes/1')
         }
 
-        response = self.fetch('/api/v1/node/1', method='GET')
+        response = self.fetch('/api/v1/nodes/1', method='GET')
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         result = json.loads(response.body.decode())

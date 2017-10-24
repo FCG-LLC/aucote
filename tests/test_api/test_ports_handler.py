@@ -24,7 +24,7 @@ class PortsHandlerTest(APITest):
                         'scan': 1,
                         'timestamp': 2345,
                         'timestamp_human': '1970-01-01T00:39:05+00:00',
-                        'url': self.get_url('/api/v1/port/2')
+                        'url': self.get_url('/api/v1/ports/2')
                     },
                     {
                         'id': 1,
@@ -39,7 +39,7 @@ class PortsHandlerTest(APITest):
                         'scan': 1,
                         'timestamp': 1234,
                         'timestamp_human': '1970-01-01T00:20:34+00:00',
-                        'url': self.get_url('/api/v1/port/1')
+                        'url': self.get_url('/api/v1/ports/1')
                     }
                 ]
         }
@@ -63,7 +63,7 @@ class PortsHandlerTest(APITest):
             'port_number': 34,
             'protocol': 'UDP',
             'scan': 1,
-            'scan_url': self.get_url('/api/v1/scan/1'),
+            'scan_url': self.get_url('/api/v1/scans/1'),
             'scans':
                 [
                     {
@@ -73,17 +73,17 @@ class PortsHandlerTest(APITest):
                         'id': 1,
                         'protocol': 'TCP',
                         'scanner': 'tcp',
-                        'scanner_url': self.get_url('/api/v1/scanner/tcp'),
+                        'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                         'start': 123,
-                        'url': self.get_url('/api/v1/scan/1')
+                        'url': self.get_url('/api/v1/scans/1')
                     }
                 ],
             'timestamp': 1234,
             'human_timestamp': '1970-01-01T00:20:34+00:00',
-            'url': self.get_url('/api/v1/port/1')
+            'url': self.get_url('/api/v1/ports/1')
         }
 
-        response = self.fetch('/api/v1/port/1', method='GET')
+        response = self.fetch('/api/v1/ports/1', method='GET')
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         result = json.loads(response.body.decode())
