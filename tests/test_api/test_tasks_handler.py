@@ -4,22 +4,15 @@ from unittest.mock import MagicMock, patch
 import ipaddress
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
-from api.main_handler import MainHandler
-from api.scanners_handler import ScannersHandler
 from api.tasks_handler import TasksHandler
-from scans.tcp_scanner import TCPScanner
-from scans.tools_scanner import ToolsScanner
 from structs import Node, Port, TransportProtocol
 from tools.common.port_task import PortTask
-from utils import Config
 from utils.async_task_manager import AsyncTaskManager
-from utils.task import Task
 
 
 class TasksHandlerTest(AsyncHTTPTestCase):
     def setUp(self):
         super(TasksHandlerTest, self).setUp()
-        self.handler = MainHandler(self.app, MagicMock(), aucote=self.aucote)
 
     def get_app(self):
         self.aucote = MagicMock(unfinished_tasks=4)

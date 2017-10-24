@@ -7,7 +7,6 @@ from tornado.netutil import bind_sockets
 from tornado.web import Application
 
 from api.kill_handler import KillHandler
-from api.main_handler import MainHandler
 from api.nodes_handler import NodesHandler
 from api.ports_handler import PortsHandler
 from api.scanners_handler import ScannersHandler
@@ -63,7 +62,6 @@ class WebServer(object):
 
         """
         return Application([
-            (r"/api/v1/status", MainHandler, {'aucote': self.aucote}),
             (r"/api/v1/kill", KillHandler, {'aucote': self.aucote}),
             (r"/api/v1/scanners", ScannersHandler, {'aucote': self.aucote}),
             (r"/api/v1/scanners/([\w_]+)", ScannersHandler, {'aucote': self.aucote}),
