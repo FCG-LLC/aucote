@@ -28,34 +28,28 @@ curl "http://localhost:1235/api/v1/ports?limit=2&page=13"
 {
   "ports": [
     {
-      "id": 4060,
-      "url": "http://localhost:1235/api/v1/port/4060",
+      "id": 5148,
+      "url": "http://localhost:1235/api/v1/ports/5148",
+      "port": {
+        "port_number": 21,
+        "protocol": "TCP",
+        "node": "10.12.1.159[315]"
+      },
+      "timestamp": 1508844360.607725,
+      "timestamp_human": "2017-10-24T11:26:00.607725+00:00",
+      "scan": "tools_advanced"
+    },
+    {
+      "id": 5147,
+      "url": "http://localhost:1235/api/v1/ports/5147",
       "port": {
         "port_number": 3268,
         "protocol": "TCP",
-        "node": {
-          "id": 86,
-          "ip": "10.12.2.175"
-        }
+        "node": "10.12.2.175[315]"
       },
-      "timestamp": 1508506247.2758377,
-      "timestamp_human": "2017-10-20T13:30:47.275838+00:00",
-      "scan": 966
-    },
-    {
-      "id": 4059,
-      "url": "http://localhost:1235/api/v1/port/4059",
-      "port": {
-        "port_number": 445,
-        "protocol": "TCP",
-        "node": {
-          "id": 86,
-          "ip": "10.12.2.175"
-        }
-      },
-      "timestamp": 1508506247.2757692,
-      "timestamp_human": "2017-10-20T13:30:47.275769+00:00",
-      "scan": 966
+      "timestamp": 1508844360.6077192,
+      "timestamp_human": "2017-10-24T11:26:00.607719+00:00",
+      "scan": "tools_advanced"
     }
   ],
   "navigation": {
@@ -65,8 +59,8 @@ curl "http://localhost:1235/api/v1/ports?limit=2&page=13"
     "previous_page": "http://localhost:1235/api/v1/ports?limit=2&page=12"
   },
   "meta": {
-    "timestamp": 1508831636.696856,
-    "human_timestamp": "2017-10-24T07:53:56.696856+00:00"
+    "timestamp": 1508848237.9150612,
+    "human_timestamp": "2017-10-24T12:30:37.915061+00:00"
   }
 }
 ```
@@ -79,12 +73,10 @@ For every port scan the keys presented below are available:
 * port - port object:
     * port_number - port number
     * protocol - port protocol
-    * node
-        * id - id of node
-        * ip - ip address of node
+    * node - node in format `ip[id]`
 * timestamp - timestamp of scan
 * timestamp_human - date of scan
-* scan - id of [scan](scans.md#details)
+* scan - scanner name
 
 ## <a name="details">Details</a>
 
@@ -93,13 +85,13 @@ Obtains port scan details for given id.
 ### URL
 
 ```
-/api/v1/port/id
+/api/v1/ports/<id>
 ```
 
 ### Request
 
 ```
-curl "http://localhost:1235/api/v1/port/77"
+curl "http://localhost:1235/api/v1/ports/77"
 ```
 
 ### Response

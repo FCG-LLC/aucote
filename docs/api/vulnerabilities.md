@@ -27,47 +27,45 @@ curl "http://localhost:1235/api/v1/vulnerabilities?limit=2&page=13"
 {
   "vulnerabilitites": [
     {
-      "id": 22952,
-      "url": "http://localhost:1235/api/v1/vulnerabilities/22952",
-      "port": "10.12.2.202:623",
+      "id": 31413,
+      "url": "http://localhost:1235/api/v1/vulnerabilities/31413",
+      "port": "10.12.1.159:3000",
       "scan": {
-        "id": 979,
-        "url": "http://localhost:1235/api/v1/scans/979",
-        "start": 1508512620,
-        "start_human": "2017-10-20T15:17:00+00:00",
-        "end": 1508512703.2486284,
-        "end_human": "2017-10-20T15:18:23.248628+00:00",
-        "protocol": "UDP",
-        "scanner": "udp",
-        "scanner_url": "http://localhost:1235/api/v1/scanners/udp"
+        "id": 1237,
+        "url": "http://localhost:1235/api/v1/scans/1237",
+        "start": 1508844360.4904735,
+        "start_human": "2017-10-24T11:26:00.490474+00:00",
+        "end": 1508844360.6061676,
+        "end_human": "2017-10-24T11:26:00.606168+00:00",
+        "protocol": null,
+        "scanner": "tools_advanced"
       },
-      "output": "asf-rmcp",
-      "exploit": 0,
-      "vuln_subid": 1,
-      "time": 1508512709.0573323,
-      "time_human": "2017-10-20T15:18:29.057332+00:00",
+      "output": "Default Request:\n    user_agent: Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.17 (KHTML, like Gecko",
+      "exploit": 157,
+      "vuln_subid": null,
+      "time": 1508844921.275118,
+      "time_human": "2017-10-24T11:35:21.275118+00:00",
       "cvss": 0
     },
     {
-      "id": 22951,
-      "url": "http://localhost:1235/api/v1/vulnerabilities/22951",
-      "port": "10.12.2.202:623",
+      "id": 31422,
+      "url": "http://localhost:1235/api/v1/vulnerabilities/31422",
+      "port": "10.12.1.159:3000",
       "scan": {
-        "id": 976,
-        "url": "http://localhost:1235/api/v1/scans/976",
-        "start": 1508512371.8921125,
-        "start_human": "2017-10-20T15:12:51.892112+00:00",
-        "end": 1508512373.840704,
-        "end_human": "2017-10-20T15:12:53.840704+00:00",
+        "id": 1237,
+        "url": "http://localhost:1235/api/v1/scans/1237",
+        "start": 1508844360.4904735,
+        "start_human": "2017-10-24T11:26:00.490474+00:00",
+        "end": 1508844360.6061676,
+        "end_human": "2017-10-24T11:26:00.606168+00:00",
         "protocol": null,
-        "scanner": "tools_basic",
-        "scanner_url": "http://localhost:1235/api/v1/scanners/tools_basic"
+        "scanner": "tools_advanced"
       },
-      "output": "None",
-      "exploit": 0,
-      "vuln_subid": 5,
-      "time": 1508512603.9029918,
-      "time_human": "2017-10-20T15:16:43.902992+00:00",
+      "output": "Default Request:\n    user_agent: Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.17 (KHTML, like Gecko",
+      "exploit": 157,
+      "vuln_subid": null,
+      "time": 1508844921.275118,
+      "time_human": "2017-10-24T11:35:21.275118+00:00",
       "cvss": 0
     }
   ],
@@ -78,8 +76,8 @@ curl "http://localhost:1235/api/v1/vulnerabilities?limit=2&page=13"
     "previous_page": "http://localhost:1235/api/v1/vulnerabilities?limit=2&page=12"
   },
   "meta": {
-    "timestamp": 1508834112.218887,
-    "human_timestamp": "2017-10-24T08:35:12.218887+00:00"
+    "timestamp": 1508848513.5876834,
+    "human_timestamp": "2017-10-24T12:35:13.587683+00:00"
   }
 }
 ```
@@ -92,11 +90,11 @@ For every vulnerability the keys presented below are available:
 * port - port in format `ip:port_number`
 * scan - [scan object](scans.md)
 * output - vulnerability description
+* exploit - exploit id
+* vuln_subid - subidentifier of exploit
 * time - vulnerability timestamp
 * time_human - date of vulnerability finding
 * cvss - cvss score
-* exploit - exploit id
-* vuln_subid - subidentifier of exploit
 
 ## <a name="details">Details</a>
 
@@ -123,10 +121,7 @@ curl "http://localhost:1235/api/v1/vulnerabilities/77"
   "port": {
     "port_number": 623,
     "protocol": "UDP",
-    "node": {
-      "id": 25,
-      "ip": "10.12.2.202"
-    }
+    "node": "10.12.2.202[25]"
   },
   "scan": {
     "id": 16,
@@ -136,8 +131,7 @@ curl "http://localhost:1235/api/v1/vulnerabilities/77"
     "end": 1508248462.0823298,
     "end_human": "2017-10-17T13:54:22.082330+00:00",
     "protocol": "UDP",
-    "scanner": "udp",
-    "scanner_url": "http://localhost:1235/api/v1/scanners/udp"
+    "scanner": "udp"
   },
   "time": 1508248467.9664423,
   "time_human": "2017-10-17T13:54:27.966442+00:00",
@@ -152,8 +146,7 @@ curl "http://localhost:1235/api/v1/vulnerabilities/77"
       "end": 1508513045.4429624,
       "end_human": "2017-10-20T15:24:05.442962+00:00",
       "protocol": null,
-      "scanner": "tools_basic",
-      "scanner_url": "http://localhost:1235/api/v1/scanners/tools_basic"
+      "scanner": "tools_basic"
     },
     {
       "id": 982,
@@ -163,13 +156,12 @@ curl "http://localhost:1235/api/v1/vulnerabilities/77"
       "end": 1508512941.3509648,
       "end_human": "2017-10-20T15:22:21.350965+00:00",
       "protocol": "UDP",
-      "scanner": "udp",
-      "scanner_url": "http://localhost:1235/api/v1/scanners/udp"
+      "scanner": "udp"
     }
   ],
   "meta": {
-    "timestamp": 1508835340.5108466,
-    "human_timestamp": "2017-10-24T08:55:40.510847+00:00"
+    "timestamp": 1508848568.4928062,
+    "human_timestamp": "2017-10-24T12:36:08.492806+00:00"
   }
 }
 ```
@@ -177,16 +169,14 @@ curl "http://localhost:1235/api/v1/vulnerabilities/77"
 In the response the keys listed below are related to port scan details
 
 * id - vulnerability identifier
-* url - [url of vulnerability](vulnerability.md)
+* url - url of vulnerability
 * port - port object
     * port_number - port number
     * protocol - port protocol
-    * node
-        * id - id of node
-        * ip - ip address of node
+    * node - node in format `ip[id]`
+* scan - [scan object](scans.md)
 * time - vulnerability timestamp
 * time_human - date of vulnerability finding
 * exploit - exploit id
 * output - vulnerability description
-* scan - [scan object](scans.md)
-* scans - list of last scans (30) which found vulnerability. Scans are formatted like [scans](scans.md)
+* scans - list of last scans (30) which found vulnerability

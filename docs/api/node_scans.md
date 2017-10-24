@@ -28,20 +28,18 @@ curl "http://localhost:1235/api/v1/nodes?limit=2&page=13"
 {
   "nodes": [
     {
-      "id": 27560,
-      "url": "http://localhost:1235/api/v1/node/27560",
-      "node_id": 96,
-      "ip": "10.12.2.110",
-      "scan": 986,
-      "scan_url": "http://localhost:1235/api/v1/scan/986"
+      "id": 27856,
+      "url": "http://localhost:1235/api/v1/nodes/27856",
+      "node_id": 315,
+      "ip": "10.12.2.175",
+      "scan": "tools_advanced"
     },
     {
-      "id": 27559,
-      "url": "http://localhost:1235/api/v1/node/27559",
-      "node_id": 18,
-      "ip": "10.12.2.215",
-      "scan": 986,
-      "scan_url": "http://localhost:1235/api/v1/scan/986"
+      "id": 27855,
+      "url": "http://localhost:1235/api/v1/nodes/27855",
+      "node_id": 315,
+      "ip": "10.12.1.159",
+      "scan": "tools_advanced"
     }
   ],
   "navigation": {
@@ -51,8 +49,8 @@ curl "http://localhost:1235/api/v1/nodes?limit=2&page=13"
     "previous_page": "http://localhost:1235/api/v1/nodes?limit=2&page=12"
   },
   "meta": {
-    "timestamp": 1508742609.8040287,
-    "human_timestamp": "2017-10-23T07:10:09.804029+00:00"
+    "timestamp": 1508848085.2904274,
+    "human_timestamp": "2017-10-24T12:28:05.290427+00:00"
   }
 }
 ```
@@ -61,11 +59,10 @@ The most important section key is `nodes` which contains list of node scans.
 For every node scan the keys presented below are available:
 
 * id - scan identifier
-* url - [url of node scan](node_scans.md)
+* url - [url of node scan](node_scans.md#details)
 * node_id - identifier of node
 * ip - ip address of node
-* scan - id of scan
-* scan url - [url of scan](scans.md)
+* scan - name of scanner used by scan
 
 ## <a name="details">Details</a>
 
@@ -102,8 +99,7 @@ curl "http://localhost:1235/api/v1/nodes/77"
       "end": 1508513045.4429624,
       "end_human": "2017-10-20T15:24:05.442962+00:00",
       "protocol": null,
-      "scanner": "tools_basic",
-      "scanner_url": "http://localhost:1235/api/v1/scanners/tools_basic"
+      "scanner": "tools_basic"
     },
     {
       "id": 985,
@@ -113,13 +109,12 @@ curl "http://localhost:1235/api/v1/nodes/77"
       "end": null,
       "end_human": null,
       "protocol": "UDP",
-      "scanner": "udp",
-      "scanner_url": "http://localhost:1235/api/v1/scanners/udp"
+      "scanner": "udp"
     }
   ],
   "meta": {
-    "timestamp": 1508831230.6487832,
-    "human_timestamp": "2017-10-24T07:47:10.648783+00:00"
+    "timestamp": 1508848148.3996565,
+    "human_timestamp": "2017-10-24T12:29:08.399657+00:00"
   }
 }
 ```
