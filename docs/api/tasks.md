@@ -22,8 +22,8 @@ curl "http://localhost:1235/api/v1/tasks"
 {
   "unfinished_tasks": 7,
   "queue": [
-    "<scans.executor.Executor object at 0x7f7d063e6e80>",
-    "<scans.executor.Executor object at 0x7f7d15407ef0>",
+    "Executor for tools_basic",
+    "Executor for tcp",
     "NmapPortInfoTask on 10.12.1.159:8865",
     "NmapPortInfoTask on 10.12.1.159:80"
   ],
