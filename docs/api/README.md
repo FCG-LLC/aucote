@@ -4,6 +4,8 @@ List of available endpoints:
 
 * [Current status](status.md)
 
+* [Tasks](tasks.md)
+
 * [Kill the main process](kill.md)
 
 * [Scanners](scanners.md)
