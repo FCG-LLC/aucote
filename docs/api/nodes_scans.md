@@ -1,6 +1,6 @@
 # Node scans
 
-Obtains list of node scans from Aucote's storage. Node scan is a connection between nodes and scans.
+Obtains list of node scans from Aucote's storage. Node scan is a connection between node and scan.
 Single node scan provides information about timestamp of scan of specific node.
 
 ### URL

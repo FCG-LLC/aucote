@@ -12,7 +12,11 @@ List of available endpoints:
 
 * [Nodes scans](nodes_scans.md)
 
+* [Node scan](node_scan.md)
+
 * [Ports scans](ports_scans.md)
+
+* [Port scan](port_scan.md)
 
 * [Security scans](security_scans.md)
 
