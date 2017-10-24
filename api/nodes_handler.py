@@ -34,7 +34,7 @@ class NodesHandler(StorageHandler):
 
         return {
             'id': node_scan.rowid,
-            'url': self.url_nodes_scan(node_scan.rowid),
+            'url': self._url_nodes_scan(node_scan.rowid),
             'node_id': node_scan.node.id,
             'ip': str(node_scan.node.ip),
             'scan': self.pretty_scan(node_scan.scan),

@@ -22,7 +22,7 @@ class VulnerabilitiesHandler(StorageHandler):
     def pretty_vulnerability(self, vulnerability):
         return {
             'id': vulnerability.rowid,
-            'url': self.url_vulnerability(vulnerability.rowid),
+            'url': self._url_vulnerability(vulnerability.rowid),
             'port': str(vulnerability.port),
             'scan': self.pretty_scan(vulnerability.scan),
             'output': vulnerability.output[:100],
@@ -41,7 +41,7 @@ class VulnerabilitiesHandler(StorageHandler):
 
         return {
             'id': vulnerability.rowid,
-            'url': self.url_security_scan(vulnerability.rowid),
+            'url': self._url_security_scan(vulnerability.rowid),
             'port': self.pretty_port(vulnerability.port),
             'scan': self.pretty_scan(vulnerability.scan),
             'time': vulnerability.time,

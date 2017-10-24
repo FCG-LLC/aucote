@@ -2,11 +2,7 @@
 Handler responsible for returning status of aucote
 
 """
-import time
-
 from api.handler import Handler
-from aucote_cfg import cfg
-from scans.tools_scanner import ToolsScanner
 
 
 class TasksHandler(Handler):

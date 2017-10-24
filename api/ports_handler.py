@@ -27,7 +27,7 @@ class PortsHandler(StorageHandler):
 
         return {
             'id': port_scan.rowid,
-            'url': self.url_ports_scan(port_scan.rowid),
+            'url': self._url_ports_scan(port_scan.rowid),
             'timestamp': port_scan.timestamp,
             'human_timestamp': parse_timestamp_to_time(port_scan.timestamp),
             'port_number': port_scan.port.number,

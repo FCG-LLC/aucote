@@ -2,11 +2,11 @@
 Handler responsible for returning status of aucote
 
 """
-from api.handler import Handler
+from api.storage_handler import StorageHandler
 from scans.tools_scanner import ToolsScanner
 
 
-class ScannersHandler(Handler):
+class ScannersHandler(StorageHandler):
     """
     Handler responsible for returning status of aucote
 
@@ -76,5 +76,5 @@ class ScannersHandler(Handler):
     def pretty_scanner(self, scanner):
         return {
             'name': scanner.NAME,
-            'url': self.url_scanner(scanner.NAME)
+            'url': self._url_scanner(scanner.NAME)
         }

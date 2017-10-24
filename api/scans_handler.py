@@ -29,7 +29,7 @@ class ScansHandler(StorageHandler):
         scan = self.aucote.storage.get_scan_by_id(rowid)
         return {
             'scan': rowid,
-            'url': self.url_scan(rowid),
+            'url': self._url_scan(rowid),
             'start': scan.start,
             'start_human': parse_timestamp_to_time(scan.start),
             'end': scan.end,

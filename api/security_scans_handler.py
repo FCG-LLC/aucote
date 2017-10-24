@@ -22,7 +22,7 @@ class SecurityScansHandler(StorageHandler):
     def pretty_sec_scan(self, sec_scan):
         return {
             'id': sec_scan.rowid,
-            'url': self.url_security_scan(sec_scan.rowid),
+            'url': self._url_security_scan(sec_scan.rowid),
             'port': self.pretty_port(sec_scan.port),
             'scan': self.pretty_scan(sec_scan.scan),
             'scan_end': sec_scan.scan_end,
@@ -44,7 +44,7 @@ class SecurityScansHandler(StorageHandler):
 
         return {
             'id': sec_scan.rowid,
-            'url': self.url_security_scan(sec_scan.rowid),
+            'url': self._url_security_scan(sec_scan.rowid),
             'port': self.pretty_port(sec_scan.port),
             'scan': self.pretty_scan(sec_scan.scan),
             'scan_end': sec_scan.scan_end,
@@ -56,7 +56,7 @@ class SecurityScansHandler(StorageHandler):
                 'app': sec_scan.exploit.app,
                 'name': sec_scan.exploit.name
             },
-            'scan_url': self.url_scan(sec_scan.scan.rowid),
+            'scan_url': self._url_scan(sec_scan.scan.rowid),
             'scans': [self.pretty_scan(scan)
                       for scan in self.aucote.storage.scans_by_security_scan(sec_scan)]
         }
