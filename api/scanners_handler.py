@@ -1,5 +1,5 @@
 """
-Handler responsible for returning status of aucote
+Handler responsible for returning aucote's scanners
 
 """
 from api.storage_handler import StorageHandler
@@ -7,11 +7,6 @@ from scans.tools_scanner import ToolsScanner
 
 
 class ScannersHandler(StorageHandler):
-    """
-    Handler responsible for returning status of aucote
-
-    """
-
     def get(self, scan=None):
         """
         Handle get method and returns aucote status in JSON

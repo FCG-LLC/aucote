@@ -1,23 +1,12 @@
 """
-Handler responsible for returning status of aucote
+Handler responsible for returning aucote's tasks
 
 """
 from api.handler import Handler
 
 
 class TasksHandler(Handler):
-    """
-    Handler responsible for returning status of aucote
-
-    """
     def get(self, scan=None):
-        """
-        Handle get method and returns aucote status in JSON
-
-        Returns:
-            None - writes aucote status in JSON
-
-        """
         task_manager = self.aucote.async_task_manager
         queue_tasks = task_manager._tasks._queue
         workers = task_manager._task_workers

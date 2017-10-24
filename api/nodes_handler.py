@@ -1,25 +1,14 @@
 """
-Handler responsible for returning status of aucote
+Handler responsible for returning aucote's nodes
 
 """
 from api.storage_handler import StorageHandler
 
 
 class NodesHandler(StorageHandler):
-    """
-    Handler responsible for returning nodes
-
-    """
     LIST_NAME = 'nodes'
 
     def list(self, limit, page):
-        """
-        Get current status of aucote nodes
-
-        Returns:
-            dict
-
-        """
         return {
             'nodes': [self.pretty_node(node_scan) for node_scan in self.aucote.storage.nodes_scans(
                 limit, page

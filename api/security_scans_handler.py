@@ -1,3 +1,7 @@
+"""
+Handler responsible for returning aucote's security scans
+
+"""
 from api.storage_handler import StorageHandler
 from utils.time import parse_timestamp_to_time
 
@@ -6,13 +10,6 @@ class SecurityScansHandler(StorageHandler):
     LIST_NAME = 'security_scans'
 
     def list(self, limit, page):
-        """
-        Get current status of aucote nodes
-
-        Returns:
-            dict
-
-        """
         return {
             'security_scans': [self.pretty_sec_scan(sec_scan) for sec_scan in self.aucote.storage.security_scans(
                 limit, page

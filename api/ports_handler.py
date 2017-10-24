@@ -1,3 +1,7 @@
+"""
+Handler responsible for returning aucote's ports
+
+"""
 from api.storage_handler import StorageHandler
 from utils.time import parse_timestamp_to_time
 
@@ -6,13 +10,6 @@ class PortsHandler(StorageHandler):
     LIST_NAME = 'ports'
 
     def list(self, limit, page):
-        """
-        Get current status of aucote nodes
-
-        Returns:
-            dict
-
-        """
         return {
             'ports': [self.pretty_port_scan(port_scan) for port_scan in self.aucote.storage.ports_scans(
                 limit, page

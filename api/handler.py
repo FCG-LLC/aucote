@@ -1,12 +1,12 @@
 """
 Handler abstract class
+
 """
 import hashlib
 
 from tornado.web import RequestHandler
 
 from aucote_cfg import cfg
-from utils.time import parse_timestamp_to_time
 
 
 class Handler(RequestHandler):

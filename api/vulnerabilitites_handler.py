@@ -1,3 +1,7 @@
+"""
+Handler responsible for returning aucote's vulnerabilities
+
+"""
 from api.storage_handler import StorageHandler
 from utils.time import parse_timestamp_to_time
 
@@ -6,13 +10,6 @@ class VulnerabilitiesHandler(StorageHandler):
     LIST_NAME = 'vulnerabilities'
 
     def list(self, limit, page):
-        """
-        Get current status of aucote nodes
-
-        Returns:
-            dict
-
-        """
         return {
             'vulnerabilitites': [self.pretty_vulnerability(vuln) for vuln in self.aucote.storage.vulnerabilities(
                 limit, page

@@ -16,7 +16,8 @@ class StorageHandler(Handler):
     @Handler.limit
     def get(self, rowid=None, limit=10, page=0):
         """
-        Handle get method and returns aucote status in JSON
+        Handle get method and returns details if rowid is not None, else return list of objects basing on limit and page
+        arguments
 
         Returns:
             None - writes aucote status in JSON

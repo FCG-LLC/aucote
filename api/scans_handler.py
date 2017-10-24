@@ -1,5 +1,5 @@
 """
-Handler responsible for returning status of aucote
+Handler responsible for returning aucote's scans
 
 """
 from api.storage_handler import StorageHandler
@@ -7,20 +7,9 @@ from utils.time import parse_timestamp_to_time
 
 
 class ScansHandler(StorageHandler):
-    """
-    Handler responsible for returning status of aucote
-
-    """
     LIST_NAME = 'scans'
 
     def list(self, limit, page):
-        """
-        Get current status of aucote tasks
-
-        Returns:
-            dict
-
-        """
         return {
             'scans': [self.pretty_scan(scan) for scan in self.aucote.storage.scans(limit, page)],
         }
