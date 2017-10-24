@@ -26,13 +26,11 @@ class UserAPITest(AsyncHTTPTestCase):
         self.assertEqual(json.loads(response.body.decode()), expected)
 
     @patch('api.main_handler.MainHandler.metadata')
-    @patch('api.main_handler.MainHandler.scanning_status')
-    def test_aucote_status(self, mock_scan_info, metadata):
+    def test_aucote_status(self, metadata):
         metadata.return_value = 'test_meta'
 
         result = self.handler.aucote_status()
-        expected = {'scanner': mock_scan_info.return_value,
-                    'meta': 'test_meta'}
+        expected = {'meta': 'test_meta'}
 
         self.assertEqual(result, expected)
 

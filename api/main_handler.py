@@ -32,7 +32,6 @@ class MainHandler(Handler):
 
         """
         stats = {
-            'scanner': self.scanning_status(self.aucote.scan_task),
             'meta': self.metadata()
         }
         return stats

@@ -49,7 +49,7 @@ class ScannersHandler(Handler):
             'next_scan': scanner.next_scan,
             'scanners': {protocol: [subscanner.command.NAME for subscanner in subscanners]
                          for protocol, subscanners in scanner.scanners.items()},
-            'status': scanner.status.value,
+            'status': scanner.status.value if scanner.status is not None else None,
             'nodes': [str(node) for node in scanner.nodes]
         }
         return stats

@@ -220,17 +220,6 @@ class Aucote(object):
         self.kill()
 
     @property
-    def scan_task(self):
-        """
-        Scan thread
-
-        Returns:
-            ScanAsyncTask
-
-        """
-        return self._scan_task
-
-    @property
     def unfinished_tasks(self):
         """
         Get number of unfinished tasks.
@@ -266,7 +255,6 @@ class Aucote(object):
         self.ioloop.add_callback_from_signal(self._graceful_stop)
 
     async def _graceful_stop(self):
-        await self.scan_task.shutdown_condition.wait()
         await self.async_task_manager.stop()
 
     @classmethod
