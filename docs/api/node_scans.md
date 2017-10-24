@@ -88,8 +88,16 @@ curl "http://localhost:1235/api/v1/nodes/77"
   "url": "http://localhost:1235/api/v1/nodes/77",
   "node_id": 5,
   "ip": "10.12.2.210",
-  "scan": 3,
-  "scan_url": "http://localhost:1235/api/v1/scans/3",
+  "scan": {
+    "id": 3,
+    "url": "http://localhost:1235/api/v1/scans/3",
+    "start": 1508246580,
+    "start_human": "2017-10-17T13:23:00+00:00",
+    "end": 1508246902.0571907,
+    "end_human": "2017-10-17T13:28:22.057191+00:00",
+    "protocol": "UDP",
+    "scanner": "udp"
+  },
   "scans": [
     {
       "id": 986,
@@ -125,6 +133,5 @@ In the response the keys listed below are related to node scan details
 * url - node scan url
 * node_id - node id
 * ip - node ip
-* scan - scan id
-* scan_url - url for scan details
-* scans - list of last scans (30) performed on node. Scans are formatted like [scans](scans.md)
+* scan - scan object
+* scans - list of last scans (30) performed on node

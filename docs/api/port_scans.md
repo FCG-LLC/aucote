@@ -108,8 +108,16 @@ curl "http://localhost:1235/api/v1/ports/77"
     "id": 25,
     "ip": "10.12.2.202"
   },
-  "scan": 93,
-  "scan_url": "http://localhost:1235/api/v1/scan/93",
+  "scan": {
+    "id": 93,
+    "url": "http://localhost:1235/api/v1/scans/93",
+    "start": 1508317320.2536325,
+    "start_human": "2017-10-18T09:02:00.253633+00:00",
+    "end": 1508317322.1295497,
+    "end_human": "2017-10-18T09:02:02.129550+00:00",
+    "protocol": null,
+    "scanner": "tools_basic"
+  },
   "scans": [
     {
       "id": 986,
@@ -152,6 +160,5 @@ In the response the keys listed below are related to port scan details
 * node
     * id - id of node
     * ip - ip address of node
-* scan - scan id
-* scan_url - url for scan details
-* scans - list of last scans (30) performed on port. Scans are formatted like [scans](scans.md)
+* scan - scan object
+* scans - list of last scans (30) performed on port

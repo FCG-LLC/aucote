@@ -29,15 +29,14 @@ class NodesHandler(StorageHandler):
     def details(self, rowid):
         node_scan = self.aucote.storage.node_scan_by_id(rowid)
         if node_scan is None:
-            self.set_status(404, "Node scan not found")
-            return {"code": "Node scan not found"}
+            self.set_status(404, 'Node scan not found')
+            return {'code': 'Node scan not found'}
 
         return {
-            "id": node_scan.rowid,
-            "url": self.url_nodes_scan(node_scan.rowid),
-            "node_id": node_scan.node.id,
-            "ip": str(node_scan.node.ip),
-            "scan": node_scan.scan.rowid,
-            "scan_url": self.url_scan(node_scan.scan.rowid),
-            "scans": [self.pretty_scan(scan) for scan in self.aucote.storage.scans_by_node_scan(node_scan)]
+            'id': node_scan.rowid,
+            'url': self.url_nodes_scan(node_scan.rowid),
+            'node_id': node_scan.node.id,
+            'ip': str(node_scan.node.ip),
+            'scan': self.pretty_scan(node_scan.scan),
+            'scans': [self.pretty_scan(scan) for scan in self.aucote.storage.scans_by_node_scan(node_scan)]
         }

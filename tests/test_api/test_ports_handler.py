@@ -56,8 +56,16 @@ class PortsHandlerTest(APITest):
             },
             'port_number': 34,
             'protocol': 'UDP',
-            'scan': 1,
-            'scan_url': self.get_url('/api/v1/scans/1'),
+            'scan': {
+                'end': 446,
+                'end_human': '1970-01-01T00:07:26+00:00',
+                'id': 1,
+                'protocol': 'TCP',
+                'scanner': 'tcp',
+                'start': 123,
+                'start_human': '1970-01-01T00:02:03+00:00',
+                'url': self.get_url('/api/v1/scans/1')
+            },
             'scans':
                 [
                     {

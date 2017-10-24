@@ -36,7 +36,6 @@ class PortsHandler(StorageHandler):
                 'id': port_scan.node.id,
                 'ip': str(port_scan.node.ip)
             },
-            'scan': port_scan.scan.rowid,
-            "scan_url": self.url_scan(port_scan.scan.rowid),
-            "scans": [self.pretty_scan(scan) for scan in self.aucote.storage.scans_by_port_scan(port_scan)]
+            'scan': self.pretty_scan(port_scan.scan),
+            'scans': [self.pretty_scan(scan) for scan in self.aucote.storage.scans_by_port_scan(port_scan)]
         }

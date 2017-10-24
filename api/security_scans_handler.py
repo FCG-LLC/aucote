@@ -40,7 +40,7 @@ class SecurityScansHandler(StorageHandler):
         sec_scan = self.aucote.storage.security_scan_by_id(rowid)
         if sec_scan is None:
             self.set_status(404, 'Security scan not found')
-            return {"code": "Security scan not found"}
+            return {'code': 'Security scan not found'}
 
         return {
             'id': sec_scan.rowid,
@@ -56,7 +56,7 @@ class SecurityScansHandler(StorageHandler):
                 'app': sec_scan.exploit.app,
                 'name': sec_scan.exploit.name
             },
-            "scan_url": self.url_scan(sec_scan.scan.rowid),
-            "scans": [self.pretty_scan(scan)
+            'scan_url': self.url_scan(sec_scan.scan.rowid),
+            'scans': [self.pretty_scan(scan)
                       for scan in self.aucote.storage.scans_by_security_scan(sec_scan)]
         }

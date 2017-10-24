@@ -14,7 +14,7 @@ class Handler(RequestHandler):
     Defines common properties for handler
 
     """
-    SCANNER_URL = "/api/v1/scanners/{scanner_name}"
+    SCANNER_URL = '/api/v1/scanners/{scanner_name}'
     SCAN_URL = '/api/v1/scans/{scan_id}'
     NODES_SCAN_URL = '/api/v1/nodes/{node_scan_id}'
     PORTS_SCAN_URL = '/api/v1/ports/{port_scan_id}'
@@ -111,7 +111,7 @@ class Handler(RequestHandler):
         return return_value
 
     def format_url(self, url):
-        return "{0}://{1}{2}".format(self.request.protocol, self.request.host, url)
+        return '{0}://{1}{2}'.format(self.request.protocol, self.request.host, url)
 
     def url_scanner(self, scanner_name):
         return self.format_url(self.SCANNER_URL.format(scanner_name=scanner_name))
@@ -141,14 +141,14 @@ class Handler(RequestHandler):
 
         """
         return {
-            "id": scan.rowid,
-            "url": self.url_scan(scan.rowid),
-            "start": scan.start,
-            "start_human": parse_timestamp_to_time(scan.start),
-            "end": scan.end,
-            "end_human": parse_timestamp_to_time(scan.end) if scan.end is not None else None,
-            "protocol": scan.protocol.db_val if scan.protocol else None,
-            "scanner": scan._scanner,
+            'id': scan.rowid,
+            'url': self.url_scan(scan.rowid),
+            'start': scan.start,
+            'start_human': parse_timestamp_to_time(scan.start),
+            'end': scan.end,
+            'end_human': parse_timestamp_to_time(scan.end) if scan.end is not None else None,
+            'protocol': scan.protocol.db_val if scan.protocol else None,
+            'scanner': scan._scanner,
         }
 
     def pretty_node(self, node_scan):
@@ -161,11 +161,11 @@ class Handler(RequestHandler):
 
         """
         return {
-            "id": node_scan.rowid,
-            "url": self.url_nodes_scan(node_scan.rowid),
-            "node_id": node_scan.node.id,
-            "ip": str(node_scan.node.ip),
-            "scan": node_scan.scan.scanner
+            'id': node_scan.rowid,
+            'url': self.url_nodes_scan(node_scan.rowid),
+            'node_id': node_scan.node.id,
+            'ip': str(node_scan.node.ip),
+            'scan': node_scan.scan.scanner
         }
 
     def pretty_port_scan(self, port_scan):

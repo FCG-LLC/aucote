@@ -75,6 +75,6 @@ class ScannersHandler(Handler):
 
     def pretty_scanner(self, scanner):
         return {
-            "name": scanner.NAME,
-            "url": self.url_scanner(scanner.NAME)
+            'name': scanner.NAME,
+            'url': self.url_scanner(scanner.NAME)
         }

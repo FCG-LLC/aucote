@@ -48,6 +48,6 @@ class VulnerabilitiesHandler(StorageHandler):
             'time_human': parse_timestamp_to_time(vulnerability.time),
             'exploit': vulnerability.exploit.id,
             'output': vulnerability.output,
-            "scans": [self.pretty_scan(scan)
+            'scans': [self.pretty_scan(scan)
                       for scan in self.aucote.storage.scans_by_vulnerability(vulnerability)]
         }
