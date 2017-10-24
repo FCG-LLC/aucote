@@ -222,7 +222,7 @@ class Storage(DbInterface):
             table (str): table name
             limit (int): LIMIT value
             page (int): OFFSET = page*limit
-            where (dict): dict which should contains special conditions like `or` or comparisons other than `=`.
+            where (dict): dict which can contains special conditions like `or` or comparisons other than `=`.
                           list of special keys:
                            - or - contains list of `where` dicts
                            - operator - operator:value dict, where value is a `where` dict and operator is SQL operator
@@ -232,7 +232,7 @@ class Storage(DbInterface):
              - table - which table should be joined
              - from - column name from base table for join
              - to - column name from joining table
-             - where - this same like where
+             - where - this same like `where`
             **kwargs (dict): dict of column_name: value, which is treat as list of conditions for query
 
         Returns:
@@ -501,6 +501,7 @@ class Storage(DbInterface):
 
         Args:
             node (Node):
+            scan (Scan):
 
         Returns:
             None
@@ -513,7 +514,8 @@ class Storage(DbInterface):
         Save nodes to database
 
         Args:
-            nodes (lst):
+            nodes (list[Node]):
+            scan (Scan):
 
         Returns:
             None
@@ -528,9 +530,11 @@ class Storage(DbInterface):
         Args:
             pasttime (int):
             timestamp (int):
+            scan (Scan):
 
         Returns:
-            list - list of nodes
+            list[Node]
+
         """
         if timestamp is None:
             timestamp = time.time() - pasttime
@@ -542,14 +546,16 @@ class Storage(DbInterface):
 
     def get_vulnerabilities(self, port, exploit, scan):
         """
-        Get nodes from database since timestamp. If timestamp is not given, it's computed basing on pastime.
+        Get vulnerabilities for given port, exploit and scan
 
         Args:
-            pasttime (int):
-            timestamp (int):
+            port (Port):
+            exploit (Exploit):
+            scan (Scan):
 
         Returns:
-            list - list of nodes
+            list[Node]
+
         """
         return self.select(table='vulnerabilities', node_id=port.node.id, node_ip=port.node.ip, port=port.number,
                            port_protocol=port.transport_protocol, vulnerability_id=exploit.id, scan_id=scan.rowid)
@@ -585,10 +591,11 @@ class Storage(DbInterface):
         Get ports from database from pasttime.
 
         Args:
+            scan (Scan):
             pasttime (int):
 
         Returns:
-            list - list of Ports
+            list[Port]
 
         """
         timestamp = time.time() - pasttime
@@ -609,7 +616,7 @@ class Storage(DbInterface):
             scan (Scan):
 
         Returns:
-            list - list of Ports
+            list[Port]
 
         """
         return self.select("ports_scans", node_id=node.id, node_ip=node.ip, scan_id=scan.rowid)
@@ -619,10 +626,10 @@ class Storage(DbInterface):
         Get nodes from database for given scan.
 
         Args:
-            pasttime (int):
+            scan (Scan):
 
         Returns:
-            list - list of Ports
+            list[Port]
 
         """
         nodes = [el.node for el in self.select("nodes_scans", scan_id=scan.rowid)]
@@ -654,6 +661,7 @@ class Storage(DbInterface):
         Args:
             exploits (list):
             port (Port):
+            scan (Scan):
 
         Returns:
             None
@@ -663,11 +671,12 @@ class Storage(DbInterface):
 
     def get_security_scan_info(self, port, app, scan):
         """
-        Get scan info from database
+        Get security scan info from database
 
         Args:
             port (Port):
             app (str):
+            scan (Scan):
 
         Returns:
             tuple
@@ -713,16 +722,22 @@ class Storage(DbInterface):
 
     def get_ports_by_nodes(self, nodes, pasttime=0, timestamp=None, protocol=None, portdetection_only=False):
         """
-        Get open ports of nodes since timestamp or from pasttime if timestamp is not given.
+        Returns list of port for given list of nodes. protocol and portdetection_only has special meanings
+        (in this order):
+             - If portdetection_only is True, then function returns ports only from portdetection scans
+             - If protocol is None then returns ports belonging to any protocol
+             - If protocol is not None then returns ports only fot this protocol
+
+        ToDo: Split on three different functions and validate usability of code paths
 
         Args:
-            nodes (list):
+            nodes (list[Node]):
             pasttime (int):
             timestamp (int):
-            protocol (int):
+            protocol (TransportProtocol|None):
+            portdetection_only (bool):
 
         Returns:
-            list - list of Ports
 
         """
         if not nodes:
@@ -839,9 +854,6 @@ class Storage(DbInterface):
         """
         return self.execute(self._update_scan(scan=scan))
 
-    def get_scan(self, scan_id):
-        return self.scan_by_id(scan_id)
-
     def get_scan_id(self, scan):
         """
         Get scan_id
@@ -869,24 +881,23 @@ class Storage(DbInterface):
             amount (int):
 
         Returns:
-            list - list of scans
+            list[Scan]
 
         """
         return self.select("scans", protocol=protocol, limit=amount, scanner_name=scanner_name)
 
     def get_scans_by_node(self, node, scan):
         """
-        Obtain scans from storage based on given node
+        Obtain scans from storage based on given node and scan
 
         Args:
-            protocol (TransportProtocol):
+            node (Node):
             scan (Scan):
 
         Returns:
-            list - list of scans
+            list[Scan]
 
         """
-
         return self.select("scans", limit=2, protocol=scan.protocol, scanner_name=scan.scanner, join={
             'table': 'nodes_scans',
             'from': 'rowid',
@@ -896,15 +907,14 @@ class Storage(DbInterface):
 
     def get_scans_by_security_scan(self, exploit, port):
         """
-        Obtain scans from storage based on given node
+        Obtain scans from storage based on given exploit and port
 
         Args:
-            protocol (TransportProtocol):
-            scanner_name (str):
-            amount (int):
+            exploit (Exploit):
+            port (Port):
 
         Returns:
-            list - list of scans
+            list[Scan]
 
         """
         return self.select(table='scans', join={'table': 'security_scans', 'from': 'rowid', 'to': 'scan_id', 'where':{
@@ -928,10 +938,10 @@ class Storage(DbInterface):
 
     def _save_vulnerabilities(self, vulnerabilities, scan):
         """
-        Save vulnarabilities into local storage
+        Save vulnerabilities into local storage
 
         Args:
-            vulnerabilities (list): list of Vulnerability
+            vulnerabilities (list[Vulnerability]): list of Vulnerability
             scan (Scan):
 
         Returns:
@@ -948,10 +958,10 @@ class Storage(DbInterface):
 
     def save_vulnerabilities(self, vulnerabilities, scan):
         """
-        Save vulnarabilities into local storage
+        Save vulnerabilities into local storage
 
         Args:
-            vulnerabilities (list): list of Vulnerability
+            vulnerabilities (list[Vulnerability]): list of Vulnerability
             scan (Scan):
 
         Returns:
@@ -987,12 +997,32 @@ class Storage(DbInterface):
                             exploit=Exploit(exploit_id=row[2], app=row[3], name=row[4]))
 
     def scans_by_node_scan(self, node_scan):
+        """
+        Return list of scans related to given NodeScan
+
+        Args:
+            node_scan (NodeScan):
+
+        Returns:
+            list[Scan]
+
+        """
         return self.select('scans', 30, 0, join={'from': 'rowid', 'to': 'scan_id', 'table': 'nodes_scans', 'where': {
             'node_id': node_scan.node.id,
             'node_ip': str(node_scan.node.ip),
         }})
 
     def scans_by_port_scan(self, port_scan):
+        """
+        Return list of scans related to given PortScan
+
+        Args:
+            port_scan (PortScan):
+
+        Returns:
+            list[Scan]
+
+        """
         return self.select('scans', 30, 0, join={'from': 'rowid', 'to': 'scan_id', 'table': 'ports_scans', 'where': {
             'node_id': port_scan.node.id,
             'node_ip': port_scan.node.ip,
@@ -1001,14 +1031,34 @@ class Storage(DbInterface):
         }})
 
     def nodes_scans_by_scan(self, scan):
+        """
+        Return list of NodeScan for given Scan
+
+        Args:
+            scan (Scan):
+
+        Returns:
+            list[NodeScan]
+
+        """
         return self.select("nodes_scans", scan_id=scan.rowid)
 
     def ports_scans_by_scan(self, scan):
+        """
+        Return list of PortScan for given Scan
+
+        Args:
+            scan (Scan):
+
+        Returns:
+            list[PortScan]
+
+        """
         return self.select("ports_scans", scan_id=scan.rowid)
 
     def save_node_scan(self, node_scan):
         """
-        Save node scan to the storage. Returns node scan with updated ROWID
+        Save NodeScan to the storage. Returns NodeScan with updated ROWID
 
         Args:
             node_scan (NodeScan):
@@ -1023,7 +1073,7 @@ class Storage(DbInterface):
 
     def save_port_scan(self, port_scan):
         """
-        Save port scan to the storage. Returns port scan with updated ROWID
+        Save PortScan to the storage. Returns PortScan with updated ROWID
 
         Args:
             port_scan (PortScan):
@@ -1035,6 +1085,16 @@ class Storage(DbInterface):
         self.execute(self._save_port(port_scan.port, port_scan.scan, timestamp=port_scan.timestamp))
 
     def save_sec_scan(self, sec_scan):
+        """
+        Save SecurityScan to the storage. Returns SecurityScan with updated rowid
+
+        Args:
+            sec_scan (SecurityScan):
+
+        Returns:
+            SecurityScan
+
+        """
         self.execute((self.SAVE_SECURITY_SCAN, (sec_scan.scan.rowid, sec_scan.exploit.id, sec_scan.exploit.app,
                                                 sec_scan.exploit.name, sec_scan.node.id, str(sec_scan.node.ip),
                                                 self._protocol_to_iana(sec_scan.port.transport_protocol),
@@ -1043,6 +1103,16 @@ class Storage(DbInterface):
         sec_scan.rowid = self.get_last_rowid()
 
     def scans_by_security_scan(self, sec_scan):
+        """
+        Returns scans for given SecurityScan
+
+        Args:
+            sec_scan (SecurityScan):
+
+        Returns:
+            list [Scan]
+
+        """
         return self.select('scans', 30, 0,
                            join={'from': 'rowid', 'to': 'scan_id', 'table': 'security_scans', 'where': {
                                     'node_id': sec_scan.node.id,
@@ -1055,6 +1125,16 @@ class Storage(DbInterface):
                                 }})
 
     def scans_by_vulnerability(self, vuln):
+        """
+        Returns scans for given vulnerability
+
+        Args:
+            vuln (Vulnerability):
+
+        Returns:
+            list [Scan]
+
+        """
         return self.select('scans', 30, 0,
                            join={'from': 'rowid', 'to': 'scan_id', 'table': 'vulnerabilities', 'where': {
                                     'node_id': vuln.port.node.id,
@@ -1066,6 +1146,16 @@ class Storage(DbInterface):
                                 }})
 
     def save_vulnerability(self, vuln):
+        """
+        Save vulnerability into storage
+
+        Args:
+            vuln (Vulnerability):
+
+        Returns:
+            None
+
+        """
         self.execute((self.SAVE_VULNERABILITY, (vuln.scan.rowid, vuln.port.node.id, str(vuln.port.node.ip),
                                                 self._protocol_to_iana(vuln.port.transport_protocol), vuln.port.number,
                                                 vuln.exploit.id, vuln.subid, vuln.cve, vuln.cvss, vuln.output,
