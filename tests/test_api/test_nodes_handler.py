@@ -15,24 +15,21 @@ class NodesHandlerTest(APITest):
                         'id': 2,
                         'ip': '10.156.67.34',
                         'node_id': 75,
-                        'scan': 2,
-                        'scan_url': self.get_url('/api/v1/scans/2'),
+                        'scan': 'udp',
                         'url': self.get_url('/api/v1/nodes/2')
                     },
                     {
                         'id': 3,
                         'ip': '10.156.67.18',
                         'node_id': 13,
-                        'scan': 2,
-                        'scan_url': self.get_url('/api/v1/scans/2'),
+                        'scan': 'udp',
                         'url': self.get_url('/api/v1/nodes/3')
                     },
                     {
                         'id': 1,
                         'ip': '10.156.67.18',
                         'node_id': 13,
-                        'scan': 1,
-                        'scan_url': self.get_url('/api/v1/scans/1'),
+                        'scan': 'tcp',
                         'url': self.get_url('/api/v1/nodes/1')
                     }
                 ]

@@ -21,10 +21,7 @@ class SecurityScansHandlerTest(APITest):
                         'id': 3,
                         'port':
                             {
-                                'node': {
-                                    'id': 13,
-                                    'ip': '10.156.67.18'
-                                },
+                                'node': '10.156.67.18[13]',
                                 'port_number': 34,
                                 'protocol': 'UDP'
                             },
@@ -55,7 +52,7 @@ class SecurityScansHandlerTest(APITest):
                         'id': 1,
                         'port':
                             {
-                                'node': {'id': 13, 'ip': '10.156.67.18'},
+                                'node': '10.156.67.18[13]',
                                 'port_number': 34,
                                 'protocol': 'UDP'
                             },
@@ -86,7 +83,7 @@ class SecurityScansHandlerTest(APITest):
                         'id': 2,
                         'port':
                             {
-                                'node': {'id': 13, 'ip': '10.156.67.18'},
+                                'node': '10.156.67.18[13]',
                                 'port_number': 34,
                                 'protocol': 'UDP'
                             },
@@ -126,10 +123,7 @@ class SecurityScansHandlerTest(APITest):
             },
             'id': 1,
             'port': {
-                'node': {
-                    'id': 13,
-                    'ip': '10.156.67.18'
-                },
+                'node': '10.156.67.18[13]',
                 'port_number': 34,
                 'protocol': 'UDP'
             },

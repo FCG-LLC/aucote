@@ -66,10 +66,8 @@ class VulnerabilitiesHandlerTest(APITest):
             'exploit': 14,
             'id': 1,
             'output': 'Vulnerable stuff',
-            'port': {'node': {
-                'id': 13,
-                'ip': '10.156.67.18'
-            },
+            'port': {
+                'node': '10.156.67.18[13]',
                 'port_number': 34,
                 'protocol': 'UDP'},
             'scan': {'end': 446,

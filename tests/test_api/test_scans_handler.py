@@ -65,8 +65,7 @@ class ScansHandlerTest(APITest):
                     'ip': '10.156.67.18',
                     "url": self.get_url('/api/v1/nodes/1'),
                     "node_id": 13,
-                    "scan": 1,
-                    "scan_url": self.get_url('/api/v1/scans/1')
+                    "scan": 'tcp'
                 }
             ],
             "ports_scans":
@@ -74,14 +73,11 @@ class ScansHandlerTest(APITest):
                     {
                         'id': 2,
                         'port': {
-                            'node': {
-                                'id': 75,
-                                'ip': '10.156.67.34'
-                            },
+                            'node': '10.156.67.34[75]',
                             'port_number': 78,
                             'protocol': 'TCP'
                         },
-                        'scan': 1,
+                        'scan': 'tcp',
                         'timestamp': 2345,
                         'timestamp_human': '1970-01-01T00:39:05+00:00',
                         'url': self.get_url('/api/v1/ports/2')
@@ -89,14 +85,11 @@ class ScansHandlerTest(APITest):
                     {
                         'id': 1,
                         'port': {
-                            'node': {
-                                'id': 13,
-                                'ip': '10.156.67.18'
-                            },
+                            'node': '10.156.67.18[13]',
                             'port_number': 34,
                             'protocol': 'UDP',
                         },
-                        'scan': 1,
+                        'scan': 'tcp',
                         'timestamp': 1234,
                         'timestamp_human': '1970-01-01T00:20:34+00:00',
                         'url': self.get_url('/api/v1/ports/1')

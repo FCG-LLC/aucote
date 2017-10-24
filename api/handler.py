@@ -165,8 +165,7 @@ class Handler(RequestHandler):
             "url": self.url_nodes_scan(node_scan.rowid),
             "node_id": node_scan.node.id,
             "ip": str(node_scan.node.ip),
-            "scan": node_scan.scan.rowid,
-            "scan_url": self.url_scan(node_scan.scan.rowid)
+            "scan": node_scan.scan.scanner
         }
 
     def pretty_port_scan(self, port_scan):
@@ -184,15 +183,12 @@ class Handler(RequestHandler):
             'port': self.pretty_port(port_scan.port),
             'timestamp': port_scan.timestamp,
             'timestamp_human': parse_timestamp_to_time(port_scan.timestamp),
-            "scan": port_scan.scan.rowid,
+            'scan': port_scan.scan.scanner
         }
 
     def pretty_port(self, port):
         return {
             'port_number': port.number,
             'protocol': port.transport_protocol.db_val,
-            'node': {
-                'id': port.node.id,
-                'ip': str(port.node.ip)
-            }
+            'node': str(port.node)
         }
