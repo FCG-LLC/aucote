@@ -29,8 +29,7 @@ class ScansHandlerTest(APITest):
                         'end': 447,
                         'end_human': '1970-01-01T00:07:27+00:00',
                         'start_human': '1970-01-01T00:03:50+00:00',
-                        'scanner': 'udp',
-                        'scanner_url': self.get_url('/api/v1/scanners/udp')
+                        'scanner': 'udp'
                     },
                     {
                         'id': 1,
@@ -40,8 +39,7 @@ class ScansHandlerTest(APITest):
                         'start_human': '1970-01-01T00:02:03+00:00',
                         'start': 123,
                         'end': 446,
-                        'scanner': 'tcp',
-                        'scanner_url': self.get_url('/api/v1/scanners/tcp')
+                        'scanner': 'tcp'
                     }
                 ]
         }

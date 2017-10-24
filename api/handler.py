@@ -149,7 +149,6 @@ class Handler(RequestHandler):
             "end_human": parse_timestamp_to_time(scan.end) if scan.end is not None else None,
             "protocol": scan.protocol.db_val if scan.protocol else None,
             "scanner": scan._scanner,
-            "scanner_url": self.url_scanner(scan._scanner)
         }
 
     def pretty_node(self, node_scan):

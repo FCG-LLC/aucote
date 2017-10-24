@@ -37,7 +37,6 @@ class SecurityScansHandlerTest(APITest):
                                 'id': 2,
                                 'protocol': 'UDP',
                                 'scanner': 'udp',
-                                'scanner_url': self.get_url('/api/v1/scanners/udp'),
                                 'start': 230,
                                 'start_human': '1970-01-01T00:03:50+00:00',
                                 'url': self.get_url('/api/v1/scans/2')
@@ -69,7 +68,6 @@ class SecurityScansHandlerTest(APITest):
                                 'id': 1,
                                 'protocol': 'TCP',
                                 'scanner': 'tcp',
-                                'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                                 'start': 123,
                                 'start_human': '1970-01-01T00:02:03+00:00',
                                 'url': self.get_url('/api/v1/scans/1')
@@ -101,7 +99,6 @@ class SecurityScansHandlerTest(APITest):
                                 'id': 1,
                                 'protocol': 'TCP',
                                 'scanner': 'tcp',
-                                'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                                 'start': 123,
                                 'start_human': '1970-01-01T00:02:03+00:00',
                                 'url': self.get_url('/api/v1/scans/1')
@@ -144,7 +141,6 @@ class SecurityScansHandlerTest(APITest):
                 'id': 1,
                 'protocol': 'TCP',
                 'scanner': 'tcp',
-                'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                 'start': 123,
                 'url': self.get_url('/api/v1/scans/1')
             },
@@ -160,7 +156,6 @@ class SecurityScansHandlerTest(APITest):
                     'id': 2,
                     'protocol': 'UDP',
                     'scanner': 'udp',
-                    'scanner_url': self.get_url('/api/v1/scanners/udp'),
                     'start': 230,
                     'url': self.get_url('/api/v1/scans/2')
                 },
@@ -171,7 +166,6 @@ class SecurityScansHandlerTest(APITest):
                     'id': 1,
                     'protocol': 'TCP',
                     'scanner': 'tcp',
-                    'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                     'start': 123,
                     'url': self.get_url('/api/v1/scans/1')
                 }

@@ -62,7 +62,6 @@ class NodesHandlerTest(APITest):
                     'id': 2,
                     'protocol': 'UDP',
                     'scanner': 'udp',
-                    'scanner_url': self.get_url('/api/v1/scanners/udp'),
                     'start': 230,
                     'url': self.get_url('/api/v1/scans/2')
                 },
@@ -73,7 +72,6 @@ class NodesHandlerTest(APITest):
                     'id': 1,
                     'protocol': 'TCP',
                     'scanner': 'tcp',
-                    'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                     'start': 123,
                     'url': self.get_url('/api/v1/scans/1')
                 }

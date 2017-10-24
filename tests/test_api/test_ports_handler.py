@@ -73,7 +73,6 @@ class PortsHandlerTest(APITest):
                         'id': 1,
                         'protocol': 'TCP',
                         'scanner': 'tcp',
-                        'scanner_url': self.get_url('/api/v1/scanners/tcp'),
                         'start': 123,
                         'url': self.get_url('/api/v1/scans/1')
                     }
