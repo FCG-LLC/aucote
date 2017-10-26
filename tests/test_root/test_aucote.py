@@ -28,10 +28,13 @@ class AucoteTest(AsyncTestCase):
             'portdetection': {
                 'security_scans': ['tools']
             },
+            'storage': {
+                'path': 'test_storage',
+                'fresh_start': True
+            },
             'service': {
                 'scans': {
                     'threads': 30,
-                    'storage': 'test_storage',
                     'parallel_tasks': 30
                 },
                 'api': {

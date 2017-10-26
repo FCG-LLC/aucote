@@ -14,11 +14,22 @@ from utils.toucan import Toucan
 
 _DEFAULT = {
     'logging': {
-        'file': lambda: path.join(path.dirname(__file__), 'aucote.log'),
-        'level': 'info',
-        'max_file_size': 10 * 1024 * 1024,
-        'max_files': 5,
-        'format': '%(levelname)s %(asctime)s %(funcName)s: %(message)s'
+        'root': {
+            'file': lambda: path.join(path.dirname(__file__), 'aucote.log'),
+            'level': 'info',
+            'max_file_size': 10 * 1024 * 1024,
+            'max_files': 5,
+            'format': '%(levelname)s %(asctime)s %(funcName)s: %(message)s',
+            'propagate': True
+        },
+        'storage': {
+            'file': lambda: path.join(path.dirname(__file__), 'storage.log'),
+            'level': 'info',
+            'max_file_size': 10 * 1024 * 1024,
+            'max_files': 10,
+            'format': '%(levelname)s %(asctime)s %(message)s',
+            'propagate': False
+        }
     },
     'fixtures': {
         'exploits': {

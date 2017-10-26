@@ -5,9 +5,11 @@ import ipaddress
 import sqlite3
 import time
 import logging as log
+import uuid
 
 from math import ceil
 
+from aucote_cfg import cfg
 from fixtures.exploits import Exploit
 from structs import Port, Node, TransportProtocol, Scan, Vulnerability, PortScan, SecurityScan
 from utils.database_interface import DbInterface
@@ -20,7 +22,6 @@ class Storage(DbInterface):
     This class provides local storage funxtionality
 
     """
-    PORTS_WHERE_MAX = 200
     GET_LAST_ROWID = "SELECT last_insert_rowid()"
 
     CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
@@ -119,6 +120,8 @@ class Storage(DbInterface):
         self.filename = filename
         self.conn = None
         self._cursor = None
+        self.log = log.getLogger('storage')
+        self.cfg = cfg
 
     def init_schema(self):
         """
@@ -493,13 +496,20 @@ class Storage(DbInterface):
             None|tuple
 
         """
-        if isinstance(query, list):
-            log.debug("executing %i queries", len(query))
-            for row in query:
-                self.cursor.execute(*row)
-        else:
-            log.debug("executing query: %s", query)
-            return self.cursor.execute(*query).fetchall()
+        log_id = uuid.uuid4()
+        log.debug("Executing query with id: %s", log_id)
+
+        try:
+            if isinstance(query, list):
+                self.log.debug("[%s] executing %i queries", log_id, len(query))
+                for row in query:
+                    self.cursor.execute(*row)
+            else:
+                self.log.debug("[%s] executing query: %s", log_id, query)
+                return self.cursor.execute(*query).fetchall()
+        except sqlite3.Error as exception:
+            self.log.exception("[%s]exception occured:", log_id)
+            raise exception
 
         self.conn.commit()
 
@@ -751,9 +761,11 @@ class Storage(DbInterface):
         if timestamp is None:
             timestamp = time.time() - pasttime
 
-        for i in range(ceil(len(nodes)/self.PORTS_WHERE_MAX)):
+        max_queries = cfg['storage.max_nodes_query']
+
+        for i in range(ceil(len(nodes)/max_queries)):
             for row in self.execute(
-                    self._get_ports_by_nodes(nodes=nodes[i*self.PORTS_WHERE_MAX:(i+1)*self.PORTS_WHERE_MAX],
+                    self._get_ports_by_nodes(nodes=nodes[i*max_queries:(i+1)*max_queries],
                                              timestamp=timestamp, protocol=protocol,
                                              portdetection_only=portdetection_only)):
                 node = nodes[nodes.index(Node(node_id=row[0], ip=ipaddress.ip_address(row[1])))]

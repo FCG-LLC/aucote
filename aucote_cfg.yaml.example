@@ -7,19 +7,40 @@ pid_file: tmp/aucote.pid
 default_config: aucote_cfg_default.yaml
 
 # logging: Aucote logs a most of events in configuration files
-#   file: <str> - This is path to the aucote log file
-#   level: (debug|info|warning|error|critical) - This is the level of logging (default: info)
-#   max_file_size: <int> - Maximum log file's size. After reach the limit, new file is created and old is archived.
-#   max_files: <int> - Maximum amount of log files (with archived).
-#   format: <str> - Format of log line. There are some variables which could be used:
-#                   https://docs.python.org/3/library/logging.html#logrecord-attributes
+#   (root|storage): Name of logger. Storage is used only for logging queries
+#       file: <str> - Path to the log file
+#       level: (debug|info|warning|error|critical) - This is the level of logging (default: info)
+#       max_file_size: <int> - Maximum log file's size. After reach the limit, new file is created and old is archived.
+#       max_files: <int> - Maximum amount of log files (with archived).
+#       format: <str> - Format of log line. There are some variables which could be used:
+#                       https://docs.python.org/3/library/logging.html#logrecord-attributes
+#       propagate: <bool> - True if logs should be propagated to root
 
 logging:
-    file: logs/aucote.log
-    level: debug
-    max_file_size: 10485760
-    max_files: 5
-    format: "%(levelname)s %(asctime)s %(module)s.%(funcName)s:%(lineno)d %(message)s"
+    root:
+        file: logs/aucote.log
+        level: debug
+        max_file_size: 10485760
+        max_files: 5
+        format: "%(levelname)s %(asctime)s %(module)s.%(funcName)s:%(lineno)d %(message)s"
+        propagate: True
+    storage:
+        file: logs/storage.log
+        level: debug
+        max_file_size: 10485760
+        max_files: 10
+        format: "%(levelname)s %(asctime)s %(message)s"
+        propagate: False
+
+# storage: Storage configuration
+#    path: <str> - Path to the storage
+#    max_nodes_query: <int> - Maximum number of nodes which should be quered for ports
+#    fresh_start: <bool> - If True storage will be removed on start
+
+storage:
+    path: "tmp/storage.sqlite3"
+    max_nodes_query: 200
+    fresh_start: True
 
 # fixtures:
 #   exploits:

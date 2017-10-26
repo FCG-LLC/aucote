@@ -18,11 +18,14 @@ class ConfigFileTest(AsyncTestCase):
         mock_log.getLogger().handlers = expected
         cfg = Config()
         cfg._cfg = {
-            'file': '',
-            'max_file_size': 0,
-            'max_files': 0,
-            'format': '',
-            'level': 'info'
+            'root': {
+                'file': 'test_file',
+                'max_file_size': 45678,
+                'max_files': 13,
+                'format': 'TEST format',
+                'level': 'info',
+                'propagate': True
+            }
         }
         await config(cfg)
 
@@ -30,8 +33,7 @@ class ConfigFileTest(AsyncTestCase):
         self.assertTrue(mock_log.getLogger.called)
         self.assertTrue(mock_log.getLogger.return_value.addHandler.called)
 
-        mock_rotate.assert_called_once_with(cfg._cfg['file'], maxBytes=cfg._cfg['max_file_size'],
-                                            backupCount=cfg._cfg['max_files'])
+        mock_rotate.assert_called_once_with('test_file', maxBytes=45678, backupCount=13)
 
-        mock_log.Formatter.assert_called_once_with(cfg._cfg['format'])
+        mock_log.Formatter.assert_called_once_with('TEST format')
         mock_log.getLogger().removeHandler.assert_has_calls((call(expected[1]), call(expected[0])))
