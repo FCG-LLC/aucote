@@ -416,11 +416,12 @@ class StorageTest(TestCase):
 
     @patch('utils.storage.time.time', MagicMock(return_value=1000))
     def test_get_ports_by_nodes(self):
+        self.storage.PORTS_WHERE_MAX = 2
         self.prepare_tables()
 
         expected = [self.port_scan_2.port, self.port_scan_4.port]
 
-        result = self.storage.get_ports_by_nodes(nodes=[self.node_1, self.node_2], pasttime=400,
+        result = self.storage.get_ports_by_nodes(nodes=[self.node_1, self.node_3, self.node_2], pasttime=400,
                                                 protocol=TransportProtocol.UDP)
 
         self.assertCountEqual(result, expected)

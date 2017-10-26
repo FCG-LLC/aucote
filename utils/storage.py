@@ -6,6 +6,8 @@ import sqlite3
 import time
 import logging as log
 
+from math import ceil
+
 from fixtures.exploits import Exploit
 from structs import Port, Node, TransportProtocol, Scan, Vulnerability, PortScan, SecurityScan
 from utils.database_interface import DbInterface
@@ -18,6 +20,7 @@ class Storage(DbInterface):
     This class provides local storage funxtionality
 
     """
+    PORTS_WHERE_MAX = 200
     GET_LAST_ROWID = "SELECT last_insert_rowid()"
 
     CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, "\
@@ -748,12 +751,15 @@ class Storage(DbInterface):
         if timestamp is None:
             timestamp = time.time() - pasttime
 
-        for row in self.execute(self._get_ports_by_nodes(nodes=nodes, timestamp=timestamp, protocol=protocol,
-                                                         portdetection_only=portdetection_only)):
-            node = nodes[nodes.index(Node(node_id=row[0], ip=ipaddress.ip_address(row[1])))]
-            port = Port(node=node, number=row[2], transport_protocol=self._transport_protocol(row[3]))
-            port.scan = Scan(start=port.node.scan.start)
-            ports.append(port)
+        for i in range(ceil(len(nodes)/self.PORTS_WHERE_MAX)):
+            for row in self.execute(
+                    self._get_ports_by_nodes(nodes=nodes[i*self.PORTS_WHERE_MAX:(i+1)*self.PORTS_WHERE_MAX],
+                                             timestamp=timestamp, protocol=protocol,
+                                             portdetection_only=portdetection_only)):
+                node = nodes[nodes.index(Node(node_id=row[0], ip=ipaddress.ip_address(row[1])))]
+                port = Port(node=node, number=row[2], transport_protocol=self._transport_protocol(row[3]))
+                port.scan = Scan(start=port.node.scan.start)
+                ports.append(port)
 
         return ports
 
