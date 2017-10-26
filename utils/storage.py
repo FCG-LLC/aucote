@@ -746,39 +746,48 @@ class Storage(DbInterface):
         if timestamp is None:
             timestamp = time.time() - pasttime
 
-        where = {'or': [{'node_ip': node.ip, 'node_id': node.id} for node in nodes],
-                 'operator': {'>': {'time': timestamp}}}
+        ports_scans = []
 
         if portdetection_only is True:
-            ports_scans = self.select(
-                table='ports_scans',
-                where=where,
-                join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where': {
-                    'or': [
-                        {'scanner_name': TCPScanner.NAME},
-                        {'scanner_name': UDPScanner.NAME}
-                    ]}})
+            for where in self._gen_where_for_ports_by_nodes(nodes=nodes, timestamp=timestamp):
+                ports_scans.extend(self.select(
+                    table='ports_scans',
+                    where=where,
+                    join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where': {
+                        'or': [
+                            {'scanner_name': TCPScanner.NAME},
+                            {'scanner_name': UDPScanner.NAME}
+                        ]}}))
 
         elif protocol is None:
-            ports_scans = self.select(
-                table='ports_scans',
-                where=where
-            )
+            for where in self._gen_where_for_ports_by_nodes(nodes=nodes, timestamp=timestamp):
+                ports_scans.extend(self.select(
+                    table='ports_scans',
+                    where=where
+                ))
 
         else:
-            ports_scans = self.select(
-                table='ports_scans',
-                port_protocol=protocol,
-                where=where
-            )
+            for where in self._gen_where_for_ports_by_nodes(nodes=nodes, timestamp=timestamp):
+                ports_scans.extend(self.select(
+                    table='ports_scans',
+                    port_protocol=protocol,
+                    where=where
+                ))
 
         return_value = []
+
         for port_scan in ports_scans:
             node = nodes[nodes.index(port_scan.node)]
             port_scan.port.scan = Scan(start=node.scan.start)
             return_value.append(port_scan.port)
 
         return return_value
+
+    def _gen_where_for_ports_by_nodes(self, nodes, timestamp):
+        nodes_limit = cfg['storage.max_nodes_query']
+        for i in range(ceil(len(nodes) / nodes_limit)):
+            yield {'or': [{'node_ip': node.ip, 'node_id': node.id} for node in nodes[i*nodes_limit:(i+1)*nodes_limit]],
+                   'operator': {'>': {'time': timestamp}}}
 
     def _transport_protocol(self, number):
         """

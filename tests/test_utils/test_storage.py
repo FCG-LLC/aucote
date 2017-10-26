@@ -424,9 +424,9 @@ class StorageTest(TestCase):
         expected = [self.port_scan_2.port, self.port_scan_4.port]
 
         result = self.storage.get_ports_by_nodes(nodes=[self.node_1, self.node_3, self.node_2], pasttime=400,
-                                                protocol=TransportProtocol.UDP)
+                                                 protocol=TransportProtocol.UDP)
 
-        self.assertEqual(result, expected)
+        self.assertCountEqual(result, expected)
 
     def test_execute_query(self):
         query = "part_1", "arg_1", "arg_2"
