@@ -416,9 +416,8 @@ class StorageTest(TestCase):
         self.assertEqual(result, expected)
 
     @patch('utils.storage.time.time', MagicMock(return_value=1000))
-    @patch('utils.storage.cfg', new_callable=Config)
-    def test_get_ports_by_nodes(self, cfg):
-        cfg['storage.max_nodes_query'] = 2
+    def test_get_ports_by_nodes(self):
+        self.storage.nodes_limit = 2
         self.prepare_tables()
 
         expected = [self.port_scan_2.port, self.port_scan_4.port]

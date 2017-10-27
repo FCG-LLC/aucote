@@ -119,7 +119,7 @@ class Aucote(object):
         signal.signal(signal.SIGHUP, self.graceful_stop)
         self.load_tools(tools_config)
 
-        self._storage = Storage(filename=cfg['storage.path'])
+        self._storage = Storage(filename=cfg['storage.path'], nodes_limit=cfg['storage.max_nodes_query'])
 
         self.ioloop = IOLoop.current()
         self.topdis = Topdis(cfg['topdis.api.host'], cfg['topdis.api.port'])

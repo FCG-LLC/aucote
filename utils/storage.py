@@ -9,7 +9,6 @@ import uuid
 
 from math import ceil
 
-from aucote_cfg import cfg
 from fixtures.exploits import Exploit
 from structs import Port, Node, TransportProtocol, Scan, Vulnerability, PortScan, SecurityScan, NodeScan
 from utils.database_interface import DbInterface
@@ -104,7 +103,7 @@ class Storage(DbInterface):
     SAVE_CHANGE = "INSERT INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
                   "current_id, time) VALUES (?, ?, ?, ?, ?, ?)"
 
-    def __init__(self, filename="storage.sqlite3"):
+    def __init__(self, filename="storage.sqlite3", nodes_limit=200):
 
         """
         Init storage
@@ -117,7 +116,7 @@ class Storage(DbInterface):
         self.conn = None
         self._cursor = None
         self.log = log.getLogger('storage')
-        self.cfg = cfg
+        self.nodes_limit = nodes_limit
 
     def init_schema(self):
         """
@@ -784,9 +783,9 @@ class Storage(DbInterface):
         return return_value
 
     def _gen_where_for_ports_by_nodes(self, nodes, timestamp):
-        nodes_limit = cfg['storage.max_nodes_query']
-        for i in range(ceil(len(nodes) / nodes_limit)):
-            yield {'or': [{'node_ip': node.ip, 'node_id': node.id} for node in nodes[i*nodes_limit:(i+1)*nodes_limit]],
+        for i in range(ceil(len(nodes) / self.nodes_limit)):
+            yield {'or': [{'node_ip': node.ip, 'node_id': node.id}
+                          for node in nodes[i*self.nodes_limit:(i+1)*self.nodes_limit]],
                    'operator': {'>': {'time': timestamp}}}
 
     def _transport_protocol(self, number):

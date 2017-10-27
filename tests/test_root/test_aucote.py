@@ -30,7 +30,8 @@ class AucoteTest(AsyncTestCase):
             },
             'storage': {
                 'path': 'test_storage',
-                'fresh_start': True
+                'fresh_start': True,
+                'max_nodes_query': 243
             },
             'service': {
                 'scans': {
@@ -306,7 +307,7 @@ class AucoteTest(AsyncTestCase):
         aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=cfg)
 
         self.assertEqual(aucote.kudu_queue, kudu_queue)
-        mock_storage.assert_called_once_with(filename='test_storage')
+        mock_storage.assert_called_once_with(filename='test_storage', nodes_limit=243)
         self.assertEqual(aucote.storage, mock_storage())
         mock_loader.assert_called_once_with(cfg)
 
