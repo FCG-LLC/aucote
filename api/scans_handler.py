@@ -7,7 +7,7 @@ from utils.time import parse_timestamp_to_time
 
 
 class ScansHandler(StorageHandler):
-    LIST_NAME = 'scans'
+    ENDPOINT_NAME = 'scans'
 
     def list(self, limit, page):
         return {
@@ -16,7 +16,8 @@ class ScansHandler(StorageHandler):
 
     def details(self, rowid):
         scan = self.aucote.storage.get_scan_by_id(rowid)
-        return {
+
+        return self.not_found('Scan not found') if scan is None else {
             'scan': rowid,
             'url': self._url_scan(rowid),
             'start': scan.start,

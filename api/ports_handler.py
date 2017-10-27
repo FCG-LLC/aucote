@@ -1,5 +1,5 @@
 """
-Handler responsible for returning aucote's ports
+Handler responsible for returning port scans performed by aucote
 
 """
 from api.storage_handler import StorageHandler
@@ -7,7 +7,7 @@ from utils.time import parse_timestamp_to_time
 
 
 class PortsHandler(StorageHandler):
-    LIST_NAME = 'ports'
+    ENDPOINT_NAME = 'ports'
 
     def list(self, limit, page):
         return {
@@ -18,11 +18,8 @@ class PortsHandler(StorageHandler):
 
     def details(self, rowid):
         port_scan = self.aucote.storage.port_scan_by_id(rowid)
-        if port_scan is None:
-            self.set_status(404, 'Port scan not found')
-            return {"code": "Port scan not found"}
 
-        return {
+        return self.not_found('Port scan not found') if port_scan is None else{
             'id': port_scan.rowid,
             'url': self._url_ports_scan(port_scan.rowid),
             'timestamp': port_scan.timestamp,

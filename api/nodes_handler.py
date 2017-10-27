@@ -6,7 +6,7 @@ from api.storage_handler import StorageHandler
 
 
 class NodesHandler(StorageHandler):
-    LIST_NAME = 'nodes'
+    ENDPOINT_NAME = 'nodes'
 
     def list(self, limit, page):
         return {
@@ -17,11 +17,8 @@ class NodesHandler(StorageHandler):
 
     def details(self, rowid):
         node_scan = self.aucote.storage.node_scan_by_id(rowid)
-        if node_scan is None:
-            self.set_status(404, 'Node scan not found')
-            return {'code': 'Node scan not found'}
 
-        return {
+        return self.not_found('Node scan not found') if node_scan is None else {
             'id': node_scan.rowid,
             'url': self._url_nodes_scan(node_scan.rowid),
             'node_id': node_scan.node.id,

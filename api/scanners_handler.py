@@ -9,33 +9,28 @@ from scans.tools_scanner import ToolsScanner
 class ScannersHandler(StorageHandler):
     def get(self, scan=None):
         """
-        Handle get method and returns aucote status in JSON
+        Handle get method and returns scanners information
 
         Returns:
             None - writes aucote status in JSON
 
         """
         if not scan:
-            self.write(self.scans())
+            self.write(self.scanners())
             return
-        self.write(self.scan_status(scan))
+        self.write(self.scanner_status(scan))
 
-    def scan_status(self, scan):
+    def scanner_status(self, scan):
         """
-        Get current status of aucote tasks
-
-        Returns:
-            dict
+        Get scanner status
 
         """
         scanner = self.get_scanner(name=scan)
         if not scanner:
-            self.set_status(404, 'Scan not found')
-            return {'code': 'Scan not found'}
+            return self.not_found('Scanner not found')
 
         if isinstance(scanner, ToolsScanner):
-            self.set_status(500, 'Security scans are unsupported right now')
-            return {'code': 'Security scans are unsupported right now'}
+            return self.internal_error('Security scanners are not implemented right now')
 
         stats = {
             'scan': scan,
@@ -56,7 +51,7 @@ class ScannersHandler(StorageHandler):
 
         return None
 
-    def scans(self):
+    def scanners(self):
         """
         Get current status of aucote tasks
 

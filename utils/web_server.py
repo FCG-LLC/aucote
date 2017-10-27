@@ -61,19 +61,19 @@ class WebServer(object):
             Application
 
         """
-        return Application([
-            (r"/api/v1/kill", KillHandler, {'aucote': self.aucote}),
-            (r"/api/v1/scanners", ScannersHandler, {'aucote': self.aucote}),
-            (r"/api/v1/scanners/([\w_]+)", ScannersHandler, {'aucote': self.aucote}),
-            (r"/api/v1/tasks", TasksHandler, {'aucote': self.aucote}),
-            (r"/api/v1/scans", ScansHandler, {'aucote': self.aucote}),
-            (r"/api/v1/scans/([\d]+)", ScansHandler, {'aucote': self.aucote}),
-            (r"/api/v1/nodes", NodesHandler, {'aucote': self.aucote}),
-            (r"/api/v1/nodes/([\d]+)", NodesHandler, {'aucote': self.aucote}),
-            (r"/api/v1/ports", PortsHandler, {'aucote': self.aucote}),
-            (r"/api/v1/ports/([\d]+)", PortsHandler, {'aucote': self.aucote}),
-            (r"/api/v1/sec_scans", SecurityScansHandler, {'aucote': self.aucote}),
-            (r"/api/v1/sec_scans/([\d]+)", SecurityScansHandler, {'aucote': self.aucote}),
-            (r"/api/v1/vulnerabilities", VulnerabilitiesHandler, {'aucote': self.aucote}),
-            (r"/api/v1/vulnerabilities/([\d]+)", VulnerabilitiesHandler, {'aucote': self.aucote}),
+        return Application((url, handler, {'aucote': self.aucote}) for url, handler in [
+            (r"/api/v1/kill", KillHandler),
+            (r"/api/v1/scanners", ScannersHandler),
+            (r"/api/v1/scanners/([\w_]+)", ScannersHandler),
+            (r"/api/v1/tasks", TasksHandler),
+            (r"/api/v1/scans", ScansHandler),
+            (r"/api/v1/scans/([\d]+)", ScansHandler),
+            (r"/api/v1/nodes", NodesHandler),
+            (r"/api/v1/nodes/([\d]+)", NodesHandler),
+            (r"/api/v1/ports", PortsHandler),
+            (r"/api/v1/ports/([\d]+)", PortsHandler),
+            (r"/api/v1/sec_scans", SecurityScansHandler),
+            (r"/api/v1/sec_scans/([\d]+)", SecurityScansHandler),
+            (r"/api/v1/vulnerabilities", VulnerabilitiesHandler),
+            (r"/api/v1/vulnerabilities/([\d]+)", VulnerabilitiesHandler),
         ])

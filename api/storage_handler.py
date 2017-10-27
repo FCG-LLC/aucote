@@ -10,7 +10,7 @@ from utils.time import parse_timestamp_to_time
 
 
 class StorageHandler(Handler):
-    LIST_NAME = None
+    ENDPOINT_NAME = None
     LIST_URL = '/api/v1/{name}?limit={limit}&page={page}'
 
     @Handler.limit
@@ -70,28 +70,28 @@ class StorageHandler(Handler):
         raise NotImplementedError
 
     def url_list(self, limit, page):
-        return self._format_url(self.LIST_URL.format(name=self.LIST_NAME, limit=limit, page=page))
+        return self._format_url(self.LIST_URL.format(name=self.ENDPOINT_NAME, limit=limit, page=page))
 
-    def _format_url(self, url):
-        return '{0}://{1}{2}'.format(self.request.protocol, self.request.host, url)
+    def _format_url(self, url, **kwargs):
+        return '{0}://{1}{2}'.format(self.request.protocol, self.request.host, url).format(**kwargs)
 
     def _url_scanner(self, scanner_name):
-        return self._format_url(self.SCANNER_URL.format(scanner_name=scanner_name))
+        return self._format_url(self.SCANNER_URL, scanner_name=scanner_name)
 
     def _url_scan(self, scan_id):
-        return self._format_url(self.SCAN_URL.format(scan_id=scan_id))
+        return self._format_url(self.SCAN_URL, scan_id=scan_id)
 
     def _url_nodes_scan(self, node_scan_id):
-        return self._format_url(self.NODES_SCAN_URL.format(node_scan_id=node_scan_id))
+        return self._format_url(self.NODES_SCAN_URL, node_scan_id=node_scan_id)
 
     def _url_ports_scan(self, port_scan_id):
-        return self._format_url(self.PORTS_SCAN_URL.format(port_scan_id=port_scan_id))
+        return self._format_url(self.PORTS_SCAN_URL, port_scan_id=port_scan_id)
 
     def _url_security_scan(self, sec_scan_id):
-        return self._format_url(self.SECURITY_SCAN_URL.format(sec_scan_id=sec_scan_id))
+        return self._format_url(self.SECURITY_SCAN_URL, sec_scan_id=sec_scan_id)
 
     def _url_vulnerability(self, vuln_id):
-        return self._format_url(self.VULNERABILITY_URL.format(vuln_id=vuln_id))
+        return self._format_url(self.VULNERABILITY_URL, vuln_id=vuln_id)
 
     def pretty_scan(self, scan):
         """

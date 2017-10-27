@@ -1,7 +1,8 @@
 """
-Handler abstract class
+Base class for all of Aucote's request handlers
 
 """
+import functools
 import hashlib
 
 from tornado.web import RequestHandler
@@ -99,6 +100,7 @@ class Handler(RequestHandler):
 
     @staticmethod
     def limit(function):
+        @functools.wraps(function)
         def return_value(self, *args, **kwargs):
             for key in ('limit', 'page'):
                 value = self.get_query_arguments(key)
@@ -109,3 +111,19 @@ class Handler(RequestHandler):
             return function(self, *args, **kwargs)
 
         return return_value
+
+    def not_found(self, msg):
+        """
+        Set HTTP status to '404 NOT FOUND' and return dict with details (msg)
+
+        """
+        self.set_status(404, msg)
+        return {'code': msg}
+
+    def internal_error(self, msg):
+        """
+        Set HTTP status to '500 INTERNAL SERVER ERROR' and return dict with details (msg)
+
+        """
+        self.set_status(500, msg)
+        return {'code': msg}

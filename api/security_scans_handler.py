@@ -7,7 +7,7 @@ from utils.time import parse_timestamp_to_time
 
 
 class SecurityScansHandler(StorageHandler):
-    LIST_NAME = 'security_scans'
+    ENDPOINT_NAME = 'security_scans'
 
     def list(self, limit, page):
         return {
@@ -35,11 +35,8 @@ class SecurityScansHandler(StorageHandler):
 
     def details(self, rowid):
         sec_scan = self.aucote.storage.security_scan_by_id(rowid)
-        if sec_scan is None:
-            self.set_status(404, 'Security scan not found')
-            return {'code': 'Security scan not found'}
 
-        return {
+        return self.not_found('Security scan not found') if sec_scan is None else{
             'id': sec_scan.rowid,
             'url': self._url_security_scan(sec_scan.rowid),
             'port': self.pretty_port(sec_scan.port),

@@ -7,7 +7,7 @@ from utils.time import parse_timestamp_to_time
 
 
 class VulnerabilitiesHandler(StorageHandler):
-    LIST_NAME = 'vulnerabilities'
+    ENDPOINT_NAME = 'vulnerabilities'
 
     def list(self, limit, page):
         return {
@@ -32,11 +32,8 @@ class VulnerabilitiesHandler(StorageHandler):
 
     def details(self, rowid):
         vulnerability = self.aucote.storage.vulnerability_by_id(rowid)
-        if vulnerability is None:
-            self.set_status(404, 'Vulnerability not found')
-            return {"code": "Vulnerability not found"}
 
-        return {
+        return self.not_found('Vulnerability not found') if vulnerability is None else {
             'id': vulnerability.rowid,
             'url': self._url_security_scan(vulnerability.rowid),
             'port': self.pretty_port(vulnerability.port),

@@ -67,7 +67,7 @@ class ScannersHandlerTest(AsyncHTTPTestCase):
         self.assertEqual(json.loads(response.body.decode()), expected)
 
     def test_tool_scanner(self):
-        expected = {'code': 'Security scans are unsupported right now'}
+        expected = {'code': 'Security scans are not implemented right now'}
         response = self.fetch('/api/v1/scanner/tools', method='GET')
         self.assertEqual(response.code, 500)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
