@@ -22,15 +22,15 @@ async def config(cfg):
 
     Args:
         cfg (Config): should contains configuration in format:
-                        ```
-                        logger_name:
-                            file: file path
-                            max_file_size: maximum size of log file
-                            max_files: maximum number of files
-                            format: format of logs
-                            level: logging level (INFO, WARNING, ERROR, CRITICAL or DEBUG)
-                            propagate: should configuration be propagated to parent logger
-                        ```
+            ```
+            logger_name:
+                file: file path
+                max_file_size: maximum size of log file
+                max_files: maximum number of files
+                format: format of logs
+                level: logging level (INFO, WARNING, ERROR, CRITICAL or DEBUG)
+                propagate: should configuration be propagated to parent logger
+            ```
 
     Returns:
         None
