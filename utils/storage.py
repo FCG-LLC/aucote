@@ -508,7 +508,7 @@ class Storage(DbInterface):
                 self.log.debug("[%s] executing query: %s", log_id, query)
                 return self.cursor.execute(*query).fetchall()
         except sqlite3.Error as exception:
-            self.log.exception("[%s]exception occured:", log_id)
+            self.log.exception("[%s] exception occured:", log_id)
             raise exception
 
         self.conn.commit()
