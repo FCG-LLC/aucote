@@ -7,12 +7,12 @@ pid_file: tmp/aucote.pid
 default_config: aucote_cfg_default.yaml
 
 # logging: Aucote logs a most of events in configuration files
-#   (root|storage): Name of logger. Storage is used only for logging queries
-#       file: <str> - Path to the log file
-#       level: (debug|info|warning|error|critical) - This is the level of logging (default: info)
-#       max_file_size: <int> - Maximum log file's size. After reach the limit, new file is created and old is archived.
+#   (root|storage): Logger name. Storage is used only for logging queries
+#       file: <str> - Log file path
+#       level: (debug|info|warning|error|critical) - Logging level (default: debug)
+#       max_file_size: <int> - Maximum log file's size. After reaching the limit, new file is created and old is archived.
 #       max_files: <int> - Maximum amount of log files (with archived).
-#       format: <str> - Format of log line. There are some variables which could be used:
+#       format: <str> - Log line formats. For more information see link:
 #                       https://docs.python.org/3/library/logging.html#logrecord-attributes
 #       propagate: <bool> - True if logs should be propagated to root
 
