@@ -19,6 +19,12 @@ class ScansHandlerTest(APITest):
 
     def test_scans(self):
         expected = {
+            'navigation': {
+                'limit': 10,
+                'next_page': self.get_url('/api/v1/scans?limit=10&page=1'),
+                'page': 0,
+                'previous_page': self.get_url('/api/v1/scans?limit=10&page=0')
+            },
             "scans":
                 [
                     {
@@ -47,7 +53,6 @@ class ScansHandlerTest(APITest):
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         result = json.loads(response.body.decode())
-        del result['navigation']
         del result['meta']
         self.assertEqual(result, expected)
 

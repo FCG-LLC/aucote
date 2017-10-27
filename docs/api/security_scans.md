@@ -8,7 +8,7 @@ Single security scan provides information about timestamp of scan of specific po
 ### URL
 
 ```
-/api/v1/sec_scans?limit=<limit>&page=<page>
+/api/v1/security_scans?limit=<limit>&page=<page>
 ```
 
 Parameters limit and offset are optional. Limit defines how many rows should be returned 
@@ -19,7 +19,7 @@ For parameters `limit=10`, `offset=3` the rows from 30 to 39 will be displayed.
 ### Request
 
 ```
-curl "http://localhost:1235/api/v1/sec_scans?limit=2&page=13"
+curl "http://localhost:1235/api/v1/security_scans?limit=2&page=13"
 ```
 
 ### Response
@@ -29,7 +29,7 @@ curl "http://localhost:1235/api/v1/sec_scans?limit=2&page=13"
   "security_scans": [
     {
       "id": 12482,
-      "url": "http://localhost:1235/api/v1/sec_scans/12482",
+      "url": "http://localhost:1235/api/v1/security_scans/12482",
       "port": {
         "port_number": 5985,
         "protocol": "TCP",
@@ -61,7 +61,7 @@ curl "http://localhost:1235/api/v1/sec_scans?limit=2&page=13"
     },
     {
       "id": 12483,
-      "url": "http://localhost:1235/api/v1/sec_scans/12483",
+      "url": "http://localhost:1235/api/v1/security_scans/12483",
       "port": {
         "port_number": 5985,
         "protocol": "TCP",
@@ -133,13 +133,13 @@ Obtains security scan details for given id.
 ### URL
 
 ```
-/api/v1/sec_scans/<id>
+/api/v1/security_scans/<id>
 ```
 
 ### Request
 
 ```
-curl "http://localhost:1235/api/v1/sec_scans/12483"
+curl "http://localhost:1235/api/v1/security_scans/12483"
 ```
 
 ### Response
@@ -147,7 +147,7 @@ curl "http://localhost:1235/api/v1/sec_scans/12483"
 ```json
 {
   "id": 12483,
-  "url": "http://localhost:1235/api/v1/sec_scans/12483",
+  "url": "http://localhost:1235/api/v1/security_scans/12483",
   "port": {
     "port_number": 5985,
     "protocol": "TCP",

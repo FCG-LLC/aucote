@@ -92,8 +92,8 @@ class APITest(AsyncHTTPTestCase):
             (r"/api/v1/nodes/([\d]+)", NodesHandler),
             (r"/api/v1/ports", PortsHandler),
             (r"/api/v1/ports/([\d]+)", PortsHandler),
-            (r"/api/v1/sec_scans", SecurityScansHandler),
-            (r"/api/v1/sec_scans/([\d]+)", SecurityScansHandler),
+            (r"/api/v1/security_scans", SecurityScansHandler),
+            (r"/api/v1/security_scans/([\d]+)", SecurityScansHandler),
             (r"/api/v1/vulnerabilities", VulnerabilitiesHandler),
             (r"/api/v1/vulnerabilities/([\d]+)", VulnerabilitiesHandler),
         ])

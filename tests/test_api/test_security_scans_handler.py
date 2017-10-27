@@ -9,6 +9,12 @@ class SecurityScansHandlerTest(APITest):
     def test_security_scans(self):
         self.maxDiff = None
         expected = {
+            'navigation': {
+                'limit': 10,
+                'next_page': self.get_url('/api/v1/security_scans?limit=10&page=1'),
+                'page': 0,
+                'previous_page': self.get_url('/api/v1/security_scans?limit=10&page=0')
+            },
             'security_scans':
                 [
                     {
@@ -107,12 +113,11 @@ class SecurityScansHandlerTest(APITest):
                 ]
         }
 
-        response = self.fetch('/api/v1/sec_scans', method='GET')
+        response = self.fetch('/api/v1/security_scans', method='GET')
 
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         result = json.loads(response.body.decode())
-        del result['navigation']
         del result['meta']
         self.assertEqual(result, expected)
 
@@ -167,7 +172,7 @@ class SecurityScansHandlerTest(APITest):
             'url': self.get_url('/api/v1/sec_scans/1')
         }
 
-        response = self.fetch('/api/v1/sec_scans/1', method='GET')
+        response = self.fetch('/api/v1/security_scans/1', method='GET')
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         result = json.loads(response.body.decode())

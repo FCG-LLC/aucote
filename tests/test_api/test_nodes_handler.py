@@ -9,6 +9,12 @@ class NodesHandlerTest(APITest):
     def test_nodes_scans(self):
         self.maxDiff = None
         expected = {
+            'navigation': {
+                'limit': 10,
+                'next_page': self.get_url('/api/v1/nodes?limit=10&page=1'),
+                'page': 0,
+                'previous_page': self.get_url('/api/v1/nodes?limit=10&page=0')
+            },
             'nodes':
                 [
                     {
@@ -40,7 +46,6 @@ class NodesHandlerTest(APITest):
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], "application/json; charset=UTF-8")
         result = json.loads(response.body.decode())
-        del result['navigation']
         del result['meta']
         self.assertEqual(result, expected)
 
