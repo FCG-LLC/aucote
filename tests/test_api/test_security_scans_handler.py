@@ -46,7 +46,7 @@ class SecurityScansHandlerTest(APITest):
                             },
                         'scan_end': 981.0,
                         'scan_end_human': '1970-01-01T00:16:21+00:00',
-                        'url': self.get_url('/api/v1/sec_scans/3')
+                        'url': self.get_url('/api/v1/security_scans/3')
                     },
                     {
                         'exploit':
@@ -77,7 +77,7 @@ class SecurityScansHandlerTest(APITest):
                             },
                         'scan_end': 851.0,
                         'scan_end_human': '1970-01-01T00:14:11+00:00',
-                        'url': self.get_url('/api/v1/sec_scans/1')
+                        'url': self.get_url('/api/v1/security_scans/1')
                     },
                     {
                         'exploit':
@@ -108,7 +108,7 @@ class SecurityScansHandlerTest(APITest):
                             },
                         'scan_end': 775.0,
                         'scan_end_human': '1970-01-01T00:12:55+00:00',
-                        'url': self.get_url('/api/v1/sec_scans/2')
+                        'url': self.get_url('/api/v1/security_scans/2')
                     }
                 ]
         }
@@ -169,7 +169,7 @@ class SecurityScansHandlerTest(APITest):
                     'url': self.get_url('/api/v1/scans/1')
                 }
             ],
-            'url': self.get_url('/api/v1/sec_scans/1')
+            'url': self.get_url('/api/v1/security_scans/1')
         }
 
         response = self.fetch('/api/v1/security_scans/1', method='GET')

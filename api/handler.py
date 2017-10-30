@@ -19,7 +19,7 @@ class Handler(RequestHandler):
     SCAN_URL = '/api/v1/scans/{scan_id}'
     NODES_SCAN_URL = '/api/v1/nodes/{node_scan_id}'
     PORTS_SCAN_URL = '/api/v1/ports/{port_scan_id}'
-    SECURITY_SCAN_URL = '/api/v1/sec_scans/{sec_scan_id}'
+    SECURITY_SCAN_URL = '/api/v1/security_scans/{sec_scan_id}'
     VULNERABILITY_URL = '/api/v1/vulnerabilities/{vuln_id}'
 
     def initialize(self, aucote):
