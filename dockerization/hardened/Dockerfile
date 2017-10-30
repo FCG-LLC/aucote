@@ -21,7 +21,6 @@ RUN apt-get install -y python-pip && pip install supervisor-stdout
 
 ADD files/supervisor_aucote.conf /etc/supervisor/conf.d/
 ADD files/supervisor_mq-broker-aucote.conf /etc/supervisor/conf.d/
-ADD files/aucote-daemon.sh /
 
 EXPOSE 1235
 
