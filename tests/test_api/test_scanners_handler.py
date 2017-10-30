@@ -54,9 +54,12 @@ class ScannersHandlerTest(AsyncHTTPTestCase):
         cfg['portdetection.test_name.periodic_scan.cron'] = '* * * * *'
         expected = {
             'current_scan': 1290,
+            'current_scan_human': '1970-01-01T00:21:30+00:00',
             'next_scan': 1380,
+            'next_scan_human': '1970-01-01T00:23:00+00:00',
             'nodes': ['127.0.0.1[1]'],
             'previous_scan': 1260,
+            'previous_scan_human': '1970-01-01T00:21:00+00:00',
             'scan': 'test_name',
             'scanners': {'IPv4': ['masscan'], 'IPv6': ['nmap']},
             'status': 'IDLE'

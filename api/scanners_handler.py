@@ -4,6 +4,7 @@ Handler responsible for returning aucote's scanners
 """
 from api.storage_handler import StorageHandler
 from scans.tools_scanner import ToolsScanner
+from utils.time import parse_timestamp_to_time
 
 
 class ScannersHandler(StorageHandler):
@@ -35,8 +36,11 @@ class ScannersHandler(StorageHandler):
         stats = {
             'scan': scan,
             'current_scan': scanner.scan_start,
+            'current_scan_human': parse_timestamp_to_time(scanner.scan_start),
             'previous_scan': scanner.previous_scan,
+            'previous_scan_human': parse_timestamp_to_time(scanner.previous_scan),
             'next_scan': scanner.next_scan,
+            'next_scan_human': parse_timestamp_to_time(scanner.next_scan),
             'scanners': {protocol: [subscanner.command.NAME for subscanner in subscanners]
                          for protocol, subscanners in scanner.scanners.items()},
             'status': scanner.status.value if scanner.status is not None else None,
