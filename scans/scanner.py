@@ -37,6 +37,7 @@ class Scanner(ScanAsyncTask):
         super(Scanner, self).__init__(*args, **kwargs)
 
         self.as_service = as_service
+        self.nodes = []
 
     async def run(self):
         """
@@ -60,6 +61,7 @@ class Scanner(ScanAsyncTask):
                 return
             self.storage.save_scan(scan)
             log.debug("Found %i nodes for potential scanning", len(nodes))
+            self.nodes = nodes
             await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
             self.storage.save_nodes(nodes, scan=scan)

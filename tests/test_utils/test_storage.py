@@ -416,15 +416,14 @@ class StorageTest(TestCase):
         self.assertEqual(result, expected)
 
     @patch('utils.storage.time.time', MagicMock(return_value=1000))
-    @patch('utils.storage.cfg', new_callable=Config)
-    def test_get_ports_by_nodes(self, cfg):
-        cfg['storage.max_nodes_query'] = 2
+    def test_get_ports_by_nodes(self):
+        self.storage.nodes_limit = 2
         self.prepare_tables()
 
         expected = [self.port_scan_2.port, self.port_scan_4.port]
 
         result = self.storage.get_ports_by_nodes(nodes=[self.node_1, self.node_3, self.node_2], pasttime=400,
-                                                protocol=TransportProtocol.UDP)
+                                                 protocol=TransportProtocol.UDP)
 
         self.assertCountEqual(result, expected)
 
@@ -571,3 +570,16 @@ class StorageTest(TestCase):
         self.storage.execute(("CREATE TABLE test(test int)",))
         self.storage.execute(("INSERT INTO test(test) VALUES (5), (6), (7)",))
         self.assertEqual(self.storage.get_last_rowid(), 3)
+
+    def test_scans(self):
+        self.prepare_tables()
+
+        self.assertEqual(self.storage.scans(2, 0), [self.scan_3, self.scan_1])
+        self.assertEqual(self.storage.scans(2, 1), [self.scan_2])
+
+    def ports_scans_by_scan(self):
+        self.prepare_tables()
+
+        expected = [self.port_scan_1, self.port_scan_2, self.port_scan_3, self.port_scan_4]
+
+        result = self.storage.ports_scans_by_scan(self.scan_1)

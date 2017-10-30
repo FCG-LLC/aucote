@@ -119,7 +119,7 @@ class Aucote(object):
         signal.signal(signal.SIGHUP, self.graceful_stop)
         self.load_tools(tools_config)
 
-        self._storage = Storage(filename=cfg['storage.path'])
+        self._storage = Storage(filename=cfg['storage.path'], nodes_limit=cfg['storage.max_nodes_query'])
 
         self.ioloop = IOLoop.current()
         self.topdis = Topdis(cfg['topdis.api.host'], cfg['topdis.api.port'])
@@ -220,17 +220,6 @@ class Aucote(object):
         self.kill()
 
     @property
-    def scan_task(self):
-        """
-        Scan thread
-
-        Returns:
-            ScanAsyncTask
-
-        """
-        return self._scan_task
-
-    @property
     def unfinished_tasks(self):
         """
         Get number of unfinished tasks.
@@ -266,7 +255,6 @@ class Aucote(object):
         self.ioloop.add_callback_from_signal(self._graceful_stop)
 
     async def _graceful_stop(self):
-        await self.scan_task.shutdown_condition.wait()
         await self.async_task_manager.stop()
 
     @classmethod

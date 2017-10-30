@@ -1,6 +1,8 @@
 """
-Handler abstract class
+Base class for all of Aucote's request handlers
+
 """
+import functools
 import hashlib
 
 from tornado.web import RequestHandler
@@ -13,6 +15,13 @@ class Handler(RequestHandler):
     Defines common properties for handler
 
     """
+    SCANNER_URL = '/api/v1/scanners/{scanner_name}'
+    SCAN_URL = '/api/v1/scans/{scan_id}'
+    NODES_SCAN_URL = '/api/v1/nodes/{node_scan_id}'
+    PORTS_SCAN_URL = '/api/v1/ports/{port_scan_id}'
+    SECURITY_SCAN_URL = '/api/v1/security_scans/{sec_scan_id}'
+    VULNERABILITY_URL = '/api/v1/vulnerabilities/{vuln_id}'
+
     def initialize(self, aucote):
         """
         Integrates Handlers with aucote
@@ -88,3 +97,33 @@ class Handler(RequestHandler):
 
         handler_class._execute = wrap_execute(handler_class._execute)
         return handler_class
+
+    @staticmethod
+    def limit(function):
+        @functools.wraps(function)
+        def return_value(self, *args, **kwargs):
+            for key in ('limit', 'page'):
+                value = self.get_query_arguments(key)
+
+                if value and value[0].isdecimal():
+                    kwargs[key] = int(value[0])
+
+            return function(self, *args, **kwargs)
+
+        return return_value
+
+    def not_found(self, msg):
+        """
+        Set HTTP status to '404 NOT FOUND' and return dict with details (msg)
+
+        """
+        self.set_status(404, msg)
+        return {'code': msg}
+
+    def internal_error(self, msg):
+        """
+        Set HTTP status to '500 INTERNAL SERVER ERROR' and return dict with details (msg)
+
+        """
+        self.set_status(500, msg)
+        return {'code': msg}

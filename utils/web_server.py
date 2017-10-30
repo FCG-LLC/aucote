@@ -7,7 +7,13 @@ from tornado.netutil import bind_sockets
 from tornado.web import Application
 
 from api.kill_handler import KillHandler
-from api.main_handler import MainHandler
+from api.nodes_handler import NodesHandler
+from api.ports_handler import PortsHandler
+from api.scanners_handler import ScannersHandler
+from api.scans_handler import ScansHandler
+from api.security_scans_handler import SecurityScansHandler
+from api.tasks_handler import TasksHandler
+from api.vulnerabilitites_handler import VulnerabilitiesHandler
 
 
 class WebServer(object):
@@ -55,7 +61,19 @@ class WebServer(object):
             Application
 
         """
-        return Application([
-            (r"/api/v1/status", MainHandler, {'aucote': self.aucote}),
-            (r"/api/v1/kill", KillHandler, {'aucote': self.aucote}),
+        return Application((url, handler, {'aucote': self.aucote}) for url, handler in [
+            (r"/api/v1/kill", KillHandler),
+            (r"/api/v1/scanners", ScannersHandler),
+            (r"/api/v1/scanners/([\w_]+)", ScannersHandler),
+            (r"/api/v1/tasks", TasksHandler),
+            (r"/api/v1/scans", ScansHandler),
+            (r"/api/v1/scans/([\d]+)", ScansHandler),
+            (r"/api/v1/nodes", NodesHandler),
+            (r"/api/v1/nodes/([\d]+)", NodesHandler),
+            (r"/api/v1/ports", PortsHandler),
+            (r"/api/v1/ports/([\d]+)", PortsHandler),
+            (r"/api/v1/security_scans", SecurityScansHandler),
+            (r"/api/v1/security_scans/([\d]+)", SecurityScansHandler),
+            (r"/api/v1/vulnerabilities", VulnerabilitiesHandler),
+            (r"/api/v1/vulnerabilities/([\d]+)", VulnerabilitiesHandler),
         ])

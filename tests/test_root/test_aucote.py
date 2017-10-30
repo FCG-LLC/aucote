@@ -30,7 +30,8 @@ class AucoteTest(AsyncTestCase):
             },
             'storage': {
                 'path': 'test_storage',
-                'fresh_start': True
+                'fresh_start': True,
+                'max_nodes_query': 243
             },
             'service': {
                 'scans': {
@@ -306,7 +307,7 @@ class AucoteTest(AsyncTestCase):
         aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=cfg)
 
         self.assertEqual(aucote.kudu_queue, kudu_queue)
-        mock_storage.assert_called_once_with(filename='test_storage')
+        mock_storage.assert_called_once_with(filename='test_storage', nodes_limit=243)
         self.assertEqual(aucote.storage, mock_storage())
         mock_loader.assert_called_once_with(cfg)
 
@@ -355,14 +356,12 @@ class AucoteTest(AsyncTestCase):
     async def test_graceful_stop(self):
         future = Future()
         future.set_result(MagicMock())
-        self.aucote.scan_task.shutdown_condition.wait.return_value = future
 
         future_wait = Future()
         future_wait.set_result(MagicMock())
         self.aucote.async_task_manager.stop.return_value = future_wait
 
         await self.aucote._graceful_stop()
-        self.aucote.scan_task.shutdown_condition.wait.assert_called_once_with()
         self.aucote.async_task_manager.stop.assert_called_once_with()
 
     @patch('aucote.os._exit')
@@ -372,9 +371,6 @@ class AucoteTest(AsyncTestCase):
 
     def test_unfinished_tasks(self):
         self.assertEqual(self.aucote.unfinished_tasks, self.aucote.async_task_manager.unfinished_tasks)
-
-    def test_scan_task_property(self):
-        self.assertEqual(self.aucote.scan_task, self.aucote._scan_task)
 
     def test_python_version(self):
         self.assertGreaterEqual(sys.version_info, (3,5))

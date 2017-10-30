@@ -33,6 +33,7 @@ class ScanAsyncTask(object):
         self.aucote = aucote
         self.scan_start = None
         self._shutdown_condition = Event()
+        self.status = ScanStatus.IDLE
 
     async def __call__(self, *args, **kwargs):
         if not cfg['portdetection.{name}.scan_enabled'.format(name=self.NAME)]:
@@ -218,6 +219,8 @@ class ScanAsyncTask(object):
             None
 
         """
+        self.status = status
+
         if not cfg.toucan or cfg['portdetection.{name}.scan_type'.format(name=self.NAME)] == ScanType.LIVE.value:
             return
 
