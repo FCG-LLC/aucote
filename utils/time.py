@@ -100,4 +100,4 @@ def parse_timestamp_to_time(timestamp):
         str
 
     """
-    return time_str(datetime.utcfromtimestamp(timestamp))
+    return time_str(datetime.utcfromtimestamp(timestamp)) if timestamp is not None else None

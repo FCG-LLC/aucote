@@ -108,7 +108,7 @@ class StorageHandler(Handler):
             'start': scan.start,
             'start_human': parse_timestamp_to_time(scan.start),
             'end': scan.end,
-            'end_human': parse_timestamp_to_time(scan.end) if scan.end is not None else None,
+            'end_human': parse_timestamp_to_time(scan.end),
             'protocol': scan.protocol.db_val if scan.protocol else None,
             'scanner': scan._scanner,
         }
