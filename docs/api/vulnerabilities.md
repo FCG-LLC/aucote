@@ -117,7 +117,7 @@ curl "http://localhost:1235/api/v1/vulnerabilities/77"
 ```json
 {
   "id": 77,
-  "url": "http://localhost:1235/api/v1/sec_scans/77",
+  "url": "http://localhost:1235/api/v1/security_scans/77",
   "port": {
     "port_number": 623,
     "protocol": "UDP",

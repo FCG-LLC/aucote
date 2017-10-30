@@ -35,7 +35,7 @@ class VulnerabilitiesHandler(StorageHandler):
 
         return self.not_found('Vulnerability not found') if vulnerability is None else {
             'id': vulnerability.rowid,
-            'url': self._url_security_scan(vulnerability.rowid),
+            'url': self._url_vulnerability(vulnerability.rowid),
             'port': self.pretty_port(vulnerability.port),
             'scan': self.pretty_scan(vulnerability.scan),
             'time': vulnerability.time,

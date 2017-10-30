@@ -101,7 +101,7 @@ class VulnerabilitiesHandlerTest(APITest):
                        'url': self.get_url('/api/v1/scans/1')}],
             'time': 134,
             'time_human': '1970-01-01T00:02:14+00:00',
-            'url': self.get_url('/api/v1/security_scans/1')}
+            'url': self.get_url('/api/v1/vulnerabilities/1')}
 
         response = self.fetch('/api/v1/vulnerabilities/1', method='GET')
         self.assertEqual(response.code, 200)
