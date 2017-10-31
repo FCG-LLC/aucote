@@ -109,8 +109,8 @@ class Scanner(ScanAsyncTask):
                         ports = await scanner.scan_ports([node])
                         await self._scan_ports(ports=ports, scan_only=scan_only, scan=scan)
 
-        await Executor(aucote=self.aucote, nodes=nodes, ports=self._get_special_ports(), scan_only=scan_only, scan=scan,
-                       scanner=self)()
+        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=nodes, ports=self._get_special_ports(),
+                                            scan_only=scan_only, scan=scan, scanner=self))
 
     async def _scan_ports(self, scan_only, scan, ports):
 
@@ -122,7 +122,8 @@ class Scanner(ScanAsyncTask):
 
         ports = [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
 
-        await Executor(aucote=self.aucote, nodes=[], ports=ports, scan_only=scan_only, scan=scan, scanner=self)()
+        self.aucote.add_async_task(Executor(aucote=self.aucote, nodes=[], ports=ports, scan_only=scan_only, scan=scan,
+                                            scanner=self))
 
     @property
     def scanners(self):
