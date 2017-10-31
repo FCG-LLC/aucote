@@ -25,7 +25,7 @@ class OpenPortsParser:
             list
 
         """
-        result = []
+        result = set()
         for host in xml.findall('host'):
             ip = ipaddress.ip_address(host.find('address').get('addr'))
             ports = host.find('ports')
@@ -54,6 +54,6 @@ class OpenPortsParser:
                         port.banner = script.get('output')
                         break
 
-                result.append(port)
+                result.update({port})
         log.info('Found %s open ports', len(result))
-        return result
+        return list(result)
