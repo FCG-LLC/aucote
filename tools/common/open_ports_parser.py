@@ -47,7 +47,7 @@ class OpenPortsParser:
                 port.service_name = service.get('name') if service is not None else None
                 port.service_version = service.get('version') if service is not None else None
 
-                log.debug('Found open port %s of %s, service is %s', port.number, str(ip), port.service_name)
+                log.debug('Found open port %s of %s, service is %s', port.number, str(node), port.service_name)
 
                 for script in xml_port.findall('script'):
                     if script.get('id') == 'banner':
