@@ -25,7 +25,7 @@ class OpenPortsParser:
             list
 
         """
-        result = []
+        result = set()
         for host in xml.findall('host'):
             ip = ipaddress.ip_address(host.find('address').get('addr'))
             ports = host.find('ports')
@@ -47,13 +47,13 @@ class OpenPortsParser:
                 port.service_name = service.get('name') if service is not None else None
                 port.service_version = service.get('version') if service is not None else None
 
-                log.debug('Found open port %s of %s, service is %s', port.number, str(ip), port.service_name)
+                log.debug('Found open port %s of %s, service is %s', port.number, str(node), port.service_name)
 
                 for script in xml_port.findall('script'):
                     if script.get('id') == 'banner':
                         port.banner = script.get('output')
                         break
 
-                result.append(port)
+                result.update({port})
         log.info('Found %s open ports', len(result))
-        return result
+        return list(result)

@@ -7,7 +7,7 @@ from ipaddress import IPv4Address, IPv6Address
 
 from utils.database_interface import DbInterface
 from utils.string import bytes_str
-from nanomsg import Socket, PUSH, DONTWAIT #pylint: disable=no-name-in-module
+from nanomsg import Socket, PUSH, DONTWAIT, NanoMsgAPIError  # pylint: disable=no-name-in-module
 
 
 class KuduMsg:
@@ -141,4 +141,10 @@ class KuduQueue(DbInterface):
         assert isinstance(msg, KuduMsg)
         log.debug('sending bytes to kuduworker: %s', bytes_str(msg.data))
         flags = DONTWAIT if dont_wait else 0
-        self._socket.send(msg.data, flags)
+        try:
+            self._socket.send(msg.data, flags)
+        except NanoMsgAPIError:
+            log.warning("Nanomessage error. Reconnecting...")
+            self.close()
+            self.connect()
+            self._socket.send(msg.data, flags)
