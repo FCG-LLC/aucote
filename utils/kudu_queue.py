@@ -124,7 +124,7 @@ class KuduQueue(DbInterface):
         """
 
         self._socket = nnpy.Socket(nnpy.AF_SP, nnpy.PUSH)
-        self._socket.bind(self._address)
+        self._socket.connect(self._address)
 
     def close(self):
         """
