@@ -8,6 +8,7 @@ from ipaddress import IPv4Address, IPv6Address
 from utils.database_interface import DbInterface
 from utils.string import bytes_str
 from nanomsg import Socket, PUSH, DONTWAIT, NanoMsgAPIError  # pylint: disable=no-name-in-module
+import nnpy
 
 
 class KuduMsg:
@@ -122,8 +123,8 @@ class KuduQueue(DbInterface):
         Connect to kudu
         """
 
-        self._socket = Socket(PUSH)
-        self._socket.connect(self._address)
+        self._socket = nnpy.Socket(nnpy.AF_SP, nnpy.PUSH)
+        self._socket.bind(self._address)
 
     def close(self):
         """

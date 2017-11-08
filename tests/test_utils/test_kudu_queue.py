@@ -64,13 +64,6 @@ class KuduQueueTest(TestCase):
         self.address = '127.0.0.1'
         self.kudu_queue = KuduQueue(self.address)
 
-    @patch('utils.kudu_queue.Socket')
-    def test_connect(self, mock_kudu):
-        mock_kudu.return_value = MagicMock()
-        self.kudu_queue.connect()
-
-        mock_kudu.return_value.connect.assert_called_once_with(self.address)
-
     def test_close(self):
         mock = MagicMock()
         self.kudu_queue._socket = mock
