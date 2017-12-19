@@ -1,16 +1,21 @@
+from tornado.ioloop import IOLoop
+
 from scans.scanner import Scanner
 from structs import TransportProtocol
-from tools.masscan import MasscanPorts
-from tools.nmap.ports import PortsScan
+from utils.portscan import PortscanScanner
 
 
 class TCPScanner(Scanner):
     PROTOCOL = TransportProtocol.TCP
     NAME = 'tcp'
 
+    def __init__(self, *args, **kwargs):
+        super(TCPScanner, self).__init__(*args, **kwargs)
+        self._tcp_scanner = PortscanScanner('localhost', 1339, IOLoop.current().instance())
+
     @property
     def scanners(self):
         return {
-            self.IPV4: [MasscanPorts(udp=False)],
-            self.IPV6: [PortsScan(ipv6=True, tcp=True, udp=False)]
+            self.IPV4: [self._tcp_scanner],
+            self.IPV6: [self._tcp_scanner]
         }

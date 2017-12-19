@@ -1,0 +1,410 @@
+************* Module api.kill_handler
+api/kill_handler.py:8: [W0223(abstract-method), KillHandler] Method 'data_received' is abstract in class 'RequestHandler' but is not overridden
+api/kill_handler.py:14: [W0221(arguments-differ), KillHandler.post] Parameters differ from overridden 'post' method
+************* Module api.handler
+api/handler.py:13: [W0223(abstract-method), Handler] Method 'data_received' is abstract in class 'RequestHandler' but is not overridden
+api/handler.py:25: [W0221(arguments-differ), Handler.initialize] Parameters differ from overridden 'initialize' method
+api/handler.py:49: [C0103(invalid-name), Handler.auth] Invalid variable name "MAX_PASSWORD_HEADER_LENGTH"
+api/handler.py:50: [C0103(invalid-name), Handler.auth] Invalid variable name "BEARER_START"
+api/handler.py:87: [W0212(protected-access), Handler.auth.wrap_execute.require_auth] Access to a protected member _transforms of a client class
+api/handler.py:62: [W0613(unused-argument), Handler.auth.wrap_execute.require_auth] Unused argument 'args'
+api/handler.py:62: [W0613(unused-argument), Handler.auth.wrap_execute.require_auth] Unused argument 'kwargs'
+api/handler.py:98: [W0212(protected-access), Handler.auth] Access to a protected member _execute of a client class
+api/handler.py:98: [W0212(protected-access), Handler.auth] Access to a protected member _execute of a client class
+api/handler.py:102: [C0111(missing-docstring), Handler.limit] Missing method docstring
+api/handler.py:104: [C0111(missing-docstring), Handler.limit.return_value] Missing function docstring
+************* Module api.nodes_handler
+api/nodes_handler.py:8: [C0111(missing-docstring), NodesHandler] Missing class docstring
+api/nodes_handler.py:8: [W0223(abstract-method), NodesHandler] Method 'data_received' is abstract in class 'RequestHandler' but is not overridden
+************* Module api.ports_handler
+api/ports_handler.py:9: [C0111(missing-docstring), PortsHandler] Missing class docstring
+api/ports_handler.py:9: [W0223(abstract-method), PortsHandler] Method 'data_received' is abstract in class 'RequestHandler' but is not overridden
+************* Module api.scanners_handler
+api/scanners_handler.py:10: [C0111(missing-docstring), ScannersHandler] Missing class docstring
+api/scanners_handler.py:10: [W0223(abstract-method), ScannersHandler] Method 'data_received' is abstract in class 'RequestHandler' but is not overridden
+api/scanners_handler.py:10: [W0223(abstract-method), ScannersHandler] Method 'details' is abstract in class 'StorageHandler' but is not overridden
+api/scanners_handler.py:10: [W0223(abstract-method), ScannersHandler] Method 'list' is abstract in class 'StorageHandler' but is not overridden
+api/scanners_handler.py:11: [W0221(arguments-differ), ScannersHandler.get] Parameters differ from overridden 'get' method
+api/scanners_handler.py:51: [C0111(missing-docstring), ScannersHandler.get_scanner] Missing method docstring
+api/scanners_handler.py:70: [C0111(missing-docstring), ScannersHandler.pretty_scanner] Missing method docstring
+************* Module api.scans_handler
+api/scans_handler.py:9: [C0111(missing-docstring), ScansHandler] Missing class docstring
+api/scans_handler.py:9: [W0223(abstract-method), ScansHandler] Method 'data_received' is abstract in class 'RequestHandler' but is not overridden
+************* Module api.security_scans_handler
+api/security_scans_handler.py:9: [C0111(missing-docstring), SecurityScansHandler] Missing class docstring
+api/security_scans_handler.py:9: [W0223(abstract-method), SecurityScansHandler] Method 'data_received' is abstract in class 'RequestHandler' but is not overridden
+api/security_scans_handler.py:19: [C0111(missing-docstring), SecurityScansHandler.pretty_sec_scan] Missing method docstring
+************* Module api.storage_handler
+api/storage_handler.py:12: [C0111(missing-docstring), StorageHandler] Missing class docstring
+api/storage_handler.py:17: [W0221(arguments-differ), StorageHandler.get] Parameters differ from overridden 'get' method
+api/storage_handler.py:72: [C0111(missing-docstring), StorageHandler.url_list] Missing method docstring
+api/storage_handler.py:113: [W0212(protected-access), StorageHandler.pretty_scan] Access to a protected member _scanner of a client class
+api/storage_handler.py:151: [C0111(missing-docstring), StorageHandler.pretty_port] Missing method docstring
+api/storage_handler.py:151: [R0201(no-self-use), StorageHandler.pretty_port] Method could be a function
+************* Module api.tasks_handler
+api/tasks_handler.py:8: [C0111(missing-docstring), TasksHandler] Missing class docstring
+api/tasks_handler.py:8: [W0223(abstract-method), TasksHandler] Method 'data_received' is abstract in class 'RequestHandler' but is not overridden
+api/tasks_handler.py:9: [W0221(arguments-differ), TasksHandler.get] Parameters differ from overridden 'get' method
+api/tasks_handler.py:11: [W0212(protected-access), TasksHandler.get] Access to a protected member _queue of a client class
+api/tasks_handler.py:11: [W0212(protected-access), TasksHandler.get] Access to a protected member _tasks of a client class
+api/tasks_handler.py:12: [W0212(protected-access), TasksHandler.get] Access to a protected member _task_workers of a client class
+api/tasks_handler.py:9: [W0613(unused-argument), TasksHandler.get] Unused argument 'scan'
+************* Module api.vulnerabilitites_handler
+api/vulnerabilitites_handler.py:9: [C0111(missing-docstring), VulnerabilitiesHandler] Missing class docstring
+api/vulnerabilitites_handler.py:9: [W0223(abstract-method), VulnerabilitiesHandler] Method 'data_received' is abstract in class 'RequestHandler' but is not overridden
+api/vulnerabilitites_handler.py:19: [C0111(missing-docstring), VulnerabilitiesHandler.pretty_vulnerability] Missing method docstring
+************* Module fixtures.exploits.exploit
+fixtures/exploits/exploit.py:135: [C0103(invalid-name), Exploit.__init__] Invalid attribute name "id"
+fixtures/exploits/exploit.py:114: [R0902(too-many-instance-attributes), Exploit] Too many instance attributes (11/7)
+fixtures/exploits/exploit.py:119: [R0913(too-many-arguments), Exploit.__init__] Too many arguments (12/5)
+fixtures/exploits/exploit.py:114: [R0903(too-few-public-methods), Exploit] Too few public methods (0/2)
+fixtures/exploits/exploit.py:223: [R0916(too-many-boolean-expressions), Exploits.find_all_matching] Too many boolean expressions in if statement (6/5)
+************* Module scans.tools_scanner
+scans/tools_scanner.py:53: [C0326(bad-whitespace), ] Exactly one space required after comma
+            self.aucote.add_async_task(Executor(aucote=self.aucote,nodes=nodes if cfg['portdetection.{0}.scan_nodes'.
+                                                                  ^
+scans/tools_scanner.py:54: [C0330(bad-continuation), ] Wrong continued indentation (add 38 spaces).
+                                                format(self.NAME)] else None, ports=ports, scan=scan, scanner=self))
+                                                ^                                     |
+scans/tools_scanner.py:27: [C0103(invalid-name), ToolsScanner.__init__] Invalid attribute name "NAME"
+scans/tools_scanner.py:74: [C0111(missing-docstring), ToolsScanner.get_last_scan_start] Missing method docstring
+************* Module scans.udp_scanner
+scans/udp_scanner.py:1: [C0111(missing-docstring), ] Missing module docstring
+scans/udp_scanner.py:6: [C0111(missing-docstring), UDPScanner] Missing class docstring
+************* Module scans.scan_async_task
+scans/scan_async_task.py:46: [C0111(missing-docstring), ScanAsyncTask.run] Missing method docstring
+scans/scan_async_task.py:7: [W0611(unused-import), ] Unused HTTPError imported from tornado.httpclient
+************* Module scans.tcp_scanner
+scans/tcp_scanner.py:1: [C0111(missing-docstring), ] Missing module docstring
+scans/tcp_scanner.py:7: [C0111(missing-docstring), TCPScanner] Missing class docstring
+************* Module scans.scanner
+scans/scanner.py:70: [C0301(line-too-long), ] Line too long (124/120)
+scans/scanner.py:82: [R0913(too-many-arguments), Scanner.run_scan] Too many arguments (6/5)
+scans/scanner.py:142: [E1101(no-member), Scanner._get_special_ports] Module 'netifaces' has no 'interfaces' member
+scans/scanner.py:145: [E1101(no-member), Scanner._get_special_ports] Module 'netifaces' has no 'ifaddresses' member
+scans/scanner.py:146: [E1101(no-member), Scanner._get_special_ports] Module 'netifaces' has no 'AF_INET' member
+scans/scanner.py:139: [R0201(no-self-use), Scanner._get_special_ports] Method could be a function
+scans/scanner.py:21: [W0611(unused-import), ] Unused MasscanPorts imported from tools.masscan
+scans/scanner.py:22: [W0611(unused-import), ] Unused PortsScan imported from tools.nmap.ports
+************* Module tools.aucote_http_headers.structs
+tools/aucote_http_headers/structs.py:8: [R0903(too-few-public-methods), HeaderDefinition] Too few public methods (0/2)
+tools/aucote_http_headers/structs.py:27: [R0903(too-few-public-methods), AucoteHttpHeaderResult] Too few public methods (0/2)
+************* Module tools.aucote_http_headers.tasks
+tools/aucote_http_headers/tasks.py:17: [W0223(abstract-method), AucoteHttpHeadersTask] Method 'get_vulnerabilities' is abstract in class 'PortTask' but is not overridden
+************* Module tools.common.parsers
+tools/common/parsers.py:15: [W0613(unused-argument), Parser.parse] Unused argument 'stderr'
+tools/common/parsers.py:15: [R0201(no-self-use), Parser.parse] Method could be a function
+tools/common/parsers.py:10: [R0903(too-few-public-methods), Parser] Too few public methods (1/2)
+tools/common/parsers.py:30: [R0903(too-few-public-methods), XMLParser] Too few public methods (1/2)
+************* Module tools.common.open_ports_parser
+tools/common/open_ports_parser.py:30: [C0103(invalid-name), OpenPortsParser.parse] Invalid variable name "ip"
+tools/common/open_ports_parser.py:10: [R0903(too-few-public-methods), OpenPortsParser] Too few public methods (1/2)
+************* Module tools.common.command
+tools/common/command.py:13: [W0611(unused-import), ] Unused NonXMLOutputException imported from utils.exceptions
+************* Module tools.common.command_task
+tools/common/command_task.py:48: [W0221(arguments-differ), CommandTask.__call__] Parameters differ from overridden '__call__' method
+************* Module tools.cve_search.structs
+tools/cve_search/structs.py:37: [C0103(invalid-name), CVESearchVulnerabilityResult.__init__] Invalid attribute name "id"
+tools/cve_search/structs.py:42: [C0103(invalid-name), CVESearchVulnerabilityResult.__init__] Invalid attribute name "vulnerable_configuration_cpe_2_2"
+tools/cve_search/structs.py:7: [R0902(too-many-instance-attributes), CVESearchVulnerabilityResult] Too many instance attributes (12/7)
+tools/cve_search/structs.py:12: [R0913(too-many-arguments), CVESearchVulnerabilityResult.__init__] Too many arguments (13/5)
+tools/cve_search/structs.py:7: [R0903(too-few-public-methods), CVESearchVulnerabilityResult] Too few public methods (1/2)
+tools/cve_search/structs.py:61: [R0903(too-few-public-methods), CVESearchVulnerabilityResults] Too few public methods (1/2)
+************* Module tools.cve_search.tasks
+tools/cve_search/tasks.py:92: [R0201(no-self-use), CVESearchServiceTask._unique_cpes] Method could be a function
+tools/cve_search/tasks.py:131: [E1101(no-member), CVESearchServiceTask.api_cvefor] Module 'ujson' has no 'loads' member
+************* Module tools.hydra.structs
+tools/hydra/structs.py:97: [R0913(too-many-arguments), HydraResult.__init__] Too many arguments (6/5)
+tools/hydra/structs.py:91: [R0903(too-few-public-methods), HydraResult] Too few public methods (0/2)
+************* Module tools.hydra.tasks
+tools/hydra/tasks.py:10: [W0223(abstract-method), HydraScriptTask] Method 'get_vulnerabilities' is abstract in class 'PortTask' but is not overridden
+************* Module tools.hydra.parsers
+tools/hydra/parsers.py:80: [R0201(no-self-use), HydraParser.from_re_match] Method could be a function
+************* Module tools.nmap.services_list
+tools/nmap/services_list.py:1: [C0302(too-many-lines), ] Too many lines in module (3222/1000)
+************* Module tools.nmap.tasks.port_scan
+tools/nmap/tasks/port_scan.py:13: [W0223(abstract-method), NmapPortScanTask] Method 'get_vulnerabilities' is abstract in class 'PortTask' but is not overridden
+************* Module tools.nmap.tasks.port_info
+tools/nmap/tasks/port_info.py:18: [W0223(abstract-method), NmapPortInfoTask] Method 'get_vulnerabilities' is abstract in class 'PortTask' but is not overridden
+tools/nmap/tasks/port_info.py:74: [W0221(arguments-differ), NmapPortInfoTask.__call__] Parameters differ from overridden '__call__' method
+************* Module tools.nmap.base
+tools/nmap/base.py:24: [R0913(too-many-arguments), NmapScript.__init__] Too many arguments (6/5)
+tools/nmap/base.py:19: [R0903(too-few-public-methods), NmapScript] Too few public methods (1/2)
+************* Module tools.nmap.parsers
+tools/nmap/parsers.py:66: [W0511(fixme), ] TODO: add likelihood to vulnerability
+tools/nmap/parsers.py:10: [R0903(too-few-public-methods), NmapParser] Too few public methods (1/2)
+tools/nmap/parsers.py:41: [R0903(too-few-public-methods), NmapInfoParser] Too few public methods (1/2)
+tools/nmap/parsers.py:57: [R0903(too-few-public-methods), NmapVulnParser] Too few public methods (1/2)
+tools/nmap/parsers.py:70: [R0903(too-few-public-methods), NmapBrutParser] Too few public methods (1/2)
+tools/nmap/parsers.py:96: [C0111(missing-docstring), NmapHTTPWebsphereConsoleParser] Missing class docstring
+tools/nmap/parsers.py:96: [R0903(too-few-public-methods), NmapHTTPWebsphereConsoleParser] Too few public methods (1/2)
+************* Module tools.nmap.tool
+tools/nmap/tool.py:310: [C0301(line-too-long), ] Line too long (132/120)
+tools/nmap/tool.py:144: [C0103(invalid-name), NmapTool.custom_args_http_domino_enum_passwords] Invalid method name "custom_args_http_domino_enum_passwords"
+tools/nmap/tool.py:302: [C0111(missing-docstring), NmapTool.custom_args_smb] Missing method docstring
+************* Module tools.skipfish.structs
+tools/skipfish/structs.py:7: [R0903(too-few-public-methods), SkipfishIssuesDesc] Too few public methods (1/2)
+tools/skipfish/structs.py:54: [R0913(too-many-arguments), SkipfishIssueSample.__init__] Too many arguments (7/5)
+tools/skipfish/structs.py:49: [R0903(too-few-public-methods), SkipfishIssueSample] Too few public methods (0/2)
+************* Module tools.skipfish.parsers
+tools/skipfish/parsers.py:40: [E1101(no-member), SkipfishResultsParser._parse_issues_desc] Module 'ujson' has no 'loads' member
+tools/skipfish/parsers.py:14: [R0903(too-few-public-methods), SkipfishResultsParser] Too few public methods (1/2)
+tools/skipfish/parsers.py:130: [R0201(no-self-use), SkipfishOutputParser._get_log_dir] Method could be a function
+tools/skipfish/parsers.py:109: [R0903(too-few-public-methods), SkipfishOutputParser] Too few public methods (1/2)
+************* Module tools.skipfish.tasks
+tools/skipfish/tasks.py:12: [W0223(abstract-method), SkipfishScanTask] Method 'get_vulnerabilities' is abstract in class 'PortTask' but is not overridden
+************* Module tools.ssl.parsers
+tools/ssl/parsers.py:21: [W0221(arguments-differ), SSLParser.parse] Parameters differ from overridden 'parse' method
+tools/ssl/parsers.py:35: [E1101(no-member), SSLParser.parse] Module 'ujson' has no 'loads' member
+tools/ssl/parsers.py:21: [W0613(unused-argument), SSLParser.parse] Unused argument 'args'
+tools/ssl/parsers.py:21: [W0613(unused-argument), SSLParser.parse] Unused argument 'kwargs'
+tools/ssl/parsers.py:52: [R0201(no-self-use), SSLParser._dict_to_result] Method could be a function
+tools/ssl/parsers.py:12: [R0903(too-few-public-methods), SSLParser] Too few public methods (1/2)
+************* Module tools.ssl.tasks
+tools/ssl/tasks.py:12: [W0223(abstract-method), SSLScriptTask] Method 'get_vulnerabilities' is abstract in class 'PortTask' but is not overridden
+************* Module tools.ssl.base
+tools/ssl/base.py:23: [C0103(invalid-name), SSLBase.__init__] Invalid attribute name "COMMON_ARGS"
+************* Module tools.ssl.structs
+tools/ssl/structs.py:16: [C0103(invalid-name), SSLSeverity] Invalid class attribute name "OK"
+tools/ssl/structs.py:53: [C0103(invalid-name), SSLResult.__init__] Invalid attribute name "id"
+tools/ssl/structs.py:54: [C0103(invalid-name), SSLResult.__init__] Invalid attribute name "ip"
+tools/ssl/structs.py:47: [R0903(too-few-public-methods), SSLResult] Too few public methods (1/2)
+************* Module tools.whatweb.parsers
+tools/whatweb/parsers.py:22: [R0201(no-self-use), WhatWebParser._get_plugin_from_dict] Method could be a function
+tools/whatweb/parsers.py:45: [E1101(no-member), WhatWebParser.parse_json] Module 'ujson' has no 'loads' member
+tools/whatweb/parsers.py:51: [W0221(arguments-differ), WhatWebParser.parse] Parameters differ from overridden 'parse' method
+tools/whatweb/parsers.py:54: [W0613(unused-argument), WhatWebParser.parse_text] Unused argument 'stderr'
+************* Module tools.whatweb.structs
+tools/whatweb/structs.py:15: [C0103(invalid-name), WhatWebPlugin.__init__] Invalid attribute name "os"
+tools/whatweb/structs.py:7: [R0902(too-many-instance-attributes), WhatWebPlugin] Too many instance attributes (9/7)
+tools/whatweb/structs.py:7: [R0903(too-few-public-methods), WhatWebPlugin] Too few public methods (0/2)
+tools/whatweb/structs.py:27: [R0903(too-few-public-methods), WhatWebTarget] Too few public methods (0/2)
+tools/whatweb/structs.py:44: [R0903(too-few-public-methods), WhatWebResult] Too few public methods (0/2)
+tools/whatweb/structs.py:56: [R0903(too-few-public-methods), WhatWebProduct] Too few public methods (0/2)
+************* Module tools.whatweb.tasks
+tools/whatweb/tasks.py:12: [W0223(abstract-method), WhatWebTask] Method 'get_vulnerabilities' is abstract in class 'PortTask' but is not overridden
+tools/whatweb/tasks.py:5: [W0611(unused-import), ] Unused Port imported from structs
+tools/whatweb/tasks.py:9: [C0411(wrong-import-order), ] standard import "import logging as log" should be placed before "from structs import CPEType, Service, Port"
+************* Module tools.whatweb.tool
+tools/whatweb/tool.py:14: [W0221(arguments-differ), WhatWebTool.call] Parameters differ from overridden 'call' method
+************* Module enum4linux_parser
+tools/acuote_ad/parsers/enum4linux_parser.py:21: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\['. String constant might be missing an r prefix.
+tools/acuote_ad/parsers/enum4linux_parser.py:21: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\]'. String constant might be missing an r prefix.
+tools/acuote_ad/parsers/enum4linux_parser.py:35: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\['. String constant might be missing an r prefix.
+tools/acuote_ad/parsers/enum4linux_parser.py:35: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\+'. String constant might be missing an r prefix.
+tools/acuote_ad/parsers/enum4linux_parser.py:35: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\]'. String constant might be missing an r prefix.
+tools/acuote_ad/parsers/enum4linux_parser.py:38: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\['. String constant might be missing an r prefix.
+tools/acuote_ad/parsers/enum4linux_parser.py:38: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\+'. String constant might be missing an r prefix.
+tools/acuote_ad/parsers/enum4linux_parser.py:38: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\]'. String constant might be missing an r prefix.
+tools/acuote_ad/parsers/enum4linux_parser.py:41: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\['. String constant might be missing an r prefix.
+tools/acuote_ad/parsers/enum4linux_parser.py:41: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\+'. String constant might be missing an r prefix.
+tools/acuote_ad/parsers/enum4linux_parser.py:41: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\]'. String constant might be missing an r prefix.
+tools/acuote_ad/parsers/enum4linux_parser.py:56: [C0303(trailing-whitespace), ] Trailing whitespace
+tools/acuote_ad/parsers/enum4linux_parser.py:59: [C0303(trailing-whitespace), ] Trailing whitespace
+tools/acuote_ad/parsers/enum4linux_parser.py:1: [C0111(missing-docstring), ] Missing module docstring
+tools/acuote_ad/parsers/enum4linux_parser.py:8: [C0111(missing-docstring), Enum4linuxParser] Missing class docstring
+tools/acuote_ad/parsers/enum4linux_parser.py:9: [C0103(invalid-name), Enum4linuxParser] Invalid class attribute name "OS_INFORMATION_REGEX_SECTION_COMPILED"
+tools/acuote_ad/parsers/enum4linux_parser.py:17: [C0103(invalid-name), Enum4linuxParser] Invalid class attribute name "PASSWORD_POLICY_SECTION_COMPILED"
+tools/acuote_ad/parsers/enum4linux_parser.py:90: [C0111(missing-docstring), Enum4linuxParser.parse_os_information] Missing method docstring
+tools/acuote_ad/parsers/enum4linux_parser.py:97: [C0111(missing-docstring), Enum4linuxParser.parse_users] Missing method docstring
+tools/acuote_ad/parsers/enum4linux_parser.py:102: [C0111(missing-docstring), Enum4linuxParser.parse_shares] Missing method docstring
+tools/acuote_ad/parsers/enum4linux_parser.py:109: [C0111(missing-docstring), Enum4linuxParser.parse_shares_list] Missing method docstring
+tools/acuote_ad/parsers/enum4linux_parser.py:120: [C0111(missing-docstring), Enum4linuxParser.parse_groups_list] Missing method docstring
+tools/acuote_ad/parsers/enum4linux_parser.py:132: [C0111(missing-docstring), Enum4linuxParser.parse_groups] Missing method docstring
+tools/acuote_ad/parsers/enum4linux_parser.py:143: [C0111(missing-docstring), Enum4linuxParser.parse_password_policy] Missing method docstring
+************* Module aucote_ad_task
+tools/acuote_ad/tasks/aucote_ad_task.py:1: [C0111(missing-docstring), ] Missing module docstring
+tools/acuote_ad/tasks/aucote_ad_task.py:5: [C0111(missing-docstring), AucoteActiveDirectoryTask] Missing class docstring
+tools/acuote_ad/tasks/aucote_ad_task.py:5: [W0223(abstract-method), AucoteActiveDirectoryTask] Method 'get_vulnerabilities' is abstract in class 'PortTask' but is not overridden
+************* Module enum4linux_task
+tools/acuote_ad/tasks/enum4linux_task.py:1: [C0111(missing-docstring), ] Missing module docstring
+tools/acuote_ad/tasks/enum4linux_task.py:5: [C0111(missing-docstring), Enum4linuxTask] Missing class docstring
+************* Module enum4linux_base
+tools/acuote_ad/bases/enum4linux_base.py:1: [C0111(missing-docstring), ] Missing module docstring
+************* Module tools.acuote_ad.structs
+tools/acuote_ad/structs.py:1: [C0111(missing-docstring), ] Missing module docstring
+tools/acuote_ad/structs.py:1: [C0111(missing-docstring), Enum4linuxResult] Missing class docstring
+tools/acuote_ad/structs.py:1: [R0903(too-few-public-methods), Enum4linuxResult] Too few public methods (0/2)
+tools/acuote_ad/structs.py:41: [C0103(invalid-name), Enum4linuxOS.__init__] Invalid attribute name "os"
+tools/acuote_ad/structs.py:37: [C0111(missing-docstring), Enum4linuxOS] Missing class docstring
+tools/acuote_ad/structs.py:37: [R0903(too-few-public-methods), Enum4linuxOS] Too few public methods (0/2)
+tools/acuote_ad/structs.py:51: [C0111(missing-docstring), Enum4linuxUser] Missing class docstring
+tools/acuote_ad/structs.py:52: [R0913(too-many-arguments), Enum4linuxUser.__init__] Too many arguments (7/5)
+tools/acuote_ad/structs.py:51: [R0903(too-few-public-methods), Enum4linuxUser] Too few public methods (0/2)
+tools/acuote_ad/structs.py:72: [C0111(missing-docstring), Enum4linuxShare] Missing class docstring
+tools/acuote_ad/structs.py:72: [R0903(too-few-public-methods), Enum4linuxShare] Too few public methods (0/2)
+tools/acuote_ad/structs.py:90: [C0111(missing-docstring), Enum4linuxGroup] Missing class docstring
+tools/acuote_ad/structs.py:90: [R0903(too-few-public-methods), Enum4linuxGroup] Too few public methods (0/2)
+tools/acuote_ad/structs.py:106: [C0111(missing-docstring), Enum4linuxPasswordPolicy] Missing class docstring
+tools/acuote_ad/structs.py:106: [R0902(too-many-instance-attributes), Enum4linuxPasswordPolicy] Too many instance attributes (13/7)
+tools/acuote_ad/structs.py:111: [R0913(too-many-arguments), Enum4linuxPasswordPolicy.__init__] Too many arguments (14/5)
+tools/acuote_ad/structs.py:106: [R0903(too-few-public-methods), Enum4linuxPasswordPolicy] Too few public methods (0/2)
+************* Module tools.acuote_ad.tool
+tools/acuote_ad/tool.py:30: [W0212(protected-access), AucoteActiveDirectory.call] Access to a protected member _cfg of a client class
+tools/acuote_ad/tool.py:31: [W0212(protected-access), AucoteActiveDirectory.call] Access to a protected member _cfg of a client class
+tools/acuote_ad/tool.py:59: [C0111(missing-docstring), AucoteActiveDirectory.resolve_nodes] Missing method docstring
+************* Module utils.async_crontab_task
+utils/async_crontab_task.py:11: [R0902(too-many-instance-attributes), AsyncCrontabTask] Too many instance attributes (8/7)
+utils/async_crontab_task.py:102: [W0703(broad-except), AsyncCrontabTask.__call__] Catching too general exception Exception
+utils/async_crontab_task.py:54: [R0912(too-many-branches), AsyncCrontabTask.__call__] Too many branches (13/12)
+************* Module utils.http_client
+utils/http_client.py:173: [C0305(trailing-newlines), ] Trailing newlines
+utils/http_client.py:169: [E1101(no-member), HTTPClient.request] Module 'ujson' has no 'dumps' member
+utils/http_client.py:9: [W0611(unused-import), ] Unused HTTPError imported from tornado.httpclient
+************* Module utils.topdis
+utils/topdis.py:41: [E1101(no-member), Topdis.get_nodes] Module 'ujson' has no 'loads' member
+utils/topdis.py:52: [C0103(invalid-name), Topdis.get_nodes] Invalid variable name "os"
+utils/topdis.py:59: [W0702(bare-except), Topdis.get_nodes] No exception type(s) specified
+utils/topdis.py:17: [R0903(too-few-public-methods), Topdis] Too few public methods (1/2)
+utils/topdis.py:8: [C0411(wrong-import-order), ] standard import "import ipaddress" should be placed before "import ujson"
+utils/topdis.py:14: [C0412(ungrouped-imports), ] Imports from package utils are not grouped
+************* Module utils.storage
+utils/storage.py:687: [C0330(bad-continuation), ] Wrong hanging indentation in dict value.
+                               {'protocol': scan.protocol, 'scanner_name': scan.scanner}})
+                               ^ |   |
+utils/storage.py:1126: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'node_id': sec_scan.node.id,
+                               |    ^
+utils/storage.py:1127: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'node_ip': sec_scan.node.ip,
+                               |    ^
+utils/storage.py:1128: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'port_number': sec_scan.port.number,
+                               |    ^
+utils/storage.py:1129: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'port_protocol': sec_scan.port.transport_protocol,
+                               |    ^
+utils/storage.py:1130: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'exploit_id': sec_scan.exploit.id,
+                               |    ^
+utils/storage.py:1131: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'exploit_app': sec_scan.exploit.app,
+                               |    ^
+utils/storage.py:1132: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'exploit_name': sec_scan.exploit.name,
+                               |    ^
+utils/storage.py:1133: [C0330(bad-continuation), ] Wrong hanging indentation.
+                                }})
+                           |   |^
+utils/storage.py:1148: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'node_id': vuln.port.node.id,
+                               |    ^
+utils/storage.py:1149: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'node_ip': vuln.port.node.ip,
+                               |    ^
+utils/storage.py:1150: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'port': vuln.port.number,
+                               |    ^
+utils/storage.py:1151: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'port_protocol': vuln.port.transport_protocol,
+                               |    ^
+utils/storage.py:1152: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'vulnerability_id': vuln.exploit.id,
+                               |    ^
+utils/storage.py:1153: [C0330(bad-continuation), ] Wrong hanging indentation (remove 5 spaces).
+                                    'vulnerability_subid': vuln.subid,
+                               |    ^
+utils/storage.py:1154: [C0330(bad-continuation), ] Wrong hanging indentation.
+                                }})
+                           |   |^
+utils/storage.py:1: [C0302(too-many-lines), ] Too many lines in module (1170/1000)
+utils/storage.py:132: [C0111(missing-docstring), Storage.get_last_rowid] Missing method docstring
+utils/storage.py:176: [C0103(invalid-name), Storage._select_where] Invalid variable name "op"
+utils/storage.py:154: [R0912(too-many-branches), Storage._select_where] Too many branches (16/12)
+utils/storage.py:216: [R0913(too-many-arguments), Storage.select] Too many arguments (6/5)
+utils/storage.py:269: [C0111(missing-docstring), Storage.scans] Missing method docstring
+utils/storage.py:272: [C0111(missing-docstring), Storage.nodes_scans] Missing method docstring
+utils/storage.py:275: [C0111(missing-docstring), Storage.ports_scans] Missing method docstring
+utils/storage.py:278: [C0111(missing-docstring), Storage.security_scans] Missing method docstring
+utils/storage.py:281: [C0111(missing-docstring), Storage.vulnerabilities] Missing method docstring
+utils/storage.py:284: [C0111(missing-docstring), Storage.select_by_id] Missing method docstring
+utils/storage.py:288: [C0111(missing-docstring), Storage.scan_by_id] Missing method docstring
+utils/storage.py:291: [C0111(missing-docstring), Storage.vulnerability_by_id] Missing method docstring
+utils/storage.py:294: [C0111(missing-docstring), Storage.node_scan_by_id] Missing method docstring
+utils/storage.py:297: [C0111(missing-docstring), Storage.port_scan_by_id] Missing method docstring
+utils/storage.py:300: [C0111(missing-docstring), Storage.security_scan_by_id] Missing method docstring
+utils/storage.py:722: [R0913(too-many-arguments), Storage.get_ports_by_nodes] Too many arguments (6/5)
+utils/storage.py:791: [R0201(no-self-use), Storage._transport_protocol] Method could be a function
+utils/storage.py:807: [R0201(no-self-use), Storage._protocol_to_iana] Method could be a function
+utils/storage.py:19: [R0904(too-many-public-methods), Storage] Too many public methods (52/20)
+************* Module utils.time
+utils/time.py:17: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\d'. String constant might be missing an r prefix.
+************* Module utils.async_task_manager
+utils/async_task_manager.py:144: [W0702(bare-except), AsyncTaskManager.process_tasks] No exception type(s) specified
+utils/async_task_manager.py:175: [W0212(protected-access), AsyncTaskManager.unfinished_tasks] Access to a protected member _unfinished_tasks of a client class
+************* Module utils.toucan
+utils/toucan.py:35: [E1101(no-member), Toucan._handle_exception] Module 'ujson' has no 'loads' member
+utils/toucan.py:27: [R0201(no-self-use), Toucan._handle_exception] Method could be a function
+utils/toucan.py:142: [E1101(no-member), Toucan.proceed_response] Module 'ujson' has no 'loads' member
+utils/toucan.py:227: [R0201(no-self-use), Toucan.is_special] Method could be a function
+************* Module utils.config
+utils/config.py:18: [C0111(missing-docstring), ToucanConsumer] Missing class docstring
+utils/config.py:127: [E1101(no-member), Config._from_toucan] Instance of 'closing' has no 'run_sync' member
+utils/config.py:288: [C0111(missing-docstring), Config.start_rabbit] Missing method docstring
+************* Module what_web_fetch_cpes
+scripts/what_web_fetch_cpes.py:1: [C0111(missing-docstring), ] Missing module docstring
+scripts/what_web_fetch_cpes.py:6: [C0103(invalid-name), ] Invalid constant name "app_name"
+scripts/what_web_fetch_cpes.py:7: [C0103(invalid-name), ] Invalid constant name "result"
+scripts/what_web_fetch_cpes.py:8: [C0103(invalid-name), ] Invalid constant name "cves"
+scripts/what_web_fetch_cpes.py:4: [C0411(wrong-import-order), ] standard import "import re" should be placed before "from requests import get"
+************* Module structs
+structs.py:20: [R0913(too-many-arguments), Scan.__init__] Too many arguments (6/5)
+structs.py:100: [C0103(invalid-name), Node.__init__] Invalid attribute name "ip"
+structs.py:101: [C0103(invalid-name), Node.__init__] Invalid attribute name "id"
+structs.py:103: [C0103(invalid-name), Node.__init__] Invalid attribute name "os"
+structs.py:85: [R0903(too-few-public-methods), Node] Too few public methods (1/2)
+structs.py:144: [R0903(too-few-public-methods), NodeScan] Too few public methods (0/2)
+structs.py:160: [R0903(too-few-public-methods), PortScan] Too few public methods (1/2)
+structs.py:195: [R0913(too-many-arguments), SecurityScan.__init__] Too many arguments (7/5)
+structs.py:190: [R0903(too-few-public-methods), SecurityScan] Too few public methods (1/2)
+structs.py:405: [W0212(protected-access), Service.copy] Access to a protected member _cpe of a client class
+structs.py:485: [C0103(invalid-name), CPEType] Invalid class attribute name "OS"
+structs.py:488: [R0902(too-many-instance-attributes), Port] Too many instance attributes (13/7)
+structs.py:596: [C0103(invalid-name), SpecialPort] Invalid class attribute name "IP"
+structs.py:627: [R0902(too-many-instance-attributes), Vulnerability] Too many instance attributes (10/7)
+structs.py:639: [R0913(too-many-arguments), Vulnerability.__init__] Too many arguments (10/5)
+structs.py:627: [R0903(too-few-public-methods), Vulnerability] Too few public methods (1/2)
+structs.py:753: [R0913(too-many-arguments), VulnerabilityChangeBase.__init__] Too many arguments (8/5)
+************* Module config
+.ropeproject/config.py:1: [C0111(missing-docstring), ] Missing module docstring
+.ropeproject/config.py:110: [W0613(unused-argument), project_opened] Unused argument 'project'
+************* Module aucote
+aucote.py:109: [R0902(too-many-instance-attributes), Aucote] Too many instance attributes (8/7)
+aucote.py:159: [W0212(protected-access), Aucote.run_scan] Access to a protected member _scan_cron of a client class
+aucote.py:164: [W0212(protected-access), Aucote.run_scan] Access to a protected member _scan_cron of a client class
+aucote.py:246: [W0613(unused-argument), Aucote.graceful_stop] Unused argument 'sig'
+aucote.py:246: [W0613(unused-argument), Aucote.graceful_stop] Unused argument 'frame'
+aucote.py:269: [W0212(protected-access), Aucote.kill] Access to a protected member _exit of a client class
+aucote.py:32: [C0411(wrong-import-order), ] standard import "import asyncio" should be placed before "from tornado import gen"
+aucote.py:31: [C0412(ungrouped-imports), ] Imports from package tornado are not grouped
+************* Module aucote_cfg
+aucote_cfg.py:58: [C0103(invalid-name), ] Invalid constant name "cfg"
+aucote_cfg.py:102: [W0703(broad-except), load] Catching too general exception Exception
+aucote_cfg.py:115: [W0703(broad-except), load] Catching too general exception Exception
+aucote_cfg.py:1: [R0401(cyclic-import), ] Cyclic import (scans.executor_config -> tools.whatweb.tool -> tools.whatweb.tasks -> scans.task_mapper)
+aucote_cfg.py:1: [R0801(duplicate-code), ] Similar lines in 2 files
+==tools.nmap.tasks.port_info:52
+==tools.nmap.tasks.port_scan:63
+        ]
+
+        if self._port.transport_protocol == TransportProtocol.TCP:
+            args.append('-sS')
+
+        elif self._port.transport_protocol == TransportProtocol.UDP:
+            args.append('-sU')
+
+aucote_cfg.py:1: [R0801(duplicate-code), ] Similar lines in 2 files
+==tools.masscan.ports:37
+==tools.nmap.ports:45
+        include_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.tcp.ports.include'],
+                                                      udp=self.udp and cfg['portdetection.udp.ports.include'])
+
+        exclude_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.tcp.ports.exclude'],
+                                                      udp=self.udp and cfg['portdetection.udp.ports.exclude'])
+
+        if not include_ports:
+            raise StopCommandException("No ports for scan")
+
+------------------------------------------------------------------
+Your code has been rated at 9.14/10 (previous run: 9.14/10, +0.00)
+
