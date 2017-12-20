@@ -1,4 +1,4 @@
-from pycslib.utils import Portscan
+from pycslib.scan_engines import Portscan
 from pycslib.utils.nmap import ports_to_string
 
 from aucote_cfg import cfg

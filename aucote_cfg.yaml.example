@@ -102,3 +102,9 @@ rabbit:
     port: 5672
     username: guest
     password: guest
+
+# TCP portscan is a remote scanning service used for TCP portdetection
+
+tcpportscan:
+    host: portscan
+    port: 1339

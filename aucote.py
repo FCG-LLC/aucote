@@ -156,8 +156,11 @@ class Aucote(object):
             self._storage.init_schema()
             self.ioloop.add_callback(self.web_server.run)
 
+            tcp_host = cfg['tcpportscan.host'].cfg
+            tcp_port = cfg['tcpportscan.port'].cfg
+
             self.scanners = [
-                TCPScanner(aucote=self, as_service=as_service),
+                TCPScanner(host=tcp_host, port=tcp_port, aucote=self, as_service=as_service),
                 UDPScanner(aucote=self, as_service=as_service)
             ]
 

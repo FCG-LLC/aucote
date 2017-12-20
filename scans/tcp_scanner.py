@@ -9,9 +9,11 @@ class TCPScanner(Scanner):
     PROTOCOL = TransportProtocol.TCP
     NAME = 'tcp'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, host, port, *args, **kwargs):
         super(TCPScanner, self).__init__(*args, **kwargs)
-        self._tcp_scanner = PortscanScanner('localhost', 1339, IOLoop.current().instance())
+        self.host = host
+        self.port = port
+        self._tcp_scanner = PortscanScanner(self.host, self.port, IOLoop.current().instance())
 
     @property
     def scanners(self):
