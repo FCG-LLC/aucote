@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 from pycslib.scan_engines import Portscan
 from pycslib.utils.nmap import ports_to_string
 
@@ -9,6 +11,7 @@ from tools.nmap.tool import NmapTool
 class PortscanScanner(object):
     def __init__(self, host, port, io_loop):
         self.portscan = Portscan(host, port, io_loop)
+        self.command = namedtuple('command', 'NAME')('portscan')
         io_loop.add_callback(self.portscan.connect)
 
     async def scan_ports(self, nodes):

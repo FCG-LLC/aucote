@@ -7,17 +7,13 @@ from scans.tcp_scanner import TCPScanner
 class TCPScannerTest(TestCase):
     def setUp(self):
         self.aucote = MagicMock()
-        self.scanner = TCPScanner(aucote=self.aucote, as_service=False)
+        self.scanner = TCPScanner(aucote=self.aucote, as_service=False, host='localhost', port=1339)
 
-    @patch('scans.tcp_scanner.MasscanPorts')
-    @patch('scans.tcp_scanner.PortsScan')
-    def test_scanners(self, scan, masscan):
+    def test_scanners(self):
         result = self.scanner.scanners
         expected = {
-            self.scanner.IPV4: [masscan.return_value],
-            self.scanner.IPV6: [scan.return_value]
+            self.scanner.IPV4: [self.scanner._tcp_scanner],
+            self.scanner.IPV6: [self.scanner._tcp_scanner]
         }
 
         self.assertEqual(result, expected)
-        scan.assert_called_once_with(ipv6=True, tcp=True, udp=False)
-        masscan.assert_called_once_with(udp=False)

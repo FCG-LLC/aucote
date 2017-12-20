@@ -18,7 +18,7 @@ class ScannersHandlerTest(AsyncHTTPTestCase):
 
     def get_app(self):
         self.aucote = MagicMock()
-        self.scanner = TCPScanner(aucote=self.aucote)
+        self.scanner = TCPScanner(aucote=self.aucote, host='localhost', port=1339)
         self.scanner.NAME = 'test_name'
         self.scanner.scan_start = 1290
         self.scanner.nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))]
@@ -61,7 +61,7 @@ class ScannersHandlerTest(AsyncHTTPTestCase):
             'previous_scan': 1260,
             'previous_scan_human': '1970-01-01T00:21:00+00:00',
             'scan': 'test_name',
-            'scanners': {'IPv4': ['masscan'], 'IPv6': ['nmap']},
+            'scanners': {'IPv4': ['portscan'], 'IPv6': ['portscan']},
             'status': 'IDLE'
         }
         response = self.fetch('/api/v1/scanner/test_name', method='GET')
