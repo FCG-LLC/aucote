@@ -22,9 +22,12 @@ class PortsScan(PortScanTask):
         self.tcp = tcp
         super(PortsScan, self).__init__(NmapBase())
 
-    def prepare_args(self, nodes):
+    async def prepare_args(self, nodes):
         args = ['-Pn']
-        rate = str(cfg['portdetection.tcp.scan_rate'] if self.tcp else cfg['portdetection.udp.scan_rate'])
+
+        base_rate = cfg['portdetection.tcp.scan_rate'] if self.tcp else cfg['portdetection.udp.scan_rate']
+        throttling = await cfg.toucan.get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
+        rate = str(int(float(throttling) * int(base_rate)))
 
         if self.ipv6:
             args.append('-6')

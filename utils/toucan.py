@@ -42,7 +42,7 @@ class Toucan(object):
 
     @retry_if_fail(min_retry_time=min_retry_time, max_retry_time=max_retry_time, max_retries=max_retry_count,
                    exceptions=ToucanConnectionException)
-    async def get(self, key):
+    async def get(self, key, add_prefix=True):
         """
         Get config from toucan
 
@@ -56,7 +56,7 @@ class Toucan(object):
             ToucanConnectionException
 
         """
-        toucan_key = self._get_slash_separated_key(key, strip_slashes=True)
+        toucan_key = self._get_slash_separated_key(key, strip_slashes=True, add_prefix=add_prefix)
 
         try:
             response = await self._http_client.get(url="{api}/config/{key}".format(api=self.api, key=toucan_key))

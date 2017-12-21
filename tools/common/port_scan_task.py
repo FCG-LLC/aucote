@@ -19,7 +19,7 @@ class PortScanTask(object):
     def __init__(self, command):
         self.command = command
 
-    def prepare_args(self, nodes):
+    async def prepare_args(self, nodes):
         """
         Prepare args for command execution
 
@@ -48,7 +48,7 @@ class PortScanTask(object):
             return []
 
         try:
-            args = self.prepare_args(nodes)
+            args = await self.prepare_args(nodes)
         except StopCommandException:
             log.exception("Cannot execute command")
             return []
