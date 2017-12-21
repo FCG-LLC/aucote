@@ -29,6 +29,9 @@ class PortsScan(PortScanTask):
         throttling = await cfg.toucan.get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
         rate = str(int(float(throttling) * int(base_rate)))
 
+        if rate == '0':
+            raise StopCommandException("Cancel scan due to low throttling rate {}".format(throttling))
+
         if self.ipv6:
             args.append('-6')
 

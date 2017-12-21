@@ -6,10 +6,12 @@ from functools import partial
 import logging as log
 
 from tornado import gen
+from tornado.gen import sleep
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
 from tornado.queues import Queue
 
+from aucote_cfg import cfg
 from utils.async_crontab_task import AsyncCrontabTask
 
 
@@ -22,6 +24,7 @@ class AsyncTaskManager(object):
 
     """
     _instance = None
+    THROTTLE_POLL_TIME = 60
 
     def __init__(self, parallel_tasks=10):
         self._shutdown_condition = Event()
@@ -29,8 +32,10 @@ class AsyncTaskManager(object):
         self._cron_tasks = {}
         self._parallel_tasks = parallel_tasks
         self._tasks = Queue()
-        self._task_workers = []
+        self._task_workers = {}
         self._events = {}
+        self._limit = self._parallel_tasks
+        self._next_task_number = 0
 
     @classmethod
     def instance(cls, *args, **kwargs):
@@ -67,7 +72,10 @@ class AsyncTaskManager(object):
             task.start()
 
         for number in range(self._parallel_tasks):
-            self._task_workers.append(IOLoop.current().add_callback(partial(self.process_tasks, number)))
+            self._task_workers[number] = IOLoop.current().add_callback(partial(self.process_tasks, number))
+
+        self._next_task_number = self._parallel_tasks
+        IOLoop.current().add_callback(self.monitor_limit)
 
     def add_crontab_task(self, task, cron, event=None):
         """
@@ -148,6 +156,12 @@ class AsyncTaskManager(object):
                 self._tasks.task_done()
                 log.debug("Tasks left in queue: %s", self.unfinished_tasks)
                 self._task_workers[number] = None
+
+                if self._limit < len(self._task_workers):
+                    break
+
+        del self._task_workers[number]
+
         log.info("Closing worker %s", number)
 
     def add_task(self, task):
@@ -184,3 +198,20 @@ class AsyncTaskManager(object):
 
         """
         return self._cron_tasks.keys()
+
+    async def monitor_limit(self):
+        """
+        Update workers limit and start new if possible
+        """
+        throttling = await cfg.toucan.get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
+        self._limit = round(self._parallel_tasks * float(throttling))
+
+        current_tasks = len(self._task_workers)
+
+        for number in range(self._limit - current_tasks):
+            self._task_workers[self._next_task_number] = None
+            IOLoop.current().add_callback(partial(self.process_tasks, self._next_task_number))
+            self._next_task_number += 1
+
+        await sleep(self.THROTTLE_POLL_TIME)
+        IOLoop.current().add_callback(self.monitor_limit)

@@ -22,7 +22,7 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.task_manager._stop_condition = MagicMock()
         self.task_manager._cron_tasks['task_1'] = self.task_1
         self.task_manager._cron_tasks['task_2'] = self.task_2
-        self.task_manager._task_workers = [None]
+        self.task_manager._task_workers = {0: None}
 
     def tearDown(self):
         self.task_manager.clear()

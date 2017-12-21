@@ -49,8 +49,8 @@ class PortScanTask(object):
 
         try:
             args = await self.prepare_args(nodes)
-        except StopCommandException:
-            log.exception("Cannot execute command")
+        except StopCommandException as exception:
+            log.warning("Cannot execute command: %s", str(exception))
             return []
 
         try:
