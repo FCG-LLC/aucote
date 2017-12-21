@@ -6,6 +6,7 @@ import subprocess
 import time
 import logging as log
 
+from aucote_cfg import cfg
 from structs import Scan, Vulnerability
 from tools.common.port_task import PortTask
 from utils.exceptions import StopCommandException
@@ -55,8 +56,10 @@ class CommandTask(PortTask):
             log.exception("Cannot execute command")
             return None
 
+        timeout = cfg['tools.{}.timeout'.format(self.command.NAME)]
+
         try:
-            results = await self.command.async_call(args)
+            results = await self.command.async_call(args, timeout=timeout)
         except subprocess.CalledProcessError as exception:
             self._port.scan = Scan(0, 0)
             self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port, scan=self._scan)

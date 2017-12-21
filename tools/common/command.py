@@ -10,6 +10,7 @@ from tornado import process
 
 from aucote_cfg import cfg
 from tools.common.parsers import Parser
+from utils.exceptions import NonXMLOutputException
 
 
 class Command(object):
@@ -25,14 +26,9 @@ class Command(object):
     CMD = None
     parser = Parser()
 
-    def call(self, args=None):
+    def call(self, args=None, timeout=None):
         """
         Calls system command and return parsed output or standard error output
-
-        Args:
-            args (list):
-
-        Returns:
 
         """
         if args is None:
@@ -44,7 +40,7 @@ class Command(object):
         cmd = ' '.join(all_args),
         log.debug('Executing: %s', cmd)
 
-        proc = subprocess.run(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.run(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
         return_code, stdout, stderr = proc.returncode, proc.stdout, proc.stderr
 
         if return_code != 0:
@@ -55,15 +51,9 @@ class Command(object):
 
         return self.parser.parse(stdout.decode('utf-8'), stderr.decode('utf-8'))
 
-    @gen.coroutine
-    def async_call(self, args=None):
+    async def async_call(self, args=None, timeout=None):
         """
-        Calls system command and return parsed output or standard error output
-
-        Args:
-            args (list):
-
-        Returns:
+        Calls system command and return parsed output or standard error outpu
 
         """
         if args is None:
@@ -77,9 +67,19 @@ class Command(object):
 
         task = process.Subprocess(all_args, stderr=process.Subprocess.STREAM, stdout=process.Subprocess.STREAM)
 
-        return_code, stdout, stderr = yield gen.multi([task.wait_for_exit(raise_error=False),
-                                                       task.stdout.read_until_close(),
-                                                       task.stderr.read_until_close()])
+        coroutine = gen.multi([task.wait_for_exit(raise_error=False),
+                               task.stdout.read_until_close(),
+                               task.stderr.read_until_close()])
+
+        if not timeout:
+            return_code, stdout, stderr = await coroutine
+        else:
+            try:
+                return_code, stdout, stderr = await gen.with_timeout(timeout, coroutine)
+            except gen.TimeoutError as exception:
+                log.exception("Command %s timed out while executing %s", self.NAME, cmd)
+                task.proc.kill()
+                raise exception
 
         if return_code != 0:
             log.warning("Command '%s' failed wit exit code: %s", cmd, return_code)

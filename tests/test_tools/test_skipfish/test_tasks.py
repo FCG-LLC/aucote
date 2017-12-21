@@ -1,6 +1,4 @@
 import ipaddress
-import subprocess
-from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from tornado.concurrent import Future
@@ -42,15 +40,17 @@ class SkipfishScanTaskTest(AsyncTestCase):
         self.task.store_scan_end = MagicMock()
 
     @patch('time.time', MagicMock(return_value=27.0))
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.skipfish.tasks.cfg', new_callable=Config)
     @gen_test
-    async def test_storage(self, cfg):
-        cfg._cfg = {
+    async def test_storage(self, cfg, cfg_comm_task):
+        cfg_comm_task._cfg = cfg._cfg = {
             'tools': {
                 'skipfish': {
                     'threads': 30,
                     'limit': 0,
-                    'tmp_directory': '/tmp'
+                    'tmp_directory': '/tmp',
+                    'timeout': 0
                 }
             }
         }

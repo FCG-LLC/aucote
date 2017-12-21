@@ -241,6 +241,7 @@ portdetection:
 #       module1: - list of networks, which should be scanned by module/script. This option overwrite tools.app.networks!
 #         - <address/mask> - ip address of restricted network
 #         - <address/mask>
+#     timeout: <int> - defines maximum time for waiting on task execution
 #   common: - Contains common configuration e.g. rates
 #     rate: <int> - rate in pps for tools scan
 #     active-directory: - Configuration related to active directory scans
@@ -284,6 +285,7 @@ portdetection:
 tools:
     nmap:
         cmd: nmap
+        timeout: 7200  # 2 hours
         enable: True
         period: 1d
         scripts_dir: ./static/nmap/
@@ -293,9 +295,11 @@ tools:
         script_networks: {}
     masscan:
         cmd: masscan
+        timeout: 7200  # 2 hours
         args: []
     hydra:
         cmd: hydra
+        timeout: 7200  # 2 hours
         loginfile: static/logins.hydra.txt
         passwordfile: static/passwords.hydra.txt
         enable: False
@@ -309,6 +313,7 @@ tools:
         script_networks: {}
     skipfish:
         cmd: skipfish
+        timeout: 7200  # 2 hours
         enable: False
         limit: 0:10:00
         threads: 5
@@ -325,6 +330,7 @@ tools:
         script_networks: {}
     testssl:
         cmd: testssl
+        timeout: 7200  # 2 hours
         enable: True
         period: 0s
         periods: {}
@@ -332,6 +338,7 @@ tools:
         script_networks: {}
     whatweb:
         cmd: whatweb
+        timeout: 7200  # 2 hours
         enable: True
         period: 0s
         periods: {}

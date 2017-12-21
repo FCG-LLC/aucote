@@ -42,14 +42,16 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.assertEqual(self.hydra_script_task._port, self.port)
 
     @patch('time.time', MagicMock(return_value=27.0))
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.hydra.tasks.cfg', new_callable=Config)
     @gen_test
-    async def test_storage(self, cfg):
-        cfg._cfg = {
+    async def test_storage(self, cfg, cfg_cct):
+        cfg_cct._cfg = cfg._cfg = {
             'tools': {
                 'hydra': {
                     'loginfile': None,
-                    'passwordfile': None
+                    'passwordfile': None,
+                    'timeout': 0
                 }
             }
         }
