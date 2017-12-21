@@ -62,12 +62,13 @@ class CommandTask(PortTask):
 
         try:
             results = await self.command.async_call(args, timeout=timeout)
-        except (subprocess.CalledProcessError, gen.TimeoutError):
+        except subprocess.CalledProcessError:
             self._port.scan = Scan(0, 0)
             self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port, scan=self._scan)
             log.exception("Exiting process %s ", self.command.NAME)
             return None
-
+        except gen.TimeoutError:
+            return None
 
         self._port.scan.end = int(time.time())
         self.store_scan_end(exploits=self.current_exploits, port=self._port)
