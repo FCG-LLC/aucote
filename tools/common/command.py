@@ -53,7 +53,7 @@ class Command(object):
 
     async def async_call(self, args=None, timeout=None):
         """
-        Calls system command and return parsed output or standard error outpu
+        Calls system command and return parsed output or standard error output
 
         """
         if args is None:
