@@ -6,6 +6,8 @@ import subprocess
 import time
 import logging as log
 
+from tornado import gen
+
 from aucote_cfg import cfg
 from structs import Scan, Vulnerability
 from tools.common.port_task import PortTask
@@ -60,11 +62,12 @@ class CommandTask(PortTask):
 
         try:
             results = await self.command.async_call(args, timeout=timeout)
-        except subprocess.CalledProcessError as exception:
+        except (subprocess.CalledProcessError, gen.TimeoutError):
             self._port.scan = Scan(0, 0)
             self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port, scan=self._scan)
-            log.warning("Exiting process %s ", self.command.NAME, exc_info=exception)
+            log.exception("Exiting process %s ", self.command.NAME)
             return None
+
 
         self._port.scan.end = int(time.time())
         self.store_scan_end(exploits=self.current_exploits, port=self._port)
