@@ -23,16 +23,15 @@ class ToucanConsumer(RabbitConsumer):
     async def process_message(self, msg):
         result = msg.json()
         if result['status'] != 'OK':
+            log.warning('Toucan send message with error: %s', result)
             return
 
-        value = result['value']
-
         if not msg.routing_key.startswith('toucan.config.aucote.'):
+            log.warning('Unexpected routing key %s', msg.routing_key)
             return
 
         key = msg.routing_key[len('toucan.config.aucote.'):]
-
-        self.cfg[key] = value
+        self.cfg[key] = result['value']
 
         log.debug('Changing configuration key %s to %s', key, value)
 
