@@ -112,6 +112,13 @@ class AucoteCfgTest(AsyncTestCase):
                 'max_retry_time': 25,
                 'max_retry_count': 35,
                 'overwrite': False,
+            },
+            'rabbit': {
+                'enable': False,
+                'host': 'localhost',
+                'port': 5672,
+                'username': 'test_user',
+                'password': 'some_pass'
             }
         }
 
@@ -145,6 +152,13 @@ class AucoteCfgTest(AsyncTestCase):
                 'max_retry_time': 25,
                 'max_retry_count': 35,
                 'overwrite': True
+            },
+            'rabbit': {
+                'enable': False,
+                'host': 'localhost',
+                'port': 5672,
+                'username': 'test_user',
+                'password': 'some_pass'
             }
         }
 
