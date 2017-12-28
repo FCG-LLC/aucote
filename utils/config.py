@@ -31,8 +31,9 @@ class ToucanConsumer(RabbitConsumer):
             return
 
         key = msg.routing_key[len('toucan.config.aucote.'):]
-        self.cfg[key] = result['value']
+        value = result['value']
 
+        self.cfg[key] = value
         log.debug('Changing configuration key %s to %s', key, value)
 
 
