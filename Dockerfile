@@ -12,6 +12,7 @@ RUN printf "Package: * \nPin: release a=xenial, o=aptly.cs.int \nPin-Priority: 1
 
 RUN apt-get update && apt-get install -y software-properties-common python3-setuptools python3-pip python3-dev libyaml-dev libpq-dev nanomsg nanomsg-dev curl git bash
 RUN easy_install3 -U setuptools
+ADD internal_deps /internal_deps
 ADD requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt -v
 RUN pip3 install virtualenv pylint nose nose-cov bandit

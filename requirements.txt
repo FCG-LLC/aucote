@@ -15,3 +15,4 @@ cpe==1.2.1
 ujson==1.35
 async-dns==1.0.0
 defusedxml==0.5.0
+./internal_deps/py_cslib/
