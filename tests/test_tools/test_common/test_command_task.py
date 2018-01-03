@@ -7,6 +7,7 @@ from tornado.testing import gen_test, AsyncTestCase
 
 from structs import Port, Scan
 from tools.common.command_task import CommandTask
+from utils import Config
 from utils.exceptions import StopCommandException
 
 
@@ -16,7 +17,7 @@ class CommandTaskTest(AsyncTestCase):
         self.aucote = MagicMock()
         self.port = Port(node=MagicMock(), transport_protocol=None, number=None)
         self.port.scan = Scan()
-        self.command = MagicMock()
+        self.command = MagicMock(NAME='test_name')
         future = Future()
         self.future_return = MagicMock()
         future.set_result(self.future_return)
@@ -25,6 +26,13 @@ class CommandTaskTest(AsyncTestCase):
         self.scan = Scan()
         self.task = CommandTask(aucote=self.aucote, port=self.port, command=self.command, exploits=[self.exploit],
                                 scan=self.scan)
+        self.cfg = {
+            'tools': {
+                'test_name': {
+                    'timeout': 0
+                }
+            }
+        }
 
     def test_init(self):
         self.assertEqual(self.task._port, self.port)
@@ -36,22 +44,25 @@ class CommandTaskTest(AsyncTestCase):
         self.assertRaises(NotImplementedError, self.task.prepare_args)
 
     @patch('time.time', MagicMock(return_value=5))
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.common.command_task.Vulnerability')
     @gen_test
-    async def test_call_ok(self, mock_vuln):
+    async def test_call_ok(self, mock_vuln, cfg):
+        cfg._cfg = self.cfg
         self.task.prepare_args = MagicMock()
         self.task.store_vulnerability = MagicMock()
 
         await self.task()
 
-        self.command.async_call.assert_called_once_with(self.task.prepare_args())
-        mock_vuln.assert_called_once_with(exploit=self.exploit, port=self.port,
-                                                              output=self.future_return)
+        self.command.async_call.assert_called_once_with(self.task.prepare_args(), timeout=0)
+        mock_vuln.assert_called_once_with(exploit=self.exploit, port=self.port, output=self.future_return)
         self.task.store_vulnerability.assert_called_once_with(mock_vuln())
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('time.time', MagicMock(return_value=5))
     @gen_test
-    async def test_call_without_results(self):
+    async def test_call_without_results(self, cfg):
+        cfg._cfg = self.cfg
         self.task.prepare_args = MagicMock()
         self.task.store_vulnerability = MagicMock()
         future = Future()
@@ -61,9 +72,11 @@ class CommandTaskTest(AsyncTestCase):
         result = await self.task()
         self.assertEqual(result, None)
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('time.time', MagicMock(return_value=5))
     @gen_test
-    async def test_call_with_exception(self):
+    async def test_call_with_exception(self, cfg):
+        cfg._cfg = self.cfg
         self.task.prepare_args = MagicMock()
         self.task.store_vulnerability = MagicMock()
         self.command.async_call.side_effect = CalledProcessError(returncode=127, cmd='test')

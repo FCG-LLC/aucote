@@ -3,6 +3,9 @@ Base class for scanners
 
 """
 import logging as log
+
+from tornado import gen
+
 from tools.common import OpenPortsParser
 from utils.exceptions import NonXMLOutputException, StopCommandException
 
@@ -51,8 +54,10 @@ class PortScanTask(object):
             return []
 
         try:
-            xml = await self.command.async_call(args)
+            xml = await self.command.async_call(args, timeout=0)
         except NonXMLOutputException:
+            return []
+        except gen.TimeoutError:
             return []
 
         node_by_ip = {node.ip: node for node in nodes}

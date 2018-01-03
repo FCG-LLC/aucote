@@ -147,7 +147,8 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.cfg = {
             'tools': {
                 'nmap': {
-                    'scripts_dir': ''
+                    'scripts_dir': '',
+                    'timeout': 0
                 }
             }
         }
@@ -157,17 +158,19 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertEqual(self.scan_task.port, self.port)
         self.assertEqual(self.scan_task.script_classes, [self.script, self.script2])
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     @gen_test
-    async def test_tcp_scan(self, cfg):
+    async def test_tcp_scan(self, cfg, cfg_cct):
         """
         Test TCP scanning
 
         """
-        cfg._cfg = {
+        cfg_cct._cfg = cfg._cfg = {
             'tools': {
                 'nmap': {
-                    'scripts_dir': ''
+                    'scripts_dir': '',
+                    'timeout': 0
                 }
             }
         }
@@ -180,17 +183,19 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertTrue(expected.issubset(result))
         self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     @gen_test
-    async def test_tcp_scan_service_detection(self, cfg):
+    async def test_tcp_scan_service_detection(self, cfg, cfg_cct):
         """
         Test TCP scanning
 
         """
-        cfg._cfg = {
+        cfg_cct._cfg = cfg._cfg = {
             'tools': {
                 'nmap': {
-                    'scripts_dir': ''
+                    'scripts_dir': '',
+                    'timeout': 0
                 }
             }
         }
@@ -202,17 +207,19 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertTrue(expected.issubset(result))
         self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     @gen_test
-    async def test_udp_scan(self, cfg):
+    async def test_udp_scan(self, cfg, cfg_cct):
         """
         Test UDP scanning
 
         """
-        cfg._cfg = {
+        cfg_cct._cfg = cfg._cfg = {
             'tools': {
                 'nmap': {
-                    'scripts_dir': ''
+                    'scripts_dir': '',
+                    'timeout': 0
                 }
             }
         }
@@ -226,10 +233,11 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertTrue(expected.issubset(result))
         self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     @gen_test
-    async def test_no_vulnerabilities(self, cfg):
-        cfg._cfg = self.cfg
+    async def test_no_vulnerabilities(self, cfg, cfg_cct):
+        cfg_cct._cfg = cfg._cfg = self.cfg
         future = Future()
         future.set_result(ElementTree.fromstring(self.NO_VULNERABILITIES_XML))
         self.scan_task.command.async_call = MagicMock(return_value=future)
@@ -238,10 +246,11 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertFalse(self.scan_task.kudu_queue.send_msg.called)
 
     @patch('tools.nmap.tasks.port_scan.Vulnerability')
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     @gen_test
-    async def test_prescript(self, cfg, mock_vulnerability):
-        cfg._cfg = self.cfg
+    async def test_prescript(self, cfg, cfg_cct, mock_vulnerability):
+        cfg_cct._cfg = cfg._cfg = self.cfg
         future = Future()
         future.set_result(ElementTree.fromstring(self.PRESCRIPT_XML))
         self.scan_task.command.async_call = MagicMock(return_value=future)
@@ -253,10 +262,11 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertEqual(result, expected)
 
     @patch('tools.nmap.tasks.port_scan.Vulnerability')
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     @gen_test
-    async def test_hostscript(self, cfg, mock_vulnerability):
-        cfg._cfg = self.cfg
+    async def test_hostscript(self, cfg, cfg_cct, mock_vulnerability):
+        cfg_cct._cfg = cfg._cfg = self.cfg
         future = Future()
         future.set_result(ElementTree.fromstring(self.HOSTSCRIPT_XML))
         self.scan_task.command.async_call = MagicMock(return_value=future)
@@ -267,14 +277,15 @@ class NmapPortScanTaskTest(AsyncTestCase):
 
         self.assertEqual(result, expected)
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     @gen_test
-    async def test_dns_scan(self, cfg):
+    async def test_dns_scan(self, cfg, cfg_cct):
         """
         Test UDP scanning
 
         """
-        cfg._cfg = self.cfg
+        cfg_cct._cfg = cfg._cfg = self.cfg
         self.scan_task._port.number = 53
         await self.scan_task()
 
@@ -285,10 +296,11 @@ class NmapPortScanTaskTest(AsyncTestCase):
 
     @patch('time.time', MagicMock(return_value=27.0))
     @patch('tools.nmap.tasks.port_scan.Vulnerability', MagicMock())
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
     @gen_test
-    async def test_storage(self, cfg):
-        cfg._cfg = self.cfg
+    async def test_storage(self, cfg, cfg_cct):
+        cfg_cct._cfg = cfg._cfg = self.cfg
         self.scan_task._script_classes = [self.script]
         future = Future()
         future.set_result(ElementTree.fromstring(self.PRESCRIPT_XML))
@@ -304,9 +316,10 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertDictEqual(result, expected)
         self.assertEqual(self.port.scan.end, 27.0)
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_prepare_args_broadcast(self, cfg):
-        cfg._cfg = {
+    def test_prepare_args_broadcast(self, cfg, cfg_cct):
+        cfg_cct._cfg = cfg._cfg = {
             'tools': {
                 'nmap': {
                     'scripts_dir': ''
@@ -321,9 +334,10 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertTrue(expected.issubset(result))
         self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_prepare_args_physical(self, cfg):
-        cfg._cfg = {
+    def test_prepare_args_physical(self, cfg, cfg_cct):
+        cfg_cct._cfg = cfg._cfg = {
             'tools': {
                 'nmap': {
                     'scripts_dir': ''
@@ -339,9 +353,10 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertTrue(expected.issubset(result))
         self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_prepare_args_ipv6(self, cfg):
-        cfg._cfg = self.cfg
+    def test_prepare_args_ipv6(self, cfg, cfg_cct):
+        cfg_cct._cfg = cfg._cfg = self.cfg
         self.scan_task._port = self.port_ipv6
 
         result = self.scan_task.prepare_args()
@@ -349,9 +364,10 @@ class NmapPortScanTaskTest(AsyncTestCase):
 
         self.assertIn(expected, result)
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_prepare_args_scripts_dir(self, cfg):
-        cfg._cfg = {
+    def test_prepare_args_scripts_dir(self, cfg, cfg_cct):
+        cfg_cct._cfg = cfg._cfg = {
             'tools': {
                 'nmap': {
                     'scripts_dir': './test_dir/'
@@ -368,9 +384,10 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.assertTrue(expected.issubset(result))
         self.assertTrue('+test,+test2' in result or '+test2,+test' in result)
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_prepare_args_scripts_args(self, cfg):
-        cfg._cfg = {
+    def test_prepare_args_scripts_args(self, cfg, cfg_cct):
+        cfg_cct._cfg = cfg._cfg = {
             'tools': {
                 'nmap': {
                     'scripts_dir': './test_dir/'
@@ -385,9 +402,10 @@ class NmapPortScanTaskTest(AsyncTestCase):
 
         self.assertTrue('test_args,other_args' in result or 'other_args,test_args' in result)
 
+    @patch('tools.common.command_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_scan.cfg', new_callable=Config)
-    def test_prepare_no_args(self, cfg):
-        cfg._cfg = {
+    def test_prepare_no_args(self, cfg, cfg_cct):
+        cfg_cct._cfg = cfg._cfg = {
             'tools': {
                 'nmap': {
                     'scripts_dir': './test_dir/'
