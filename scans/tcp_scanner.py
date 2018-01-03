@@ -1,4 +1,4 @@
-from tornado.ioloop import IOLoop
+from asyncio import get_event_loop
 
 from scans.scanner import Scanner
 from structs import TransportProtocol
@@ -13,7 +13,7 @@ class TCPScanner(Scanner):
         super(TCPScanner, self).__init__(*args, **kwargs)
         self.host = host
         self.port = port
-        self._tcp_scanner = PortscanScanner(self.host, self.port, IOLoop.current().instance())
+        self._tcp_scanner = PortscanScanner(self.host, self.port, get_event_loop())
 
     @property
     def scanners(self):
