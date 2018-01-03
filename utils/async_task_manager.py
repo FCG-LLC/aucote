@@ -5,6 +5,7 @@ This module contains class for managing async tasks.
 from functools import partial
 import logging as log
 
+from pycslib.utils import RabbitConsumer
 from tornado import gen
 from tornado.gen import sleep
 from tornado.ioloop import IOLoop
@@ -201,10 +202,20 @@ class AsyncTaskManager(object):
 
     async def monitor_limit(self):
         """
-        Update workers limit and start new if possible
+        Poll configuration for throttling value
         """
         throttling = await cfg.toucan.get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
-        self._limit = round(self._parallel_tasks * float(throttling))
+
+        self.change_throttling(throttling)
+
+        await sleep(self.THROTTLE_POLL_TIME)
+        IOLoop.current().add_callback(self.monitor_limit)
+
+    def change_throttling(self, new_value):
+        """
+        Change throttling value
+        """
+        self._limit = round(self._parallel_tasks * float(new_value))
 
         current_tasks = len(self._task_workers)
 
@@ -213,5 +224,21 @@ class AsyncTaskManager(object):
             IOLoop.current().add_callback(partial(self.process_tasks, self._next_task_number))
             self._next_task_number += 1
 
-        await sleep(self.THROTTLE_POLL_TIME)
-        IOLoop.current().add_callback(self.monitor_limit)
+
+class ThrottlingConsumer(RabbitConsumer):
+    """
+    Throttling consumer for rabbit queue
+    """
+    def __init__(self, manager):
+        self._manager = manager
+        super(ThrottlingConsumer, self).__init__('toucan', 'topic', 'toucan.config.throttling.rate')
+
+    async def process_message(self, msg):
+        """
+        Process message and set new throttling value
+        """
+        if msg.routing_key != 'toucan.config.throttling.rate':
+            return
+        value = float(msg.json()['value'])
+        log.info("Changing scan throttling to %s", value)
+        self._manager.change_throttling(value)

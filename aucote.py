@@ -20,7 +20,7 @@ from scans.executor_config import EXECUTOR_CONFIG
 from scans.tcp_scanner import TCPScanner
 from scans.tools_scanner import ToolsScanner
 from scans.udp_scanner import UDPScanner
-from utils.async_task_manager import AsyncTaskManager
+from utils.async_task_manager import AsyncTaskManager, ThrottlingConsumer
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
 from utils.kudu_queue import KuduQueue
@@ -124,6 +124,8 @@ class Aucote(object):
         self.ioloop = IOLoop.current()
         self.topdis = Topdis(cfg['topdis.api.host'], cfg['topdis.api.port'])
         self.async_task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
+        self._throttling_consumer = ThrottlingConsumer(manager=self.async_task_manager)
+        cfg.add_rabbit_consumer(self._throttling_consumer)
         self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'])
         self.scanners = []
 
