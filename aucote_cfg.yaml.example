@@ -104,6 +104,9 @@ rabbit:
     password: guest
 
 # TCP portscan is a remote scanning service used for TCP portdetection
+# tcpportscan:
+#   host: <str>
+#   port: <int>
 
 tcpportscan:
     host: portscan
