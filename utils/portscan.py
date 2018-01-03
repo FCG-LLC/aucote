@@ -23,12 +23,10 @@ class PortscanScanner(object):
 
         task = {str(node.ip): ports_to_string(set(ports)) for node in nodes}
 
-        result = await self.portscan.send(task)
-        if isinstance(result, Exception):
-            raise result
+        found_ports = await self.portscan.send(task)
 
         return list({
             Port(number=port, node=node, transport_protocol=TransportProtocol.TCP, scan=Scan(start=node.scan.start))
             for node in nodes
-            for port in result.get(str(node.ip))
+            for port in found_ports.get(str(node.ip))
         })
