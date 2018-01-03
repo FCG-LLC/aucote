@@ -87,3 +87,18 @@ toucan:
     max_retry_count: 20
     api: http://toucan:3000
     overwrite: False
+
+# RabbitMQ is used for obtaining real-time information from other services
+# rabbit:
+#   enable: <bool>
+#   host: <str>
+#   port: <int>
+#   username: <str>
+#   password: <str>
+
+rabbit:
+    enable: True
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest

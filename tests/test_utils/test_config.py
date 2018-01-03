@@ -1,10 +1,13 @@
 from unittest.mock import MagicMock, patch, mock_open
 
+import json
+from asynqp import IncomingMessage
 from coverage.backunittest import TestCase
 from tornado.concurrent import Future
-from tornado.ioloop import IOLoop
+from tornado.testing import AsyncTestCase, gen_test
 
 from utils import Config
+from utils.config import ToucanConsumer
 from utils.exceptions import ToucanException
 
 
@@ -286,4 +289,28 @@ class ConfigTest(TestCase):
         partial.assert_called_once_with(self.config.toucan.get, 'test')
         ioloop().run_sync.assert_called_once_with(partial())
         ioloop().close.assert_called_once_with()
+        self.assertEqual(result, expected)
+
+
+class ToucanConsumerTest(AsyncTestCase):
+    def setUp(self):
+        super(ToucanConsumerTest, self).setUp()
+        self.cfg = Config()
+        self.consumer = ToucanConsumer(self.cfg)
+
+    @gen_test
+    async def test_process_message(self):
+        message_body = {
+            'status': 'OK',
+            'value': 'test_value',
+            'key': '/aucote/example/key'
+        }
+        message = IncomingMessage(sender=MagicMock(), delivery_tag=1, exchange_name='toucan',
+                                  routing_key='toucan.config.aucote.example.key',
+                                  body=json.dumps(message_body).encode('utf-8'))
+
+        await self.consumer.process_message(message)
+        result = self.cfg['example.key']
+        expected = 'test_value'
+
         self.assertEqual(result, expected)

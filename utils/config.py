@@ -4,13 +4,37 @@ Configuration related module
 """
 import time
 import logging as log
+from asyncio import get_event_loop, ensure_future
 from functools import partial
 
 import contextlib
 import yaml
 from tornado.ioloop import IOLoop
 
+from pycslib.utils import RabbitConsumer, Rabbit
 from utils.exceptions import ToucanException
+
+
+class ToucanConsumer(RabbitConsumer):
+    def __init__(self, cfg):
+        self.cfg = cfg
+        super(ToucanConsumer, self).__init__('toucan', 'topic', 'toucan.config.aucote.#')
+
+    async def process_message(self, msg):
+        result = msg.json()
+        if result['status'] != 'OK':
+            log.warning('Toucan send message with error: %s', result)
+            return
+
+        if not msg.routing_key.startswith('toucan.config.aucote.'):
+            log.warning('Unexpected routing key %s', msg.routing_key)
+            return
+
+        key = msg.routing_key[len('toucan.config.aucote.'):]
+        value = result['value']
+
+        self.cfg[key] = value
+        log.debug('Changing configuration key %s to %s', key, value)
 
 
 class Config:
@@ -27,6 +51,7 @@ class Config:
         self.push_config(cfg, immutable=True)
         self.default = self._cfg.copy()
         self.toucan = None
+        self.rabbit = None
         self.cache_time = cache_time
 
     def __len__(self):
@@ -259,3 +284,14 @@ class Config:
 
             if immutable:
                 self._immutable.add(new_key)
+
+    async def start_rabbit(self, host, port, username, password):
+        io_loop = get_event_loop()
+        self.rabbit = Rabbit(host=host, port=port, username=username, password=password, ioloop=io_loop)
+        await self.rabbit.connect()
+        self.rabbit.start_monitoring()
+
+        consumer = ToucanConsumer(self)
+
+        ensure_future(self.rabbit.add_consumer(consumer))
+        ensure_future(consumer.consume())

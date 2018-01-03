@@ -74,6 +74,9 @@ async def start_toucan(default_config):
     Toucan.max_retry_count = cfg['toucan.max_retry_count']
 
     cfg.toucan = Toucan(api=cfg['toucan.api'])
+    if cfg['rabbit.enable']:
+        await cfg.start_rabbit(cfg['rabbit.host'], int(cfg['rabbit.port']), cfg['rabbit.username'],
+                               cfg['rabbit.password'])
 
     with open(default_config, "r") as file:
         config = yaml.safe_load(file)
