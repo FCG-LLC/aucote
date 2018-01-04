@@ -12,6 +12,8 @@ import fcntl
 
 import signal
 from unittest.mock import MagicMock
+
+from functools import partial
 from tornado import gen
 from tornado.ioloop import IOLoop
 
@@ -123,9 +125,12 @@ class Aucote(object):
 
         self.ioloop = IOLoop.current()
         self.topdis = Topdis(cfg['topdis.api.host'], cfg['topdis.api.port'])
+
         self.async_task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
         self._throttling_consumer = ThrottlingConsumer(manager=self.async_task_manager)
-        cfg.add_rabbit_consumer(self._throttling_consumer)
+        self.ioloop.add_callback(partial(cfg.add_rabbit_consumer, self._throttling_consumer))
+        self.ioloop.add_callback(self._throttling_consumer.consume)
+
         self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'])
         self.scanners = []
 
