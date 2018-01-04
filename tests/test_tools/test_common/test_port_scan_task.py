@@ -15,9 +15,11 @@ class PortScanTaskTest(AsyncTestCase):
         super(PortScanTaskTest, self).setUp()
         self.command = MagicMock()
         self.task = PortScanTask(self.command)
-    
-    def test_prepare_args(self):
-        self.assertRaises(NotImplementedError, self.task.prepare_args, [])
+
+    @gen_test
+    async def test_prepare_args(self):
+        with self.assertRaises(NotImplementedError):
+            await self.task.prepare_args([])
 
     @gen_test
     def test_scan_ports_without_nodes(self):
@@ -34,7 +36,8 @@ class PortScanTaskTest(AsyncTestCase):
 
         mock_parser.return_value = expected
         nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))]
-        self.task.prepare_args = MagicMock()
+        self.task.prepare_args = MagicMock(return_value=Future())
+        self.task.prepare_args.return_value.set_result(MagicMock())
         future_1 = Future()
         future_1.set_result(MagicMock())
         self.task.command.async_call.return_value = future_1
@@ -45,7 +48,8 @@ class PortScanTaskTest(AsyncTestCase):
     @gen_test
     def test_scan_ports_with_exception(self):
         nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))]
-        self.task.prepare_args = MagicMock()
+        self.task.prepare_args = MagicMock(return_value=Future())
+        self.task.prepare_args.return_value.set_result(MagicMock())
         self.task.command.async_call.side_effect = NonXMLOutputException()
 
         result = yield self.task.scan_ports(nodes)

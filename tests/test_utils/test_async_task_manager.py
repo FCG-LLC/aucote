@@ -3,7 +3,7 @@ from random import randint
 from unittest.mock import MagicMock, patch, call
 
 from tornado.concurrent import Future
-from tornado.queues import Queue
+from tornado.queues import QueueEmpty
 from tornado.testing import AsyncTestCase, gen_test
 
 from utils.async_crontab_task import AsyncCrontabTask
@@ -22,7 +22,7 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.task_manager._stop_condition = MagicMock()
         self.task_manager._cron_tasks['task_1'] = self.task_1
         self.task_manager._cron_tasks['task_2'] = self.task_2
-        self.task_manager._task_workers = [None]
+        self.task_manager._task_workers = {0: None}
 
     def tearDown(self):
         self.task_manager.clear()
@@ -148,6 +148,14 @@ class TestAsyncTaskManager(AsyncTestCase):
                 super(queue, self).__init__()
                 self._end = False
                 self._task = task
+
+            def get_nowait(self):
+                if not self._end:
+                    return self._task
+                raise QueueEmpty
+
+            def empty(self):
+                return True
 
             async def __aiter__(self):
                 return self

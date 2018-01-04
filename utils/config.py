@@ -286,6 +286,9 @@ class Config:
                 self._immutable.add(new_key)
 
     async def start_rabbit(self, host, port, username, password):
+        """
+        Start rabbit client
+        """
         io_loop = get_event_loop()
         self.rabbit = Rabbit(host=host, port=port, username=username, password=password, ioloop=io_loop)
         await self.rabbit.connect()
@@ -293,5 +296,13 @@ class Config:
 
         consumer = ToucanConsumer(self)
 
-        ensure_future(self.rabbit.add_consumer(consumer))
-        ensure_future(consumer.consume())
+        ensure_future(self.rabbit.add_consumer(consumer), loop=io_loop)
+        ensure_future(consumer.consume(), loop=io_loop)
+
+    async def add_rabbit_consumer(self, consumer):
+        """
+        Add consumer to the rabbit
+        """
+        io_loop = get_event_loop()
+        if self.rabbit:
+            ensure_future(self.rabbit.add_consumer(consumer), loop=io_loop)

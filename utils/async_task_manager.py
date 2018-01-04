@@ -5,11 +5,14 @@ This module contains class for managing async tasks.
 from functools import partial
 import logging as log
 
+from pycslib.utils import RabbitConsumer
 from tornado import gen
+from tornado.gen import sleep
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
-from tornado.queues import Queue
+from tornado.queues import Queue, QueueEmpty
 
+from aucote_cfg import cfg
 from utils.async_crontab_task import AsyncCrontabTask
 
 
@@ -22,6 +25,7 @@ class AsyncTaskManager(object):
 
     """
     _instance = None
+    THROTTLE_POLL_TIME = 60
 
     def __init__(self, parallel_tasks=10):
         self._shutdown_condition = Event()
@@ -29,8 +33,10 @@ class AsyncTaskManager(object):
         self._cron_tasks = {}
         self._parallel_tasks = parallel_tasks
         self._tasks = Queue()
-        self._task_workers = []
+        self._task_workers = {}
         self._events = {}
+        self._limit = self._parallel_tasks
+        self._next_task_number = 0
 
     @classmethod
     def instance(cls, *args, **kwargs):
@@ -67,7 +73,10 @@ class AsyncTaskManager(object):
             task.start()
 
         for number in range(self._parallel_tasks):
-            self._task_workers.append(IOLoop.current().add_callback(partial(self.process_tasks, number)))
+            self._task_workers[number] = IOLoop.current().add_callback(partial(self.process_tasks, number))
+
+        self._next_task_number = self._parallel_tasks
+        IOLoop.current().add_callback(self.monitor_limit)
 
     def add_crontab_task(self, task, cron, event=None):
         """
@@ -136,18 +145,30 @@ class AsyncTaskManager(object):
 
         """
         log.info("Starting worker %s", number)
-        async for item in self._tasks:
+        while True:
             try:
-                log.debug("Worker %s: starting %s", number, item)
-                self._task_workers[number] = item
-                await item()
-            except:
-                log.exception("Worker %s: exception occurred", number)
+                item = self._tasks.get_nowait()
+                try:
+                    log.debug("Worker %s: starting %s", number, item)
+                    self._task_workers[number] = item
+                    await item()
+                except:
+                    log.exception("Worker %s: exception occurred", number)
+                finally:
+                    log.debug("Worker %s: %s finished", number, item)
+                    self._tasks.task_done()
+                    log.debug("Tasks left in queue: %s", self.unfinished_tasks)
+                    self._task_workers[number] = None
+            except QueueEmpty:
+                await gen.sleep(0.5)
+                if self._stop_condition.is_set() and self._tasks.empty():
+                    return
             finally:
-                log.debug("Worker %s: %s finished", number, item)
-                self._tasks.task_done()
-                log.debug("Tasks left in queue: %s", self.unfinished_tasks)
-                self._task_workers[number] = None
+                if self._limit < len(self._task_workers):
+                    break
+
+        del self._task_workers[number]
+
         log.info("Closing worker %s", number)
 
     def add_task(self, task):
@@ -184,3 +205,53 @@ class AsyncTaskManager(object):
 
         """
         return self._cron_tasks.keys()
+
+    async def monitor_limit(self):
+        """
+        Poll configuration for throttling value
+        """
+        throttling = await cfg.toucan.get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
+
+        self.change_throttling(throttling)
+
+        await sleep(self.THROTTLE_POLL_TIME)
+        IOLoop.current().add_callback(self.monitor_limit)
+
+    def change_throttling(self, new_value):
+        """
+        Change throttling value
+        """
+        if new_value > 1:
+            new_value = 1
+        if new_value < 0:
+            new_value = 0
+
+        self._limit = round(self._parallel_tasks * float(new_value))
+
+        current_tasks = len(self._task_workers)
+
+        for number in range(self._limit - current_tasks):
+            self._task_workers[self._next_task_number] = None
+            IOLoop.current().add_callback(partial(self.process_tasks, self._next_task_number))
+            self._next_task_number += 1
+
+
+class ThrottlingConsumer(RabbitConsumer):
+    """
+    Throttling consumer for rabbit queue
+    """
+    def __init__(self, manager):
+        self._manager = manager
+        super(ThrottlingConsumer, self).__init__('toucan', 'topic', 'toucan.config.throttling.rate')
+
+    async def process_message(self, msg):
+        """
+        Process message and set new throttling value
+        """
+        if msg.routing_key != 'toucan.config.throttling.rate':
+            return
+
+        value = float(msg.json()['value'])
+
+        log.info("Changing scan throttling to %s", value)
+        self._manager.change_throttling(value)

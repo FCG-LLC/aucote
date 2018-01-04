@@ -20,7 +20,7 @@ class MasscanPorts(PortScanTask):
         self.udp = udp
         super(MasscanPorts, self).__init__(MasscanBase())
 
-    def prepare_args(self, nodes):
+    async def prepare_args(self, nodes):
         """
         Prepare args for command execution
 
@@ -32,8 +32,22 @@ class MasscanPorts(PortScanTask):
 
         """
         args = list(cfg['tools.masscan.args'])
-        args.extend(['--rate', str(cfg['portdetection.tcp.scan_rate'] if self.tcp
-                                   else cfg['portdetection.udp.scan_rate'])])
+
+        base_rate = cfg['portdetection.tcp.scan_rate'] if self.tcp else cfg['portdetection.udp.scan_rate']
+        throttling = await cfg.toucan.get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
+
+        if throttling > 1:
+            throttling = 1
+
+        if throttling < 0:
+            throttling = 0
+
+        rate = str(int(float(throttling) * int(base_rate)))
+
+        if rate == '0':
+            raise StopCommandException("Cancel scan due to low throttling rate {}".format(throttling))
+
+        args.extend(['--rate', rate])
 
         include_ports = NmapTool.list_to_ports_string(tcp=self.tcp and cfg['portdetection.tcp.ports.include'],
                                                       udp=self.udp and cfg['portdetection.udp.ports.include'])
