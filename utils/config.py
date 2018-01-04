@@ -303,5 +303,6 @@ class Config:
         """
         Add consumer to the rabbit
         """
+        io_loop = get_event_loop()
         if self.rabbit:
-            self.rabbit.add_consumer(consumer)
+            ensure_future(self.rabbit.add_consumer(consumer), loop=io_loop)
