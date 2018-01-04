@@ -101,7 +101,7 @@ class Scanner(ScanAsyncTask):
                 log.info("Scanning %i %s %s nodes for open ports.", len(dict_nodes[ip_protocol]), protocol.name,
                          ip_protocol)
                 if protocol == TransportProtocol.UDP:
-                    await self._scan_ports(ports=await scanner.scan_ports([dict_nodes[ip_protocol]]),
+                    await self._scan_ports(ports=await scanner.scan_ports(dict_nodes[ip_protocol]),
                                            scan_only=scan_only, scan=scan)
                 else:
                     for node in dict_nodes[ip_protocol]:
