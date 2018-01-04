@@ -10,7 +10,7 @@ from tornado import gen
 from tornado.gen import sleep
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
-from tornado.queues import Queue
+from tornado.queues import Queue, QueueEmpty
 
 from aucote_cfg import cfg
 from utils.async_crontab_task import AsyncCrontabTask
@@ -145,19 +145,25 @@ class AsyncTaskManager(object):
 
         """
         log.info("Starting worker %s", number)
-        async for item in self._tasks:
+        while True:
             try:
-                log.debug("Worker %s: starting %s", number, item)
-                self._task_workers[number] = item
-                await item()
-            except:
-                log.exception("Worker %s: exception occurred", number)
+                item = self._tasks.get_nowait()
+                try:
+                    log.debug("Worker %s: starting %s", number, item)
+                    self._task_workers[number] = item
+                    await item()
+                except:
+                    log.exception("Worker %s: exception occurred", number)
+                finally:
+                    log.debug("Worker %s: %s finished", number, item)
+                    self._tasks.task_done()
+                    log.debug("Tasks left in queue: %s", self.unfinished_tasks)
+                    self._task_workers[number] = None
+            except QueueEmpty:
+                await gen.sleep(0.5)
+                if self._stop_condition.is_set() and self._tasks.empty():
+                    return
             finally:
-                log.debug("Worker %s: %s finished", number, item)
-                self._tasks.task_done()
-                log.debug("Tasks left in queue: %s", self.unfinished_tasks)
-                self._task_workers[number] = None
-
                 if self._limit < len(self._task_workers):
                     break
 
@@ -215,6 +221,11 @@ class AsyncTaskManager(object):
         """
         Change throttling value
         """
+        if new_value > 1:
+            new_value = 1
+        if new_value < 0:
+            new_value = 0
+
         self._limit = round(self._parallel_tasks * float(new_value))
 
         current_tasks = len(self._task_workers)
@@ -239,6 +250,8 @@ class ThrottlingConsumer(RabbitConsumer):
         """
         if msg.routing_key != 'toucan.config.throttling.rate':
             return
+
         value = float(msg.json()['value'])
+
         log.info("Changing scan throttling to %s", value)
         self._manager.change_throttling(value)
