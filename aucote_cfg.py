@@ -15,7 +15,7 @@ from utils.toucan import Toucan
 _DEFAULT = {
     'logging': {
         'root': {
-            'file': lambda: path.join(path.dirname(__file__), 'aucote.log'),
+            'file': lambda: path.join(path.dirname(__file__), 'logs/aucote.log'),
             'level': 'info',
             'max_file_size': 10 * 1024 * 1024,
             'max_files': 5,
@@ -23,7 +23,7 @@ _DEFAULT = {
             'propagate': True
         },
         'storage': {
-            'file': lambda: path.join(path.dirname(__file__), 'storage.log'),
+            'file': lambda: path.join(path.dirname(__file__), 'logs/storage.log'),
             'level': 'info',
             'max_file_size': 10 * 1024 * 1024,
             'max_files': 10,
