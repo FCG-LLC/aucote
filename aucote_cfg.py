@@ -29,6 +29,14 @@ _DEFAULT = {
             'max_files': 10,
             'format': '%(levelname)s %(asctime)s %(message)s',
             'propagate': False
+        },
+        'pycslib': {
+            'file': lambda: path.join(path.dirname(__file__), 'logs/pycslib.log'),
+            'level': 'info',
+            'max_file_size': 10 * 1024 * 1024,
+            'max_files': 10,
+            'format': '%(levelname)s %(asctime)s %(message)s',
+            'propagate': False
         }
     },
     'fixtures': {
