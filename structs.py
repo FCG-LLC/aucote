@@ -494,7 +494,7 @@ class Port(object):
         'http-proxy': 'http'
     }
 
-    def __init__(self, node, number, transport_protocol):
+    def __init__(self, node, number, transport_protocol, scan=None):
         """
         Args:
             node (Node):
@@ -511,7 +511,7 @@ class Port(object):
         self.apps = []
         self.protocol = None
         self.banner = None
-        self.scan = None
+        self.scan = scan
         self.interface = None
 
     def __eq__(self, other):

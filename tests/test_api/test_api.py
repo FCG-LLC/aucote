@@ -76,7 +76,7 @@ class APITest(AsyncHTTPTestCase):
         for vulnerability in (self.vulnerability_1, self.vulnerability_2):
             self.storage.save_vulnerability(vulnerability)
 
-        self.scanner = TCPScanner(aucote=self.aucote)
+        self.scanner = TCPScanner(aucote=self.aucote, host='localhost', port=1339)
         self.scanner.NAME = 'test_name'
         self.scanner.scan_start = 1290
         self.scanner.nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))]

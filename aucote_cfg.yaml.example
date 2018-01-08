@@ -31,6 +31,13 @@ logging:
         max_files: 10
         format: "%(levelname)s %(asctime)s %(message)s"
         propagate: False
+    pycslib:
+        file: logs/pycslib.log
+        level: debug
+        max_file_size: 10485760
+        max_files: 10
+        format: "%(levelname)s %(asctime)s %(message)s"
+        propagate: False
 
 # storage: Storage configuration
 #    path: <str> - Path to the storage
@@ -102,3 +109,12 @@ rabbit:
     port: 5672
     username: guest
     password: guest
+
+# TCP portscan is a remote scanning service used for TCP portdetection
+# tcpportscan:
+#   host: <str>
+#   port: <int>
+
+tcpportscan:
+    host: portscan
+    port: 1339

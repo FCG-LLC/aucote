@@ -4,7 +4,7 @@ set -e
 
 VERSION=$1
 PACKAGE_NAME=aucote
-PYTHON_FILES=`find . -not -path './venv*' -and -not -path './package*' -and -name '*.py'`
+PYTHON_FILES=`find . -not -path './venv*' -and -not -path './package*' -not -path './internal_deps*' -and -name '*.py'`
 PACKAGE_FILES="venv ${PYTHON_FILES} fixtures/exploits/* static/* aucote_cfg.yaml.example aucote_cfg_default.yaml"
 PACKAGE_PATH=package/${PACKAGE_NAME}_${VERSION}
 PACKAGE_TARGET_PATH=${PACKAGE_PATH}/opt/${PACKAGE_NAME}
