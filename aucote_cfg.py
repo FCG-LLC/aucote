@@ -12,10 +12,12 @@ from utils import Config
 # default values
 from utils.toucan import Toucan
 
+LOG_DIR = path.join(path.dirname(__file__), 'logs')
+
 _DEFAULT = {
     'logging': {
         'root': {
-            'file': lambda: path.join(path.dirname(__file__), 'logs/aucote.log'),
+            'file': path.join(LOG_DIR, 'aucote.log'),
             'level': 'info',
             'max_file_size': 10 * 1024 * 1024,
             'max_files': 5,
@@ -23,7 +25,7 @@ _DEFAULT = {
             'propagate': True
         },
         'storage': {
-            'file': lambda: path.join(path.dirname(__file__), 'logs/storage.log'),
+            'file': path.join(LOG_DIR, 'storage.log'),
             'level': 'info',
             'max_file_size': 10 * 1024 * 1024,
             'max_files': 10,
@@ -31,7 +33,7 @@ _DEFAULT = {
             'propagate': False
         },
         'pycslib': {
-            'file': lambda: path.join(path.dirname(__file__), 'logs/pycslib.log'),
+            'file': path.join(LOG_DIR, 'pycslib.log'),
             'level': 'info',
             'max_file_size': 10 * 1024 * 1024,
             'max_files': 10,
