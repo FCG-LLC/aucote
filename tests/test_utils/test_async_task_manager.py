@@ -251,6 +251,27 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.assertFalse(any([self.tasks[4].cancel.called]))
 
     @patch('utils.async_task_manager.cfg', new_callable=Config)
+    def test_change_throttling_kill_idle_first(self, cfg):
+        cfg['service.scans.task_politic'] = 3
+
+        self.task_manager._task_workers = self.tasks
+        self.task_manager._cancellable_tasks = self.tasks
+        self.task_manager._parallel_tasks = 10
+        self.task_manager._limit = 10
+        self.task_manager.change_throttling(0.4)
+
+        self.assertTrue(all([
+            self.tasks[0].cancel.called
+        ]))
+
+        self.assertFalse(any([
+            self.tasks[1].cancel.called,
+            self.tasks[2].cancel.called,
+            self.tasks[3].cancel.called,
+            self.tasks[4].cancel.called
+        ]))
+
+    @patch('utils.async_task_manager.cfg', new_callable=Config)
     def test_change_throttling_scaled(self, cfg):
         cfg['service.scans.task_politic'] = 2
 

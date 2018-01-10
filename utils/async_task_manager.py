@@ -29,8 +29,9 @@ class AsyncTaskManager(object):
     THROTTLE_POLL_TIME = 60
 
     TASKS_POLITIC_WAIT = 0
-    TASKS_POLITIC_KILL = 1
+    TASKS_POLITIC_KILL_WORKING_FIRST = 1
     TASKS_POLITIC_KILL_PROPORTIONS = 2
+    TASKS_POLITIC_KILL_WORKING = 3
 
     def __init__(self, parallel_tasks=10):
         self._shutdown_condition = Event()
@@ -248,11 +249,12 @@ class AsyncTaskManager(object):
         task_politic = cfg['service.scans.task_politic']
         tasks_left = 0
 
-        if task_politic == self.TASKS_POLITIC_KILL:
+        if task_politic == self.TASKS_POLITIC_KILL_WORKING_FIRST:
             tasks_left = current_tasks - self._limit
         elif task_politic == self.TASKS_POLITIC_KILL_PROPORTIONS:
             tasks_left = round((old_limit - self._limit) * len(working_tasks)/self._parallel_tasks)
-            log.warning('Killing %s of %s working tasks', tasks_left, len(working_tasks))
+        elif task_politic == self.TASKS_POLITIC_KILL_WORKING:
+            tasks_left = (old_limit - self._limit) - (len(self._task_workers) - len(working_tasks))
 
         for number in working_tasks:
             if tasks_left <= 0:
