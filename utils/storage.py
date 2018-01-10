@@ -484,6 +484,7 @@ class Storage(DbInterface):
             if isinstance(query, list):
                 self.log.debug("[%s] executing %i queries", log_id, len(query))
                 for row in query:
+                    self.log.debug(row)
                     self.cursor.execute(*row)
             else:
                 self.log.debug("[%s] executing query: %s", log_id, query)

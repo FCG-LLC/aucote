@@ -6,6 +6,7 @@ import time
 import logging as log
 
 from tornado.httpclient import HTTPError
+from tornado.platform.asyncio import to_asyncio_future
 
 from aucote_cfg import cfg
 from structs import Vulnerability
@@ -39,7 +40,8 @@ class AucoteHttpHeadersTask(PortTask):
             custom_headers['User-Agent'] = useragent
 
         try:
-            response = await HTTPClient.instance().head(url=self._port.url, headers=custom_headers, validate_cert=False)
+            response = await to_asyncio_future(HTTPClient.instance().head(url=self._port.url, headers=custom_headers,
+                                                                          validate_cert=False))
         except HTTPError as exception:
             if exception.response is None:
                 return

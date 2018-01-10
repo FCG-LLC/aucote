@@ -6,6 +6,7 @@ from tornado.concurrent import Future
 from tornado.queues import QueueEmpty
 from tornado.testing import AsyncTestCase, gen_test
 
+from utils import Config
 from utils.async_crontab_task import AsyncCrontabTask
 from utils.async_task_manager import AsyncTaskManager
 
@@ -23,6 +24,18 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.task_manager._cron_tasks['task_1'] = self.task_1
         self.task_manager._cron_tasks['task_2'] = self.task_2
         self.task_manager._task_workers = {0: None}
+        self.tasks = {
+            0: MagicMock(),
+            1: MagicMock(),
+            2: MagicMock(),
+            3: MagicMock(),
+            4: MagicMock(),
+            5: None,
+            6: None,
+            7: None,
+            8: None,
+            9: None
+        }
 
     def tearDown(self):
         self.task_manager.clear()
@@ -137,11 +150,17 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.task_manager._tasks.task_done()
         self.assertEqual(result, expected)
 
+    @patch('utils.async_task_manager.Task')
     @gen_test
-    def test_process_queue(self):
+    def test_process_queue(self, mock_task):
+        self.task_manager.cancellable_executor = MagicMock()
+
         future = Future()
         future.set_result(MagicMock())
         task = MagicMock(return_value=future)
+
+        mock_task.return_value = Future()
+        mock_task.return_value.set_result(MagicMock())
 
         class queue(MagicMock):
             def __init__(self, task):
@@ -175,16 +194,18 @@ class TestAsyncTaskManager(AsyncTestCase):
         self.task_manager._tasks = queue(task)
 
         yield self.task_manager.process_tasks(0)
-        task.assert_called_once_with()
+        mock_task.assert_called_once_with(self.task_manager.cancellable_executor.return_value)
+        self.task_manager.cancellable_executor.assert_called_once_with(task)
 
     @patch('utils.async_task_manager.log.exception')
+    @patch('utils.async_task_manager.Task')
     @gen_test
-    def test_process_queue_exception(self, mock_exception):
+    async def test_process_queue_exception(self, mock_task, mock_exception):
         task = MagicMock(side_effect=Exception())
         self.task_manager.add_task(task)
 
         self.io_loop.add_callback(partial(self.task_manager.process_tasks, 0))
-        yield self.task_manager._tasks.join()
+        await self.task_manager._tasks.join()
         self.assertTrue(mock_exception.called)
 
     def test_unfinished_tasks(self):
@@ -209,3 +230,64 @@ class TestAsyncTaskManager(AsyncTestCase):
         result = self.task_manager.cron_tasks
 
         self.assertEqual(result, expected)
+
+    @patch('utils.async_task_manager.cfg', new_callable=Config)
+    def test_change_throttling(self, cfg):
+        cfg['service.scans.task_politic'] = 1
+
+        self.task_manager._task_workers = self.tasks
+        self.task_manager._cancellable_tasks = self.tasks
+        self.task_manager._parallel_tasks = 10
+        self.task_manager._limit = 10
+        self.task_manager.change_throttling(0.6)
+
+        self.assertTrue(all([
+            self.tasks[0].cancel.called,
+            self.tasks[1].cancel.called,
+            self.tasks[2].cancel.called,
+            self.tasks[3].cancel.called,
+        ]))
+
+        self.assertFalse(any([self.tasks[4].cancel.called]))
+
+    @patch('utils.async_task_manager.cfg', new_callable=Config)
+    def test_change_throttling_scaled(self, cfg):
+        cfg['service.scans.task_politic'] = 2
+
+        self.task_manager._task_workers = self.tasks
+        self.task_manager._cancellable_tasks = self.tasks
+        self.task_manager._parallel_tasks = 10
+        self.task_manager._limit = 10
+        self.task_manager.change_throttling(0.6)
+
+        self.assertTrue(all([
+            self.tasks[0].cancel.called,
+            self.tasks[1].cancel.called,
+        ]))
+
+        self.assertFalse(any([
+            self.tasks[2].cancel.called,
+            self.tasks[3].cancel.called,
+            self.tasks[4].cancel.called
+        ]))
+
+    @patch('utils.async_task_manager.cfg', new_callable=Config)
+    def test_change_throttling_scaled_non_1(self, cfg):
+        cfg['service.scans.task_politic'] = 2
+
+        self.task_manager._task_workers = self.tasks
+        self.task_manager._cancellable_tasks = self.tasks
+        self.task_manager._parallel_tasks = 10
+        self.task_manager._limit = 10
+        self.task_manager.change_throttling(0.6)
+
+        self.assertTrue(all([
+            self.tasks[0].cancel.called,
+            self.tasks[1].cancel.called,
+        ]))
+
+        self.assertFalse(any([
+            self.tasks[2].cancel.called,
+            self.tasks[3].cancel.called,
+            self.tasks[4].cancel.called
+        ]))

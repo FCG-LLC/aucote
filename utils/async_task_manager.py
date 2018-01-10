@@ -2,6 +2,7 @@
 This module contains class for managing async tasks.
 
 """
+from asyncio import CancelledError, Task
 from functools import partial
 import logging as log
 
@@ -27,6 +28,10 @@ class AsyncTaskManager(object):
     _instance = None
     THROTTLE_POLL_TIME = 60
 
+    TASKS_POLITIC_WAIT = 0
+    TASKS_POLITIC_KILL = 1
+    TASKS_POLITIC_KILL_PROPORTIONS = 2
+
     def __init__(self, parallel_tasks=10):
         self._shutdown_condition = Event()
         self._stop_condition = Event()
@@ -34,6 +39,7 @@ class AsyncTaskManager(object):
         self._parallel_tasks = parallel_tasks
         self._tasks = Queue()
         self._task_workers = {}
+        self._cancellable_tasks = {}
         self._events = {}
         self._limit = self._parallel_tasks
         self._next_task_number = 0
@@ -73,7 +79,9 @@ class AsyncTaskManager(object):
             task.start()
 
         for number in range(self._parallel_tasks):
-            self._task_workers[number] = IOLoop.current().add_callback(partial(self.process_tasks, number))
+            IOLoop.current().add_callback(partial(self.process_tasks, number))
+            self._task_workers[number] = None
+            self._cancellable_tasks[number] = None
 
         self._next_task_number = self._parallel_tasks
         IOLoop.current().add_callback(self.monitor_limit)
@@ -151,7 +159,8 @@ class AsyncTaskManager(object):
                 try:
                     log.debug("Worker %s: starting %s", number, item)
                     self._task_workers[number] = item
-                    await item()
+                    self._cancellable_tasks[number] = Task(self.cancellable_executor(item))
+                    await self._cancellable_tasks[number]
                 except:
                     log.exception("Worker %s: exception occurred", number)
                 finally:
@@ -159,15 +168,17 @@ class AsyncTaskManager(object):
                     self._tasks.task_done()
                     log.debug("Tasks left in queue: %s", self.unfinished_tasks)
                     self._task_workers[number] = None
+                    self._cancellable_tasks[number] = None
             except QueueEmpty:
                 await gen.sleep(0.5)
                 if self._stop_condition.is_set() and self._tasks.empty():
                     return
             finally:
-                if self._limit < len(self._task_workers):
+                if len(self._task_workers) > self._limit:
                     break
 
         del self._task_workers[number]
+        del self._cancellable_tasks[number]
 
         log.info("Closing worker %s", number)
 
@@ -226,14 +237,46 @@ class AsyncTaskManager(object):
         if new_value < 0:
             new_value = 0
 
+        new_value = round(new_value*100)/100
+
+        old_limit = self._limit
         self._limit = round(self._parallel_tasks * float(new_value))
 
+        working_tasks = [number for number, task in self._task_workers.items() if task is not None]
         current_tasks = len(self._task_workers)
+
+        task_politic = cfg['service.scans.task_politic']
+        tasks_left = 0
+
+        if task_politic == self.TASKS_POLITIC_KILL:
+            tasks_left = current_tasks - self._limit
+        elif task_politic == self.TASKS_POLITIC_KILL_PROPORTIONS:
+            tasks_left = round((old_limit - self._limit) * len(working_tasks)/self._parallel_tasks)
+            log.warning('Killing %s of %s working tasks', tasks_left, len(working_tasks))
+
+        for number in working_tasks:
+            if tasks_left <= 0:
+                break
+            self._cancellable_tasks[number].cancel()
+            tasks_left -= 1
 
         for number in range(self._limit - current_tasks):
             self._task_workers[self._next_task_number] = None
+            self._cancellable_tasks[self._next_task_number] = None
             IOLoop.current().add_callback(partial(self.process_tasks, self._next_task_number))
             self._next_task_number += 1
+
+    async def cancellable_executor(self, task):
+        """
+        Run cancellable task
+
+        Args:
+            task (callable):
+        """
+        try:
+            await task()
+        except CancelledError:
+            task.cancelled()
 
 
 class ThrottlingConsumer(RabbitConsumer):

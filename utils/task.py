@@ -121,3 +121,12 @@ class Task(object):
 
     def __str__(self):
         return "{} for {}".format(self.__class__.__name__, self._scan.scanner)
+
+    def cancelled(self):
+        """
+        Executes when task was cancelled
+
+        Returns:
+            None
+        """
+        pass

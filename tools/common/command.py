@@ -4,9 +4,12 @@ Provides classes for executing and fetching output from system commands.
 """
 import logging as log
 import subprocess
+from asyncio import CancelledError
+from datetime import timedelta
 
 from tornado import gen
 from tornado import process
+from tornado.platform.asyncio import to_asyncio_future
 
 from aucote_cfg import cfg
 from tools.common.parsers import Parser
@@ -72,12 +75,16 @@ class Command(object):
                                task.stderr.read_until_close()])
 
         if not timeout:
-            return_code, stdout, stderr = await coroutine
+            return_code, stdout, stderr = await to_asyncio_future(coroutine)
         else:
             try:
-                return_code, stdout, stderr = await gen.with_timeout(timeout, coroutine)
-            except gen.TimeoutError as exception:
-                log.exception("Command %s timed out while executing %s", self.NAME, cmd)
+                return_code, stdout, stderr = await to_asyncio_future(gen.with_timeout(timedelta(seconds=timeout),
+                                                                                       coroutine))
+            except (gen.TimeoutError, CancelledError) as exception:
+                if isinstance(exception, gen.TimeoutError):
+                    log.exception("Command %s timed out after %s while executing %s", self.NAME, timeout, cmd)
+                elif isinstance(exception, CancelledError):
+                    log.warning("Command %s cancelled by task manager during executing %s", self.NAME, cmd)
                 task.proc.kill()
                 raise exception
 
