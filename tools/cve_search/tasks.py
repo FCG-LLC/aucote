@@ -10,6 +10,7 @@ import ujson
 
 from cpe import CPE
 from tornado.httpclient import HTTPError
+from tornado.platform.asyncio import to_asyncio_future
 
 from aucote_cfg import cfg
 from structs import Vulnerability, PhysicalPort, Port
@@ -124,7 +125,7 @@ class CVESearchServiceTask(PortTask):
         cpe_encoded = re.sub('%2([89])', r'%25252\1', quote(cpe.as_fs().replace('\\', '')))
         url = "{api}/cvefor/{cpe}".format(api=self.api, cpe=cpe_encoded)
         try:
-            response = await HTTPClient.instance().get(url)
+            response = await to_asyncio_future(HTTPClient.instance().get(url))
         except (HTTPError, ConnectionError) as exception:
             raise CVESearchApiException(str(exception))
 
