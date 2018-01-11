@@ -194,7 +194,7 @@ class TopdisTest(AsyncTestCase):
 
     def setUp(self):
         super(TopdisTest, self).setUp()
-        self.topdis = Topdis('localhost', 1234)
+        self.topdis = Topdis('localhost', 1234, '/api/v1')
         self.req_future = Future()
         self.http_client_response = MagicMock()
         self.http_client_response.body = self.TODIS_RESPONSE

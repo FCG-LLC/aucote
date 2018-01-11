@@ -23,8 +23,8 @@ class Topdis(object):
     max_retry_time = 30
     max_retry_count = 20
 
-    def __init__(self, hostname, port):
-        self.api = 'http://{0}:{1}/api/v1'.format(hostname, port)
+    def __init__(self, hostname, port, api):
+        self.api = 'http://{0}:{1}{2}'.format(hostname, port, api)
 
     @retry_if_fail(min_retry_time, max_retry_time, max_retry_count, HTTPError)
     async def get_nodes(self):

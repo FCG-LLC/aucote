@@ -61,7 +61,8 @@ class AucoteTest(AsyncTestCase):
             'topdis': {
                 'api': {
                     'host': 'localhost',
-                    'port': '1234'
+                    'port': '1234',
+                    'base': '/api/v1'
                 }
             },
             'tcpportscan': {

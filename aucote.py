@@ -124,7 +124,7 @@ class Aucote(object):
         self._storage = Storage(filename=cfg['storage.path'], nodes_limit=cfg['storage.max_nodes_query'])
 
         self.ioloop = IOLoop.current()
-        self.topdis = Topdis(cfg['topdis.api.host'], cfg['topdis.api.port'])
+        self.topdis = Topdis(cfg['topdis.api.host'], cfg['topdis.api.port'], cfg['topdis.api.base'])
 
         self.async_task_manager = AsyncTaskManager.instance(parallel_tasks=cfg['service.scans.parallel_tasks'])
         self._throttling_consumer = ThrottlingConsumer(manager=self.async_task_manager)
