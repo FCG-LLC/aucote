@@ -98,9 +98,21 @@ class Node:
         """
         self.name = None
         self.ip = ip
+        self._id = None
         self.id = node_id
         self.scan = None
         self.os = Service()
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        # Convert signed int to unsigned int
+        if isinstance(value, int) and value < 0:
+            value += (1 << 32)
+        self._id = value
 
     def __eq__(self, other):
         return isinstance(other, Node) and self.ip == other.ip and self.id == other.id
