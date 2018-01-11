@@ -4,6 +4,7 @@ Provides classes for executing and fetching output from system commands.
 """
 import logging as log
 import subprocess
+from datetime import timedelta
 
 from tornado import gen
 from tornado import process
@@ -75,9 +76,9 @@ class Command(object):
             return_code, stdout, stderr = await coroutine
         else:
             try:
-                return_code, stdout, stderr = await gen.with_timeout(timeout, coroutine)
+                return_code, stdout, stderr = await gen.with_timeout(timedelta(seconds=timeout), coroutine)
             except gen.TimeoutError as exception:
-                log.exception("Command %s timed out while executing %s", self.NAME, cmd)
+                log.exception("Command %s timed out after %s while executing %s", self.NAME, timeout, cmd)
                 task.proc.kill()
                 raise exception
 
