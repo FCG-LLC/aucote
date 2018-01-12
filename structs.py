@@ -5,6 +5,7 @@ This file provides structures for project.
 import ipaddress
 import re
 from abc import ABCMeta, abstractmethod
+from ctypes import c_uint32
 from enum import Enum
 import time
 
@@ -109,9 +110,10 @@ class Node:
 
     @id.setter
     def id(self, value):
-        # Convert signed int to unsigned int
-        if isinstance(value, int) and value < 0:
-            value += (1 << 32)
+        """
+        Set node id. If it's negative, convert to unsigned int
+        """
+        value = c_uint32(value).value
         self._id = value
 
     def __eq__(self, other):
