@@ -22,6 +22,7 @@ class StorageThread(Thread):
         self.finish = False
         self.lock = Lock()
         self.started_event = Event()
+        self._close = False
 
     def run(self):
         """
@@ -36,6 +37,10 @@ class StorageThread(Thread):
             try:
                 query = self._queue.get(timeout=1)
             except Empty:
+                if self._close:
+                    self._storage.close()
+                    break
+
                 continue
 
             with self.lock:
@@ -62,3 +67,6 @@ class StorageThread(Thread):
 
         with self.lock:
             return query['result']
+
+    def stop(self):
+        self._close = True

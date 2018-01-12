@@ -186,7 +186,7 @@ class Aucote(object):
             await self.async_task_manager.shutdown_condition.wait()
 
             self.web_server.stop()
-            self._storage.close()
+            self._storage_thread.stop()
 
             log.info("Closing loop")
 
