@@ -62,9 +62,9 @@ class NodeTest(TestCase):
 
     def test_hash(self):
         ip = MagicMock()
-        id = MagicMock()
+        id = -1
 
-        expected = hash((id, ip))
+        expected = hash((4294967295, ip))
         result = hash(Node(ip=ip, node_id=id))
 
         self.assertEqual(result, expected)

@@ -112,7 +112,8 @@ class Node:
         """
         Set node id. If it's negative, convert to unsigned int
         """
-        value = c_uint32(value).value
+        if value is not None:
+            value = c_uint32(value).value
         self._id = value
 
     def __eq__(self, other):
