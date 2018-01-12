@@ -6,6 +6,7 @@ import logging as log
 import subprocess
 from datetime import timedelta
 
+import threading
 from tornado import gen
 from tornado import process
 
@@ -59,6 +60,9 @@ class Command(object):
         """
         if args is None:
             args = []
+
+        if threading.main_thread().ident != threading.get_ident():
+            return self.call(args=args, timeout=timeout)
 
         all_args = [self.CMD if self.CMD is not None else cfg['tools.%s.cmd' % self.NAME]]
         all_args.extend(self.COMMON_ARGS)
