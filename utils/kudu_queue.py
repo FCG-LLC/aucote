@@ -139,7 +139,7 @@ class KuduQueue(DbInterface):
         """
 
         assert isinstance(msg, KuduMsg)
-        log.debug('sending bytes to kuduworker: %s', bytes_str(msg.data))
+        log.debug('sending bytes to kuduworker: %s', len(msg.data))
         flags = DONTWAIT if dont_wait else 0
         try:
             self._socket.send(msg.data, flags)

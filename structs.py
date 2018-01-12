@@ -5,6 +5,7 @@ This file provides structures for project.
 import ipaddress
 import re
 from abc import ABCMeta, abstractmethod
+from ctypes import c_uint32
 from enum import Enum
 import time
 
@@ -84,8 +85,7 @@ class Scan(object):
 
 class Node:
     """
-    Node object consist of name, id and ip
-
+    Represents node in the network. Every pair ip:node_id is considered as separated node
     """
 
     def __init__(self, node_id, ip):
@@ -98,9 +98,23 @@ class Node:
         """
         self.name = None
         self.ip = ip
+        self._id = None
         self.id = node_id
         self.scan = None
         self.os = Service()
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        """
+        Set node id. If it's negative, convert to unsigned int
+        """
+        if value is not None:
+            value = c_uint32(value).value
+        self._id = value
 
     def __eq__(self, other):
         return isinstance(other, Node) and self.ip == other.ip and self.id == other.id

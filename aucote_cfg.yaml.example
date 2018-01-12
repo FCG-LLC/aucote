@@ -72,11 +72,13 @@ kuduworker:
 #   api:
 #     host: <str|ipaddress> - host of api
 #     port: <int> - port of api
+#     base: <str> - base address for topdis
 
 topdis:
     api:
         host: topdis
         port: 1234
+        base: /api/v1
 
 # Toucan is centralized node manager. It provides configuration for Aucote
 # toucan:
