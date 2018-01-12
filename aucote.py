@@ -154,6 +154,7 @@ class Aucote(object):
         """
         try:
             self._storage_thread.start()
+            self._storage_thread.started_event.wait()
 
             self.async_task_manager.clear()
             self._storage.init_schema()

@@ -21,6 +21,7 @@ class StorageThread(Thread):
         self._queue = Queue()
         self.finish = False
         self.lock = Lock()
+        self.started_event = Event()
 
     def run(self):
         """
@@ -29,6 +30,7 @@ class StorageThread(Thread):
         self._storage.set_thread(self)
 
         self._storage.connect()
+        self.started_event.set()
 
         while not self.finish:
             try:
