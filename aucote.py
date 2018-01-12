@@ -22,6 +22,7 @@ from scans.executor_config import EXECUTOR_CONFIG
 from scans.tcp_scanner import TCPScanner
 from scans.tools_scanner import ToolsScanner
 from scans.udp_scanner import UDPScanner
+from threads.storage_thread import StorageThread
 from utils.async_task_manager import AsyncTaskManager, ThrottlingConsumer
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
@@ -132,6 +133,7 @@ class Aucote(object):
         self.ioloop.add_callback(self._throttling_consumer.consume)
 
         self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'])
+        self._storage_thread = StorageThread(storage=self._storage)
         self.scanners = []
 
     @property
@@ -151,8 +153,9 @@ class Aucote(object):
 
         """
         try:
+            self._storage_thread.start()
+
             self.async_task_manager.clear()
-            self._storage.connect()
             self._storage.init_schema()
             self.ioloop.add_callback(self.web_server.run)
 

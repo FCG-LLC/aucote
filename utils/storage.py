@@ -9,6 +9,8 @@ import uuid
 
 from math import ceil
 
+import threading
+
 from fixtures.exploits import Exploit
 from structs import Port, Node, TransportProtocol, Scan, Vulnerability, PortScan, SecurityScan, NodeScan
 from utils.database_interface import DbInterface
@@ -117,6 +119,10 @@ class Storage(DbInterface):
         self._cursor = None
         self.log = log.getLogger('storage')
         self.nodes_limit = nodes_limit
+        self.thread = None
+
+    def set_thread(self, thread):
+        self.thread = thread
 
     def init_schema(self):
         """
@@ -133,6 +139,8 @@ class Storage(DbInterface):
         return self.execute((self.GET_LAST_ROWID,))[0][0] or None
 
     def connect(self):
+        if self.thread and threading.get_ident() != self.thread.ident:
+            raise Exception("Connection from incorrect thread")
         self.conn = sqlite3.connect(self.filename, check_same_thread=True)
         self._cursor = self.conn.cursor()
 
@@ -477,22 +485,25 @@ class Storage(DbInterface):
             None|list
 
         """
-        log_id = uuid.uuid4()
-        log.debug("Executing query with id: %s", log_id)
+        if self.thread and threading.get_ident() != self.thread.ident:
+            return self.thread.execute(query)
+        else:
+            log_id = uuid.uuid4()
+            log.debug("Executing query with id: %s", log_id)
 
-        try:
-            if isinstance(query, list):
-                self.log.debug("[%s] executing %i queries", log_id, len(query))
-                for row in query:
-                    self.cursor.execute(*row)
-            else:
-                self.log.debug("[%s] executing query: %s", log_id, query)
-                return self.cursor.execute(*query).fetchall()
-        except sqlite3.Error as exception:
-            self.log.exception("[%s] exception occured:", log_id)
-            raise exception
+            try:
+                if isinstance(query, list):
+                    self.log.debug("[%s] executing %i queries", log_id, len(query))
+                    for row in query:
+                        self.cursor.execute(*row)
+                else:
+                    self.log.debug("[%s] executing query: %s", log_id, query)
+                    return self.cursor.execute(*query).fetchall()
+            except sqlite3.Error as exception:
+                self.log.exception("[%s] exception occured:", log_id)
+                raise exception
 
-        self.conn.commit()
+            self.conn.commit()
 
     def save_node(self, node, scan):
         """
