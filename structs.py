@@ -85,8 +85,7 @@ class Scan(object):
 
 class Node:
     """
-    Node object consist of name, id and ip
-
+    Represents node in the network. Every pair ip:node_id is considered as separated node
     """
 
     def __init__(self, node_id, ip):
