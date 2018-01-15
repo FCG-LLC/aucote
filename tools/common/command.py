@@ -12,7 +12,6 @@ from tornado import process
 
 from aucote_cfg import cfg
 from tools.common.parsers import Parser
-from utils.exceptions import NonXMLOutputException
 
 
 class Command(object):
@@ -28,6 +27,15 @@ class Command(object):
     CMD = None
     parser = Parser()
 
+    def __init__(self):
+        self.proc = None
+
+    def kill(self):
+        if self.proc is None:
+            return
+
+        self.proc.kill()
+
     def call(self, args=None, timeout=None):
         """
         Calls system command and return parsed output or standard error output
@@ -42,8 +50,12 @@ class Command(object):
         cmd = ' '.join(all_args),
         log.debug('Executing: %s', cmd)
 
-        proc = subprocess.run(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
-        return_code, stdout, stderr = proc.returncode, proc.stdout, proc.stderr
+        self.proc = subprocess.Popen(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.proc.kill()
+        self.proc.wait(timeout=timeout)
+
+        return_code, stdout, stderr = self.proc.returncode, self.proc.stdout.read(), self.proc.stderr.read()
+        self.proc = None
 
         if return_code != 0:
             log.warning("Command '%s' failed wit exit code: %s", cmd, return_code)
@@ -72,6 +84,7 @@ class Command(object):
         log.debug('Executing: %s', cmd)
 
         task = process.Subprocess(all_args, stderr=process.Subprocess.STREAM, stdout=process.Subprocess.STREAM)
+        self.proc = task.proc
 
         coroutine = gen.multi([task.wait_for_exit(raise_error=False),
                                task.stdout.read_until_close(),
@@ -86,6 +99,8 @@ class Command(object):
                 log.exception("Command %s timed out after %s while executing %s", self.NAME, timeout, cmd)
                 task.proc.kill()
                 raise exception
+
+        self.proc = None
 
         if return_code != 0:
             log.warning("Command '%s' failed wit exit code: %s", cmd, return_code)

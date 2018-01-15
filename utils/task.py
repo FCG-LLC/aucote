@@ -121,3 +121,9 @@ class Task(object):
 
     def __str__(self):
         return "{} for {}".format(self.__class__.__name__, self._scan.scanner)
+
+    def cancel(self):
+        pass
+
+    def clear(self):
+        pass

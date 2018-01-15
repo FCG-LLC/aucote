@@ -14,6 +14,7 @@ from tornado.locks import Event
 from tornado.queues import Queue, QueueEmpty
 
 from aucote_cfg import cfg
+from tools.common.command_task import CommandTask
 from utils.async_crontab_task import AsyncCrontabTask
 
 
@@ -26,10 +27,19 @@ class _Executor(Thread):
     def run(self):
         self.ioloop = IOLoop()
         self.ioloop.make_current()
-        self.ioloop.run_sync(self.task)
+        self.ioloop.add_callback(self.execute)
+        self.ioloop.start()
+        self.task.clear()
+        self.ioloop.clear_current()
 
-    def cancel(self):
+    async def execute(self):
+        await self.task()
         self.ioloop.stop()
+
+    def stop(self):
+        self.task.cancel()
+        if not isinstance(self.task, CommandTask):
+            self.ioloop.stop()
 
 
 class AsyncTaskManager(object):
@@ -42,6 +52,11 @@ class AsyncTaskManager(object):
     """
     _instance = None
     THROTTLE_POLL_TIME = 60
+
+    TASKS_POLITIC_WAIT = 0
+    TASKS_POLITIC_KILL_WORKING_FIRST = 1
+    TASKS_POLITIC_KILL_PROPORTIONS = 2
+    TASKS_POLITIC_KILL_WORKING = 3
 
     def __init__(self, parallel_tasks=10):
         self._shutdown_condition = Event()
@@ -245,6 +260,31 @@ class AsyncTaskManager(object):
             new_value = 1
         if new_value < 0:
             new_value = 0
+
+        new_value = round(new_value * 100) / 100
+
+        old_limit = self._limit
+        self._limit = round(self._parallel_tasks * float(new_value))
+
+        working_tasks = [number for number, task in self._task_workers.items() if task is not None]
+        current_tasks = len(self._task_workers)
+
+        task_politic = cfg['service.scans.task_politic']
+        tasks_left = 0
+
+        if task_politic == self.TASKS_POLITIC_KILL_WORKING_FIRST:
+            tasks_left = current_tasks - self._limit
+        elif task_politic == self.TASKS_POLITIC_KILL_PROPORTIONS:
+            tasks_left = round((old_limit - self._limit) * len(working_tasks) / self._parallel_tasks)
+        elif task_politic == self.TASKS_POLITIC_KILL_WORKING:
+            tasks_left = (old_limit - self._limit) - (len(self._task_workers) - len(working_tasks))
+
+        for number in working_tasks:
+            if tasks_left <= 0:
+                break
+            self._task_workers[number].stop()
+
+        tasks_left -= 1
 
         self._limit = round(self._parallel_tasks * float(new_value))
 
