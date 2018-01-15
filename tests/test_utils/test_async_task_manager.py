@@ -177,16 +177,6 @@ class TestAsyncTaskManager(AsyncTestCase):
         yield self.task_manager.process_tasks(0)
         task.assert_called_once_with()
 
-    @patch('utils.async_task_manager.log.exception')
-    @gen_test
-    def test_process_queue_exception(self, mock_exception):
-        task = MagicMock(side_effect=Exception())
-        self.task_manager.add_task(task)
-
-        self.io_loop.add_callback(partial(self.task_manager.process_tasks, 0))
-        yield self.task_manager._tasks.join()
-        self.assertTrue(mock_exception.called)
-
     def test_unfinished_tasks(self):
         tasks = randint(5, 10)
         for i in range(tasks):
