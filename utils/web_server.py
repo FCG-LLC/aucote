@@ -28,6 +28,13 @@ class WebServer(object):
         self.aucote = aucote
         self.name = "WebServer"
 
+    async def __aenter__(self):
+        await self.run()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+
     async def run(self):
         """
         Start server

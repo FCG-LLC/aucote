@@ -22,6 +22,7 @@ from scans.executor_config import EXECUTOR_CONFIG
 from scans.tcp_scanner import TCPScanner
 from scans.tools_scanner import ToolsScanner
 from scans.udp_scanner import UDPScanner
+from threads.storage_thread import StorageThread
 from utils.async_task_manager import AsyncTaskManager, ThrottlingConsumer
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
@@ -132,6 +133,7 @@ class Aucote(object):
         self.ioloop.add_callback(self._throttling_consumer.consume)
 
         self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'])
+        self._storage_thread = StorageThread(storage=self._storage)
         self.scanners = []
 
     @property
@@ -151,38 +153,36 @@ class Aucote(object):
 
         """
         try:
-            self.async_task_manager.clear()
-            self._storage.connect()
-            self._storage.init_schema()
-            self.ioloop.add_callback(self.web_server.run)
+            with self._storage_thread:
+                self.async_task_manager.clear()
+                self._storage.init_schema()
+                async with self.web_server:
+                    self.ioloop.add_callback(self.web_server.run)
 
-            tcp_host = cfg['tcpportscan.host']
-            tcp_port = int(cfg['tcpportscan.port'])
+                    tcp_host = cfg['tcpportscan.host']
+                    tcp_port = int(cfg['tcpportscan.port'])
 
-            self.scanners = [
-                TCPScanner(host=tcp_host, port=tcp_port, aucote=self, as_service=as_service),
-                UDPScanner(aucote=self, as_service=as_service)
-            ]
+                    self.scanners = [
+                        TCPScanner(host=tcp_host, port=tcp_port, aucote=self, as_service=as_service),
+                        UDPScanner(aucote=self, as_service=as_service)
+                    ]
 
-            if as_service:
-                for scanner in self.scanners:
-                    self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron)
+                    if as_service:
+                        for scanner in self.scanners:
+                            self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron)
 
-                for scanner_name in cfg['portdetection.security_scans'].cfg:
-                    scanner = ToolsScanner(aucote=self, name=scanner_name)
-                    self.scanners.append(scanner)
-                    self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron, event='tools')
+                        for scanner_name in cfg['portdetection.security_scans'].cfg:
+                            scanner = ToolsScanner(aucote=self, name=scanner_name)
+                            self.scanners.append(scanner)
+                            self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron, event='tools')
 
-                self.async_task_manager.start()
-            else:
-                self.async_task_manager.start()
-                await gen.multi(scanner() for scanner in self.scanners)
-                self.async_task_manager.stop()
+                        self.async_task_manager.start()
+                    else:
+                        self.async_task_manager.start()
+                        await gen.multi(scanner() for scanner in self.scanners)
+                        self.async_task_manager.stop()
 
-            await self.async_task_manager.shutdown_condition.wait()
-
-            self.web_server.stop()
-            self._storage.close()
+                    await self.async_task_manager.shutdown_condition.wait()
 
             log.info("Closing loop")
 

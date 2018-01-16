@@ -10,6 +10,7 @@ from tornado.testing import AsyncTestCase, gen_test
 from aucote import main, Aucote
 from utils import Config
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
+from utils.web_server import WebServer
 
 
 @patch('aucote_cfg.cfg.load', Mock(return_value=""))
@@ -190,7 +191,6 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.ToolsScanner')
     @patch('aucote.UDPScanner')
     @patch('aucote.TCPScanner')
-    @patch('aucote.WebServer', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
     @gen_test
@@ -199,6 +199,8 @@ class AucoteTest(AsyncTestCase):
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
+
+        self.mock_web_server()
 
         self.aucote.async_task_manager = MagicMock()
         self.aucote.async_task_manager.shutdown_condition.wait.return_value = Future()
@@ -223,7 +225,6 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.ToolsScanner')
     @patch('aucote.UDPScanner')
     @patch('aucote.TCPScanner')
-    @patch('aucote.WebServer', MagicMock())
     @patch('aucote.IOLoop', MagicMock())
     @patch('aucote.cfg', new_callable=Config)
     @gen_test
@@ -235,6 +236,8 @@ class AucoteTest(AsyncTestCase):
         self.aucote.async_task_manager = MagicMock()
         self.aucote.async_task_manager.shutdown_condition.wait.return_value = Future()
         self.aucote.async_task_manager.shutdown_condition.wait.return_value.set_result(True)
+
+        self.mock_web_server()
 
         tcp_scanner.return_value.return_value = Future()
         tcp_scanner.return_value.return_value.set_result(True)
@@ -272,6 +275,8 @@ class AucoteTest(AsyncTestCase):
     @patch('aucote.cfg', new_callable=Config)
     @gen_test
     async def test_scan_with_exception(self, cfg, mock_executor):
+        self.mock_web_server()
+
         cfg._cfg = self.cfg._cfg
         await self.aucote.run_scan()
         self.assertEqual(mock_executor.call_count, 0)
@@ -379,3 +384,13 @@ class AucoteTest(AsyncTestCase):
 
     def test_python_version(self):
         self.assertGreaterEqual(sys.version_info, (3,5))
+
+    def get_future(self, result=None):
+        future = Future()
+        future.set_result(result)
+        return future
+
+    def mock_web_server(self):
+        self.aucote.web_server = WebServer(MagicMock(), None, None)
+        self.aucote.web_server.run = MagicMock(return_value=self.get_future())
+        self.aucote.web_server.stop = MagicMock(return_value=self.get_future())
