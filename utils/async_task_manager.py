@@ -4,6 +4,7 @@ This module contains class for managing async tasks.
 """
 from functools import partial
 import logging as log
+from threading import Thread
 
 from pycslib.utils import RabbitConsumer
 from tornado import gen
@@ -14,6 +15,21 @@ from tornado.queues import Queue, QueueEmpty
 
 from aucote_cfg import cfg
 from utils.async_crontab_task import AsyncCrontabTask
+
+
+class _Executor(Thread):
+    def __init__(self, task, *args, **kwargs):
+        super(_Executor, self).__init__(*args, **kwargs)
+        self.ioloop = None
+        self.task = task
+
+    def run(self):
+        self.ioloop = IOLoop()
+        self.ioloop.make_current()
+        self.ioloop.run_sync(self.task)
+
+    def cancel(self):
+        self.ioloop.stop()
 
 
 class AsyncTaskManager(object):
@@ -150,8 +166,12 @@ class AsyncTaskManager(object):
                 item = self._tasks.get_nowait()
                 try:
                     log.debug("Worker %s: starting %s", number, item)
-                    self._task_workers[number] = item
-                    await item()
+                    thread = _Executor(task=item)
+                    self._task_workers[number] = thread
+                    thread.start()
+
+                    while thread.is_alive():
+                        await sleep(0.5)
                 except:
                     log.exception("Worker %s: exception occurred", number)
                 finally:
