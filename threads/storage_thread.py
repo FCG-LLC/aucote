@@ -55,13 +55,12 @@ class StorageThread(Thread):
         """
         Adds query to the queue.
         """
-        with self.lock:
-            event = Event()
-            query = {
-                'event': event,
-                'query': query,
-                'result': None
-            }
+        event = Event()
+        query = {
+            'event': event,
+            'query': query,
+            'result': None
+        }
         self._queue.put(query)
         event.wait()
 
