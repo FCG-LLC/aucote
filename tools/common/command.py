@@ -61,6 +61,7 @@ class Command(object):
         if args is None:
             args = []
 
+        # Executing command with Tornado subprocess is possible only in main thread
         if threading.main_thread().ident != threading.get_ident():
             return self.call(args=args, timeout=timeout)
 
