@@ -156,7 +156,7 @@ class Storage(DbInterface):
         self._cursor = self.conn.cursor()
 
     def close(self):
-        if isinstance(self.conn, sqlite3.Connection):
+        if self.conn is not None:
             self.conn.close()
         self.conn = None
         self._cursor = None
