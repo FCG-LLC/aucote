@@ -70,6 +70,9 @@ class StorageThread(Thread):
         event.wait()
 
         with self.lock:
+            if isinstance(query['result'], Exception):
+                raise query['result']
+
             return query['result']
 
     def stop(self):
