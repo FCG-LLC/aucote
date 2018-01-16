@@ -15,6 +15,8 @@ from tornado.queues import Queue, QueueEmpty
 
 from aucote_cfg import cfg
 from tools.common.command_task import CommandTask
+from tools.common.port_scan_task import PortScanTask
+from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.async_crontab_task import AsyncCrontabTask
 
 
@@ -38,7 +40,7 @@ class _Executor(Thread):
 
     def stop(self):
         self.task.cancel()
-        if not isinstance(self.task, CommandTask):
+        if not isinstance(self.task, (CommandTask, NmapPortInfoTask, PortScanTask)):
             self.ioloop.stop()
 
 
@@ -278,6 +280,8 @@ class AsyncTaskManager(object):
             tasks_left = round((old_limit - self._limit) * len(working_tasks) / self._parallel_tasks)
         elif task_politic == self.TASKS_POLITIC_KILL_WORKING:
             tasks_left = (old_limit - self._limit) - (len(self._task_workers) - len(working_tasks))
+
+        log.debug('%s tasks will be killed', tasks_left)
 
         for number in working_tasks:
             if tasks_left <= 0:

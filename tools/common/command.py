@@ -51,8 +51,13 @@ class Command(object):
         log.debug('Executing: %s', cmd)
 
         self.proc = subprocess.Popen(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        self.proc.kill()
-        self.proc.wait(timeout=timeout)
+
+        try:
+            self.proc.wait(timeout=timeout)
+        except TimeoutError as exception:
+            log.exception("Command %s timed out after %s while executing %s", self.NAME, timeout, cmd)
+            self.proc.kill()
+            raise exception
 
         return_code, stdout, stderr = self.proc.returncode, self.proc.stdout.read(), self.proc.stderr.read()
         self.proc = None
