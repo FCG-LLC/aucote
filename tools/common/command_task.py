@@ -73,7 +73,7 @@ class CommandTask(PortTask):
         self._port.scan.end = int(time.time())
         self.store_scan_end(exploits=self.current_exploits, port=self._port)
 
-        if not results:
+        if results is None:
             return None
 
         vulnerabilities = self._get_vulnerabilities(results)
