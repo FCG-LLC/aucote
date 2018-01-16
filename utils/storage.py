@@ -121,6 +121,13 @@ class Storage(DbInterface):
         self.nodes_limit = nodes_limit
         self._thread = None
 
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
     @property
     def is_correct_thread(self):
         return not self._thread or self._thread and threading.get_ident() == self._thread.ident

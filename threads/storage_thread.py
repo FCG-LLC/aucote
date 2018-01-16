@@ -36,23 +36,24 @@ class StorageThread(Thread):
         """
         Connect to the storage and execute queries from queue in infinite loop
         """
-        self._storage.set_thread(self)
+        with self._storage:
+            self._storage.set_thread(self)
+            self.started_event.set()
 
-        self._storage.connect()
-        self.started_event.set()
+            while not self._close or not self._queue.empty():
+                try:
+                    query = self._queue.get(timeout=1)
+                except Empty:
+                    continue
 
-        while not self._close or not self._queue.empty():
-            try:
-                query = self._queue.get(timeout=1)
-            except Empty:
-                continue
+                with self.lock:
+                    try:
+                        query['result'] = self._storage.execute(query['query'])
+                        self._queue.task_done()
+                        query['event'].set()
+                    except Exception as exception:
+                        query['result'] = exception
 
-            with self.lock:
-                query['result'] = self._storage.execute(query['query'])
-                self._queue.task_done()
-                query['event'].set()
-
-        self._storage.close()
         log.debug("Exit")
 
     def execute(self, query):
