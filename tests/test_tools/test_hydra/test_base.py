@@ -2,7 +2,6 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from tools.hydra.base import HydraBase
-from tools.hydra.structs import HydraResults
 
 
 @patch('aucote_cfg.cfg.get', MagicMock(return_value='test'))
@@ -30,14 +29,3 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:20:21'''
     def setUp(self):
         self.executor = MagicMock()
         self.hydra = HydraBase()
-
-    @patch('tools.common.command.subprocess.run')
-    def test_success(self, mock_run):
-        """
-        Test with successful output
-        """
-
-        mock_run.return_value = MagicMock(returncode=0, stdout=self.OUTPUT_SUCCESSFUL, stderr=b'')
-        result = self.hydra.call()
-
-        self.assertIsInstance(result, HydraResults)
