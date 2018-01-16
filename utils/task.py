@@ -123,7 +123,16 @@ class Task(object):
         return "{} for {}".format(self.__class__.__name__, self._scan.scanner)
 
     def cancel(self):
+        """
+        Cancels tasks. As for now part of tasks are executed in ioloop and terminated externally by stopping ioloop,
+        the default behaviour is to do nothing
+        """
         pass
 
     def clear(self):
+        """
+        Clear after task. By default task doesn't require any special clearing,
+        some task (especially which uses external tools) can need it
+
+        """
         pass

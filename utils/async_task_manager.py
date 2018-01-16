@@ -285,7 +285,6 @@ class AsyncTaskManager(object):
         current_tasks = len(self._task_workers)
 
         task_politic = cfg['service.scans.task_politic']
-        tasks_to_kill = 0
 
         if task_politic == self.TASKS_POLITIC_KILL_WORKING_FIRST:
             tasks_to_kill = current_tasks - self._limit
@@ -293,6 +292,8 @@ class AsyncTaskManager(object):
             tasks_to_kill = round((old_limit - self._limit) * len(working_tasks) / self._parallel_tasks)
         elif task_politic == self.TASKS_POLITIC_KILL_WORKING:
             tasks_to_kill = (old_limit - self._limit) - (len(self._task_workers) - len(working_tasks))
+        else:
+            tasks_to_kill = 0
 
         log.debug('%s tasks will be killed', tasks_to_kill)
 
