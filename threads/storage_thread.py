@@ -11,7 +11,7 @@ from utils.storage import Storage
 
 class StorageThread(Thread):
     """
-    Class which is separate thread. Creates and manages local storage
+    Thread for creating and managing in-memory storage using a Queue.
 
     """
     def __init__(self, storage: Storage):
@@ -19,10 +19,18 @@ class StorageThread(Thread):
         self._storage = storage
         self.name = "Storage"
         self._queue = Queue()
-        self.finish = False
         self.lock = Lock()
         self.started_event = Event()
         self._close = False
+
+    def __enter__(self):
+        self.start()
+        self.started_event.wait()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+        self.join()
 
     def run(self):
         """
@@ -33,14 +41,10 @@ class StorageThread(Thread):
         self._storage.connect()
         self.started_event.set()
 
-        while not self.finish:
+        while not self._close or not self._queue.empty():
             try:
                 query = self._queue.get(timeout=1)
             except Empty:
-                if self._close:
-                    self._storage.close()
-                    break
-
                 continue
 
             with self.lock:

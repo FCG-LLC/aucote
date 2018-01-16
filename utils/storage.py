@@ -119,10 +119,14 @@ class Storage(DbInterface):
         self._cursor = None
         self.log = log.getLogger('storage')
         self.nodes_limit = nodes_limit
-        self.thread = None
+        self._thread = None
+
+    @property
+    def is_correct_thread(self):
+        return not self._thread or self._thread and threading.get_ident() == self._thread.ident
 
     def set_thread(self, thread):
-        self.thread = thread
+        self._thread = thread
 
     def init_schema(self):
         """
@@ -139,7 +143,7 @@ class Storage(DbInterface):
         return self.execute((self.GET_LAST_ROWID,))[0][0] or None
 
     def connect(self):
-        if self.thread and threading.get_ident() != self.thread.ident:
+        if not self.is_correct_thread:
             raise Exception("Connection from incorrect thread")
         self.conn = sqlite3.connect(self.filename, check_same_thread=True)
         self._cursor = self.conn.cursor()
@@ -485,8 +489,8 @@ class Storage(DbInterface):
             None|list
 
         """
-        if self.thread and threading.get_ident() != self.thread.ident:
-            return self.thread.execute(query)
+        if not self.is_correct_thread:
+            return self._thread.execute(query)
         else:
             log_id = uuid.uuid4()
             log.debug("Executing query with id: %s", log_id)

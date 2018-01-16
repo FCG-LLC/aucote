@@ -153,40 +153,36 @@ class Aucote(object):
 
         """
         try:
-            self._storage_thread.start()
-            self._storage_thread.started_event.wait()
+            with self._storage_thread:
+                self.async_task_manager.clear()
+                self._storage.init_schema()
+                async with self.web_server:
+                    self.ioloop.add_callback(self.web_server.run)
 
-            self.async_task_manager.clear()
-            self._storage.init_schema()
-            self.ioloop.add_callback(self.web_server.run)
+                    tcp_host = cfg['tcpportscan.host']
+                    tcp_port = int(cfg['tcpportscan.port'])
 
-            tcp_host = cfg['tcpportscan.host']
-            tcp_port = int(cfg['tcpportscan.port'])
+                    self.scanners = [
+                        TCPScanner(host=tcp_host, port=tcp_port, aucote=self, as_service=as_service),
+                        UDPScanner(aucote=self, as_service=as_service)
+                    ]
 
-            self.scanners = [
-                TCPScanner(host=tcp_host, port=tcp_port, aucote=self, as_service=as_service),
-                UDPScanner(aucote=self, as_service=as_service)
-            ]
+                    if as_service:
+                        for scanner in self.scanners:
+                            self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron)
 
-            if as_service:
-                for scanner in self.scanners:
-                    self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron)
+                        for scanner_name in cfg['portdetection.security_scans'].cfg:
+                            scanner = ToolsScanner(aucote=self, name=scanner_name)
+                            self.scanners.append(scanner)
+                            self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron, event='tools')
 
-                for scanner_name in cfg['portdetection.security_scans'].cfg:
-                    scanner = ToolsScanner(aucote=self, name=scanner_name)
-                    self.scanners.append(scanner)
-                    self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron, event='tools')
+                        self.async_task_manager.start()
+                    else:
+                        self.async_task_manager.start()
+                        await gen.multi(scanner() for scanner in self.scanners)
+                        self.async_task_manager.stop()
 
-                self.async_task_manager.start()
-            else:
-                self.async_task_manager.start()
-                await gen.multi(scanner() for scanner in self.scanners)
-                self.async_task_manager.stop()
-
-            await self.async_task_manager.shutdown_condition.wait()
-
-            self.web_server.stop()
-            self._storage_thread.stop()
+                    await self.async_task_manager.shutdown_condition.wait()
 
             log.info("Closing loop")
 
