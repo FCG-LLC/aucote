@@ -24,10 +24,11 @@ class _Executor(Thread):
     """
     Tasks executor. Task is executed in ioloop for easier stopping it. Subprocess based tasks are killed external
     """
-    def __init__(self, task, *args, **kwargs):
+    def __init__(self, task, number, *args, **kwargs):
         super(_Executor, self).__init__(*args, **kwargs)
         self.ioloop = None
         self.task = task
+        self.number = number
 
     def run(self):
         self.ioloop = IOLoop()
@@ -41,8 +42,12 @@ class _Executor(Thread):
         """
         Update task and stop ioloop
         """
-        await self.task()
-        self.ioloop.stop()
+        try:
+            await self.task()
+        except:
+            log.exception("Exception while executing task on worker %s", self.number)
+        finally:
+            self.ioloop.stop()
 
     def stop(self):
         """
@@ -191,7 +196,7 @@ class AsyncTaskManager(object):
                 item = self._tasks.get_nowait()
                 try:
                     log.debug("Worker %s: starting %s", number, item)
-                    thread = _Executor(task=item)
+                    thread = _Executor(task=item, number=number)
                     self._task_workers[number] = thread
                     thread.start()
 

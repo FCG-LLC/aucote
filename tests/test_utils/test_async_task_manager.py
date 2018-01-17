@@ -7,7 +7,7 @@ from tornado.queues import QueueEmpty
 from tornado.testing import AsyncTestCase, gen_test
 
 from utils.async_crontab_task import AsyncCrontabTask
-from utils.async_task_manager import AsyncTaskManager
+from utils.async_task_manager import AsyncTaskManager, _Executor
 
 
 class TestAsyncTaskManager(AsyncTestCase):
@@ -199,3 +199,20 @@ class TestAsyncTaskManager(AsyncTestCase):
         result = self.task_manager.cron_tasks
 
         self.assertEqual(result, expected)
+
+
+class _ExecutorTest(AsyncTestCase):
+    def setUp(self):
+        super(_ExecutorTest, self).setUp()
+        self.task = MagicMock()
+        self.executor = _Executor(task=self.task, number=13)
+
+    @gen_test()
+    async def test_execute(self):
+        self.task.return_value = Future()
+        self.task.return_value.set_exception(Exception())
+
+        self.executor.ioloop = MagicMock()
+        await self.executor.execute()
+
+        self.executor.ioloop.stop.assert_called_once()
