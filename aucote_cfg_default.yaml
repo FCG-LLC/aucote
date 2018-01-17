@@ -238,16 +238,6 @@ portdetection:
 #   (nmap|masscan|hydra|skipfish|aucote-http-headers|testssl|cve-search):
 #     enable: (True|False) - Enable tool
 #     cmd: <str> - Command used to run application
-#     period: <str> - Defines how often use application
-#     periods: - Defines how often using particular application modules (e.g. nmap scripts).
-#                These values are higher priority than 'period'.
-#       module1: <period> - Period for module1
-#       module2: <period> - Period for module2
-#     networks: - list of networks, which should be scanned by tool
-#     script_networks: - list of modules and restricted networks per module
-#       module1: - list of networks, which should be scanned by module/script. This option overwrite tools.app.networks!
-#         - <address/mask> - ip address of restricted network
-#         - <address/mask>
 #     timeout: <int> - defines maximum task execution time
 #   common: - Contains common configuration e.g. rates
 #     rate: <int> - rate in pps for tools scan
@@ -294,12 +284,8 @@ tools:
         cmd: nmap
         timeout: 7200  # 2 hours
         enable: True
-        period: 1d
         scripts_dir: ./static/nmap/
         disable_scripts: []
-        periods: {}
-        networks: []
-        script_networks: {}
     masscan:
         cmd: masscan
         timeout: 7200  # 2 hours
@@ -314,10 +300,6 @@ tools:
             - vnc
             - http
             - https
-        period: 7d
-        periods: {}
-        networks: []
-        script_networks: {}
     skipfish:
         cmd: skipfish
         timeout: 7200  # 2 hours
@@ -325,45 +307,21 @@ tools:
         limit: 0:10:00
         threads: 5
         tmp_directory: /tmp
-        period: 7d
-        periods: {}
-        networks: []
-        script_networks: {}
     aucote-http-headers:
         enable: True
-        period: 0s
-        periods: {}
-        networks: []
-        script_networks: {}
     testssl:
         cmd: testssl
         timeout: 7200  # 2 hours
         enable: True
-        period: 0s
-        periods: {}
-        networks: []
-        script_networks: {}
     whatweb:
         cmd: whatweb
         timeout: 7200  # 2 hours
         enable: True
-        period: 0s
-        periods: {}
-        networks: []
-        script_networks: {}
     cve-search:
         enable: True
-        period: 0s
-        periods: {}
-        networks: []
-        script_networks: {}
         api: ''
     aucote-active-directory:
         enable: True
-        period: 0s
-        periods: {}
-        networks: []
-        script_networks: {}
     common:
         rate: 50
         active-directory:
