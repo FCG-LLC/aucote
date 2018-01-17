@@ -6,12 +6,12 @@ import logging as log
 import subprocess
 from datetime import timedelta
 
+import threading
 from tornado import gen
 from tornado import process
 
 from aucote_cfg import cfg
 from tools.common.parsers import Parser
-from utils.exceptions import NonXMLOutputException
 
 
 class Command(object):
@@ -27,6 +27,15 @@ class Command(object):
     CMD = None
     parser = Parser()
 
+    def __init__(self):
+        self.proc = None
+
+    def kill(self):
+        if self.proc is None:
+            return
+
+        self.proc.kill()
+
     def call(self, args=None, timeout=None):
         """
         Calls system command and return parsed output or standard error output
@@ -41,8 +50,17 @@ class Command(object):
         cmd = ' '.join(all_args),
         log.debug('Executing: %s', cmd)
 
-        proc = subprocess.run(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
-        return_code, stdout, stderr = proc.returncode, proc.stdout, proc.stderr
+        self.proc = subprocess.Popen(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        try:
+            self.proc.wait(timeout=timeout)
+        except TimeoutError as exception:
+            log.exception("Command %s timed out after %s while executing %s", self.NAME, timeout, cmd)
+            self.proc.kill()
+            raise exception
+
+        return_code, stdout, stderr = self.proc.returncode, self.proc.stdout.read(), self.proc.stderr.read()
+        self.proc = None
 
         if return_code != 0:
             log.warning("Command '%s' failed wit exit code: %s", cmd, return_code)
@@ -60,6 +78,10 @@ class Command(object):
         if args is None:
             args = []
 
+        # Executing command with Tornado subprocess is possible only in main thread
+        if threading.main_thread().ident != threading.get_ident():
+            return self.call(args=args, timeout=timeout)
+
         all_args = [self.CMD if self.CMD is not None else cfg['tools.%s.cmd' % self.NAME]]
         all_args.extend(self.COMMON_ARGS)
         all_args.extend(args)
@@ -67,6 +89,7 @@ class Command(object):
         log.debug('Executing: %s', cmd)
 
         task = process.Subprocess(all_args, stderr=process.Subprocess.STREAM, stdout=process.Subprocess.STREAM)
+        self.proc = task.proc
 
         coroutine = gen.multi([task.wait_for_exit(raise_error=False),
                                task.stdout.read_until_close(),
@@ -81,6 +104,8 @@ class Command(object):
                 log.exception("Command %s timed out after %s while executing %s", self.NAME, timeout, cmd)
                 task.proc.kill()
                 raise exception
+
+        self.proc = None
 
         if return_code != 0:
             log.warning("Command '%s' failed wit exit code: %s", cmd, return_code)

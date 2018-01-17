@@ -7,7 +7,7 @@ from tornado.queues import QueueEmpty
 from tornado.testing import AsyncTestCase, gen_test
 
 from utils.async_crontab_task import AsyncCrontabTask
-from utils.async_task_manager import AsyncTaskManager
+from utils.async_task_manager import AsyncTaskManager, _Executor
 
 
 class TestAsyncTaskManager(AsyncTestCase):
@@ -177,16 +177,6 @@ class TestAsyncTaskManager(AsyncTestCase):
         yield self.task_manager.process_tasks(0)
         task.assert_called_once_with()
 
-    @patch('utils.async_task_manager.log.exception')
-    @gen_test
-    def test_process_queue_exception(self, mock_exception):
-        task = MagicMock(side_effect=Exception())
-        self.task_manager.add_task(task)
-
-        self.io_loop.add_callback(partial(self.task_manager.process_tasks, 0))
-        yield self.task_manager._tasks.join()
-        self.assertTrue(mock_exception.called)
-
     def test_unfinished_tasks(self):
         tasks = randint(5, 10)
         for i in range(tasks):
@@ -209,3 +199,20 @@ class TestAsyncTaskManager(AsyncTestCase):
         result = self.task_manager.cron_tasks
 
         self.assertEqual(result, expected)
+
+
+class _ExecutorTest(AsyncTestCase):
+    def setUp(self):
+        super(_ExecutorTest, self).setUp()
+        self.task = MagicMock()
+        self.executor = _Executor(task=self.task, number=13)
+
+    @gen_test()
+    async def test_execute(self):
+        self.task.return_value = Future()
+        self.task.return_value.set_exception(Exception())
+
+        self.executor.ioloop = MagicMock()
+        await self.executor.execute()
+
+        self.executor.ioloop.stop.assert_called_once()

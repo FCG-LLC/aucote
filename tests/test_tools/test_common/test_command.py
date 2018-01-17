@@ -24,12 +24,6 @@ class CommandTest(AsyncTestCase):
         self.command.COMMON_ARGS = []
 
     @patch('tools.common.command.subprocess.run')
-    def test_stdout(self, mock_run):
-        mock_run.return_value = MagicMock(stdout=self.SCRIPT_XML, stderr=b'', returncode=0)
-        result = self.command.call()
-        self.assertEqual(result, self.SCRIPT_XML.decode("utf-8"))
-
-    @patch('tools.common.command.subprocess.run')
     def test_stderr(self, mock_run):
         mock_run.return_value = MagicMock(stdout=self.SCRIPT_XML, stderr=b'', returncode=1)
         self.assertRaises(subprocess.CalledProcessError, self.command.call)

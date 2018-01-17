@@ -4,6 +4,7 @@ This module contains class for managing async tasks.
 """
 from functools import partial
 import logging as log
+from threading import Thread
 
 from pycslib.utils import RabbitConsumer
 from tornado import gen
@@ -13,7 +14,50 @@ from tornado.locks import Event
 from tornado.queues import Queue, QueueEmpty
 
 from aucote_cfg import cfg
+from tools.common.command_task import CommandTask
+from tools.common.port_scan_task import PortScanTask
+from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.async_crontab_task import AsyncCrontabTask
+
+
+class _Executor(Thread):
+    """
+    Tasks executor. Task is executed in ioloop for easier stopping it. Subprocess based tasks are killed external
+    """
+    def __init__(self, task, number, *args, **kwargs):
+        super(_Executor, self).__init__(*args, **kwargs)
+        self.ioloop = None
+        self.task = task
+        self.number = number
+
+    def run(self):
+        self.ioloop = IOLoop()
+        self.ioloop.make_current()
+        self.ioloop.add_callback(self.execute)
+        self.ioloop.start()
+        self.task.clear()
+        self.ioloop.clear_current()
+
+    async def execute(self):
+        """
+        Update task and stop ioloop
+        """
+        try:
+            await self.task()
+        except:
+            log.exception("Exception while executing task on worker %s", self.number)
+        finally:
+            self.ioloop.stop()
+
+    def stop(self):
+        """
+        Stop task. Important especially for Subprocess based tasks
+        """
+        self.task.cancel()
+
+        # As Subprocess based tasks generate traffic only using external tool, they should exit gracefully
+        if not isinstance(self.task, (CommandTask, NmapPortInfoTask, PortScanTask)):
+            self.ioloop.stop()
 
 
 class AsyncTaskManager(object):
@@ -26,6 +70,11 @@ class AsyncTaskManager(object):
     """
     _instance = None
     THROTTLE_POLL_TIME = 60
+
+    TASKS_POLITIC_WAIT = 0
+    TASKS_POLITIC_KILL_WORKING_FIRST = 1
+    TASKS_POLITIC_KILL_PROPORTIONS = 2
+    TASKS_POLITIC_KILL_WORKING = 3
 
     def __init__(self, parallel_tasks=10):
         self._shutdown_condition = Event()
@@ -138,10 +187,7 @@ class AsyncTaskManager(object):
 
     async def process_tasks(self, number):
         """
-        Execute queue
-
-        Returns:
-            None
+        Execute queue. Every task in executed in separated thread (_Executor)
 
         """
         log.info("Starting worker %s", number)
@@ -150,8 +196,12 @@ class AsyncTaskManager(object):
                 item = self._tasks.get_nowait()
                 try:
                     log.debug("Worker %s: starting %s", number, item)
-                    self._task_workers[number] = item
-                    await item()
+                    thread = _Executor(task=item, number=number)
+                    self._task_workers[number] = thread
+                    thread.start()
+
+                    while thread.is_alive():
+                        await sleep(0.5)
                 except:
                     log.exception("Worker %s: exception occurred", number)
                 finally:
@@ -219,12 +269,44 @@ class AsyncTaskManager(object):
 
     def change_throttling(self, new_value):
         """
-        Change throttling value
+        Change throttling value. Keeps throttling value between 0 and 1.
+
+        Behaviour of algorithm is described in docs/throttling.md
+
+        Only working tasks are closing here. Idle workers are stop by themselves
+
         """
         if new_value > 1:
             new_value = 1
         if new_value < 0:
             new_value = 0
+
+        new_value = round(new_value * 100) / 100
+
+        old_limit = self._limit
+        self._limit = round(self._parallel_tasks * float(new_value))
+
+        working_tasks = [number for number, task in self._task_workers.items() if task is not None]
+        current_tasks = len(self._task_workers)
+
+        task_politic = cfg['service.scans.task_politic']
+
+        if task_politic == self.TASKS_POLITIC_KILL_WORKING_FIRST:
+            tasks_to_kill = current_tasks - self._limit
+        elif task_politic == self.TASKS_POLITIC_KILL_PROPORTIONS:
+            tasks_to_kill = round((old_limit - self._limit) * len(working_tasks) / self._parallel_tasks)
+        elif task_politic == self.TASKS_POLITIC_KILL_WORKING:
+            tasks_to_kill = (old_limit - self._limit) - (len(self._task_workers) - len(working_tasks))
+        else:
+            tasks_to_kill = 0
+
+        log.debug('%s tasks will be killed', tasks_to_kill)
+
+        for number in working_tasks:
+            if tasks_to_kill <= 0:
+                break
+            self._task_workers[number].stop()
+            tasks_to_kill -= 1
 
         self._limit = round(self._parallel_tasks * float(new_value))
 
