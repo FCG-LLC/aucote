@@ -61,18 +61,10 @@ class TaskMapperTest(AsyncTestCase):
             },
             'tools': {
                 'test': {
-                    'enable': True,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                    'period': '0s'
+                    'enable': True
                 },
                 'test2': {
-                    'enable': True,
-                    'periods': {},
-                    'script_networks': {},
-                    'networks': [],
-                    'period': '0s'
+                    'enable': True
                 }
             }
         }
@@ -141,52 +133,6 @@ class TaskMapperTest(AsyncTestCase):
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 0)
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_count, 1)
 
-    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    @patch('scans.task_mapper.cfg', new_callable=Config)
-    @patch('time.time', MagicMock(return_value=25.0))
-    @gen_test
-    async def test_storage_all_scanned_recently(self, cfg):
-        cfg._cfg = self.cfg
-        cfg['tools.test2.enable'] = False
-        cfg['tools.test.periods'] = {
-            'test_1': '1d',
-            'test_2': '2d'
-        }
-
-        await self.task_mapper.assign_tasks(self.UDP)
-
-        result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
-        expected = []
-
-        self.assertEqual(result, expected)
-
-    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    @patch('scans.task_mapper.cfg', new_callable=Config)
-    @patch('time.time', MagicMock(return_value=25.0))
-    @gen_test
-    async def test_storage_one_scanned_recently(self, cfg):
-        cfg._cfg = self.cfg
-        cfg['tools.test2.enable'] = False
-        cfg['tools.test.periods'] = {
-            'test_1': '1d',
-            'test_2': '1s'
-        }
-
-        self.task_mapper.store_security_scan = MagicMock()
-
-        expected = [self.exploits['test'][1]]
-        expected_call = {
-            'exploits': [self.exploits['test'][1]],
-            'port': self.UDP
-        }
-
-        await self.task_mapper.assign_tasks(self.UDP)
-
-        result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
-
-        self.assertEqual(result, expected)
-        self.assertCountEqual(self.task_mapper.store_security_scan.call_args[1], expected_call)
-
     def test_store_scan(self):
         self.UDP.scan = Scan(start=25.0)
         self.task_mapper.store_security_scan(exploits=[self.exploits['test'][0]], port=self.UDP)
@@ -204,57 +150,6 @@ class TaskMapperTest(AsyncTestCase):
 
         self.assertNotEqual(id(self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['port']), id(self.UDP))
         self.assertNotEqual(id(self.EXECUTOR_CONFIG['apps']['test2']['class'].call_args[1]['port']), id(self.TCP))
-
-    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    @patch('scans.task_mapper.cfg', new_callable=Config)
-    @gen_test
-    async def test_restricted_script_network(self, cfg):
-        cfg._cfg = self.cfg
-        cfg['tools.test2.enable'] = False
-        cfg['tools.test'] = {
-            'enable': True,
-            'periods': {
-                'test_1': '1s',
-                'test_2': '1s',
-                'test_3': '1s',
-                'test_4': '1s'
-            },
-            'script_networks': {
-                'test_1': [
-                    '0.0.0.0/32'
-                ],
-                'test_3': [
-                    '0.0.0.0/32'
-                ],
-                'test_4': [
-                    '0.0.0.0/32'
-                ]
-            },
-            'networks': [
-                '0.0.0.0/0'
-            ]
-        }
-
-        self.exploits = OrderedDict({
-            'test': [
-                Exploit(exploit_id=1, name='test_1', categories={ExploitCategory.OTHER}),
-                Exploit(exploit_id=2, name='test_2', categories={ExploitCategory.BRUTE}),
-                Exploit(exploit_id=3, name='test_3', categories={ExploitCategory.OTHER}),
-                Exploit(exploit_id=4, name='test_4', categories={ExploitCategory.OTHER})
-            ]
-        })
-        self.executor.exploits.find_all_matching.return_value = self.exploits
-        self.task_mapper._executor = self.executor
-
-        self.task_mapper.store_security_scan = MagicMock()
-
-        expected = [self.exploits['test'][1]]
-
-        await self.task_mapper.assign_tasks(self.UDP)
-
-        result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
-
-        self.assertEqual(result, expected)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)
@@ -305,27 +200,6 @@ class TaskMapperTest(AsyncTestCase):
         await self.task_mapper.assign_tasks(self.UDP)
         result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
 
-        self.assertEqual(result, expected)
-
-    @patch('scans.task_mapper.time.time', MagicMock(return_value=10))
-    @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
-    @patch('scans.task_mapper.cfg', new_callable=Config)
-    @gen_test
-    async def test_scan_after_service_change(self, cfg):
-        cfg._cfg = self.cfg
-        cfg['tools.test2.enable'] = False
-
-        exploit = Exploit(exploit_id=3, name='test_3')
-        self.executor.storage.get_security_scan_info.return_value = [
-            SecurityScan(exploit=exploit, scan_start=17, scan_end=26, port=self.UDP, scan=None),
-            SecurityScan(exploit=self.exploits['test'][1], scan_start=12, scan_end=17, port=self.UDP, scan=None)
-        ]
-
-        self.EXECUTOR_CONFIG['apps']['test']['class'] = MagicMock()
-
-        await self.task_mapper.assign_tasks(self.UDP)
-        result = self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['exploits']
-        expected = [self.exploits['test'][0]]
         self.assertEqual(result, expected)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
