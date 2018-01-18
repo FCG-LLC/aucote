@@ -81,7 +81,7 @@ class TaskMapper(object):
             self._aucote.add_async_task(task)
 
     def _filter_exploits(self, exploits):
-        return [exploit for exploit in exploits if self._is_exploit_allowed(exploit=exploit)]
+        return list(filter(self._is_exploit_allowed, exploits))
 
     def _is_exploit_allowed(self, exploit):
         categories = {ExploitCategory[cat.upper()] for cat in cfg.get('portdetection._internal.categories').cfg}
