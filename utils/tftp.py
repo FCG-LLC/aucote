@@ -65,11 +65,11 @@ class TFTP:
 
     DEF_BLKSIZE = 512  # size of data block in TFTP-packet
 
-    def __init__(self, ip, port, timeout, tmp_dir):
+    def __init__(self, ip, port, timeout, data_dir):
         self.ip = ip
         self.port = port
         self._timeout = timeout
-        self._dir = tmp_dir
+        self._dir = data_dir
         self._socket = None
         self._current_receive_port = self.TFTP_MIN_DATA_PORT
         self._epoll = select.epoll()
@@ -99,7 +99,7 @@ class TFTP:
 
     def get_file(self, address):
         """
-        Get file from specific address if available. If files wasn't downloaded within timeout given to `add_file`
+        Get file from specific address if available. If file wasn't downloaded within timeout given to `add_file`
         the TimeoutError is raise
 
         """
@@ -140,6 +140,8 @@ class TFTP:
         self._socket.settimeout(self._timeout)
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._socket.bind((self.ip, self.port))
+
+        os.makedirs(self._dir, exist_ok=True)
 
     def listen(self):
         """

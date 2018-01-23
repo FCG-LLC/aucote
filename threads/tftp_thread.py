@@ -5,10 +5,11 @@ from utils.tftp import TFTP
 
 class TFTPThread(Thread):
     DEFAULT_TIMEOUT = 120  # Time to wait on file in seconds
+    DATA_DIR = 'tmp/tftp/'
 
     def __init__(self, host, port, timeout, *args, **kwargs):
         super(TFTPThread, self).__init__(*args, **kwargs)
-        self._tftp = TFTP(host, port, timeout, 'tmp/')
+        self._tftp = TFTP(host, port, timeout, self.DATA_DIR)
         self.name = "TFTP"
         self.started_event = Event()
         self._close = False
@@ -26,7 +27,7 @@ class TFTPThread(Thread):
         self._tftp.stop()
         self.join()
 
-    async def async_get_file(self, address, timeout=120):
+    async def async_get_file(self, address, timeout=DEFAULT_TIMEOUT):
         event = self._tftp.register_address(address, timeout=timeout)
 
         while not event.is_set():
