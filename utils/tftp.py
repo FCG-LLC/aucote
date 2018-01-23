@@ -136,10 +136,7 @@ class TFTP:
         Start socket
 
         """
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._socket.settimeout(self._timeout)
-        self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self._socket.bind((self.ip, self.port))
+        self._socket = self._open_port(self.ip, self.port)
 
         os.makedirs(self._dir, exist_ok=True)
 
@@ -192,10 +189,7 @@ class TFTP:
             ss = buffer[2:].split(b'\0')
             filename = ss[0].decode('utf-8')
 
-            receiver = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            receiver.settimeout(self._timeout)
-            receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            receiver.bind(('', self.next_receive_port))
+            receiver = self._open_port('', self.next_receive_port)
 
             response = b'\x00\x04\x00\x00'
 
@@ -281,3 +275,10 @@ class TFTP:
         self._epoll.unregister(self._socket.fileno)
         self._socket.close()
         self._stop = True
+
+    def _open_port(self, host, port):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.settimeout(self._timeout)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind((host, port))
+        return sock
