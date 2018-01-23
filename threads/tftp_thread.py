@@ -1,20 +1,15 @@
 from threading import Thread, Event
-
-from multiprocessing import Queue
-
 from tornado.gen import sleep
-
 from utils.tftp import TFTP
 
 
 class TFTPThread(Thread):
     DEFAULT_TIMEOUT = 120  # Time to wait on file in seconds
 
-    def __init__(self):
-        super(TFTPThread, self).__init__()
-        self._tftp = TFTP('', 6969, 120, 'tmp/')
-        self.name = "Storage"
-        self._queue = Queue()
+    def __init__(self, host, port, timeout, *args, **kwargs):
+        super(TFTPThread, self).__init__(*args, **kwargs)
+        self._tftp = TFTP(host, port, timeout, 'tmp/')
+        self.name = "TFTP"
         self.started_event = Event()
         self._close = False
 
