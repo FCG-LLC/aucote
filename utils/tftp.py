@@ -1,3 +1,9 @@
+"""
+There is some tool which sends request to the switch/router.
+When device take this request it sends the file (e.g. configuration) to the TFTP as a response.
+Server is needed to confirm and to prove vulnerability.
+
+"""
 import logging
 import socket
 import os
