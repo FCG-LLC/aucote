@@ -10,7 +10,7 @@ import select
 
 from os import path
 
-from utils.tftp import TFTP
+from utils.tftp import TFTP, TFTPTimeoutError
 
 
 class TFTPHelper(Thread):
@@ -143,6 +143,107 @@ class TFTPTest(TestCase):
 
         with open(file_path, 'rb') as f:
             self.assertEqual(f.read(), b'before_test_data')
+
+    @patch('utils.tftp.time.time', MagicMock(return_value=114))
+    def test_check_timeouts(self):
+        self.maxDiff = None
+        receiver = self.tftp._open_port('127.0.0.1', 0)
+        self.tftp._receivers[receiver.fileno()] = receiver
+        event_1 = Event()
+        event_1.set()
+
+        event_2 = Event()
+
+        event_3 = Event()
+
+        self.tftp._files = {
+            '127.0.0.1': {
+                'event': event_1,
+                'time': 113,
+                'exception': None,
+                'size': 0
+            },
+            '127.0.0.2': {
+                'event': event_2,
+                'time': 115,
+                'exception': None,
+                'size': 0
+            },
+            '127.0.0.3': {
+                'event': event_3,
+                'time': 110,
+                'exception': None,
+                'size': 0,
+                'receiver': receiver
+            }
+        }
+
+        expected = {
+            '127.0.0.1': {
+                'event': event_1,
+                'time': 113,
+                'exception': None,
+                'size': 0
+            },
+            '127.0.0.2': {
+                'event': event_2,
+                'time': 115,
+                'exception': None,
+                'size': 0
+            }
+        }
+
+        self.tftp.check_timeouts()
+        self.assertDictEqual(self.tftp._files['127.0.0.1'], expected['127.0.0.1'])
+        self.assertDictEqual(self.tftp._files['127.0.0.2'], expected['127.0.0.2'])
+        self.assertTrue(self.tftp._files['127.0.0.3']['event'].is_set())
+        self.assertIsInstance(self.tftp._files['127.0.0.3']['exception'], TFTPTimeoutError)
+        self.assertEqual(receiver.fileno(), -1)
+
+    @patch('utils.tftp.time.time', MagicMock(return_value=114))
+    def test_register_address(self):
+        self.tftp.register_address('127.0.0.15', 117)
+
+        self.assertIsInstance(self.tftp._files['127.0.0.15']['event'], Event)
+        self.assertEqual(self.tftp._files['127.0.0.15']['time'], 231)
+        self.assertEqual(self.tftp._files['127.0.0.15']['size'], 0)
+        self.assertIsNone(self.tftp._files['127.0.0.15']['exception'])
+
+    def test_get_file_with_exception(self):
+        event = Event()
+        event.set()
+
+        self.tftp._files = {
+            '127.0.0.1': {
+                'event': event,
+                'time': 113,
+                'exception': Exception(),
+                'size': 0
+            },
+        }
+
+        with self.assertRaises(Exception):
+            self.tftp.get_file('127.0.0.1')
+
+    def test_get_file(self):
+        event = Event()
+        event.set()
+
+        self.tftp._files = {
+            '127.0.0.1': {
+                'event': event,
+                'time': 113,
+                'exception': None,
+                'size': 0,
+                'path': 'tmp/test_path.tst'
+            },
+        }
+
+        expected = 'tmp/test_path.tst'
+
+        result = self.tftp.get_file('127.0.0.1')
+
+        self.assertEqual(result, expected)
 
     def tearDown(self):
         if self.tftp._socket is not None:

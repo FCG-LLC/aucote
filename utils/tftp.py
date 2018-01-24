@@ -3,7 +3,7 @@ import socket
 import os
 import select
 import time
-from multiprocessing import Event
+from threading import Event
 
 
 log = logging.getLogger()
@@ -227,7 +227,7 @@ class TFTP:
             return
 
         with open(path, 'ba') as f:
-            f.write(buffer[self.OPCODE_LEN:])
+            f.write(buffer[self.PREFIX_LEN:])
 
             # send ACK
             response = b'\x00\x04' + buffer[self.OPCODE_LEN:self.PREFIX_LEN]
