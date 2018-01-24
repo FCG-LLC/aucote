@@ -14,12 +14,17 @@ from utils.tftp import TFTP
 
 
 class TFTPHelper(Thread):
+    """
+    TFTP test helper. It always bind to the 127.0.0.1 and free port (0).
+    The current port is available via `self.port`
+    """
     def __init__(self, host, port, put, request=b'', *args, **kwargs):
         super(TFTPHelper, self).__init__(*args, **kwargs)
-        self.port = port
-        self.host = host
+        self.dst_port = port
+        self.dst_host = host
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind(('127.0.0.1', 0))
+        self.host, self.port = self.socket.getsockname()
         self.started = Event()
         self.put = put
         self.response = None
@@ -27,7 +32,7 @@ class TFTPHelper(Thread):
     
     def run(self):
         self.started.set()
-        self.socket.sendto(self.request, (self.host, self.port))
+        self.socket.sendto(self.request, (self.dst_host, self.dst_port))
 
         self.response = self.socket.recvfrom(1024)
 
@@ -104,7 +109,7 @@ class TFTPTest(TestCase):
     def test_receive_file(self):
         receiver = self.tftp._open_port('127.0.0.1', 0)
         host, port = receiver.getsockname()
-        self.helper.port = port
+        self.helper.dst_port = port
 
         fd = receiver.fileno()
         self.tftp._epoll.register(fd)

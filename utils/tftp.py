@@ -11,7 +11,7 @@ log = logging.getLogger()
 
 class TFTPError(Exception):
     """
-    TFTP Error. Base class for TFTP related exceptions
+    Base class for TFTP server related exceptions
     """
     def __init__(self, *args, **kwargs):
         super(TFTPError, self).__init__(*args, **kwargs)
@@ -47,12 +47,14 @@ class TFTPMaxSizeExceeded(TFTPError):
 
 class TFTP:
     """
-    Simple TFTP server for obtaining vulnerable data by scripts with TFTP protocol
+    Simple TFTP server for obtaining vulnerable data by scripts with TFTP protocol (RFC 1350)
 
-    Server processes only request from addresses from whitelist. The whitelist is dynamic and to register address use
-    `register_address` function. Address can be registered only once till the file is obtained or TimeoutError occurs
+    Server processes only request from whitelisted addresses.
+    An address can be whitelisted by `register_address` function.
+    Address can be registered only once till the file is obtained or TimeoutError occurs
 
-    To wait on file and take path, the get_file should be fired. The file should be removed by consumer
+    If file was sent from specific address, it can be obtain by `get_file`.
+    The file should be removed by consumer
     """
 
     GET_BYTE = 1
@@ -62,6 +64,9 @@ class TFTP:
     MAX_FILE_SIZE = 0x1000  # Max file size in bytes
     TFTP_MIN_DATA_PORT = 44000  # range of UDP data port
     TFTP_MAX_DATA_PORT = 65000  # -//-
+
+    OPCODE_LEN = BLOCK_NUMBER_LEN = 2
+    PREFIX_LEN = OPCODE_LEN + BLOCK_NUMBER_LEN
 
     DEF_BLKSIZE = 512  # size of data block in TFTP-packet
 
@@ -170,7 +175,7 @@ class TFTP:
         """
         try:
             buffer, (address, port) = self._socket.recvfrom(self.MAX_BLKSIZE)
-        except (socket.timeout, socket.error):
+        except (OSError, socket.error):
             # Dont do anything in case of socket timeout/error
             return
 
@@ -186,17 +191,18 @@ class TFTP:
             # Reading files is unsupported
             return
         elif message_type == self.PUT_BYTE:
-            ss = buffer[2:].split(b'\0')
+            ss = buffer[self.OPCODE_LEN:].split(b'\0')
             filename = ss[0].decode('utf-8')
 
             receiver = self._open_port('', self.next_receive_port)
 
+            # Send ACK
             response = b'\x00\x04\x00\x00'
 
             receiver.sendto(response, (address, port))
             self._epoll.register(receiver.fileno())
             self._files[address]['filename'] = filename
-            self._files[address]['path'] = 'tmp/' + str(time.time()) + '_' + filename
+            self._files[address]['path'] = 'tmp/{}_{}'.format(time.time(), filename)
             self._files[address]['receiver'] = receiver
             self._receivers[receiver.fileno()] = receiver
         else:
@@ -205,13 +211,13 @@ class TFTP:
 
     def receive_file(self, fd):
         """
-        Receive data on given fd. Append it to cnfigured file
+        Receive data on given fd. Append it to configured file
         """
         receiver = self._receivers[fd]
         buffer, (remote_address, remote_port) = receiver.recvfrom(self.MAX_BLKSIZE)
         path = self._files[remote_address]['path']
 
-        self._files[remote_address]['size'] += len(buffer[4:])
+        self._files[remote_address]['size'] += len(buffer[self.PREFIX_LEN:])
 
         if self._files[remote_address]['size'] > self.MAX_FILE_SIZE:
             # Too big file from client, close connection
@@ -221,12 +227,13 @@ class TFTP:
             return
 
         with open(path, 'ba') as f:
-            f.write(buffer[4:])
+            f.write(buffer[self.OPCODE_LEN:])
 
-            response = b'\x00\x04' + buffer[2:4]
+            # send ACK
+            response = b'\x00\x04' + buffer[self.OPCODE_LEN:self.PREFIX_LEN]
             receiver.sendto(response, (remote_address, remote_port))
 
-            if len(buffer[4:]) < self.DEF_BLKSIZE:
+            if len(buffer[self.PREFIX_LEN:]) < self.DEF_BLKSIZE:
                 self._close_receiver(fd, remote_address)
 
     def _close_receiver(self, fd, remote_address):
@@ -241,7 +248,7 @@ class TFTP:
 
     def check_timeouts(self):
         """
-        Check timeouts and clean obsolete data
+        Check timeouts and clean obsolete data (used for process requests and save file)
         """
         current_time = time.time()
 
