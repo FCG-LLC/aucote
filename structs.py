@@ -1007,3 +1007,15 @@ class VulnerabilityChange(VulnerabilityChangeBase):
     @property
     def current_output(self):
         return self.current_finding.output if self.current_finding else ""
+
+
+class ScanContext:
+    """
+    Scan context handle information about scan ant it progress
+    """
+    def __init__(self, aucote, scan):
+        self.aucote = aucote
+        self.scan = scan
+        self.scripts = []
+        self.start = None
+        self.end = None
