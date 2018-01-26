@@ -5,7 +5,7 @@ from tornado.concurrent import Future
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
-from structs import Port, TransportProtocol, Node, Scan
+from structs import Port, TransportProtocol, Node, Scan, ScanContext
 from tools.skipfish.tasks import SkipfishScanTask
 from utils import Config
 
@@ -34,8 +34,9 @@ class SkipfishScanTaskTest(AsyncTestCase):
         self.port.scan = Scan()
         self.exploit = Exploit(exploit_id=1)
         self.scan = Scan()
+        self.context = ScanContext(aucote=self.aucote, scan=None)
 
-        self.task = SkipfishScanTask(aucote=self.aucote, port=self.port, exploits=[self.exploit], scan=self.scan,)
+        self.task = SkipfishScanTask(context=self.context, port=self.port, exploits=[self.exploit], scan=self.scan,)
         self.task.aucote.exploits.find.return_value = self.exploit
         self.task.store_scan_end = MagicMock()
 

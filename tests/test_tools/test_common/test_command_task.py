@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from tornado.concurrent import Future
 from tornado.testing import gen_test, AsyncTestCase
 
-from structs import Port, Scan
+from structs import Port, Scan, ScanContext
 from tools.common.command_task import CommandTask
 from utils import Config
 from utils.exceptions import StopCommandException
@@ -24,7 +24,8 @@ class CommandTaskTest(AsyncTestCase):
         self.command.async_call = MagicMock(return_value=future)
         self.exploit = MagicMock()
         self.scan = Scan()
-        self.task = CommandTask(aucote=self.aucote, port=self.port, command=self.command, exploits=[self.exploit],
+        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.task = CommandTask(context=self.context, port=self.port, command=self.command, exploits=[self.exploit],
                                 scan=self.scan)
         self.cfg = {
             'tools': {

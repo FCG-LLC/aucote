@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from structs import Scan
+from structs import Scan, ScanContext
 from tools.base import Tool
 
 
@@ -13,8 +13,9 @@ class ToolTest(TestCase):
         self.config = MagicMock()
         self.port = MagicMock()
         self.scan = Scan()
+        self.context = ScanContext(aucote=self.aucote, scan=None)
 
-        self.tool = Tool(aucote=self.aucote, exploits=self.exploits, port=self.port, config=self.config, scan=self.scan)
+        self.tool = Tool(context=self.context, exploits=self.exploits, port=self.port, config=self.config, scan=self.scan)
 
     def test_init(self):
         self.assertEqual(self.tool.aucote, self.aucote)

@@ -13,16 +13,20 @@ class Task(object):
     Base class for tasks, e.g. scan, nmap, hydra
 
     """
-    def __init__(self, aucote, scan):
+    def __init__(self, context, scan):
         """
         Assign executor
 
         """
-        self.aucote = aucote
+        self.context = context
         self.creation_time = time.time()
         self.start_time = None
         self._name = None
         self._scan = scan
+
+    @property
+    def aucote(self):
+        return self.context.aucote
 
     @property
     def kudu_queue(self):

@@ -4,7 +4,7 @@ from tornado.concurrent import Future
 from tornado.httpclient import HTTPClient, HTTPError, HTTPResponse, HTTPRequest
 from tornado.testing import gen_test, AsyncTestCase
 
-from structs import Port, Scan
+from structs import Port, Scan, ScanContext
 from tools.aucote_http_headers.structs import HeaderDefinition, AucoteHttpHeaderResult
 from tools.aucote_http_headers.tasks import AucoteHttpHeadersTask
 
@@ -53,7 +53,8 @@ class AucoteHttpHeadersTaskTest(AsyncTestCase):
         }
         self.scan = Scan()
         self.custom_headers = {'Accept-Encoding': 'gzip, deflate', 'User-Agent': 'test'}
-        self.task = AucoteHttpHeadersTask(port=self.port, aucote=self.aucote, exploits=[self.exploit],
+        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.task = AucoteHttpHeadersTask(port=self.port, context=self.context, exploits=[self.exploit],
                                           config=self.config, scan=self.scan)
 
     def tearDown(self):

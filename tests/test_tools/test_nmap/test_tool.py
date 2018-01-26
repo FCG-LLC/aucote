@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock, call
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
-from structs import RiskLevel, Port, TransportProtocol, Node, Scan
+from structs import RiskLevel, Port, TransportProtocol, Node, Scan, ScanContext
 from tools.nmap.base import NmapScript
 from tools.nmap.tool import NmapTool
 from tools.nmap.parsers import NmapParser
@@ -59,7 +59,8 @@ class NmapToolTest(AsyncTestCase):
 
         self.aucote = MagicMock(storage=Storage(":memory:"))
         self.scan = Scan()
-        self.nmap_tool = NmapTool(aucote=self.aucote, exploits=self.exploits, port=self.port, config=self.config,
+        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.nmap_tool = NmapTool(context=self.context, exploits=self.exploits, port=self.port, config=self.config,
                                   scan=self.scan)
 
     @patch('tools.nmap.tool.NmapVulnParser')

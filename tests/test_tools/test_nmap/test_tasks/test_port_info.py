@@ -7,7 +7,7 @@ from tornado.concurrent import Future
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
-from structs import Port, TransportProtocol, Node, BroadcastPort, Scan, Vulnerability, VulnerabilityChange
+from structs import Port, TransportProtocol, Node, BroadcastPort, Scan, Vulnerability, VulnerabilityChange, ScanContext
 
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils import Config
@@ -110,8 +110,9 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port_ipv6 = Port(number=22, node=self.node_ipv6, transport_protocol=TransportProtocol.TCP)
         self.scan = Scan()
         self.scanner = MagicMock(NAME='tools')
+        self.context = ScanContext(aucote=self.aucote, scan=None)
 
-        self.port_info = NmapPortInfoTask(aucote=self.aucote, port=self.port, scan=self.scan, scanner=self.scanner)
+        self.port_info = NmapPortInfoTask(context=self.context, port=self.port, scan=self.scan, scanner=self.scanner)
 
         self.cfg = {
             'portdetection': {
