@@ -21,6 +21,7 @@ class Task(object):
         self.context = context
         self.creation_time = time.time()
         self.start_time = None
+        self.finish_time = None
         self._name = None
         self._scan = scan
 
