@@ -1016,6 +1016,10 @@ class ScanContext:
     def __init__(self, aucote, scan):
         self.aucote = aucote
         self.scan = scan
-        self.scripts = []
+        self.tasks = []
         self.start = None
         self.end = None
+
+    def add_task(self, task):
+        self.tasks.append(task)
+        self.aucote.add_async_task(task)
