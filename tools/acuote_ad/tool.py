@@ -35,9 +35,9 @@ class AucoteActiveDirectory(Tool):
 
         if not self.node:
             for domain_name in domain_names:
-                self.aucote.add_async_task(Enum4linuxTask(domain=domain_name, username=username, password=password,
-                                                          command=Enum4linuxBase(), aucote=self.aucote, scan=self._scan,
-                                                          port=self._port, exploits=exploits))
+                self.context.add_task(Enum4linuxTask(domain=domain_name, username=username, password=password,
+                                                     command=Enum4linuxBase(), aucote=self.aucote, scan=self._scan,
+                                                     port=self._port, exploits=exploits))
             return
 
         if str(self.node.ip) not in dns_servers:
@@ -53,7 +53,7 @@ class AucoteActiveDirectory(Tool):
             port = SpecialPort(node=self.node, transport_protocol=TransportProtocol.TCP)
             port.scan = self._scan
 
-            self.aucote.add_async_task(AucoteActiveDirectoryTask(
+            self.context.add_task(AucoteActiveDirectoryTask(
                 domain=domain_name, nodes=nodes, aucote=self.aucote, scan=self._scan, port=port, exploits=exploits))
 
     async def resolve_nodes(self, dns_server, domain_name, current_nodes):

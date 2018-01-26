@@ -1023,3 +1023,10 @@ class ScanContext:
     def add_task(self, task):
         self.tasks.append(task)
         self.aucote.add_async_task(task)
+
+    def is_scan_end(self):
+        unfinished_tasks = [task for task in self.tasks if task.finish_time is None]
+        if unfinished_tasks:
+            return False
+
+        return True

@@ -20,16 +20,20 @@ class TaskMapper(object):
 
     """
 
-    def __init__(self, aucote, scan, scanner):
+    def __init__(self, context, scan, scanner):
         """
         Args:
             executor (Executor): tasks executor
             scan (Scan): Scan under which the mapper is working
 
         """
-        self._aucote = aucote
+        self.context = context
         self._scan = scan
         self.scanner = scanner
+
+    @property
+    def _aucote(self):
+        return self.context.aucote
 
     async def assign_tasks(self, port, scripts=None):
         """
@@ -57,7 +61,7 @@ class TaskMapper(object):
             task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, port=port.copy(),
                                                          config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
 
-            self._aucote.add_async_task(task)
+            self.context.add_task(task)
 
     async def assign_tasks_for_node(self, node):
         """
@@ -78,7 +82,7 @@ class TaskMapper(object):
             task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, node=node,
                                                          config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
 
-            self._aucote.add_async_task(task)
+            self.context.add_task(task)
 
     def _filter_exploits(self, exploits):
         return list(filter(self._is_exploit_allowed, exploits))

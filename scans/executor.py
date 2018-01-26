@@ -125,7 +125,7 @@ class Executor(Task):
             None
 
         """
-        return self.aucote.add_async_task(task)
+        return self.context.add_task(task)
 
     @property
     def exploits(self):
