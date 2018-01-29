@@ -335,5 +335,5 @@ class ThrottlingConsumer(RabbitConsumer):
 
         value = float(msg.json()['value'])
 
-        log.info("Changing scan throttling to %s", value)
+        log.info("Changing throttling scan rate to %s", value)
         self._manager.change_throttling(value)
