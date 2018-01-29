@@ -67,5 +67,5 @@ class WhatWebTask(CommandTask):
         new_port.apps = cpes
 
         from scans.task_mapper import TaskMapper  # ToDo: Solve circular dependencies by using context
-        await TaskMapper(aucote=self.aucote, scan=self._scan,
+        await TaskMapper(context=self.context, scan=self._scan,
                          scanner=self._scan.scanner_task).assign_tasks(port=new_port, scripts=exploits)

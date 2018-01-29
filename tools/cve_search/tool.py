@@ -22,7 +22,7 @@ class CVESearchTool(Tool):
             self.port = PhysicalPort(node=self.node)
             self.port.scan = Scan()
 
-        self.context.add_task(CVESearchServiceTask(aucote=self.aucote, port=self.port, scan=self._scan,
+        self.context.add_task(CVESearchServiceTask(context=self.context, port=self.port, scan=self._scan,
                                                    exploits=[self.aucote.exploits.find('cve-search', 'cve-search')]))
 
     def __str__(self):

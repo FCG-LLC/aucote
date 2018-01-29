@@ -56,7 +56,7 @@ class ScannerTest(AsyncTestCase):
     @patch('scans.scanner.Executor')
     @patch('scans.scanner.cfg', new_callable=Config)
     @gen_test
-    def test_run_scan_as_service(self, cfg, mock_executor, mock_netiface, physical_port):
+    async def test_run_scan_as_service(self, cfg, mock_executor, mock_netiface, physical_port):
         cfg._cfg = {
             'service': {
                 'scans': {
@@ -128,13 +128,13 @@ class ScannerTest(AsyncTestCase):
 
         mock_executor.return_value.side_effect = futures
 
-        yield self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock(), scan=scan)
+        await self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock(), scan=scan)
 
-        mock_executor.assert_has_calls((call(aucote=self.thread.aucote, nodes=nodes, ports=[port], scan_only=False,
+        mock_executor.assert_has_calls((call(context=self.thread.context, nodes=nodes, ports=[port], scan_only=False,
                                              scan=scan, scanner=self.thread),
-                                        call(aucote=self.thread.aucote, nodes=[], ports=[ports_ipv6[0]],
+                                        call(context=self.thread.context, nodes=[], ports=[ports_ipv6[0]],
                                              scan_only=False, scan=scan, scanner=self.thread),
-                                        call(aucote=self.thread.aucote, nodes=[], ports=[ports_ipv4[0]],
+                                        call(context=self.thread.context, nodes=[], ports=[ports_ipv4[0]],
                                              scan_only=False, scan=scan, scanner=self.thread)), any_order=True)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 

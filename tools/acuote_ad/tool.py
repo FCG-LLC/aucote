@@ -36,7 +36,7 @@ class AucoteActiveDirectory(Tool):
         if not self.node:
             for domain_name in domain_names:
                 self.context.add_task(Enum4linuxTask(domain=domain_name, username=username, password=password,
-                                                     command=Enum4linuxBase(), aucote=self.aucote, scan=self._scan,
+                                                     command=Enum4linuxBase(), context=self.context, scan=self._scan,
                                                      port=self._port, exploits=exploits))
             return
 
@@ -54,7 +54,7 @@ class AucoteActiveDirectory(Tool):
             port.scan = self._scan
 
             self.context.add_task(AucoteActiveDirectoryTask(
-                domain=domain_name, nodes=nodes, aucote=self.aucote, scan=self._scan, port=port, exploits=exploits))
+                domain=domain_name, nodes=nodes, context=self.context, scan=self._scan, port=port, exploits=exploits))
 
     async def resolve_nodes(self, dns_server, domain_name, current_nodes):
         domain = "_ldap._tcp.dc._msdcs.{domain}".format(domain=domain_name)

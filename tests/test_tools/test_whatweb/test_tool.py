@@ -25,7 +25,7 @@ class WhatWebToolTest(AsyncTestCase):
     @gen_test
     async def test_call(self, mock_task):
         await self.tool()
-        mock_task.assert_called_once_with(aucote=self.aucote, port=self.port, scan=self.scan,
+        mock_task.assert_called_once_with(context=self.context, port=self.port, scan=self.scan,
                                           exploits=[self.aucote.exploits.find.return_value])
         self.aucote.exploits.find.assert_called_once_with('whatweb', 'whatweb')
         self.aucote.add_async_task.assert_called_once_with(mock_task.return_value)

@@ -221,6 +221,6 @@ class TaskMapperTest(AsyncTestCase):
 
         await self.task_mapper.assign_tasks_for_node(node)
 
-        class_mock.assert_called_once_with(aucote=self.task_mapper._aucote, exploits=[exploit], node=node,
+        class_mock.assert_called_once_with(context=self.task_mapper.context, exploits=[exploit], node=node,
                                            config=self.EXECUTOR_CONFIG['apps']['test'], scan=self.scan)
 

@@ -31,7 +31,7 @@ class ToolsScannerTest(AsyncTestCase):
 
         await self.task.run()
 
-        mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=nodes, ports=ports, scan=scan(),
+        mock_executor.assert_called_once_with(context=self.task.context, nodes=nodes, ports=ports, scan=scan(),
                                               scanner=self.task)
         self.task.get_ports_for_scan.assert_called_once_with(nodes, timestamp=self.task.get_last_scan_start())
 
@@ -52,7 +52,7 @@ class ToolsScannerTest(AsyncTestCase):
 
         await self.task.run()
 
-        mock_executor.assert_called_once_with(aucote=self.task.aucote, nodes=None, ports=ports, scan=scan(),
+        mock_executor.assert_called_once_with(context=self.task.context, nodes=None, ports=ports, scan=scan(),
                                               scanner=self.task)
         self.task.get_ports_for_scan.assert_called_once_with(nodes, timestamp=self.task.get_last_scan_start())
 

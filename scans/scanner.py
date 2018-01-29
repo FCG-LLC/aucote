@@ -108,7 +108,7 @@ class Scanner(ScanAsyncTask):
                         ports = await scanner.scan_ports([node])
                         await self._scan_ports(ports=ports, scan_only=scan_only, scan=scan)
 
-        self.context.add_task(Executor(aucote=self.aucote, nodes=nodes, ports=self._get_special_ports(),
+        self.context.add_task(Executor(context=self.context, nodes=nodes, ports=self._get_special_ports(),
                                        scan_only=scan_only, scan=scan, scanner=self))
 
         while not self.context.is_scan_end():

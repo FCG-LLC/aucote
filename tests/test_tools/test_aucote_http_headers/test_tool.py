@@ -24,5 +24,5 @@ class AucoteHttpHeadersToolTest(AsyncTestCase):
     async def test_call(self, mock_task):
         self.assertIsNone(await self.tool())
 
-        mock_task.assert_called_once_with(aucote=self.aucote, port=self.port, scan=self.scan,
+        mock_task.assert_called_once_with(context=self.context, port=self.port, scan=self.scan,
                                           exploits=self.exploits, config=self.config)
