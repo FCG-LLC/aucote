@@ -86,7 +86,7 @@ class Executor(Task):
 
     async def _execute_nodes(self):
         for node in set(self.nodes):
-            await TaskMapper(aucote=self.aucote, scan=self._scan, scanner=self.scanner).assign_tasks_for_node(node)
+            await TaskMapper(context=self.context, scan=self._scan, scanner=self.scanner).assign_tasks_for_node(node)
 
     def __call__(self, *args, **kwargs):
         """

@@ -19,8 +19,6 @@ from database.serializer import Serializer
 from scans.executor import Executor
 from scans.scan_async_task import ScanAsyncTask
 from structs import ScanStatus, PhysicalPort, Scan, TransportProtocol, PortDetectionChange
-from tools.masscan import MasscanPorts
-from tools.nmap.ports import PortsScan
 from tools.nmap.tool import NmapTool
 
 
@@ -126,7 +124,7 @@ class Scanner(ScanAsyncTask):
 
         ports = [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
 
-        self.context.add_task(Executor(aucote=self.aucote, nodes=[], ports=ports, scan_only=scan_only, scan=scan,
+        self.context.add_task(Executor(context=self.context, nodes=[], ports=ports, scan_only=scan_only, scan=scan,
                                        scanner=self))
 
     @property

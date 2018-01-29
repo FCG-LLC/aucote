@@ -2,16 +2,12 @@
 Class responsible for mapping scans and port, service
 
 """
-import time
 import logging as log
-
-from netaddr import IPSet
 
 from aucote_cfg import cfg
 from fixtures.exploits.exploit import ExploitCategory
 from scans.executor_config import EXECUTOR_CONFIG
 from structs import SpecialPort
-from utils.time import parse_period
 
 
 class TaskMapper(object):
@@ -58,7 +54,7 @@ class TaskMapper(object):
 
             log.info("Using %i exploits against %s", len(exploits), port)
             self.store_security_scan(port=port, exploits=exploits)
-            task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, port=port.copy(),
+            task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, port=port.copy(),
                                                          config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
 
             self.context.add_task(task)
@@ -79,7 +75,7 @@ class TaskMapper(object):
 
             log.info("Using %i exploits against %s", len(exploits), node)
 
-            task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, node=node,
+            task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, node=node,
                                                          config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
 
             self.context.add_task(task)
