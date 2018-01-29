@@ -33,6 +33,7 @@ class ScanAsyncTask(object):
         self.scan_start = None
         self._shutdown_condition = Event()
         self.status = ScanStatus.IDLE
+        self.run_now = False
 
     @property
     def aucote(self):
@@ -44,10 +45,27 @@ class ScanAsyncTask(object):
             return
         log.info("Starting %s scanner", self.NAME)
 
-        return await self.run()
+        result = await self.run()
+
+        run_after = cfg['portdetection.{name}.run_after'.format(name=self.NAME)]
+        for scan_name in run_after:
+
+            scan_task = self.aucote.async_task_manager.cron_task(scan_name)
+            if scan_task is not None:
+                scan_task.run_asap()
+
+        return result
 
     async def run(self):
         raise NotImplementedError()
+
+    def run_asap(self):
+        """
+        Wait on finish of current scan and 'force' to run in next iteration
+
+        """
+        log.info('%s will be set to start as soon as possible', self.NAME)
+        self.run_now = True
 
     @property
     def shutdown_condition(self):

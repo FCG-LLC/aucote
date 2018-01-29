@@ -16,6 +16,7 @@ class AsyncCrontabTaskTest(AsyncTestCase):
         future = Future()
         future.set_result(MagicMock())
         self.func.return_value = future
+        self.func.run_now = False
 
         self.cron = '*/5 * * * *'
         self.task = AsyncCrontabTask(func=self.func, cron=self.cron)

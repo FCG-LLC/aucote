@@ -101,7 +101,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
                             '127.0.0.1/24',
                             '128.0.0.1/13'
                         ]
-                    }
+                    },
+                    'run_after': []
                 }
             }
         }
@@ -213,6 +214,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     async def test_call(self, cfg):
         self.thread.NAME = 'test_name'
         cfg['portdetection.test_name.scan_enabled'] = True
+        cfg['portdetection.test_name.run_after'] = []
         self.thread.run = MagicMock(return_value=Future())
         self.thread.run.return_value.set_result(True)
 
