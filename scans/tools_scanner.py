@@ -7,7 +7,6 @@ import logging as log
 
 import time
 
-from tornado import gen
 from tornado.httpclient import HTTPError
 
 from aucote_cfg import cfg
@@ -55,8 +54,7 @@ class ToolsScanner(ScanAsyncTask):
             self.context.add_task(Executor(context=self.context, nodes=nodes if cfg['portdetection.{0}.scan_nodes'.
                                            format(self.NAME)] else None, ports=ports, scan=scan, scanner=self))
 
-            while not self.context.is_scan_end():
-                await gen.sleep(1)
+            await self.context.wait_on_tasks_finish()
 
             scan.end = time.time()
             self.storage.update_scan(scan)

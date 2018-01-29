@@ -10,6 +10,7 @@ from enum import Enum
 import time
 
 from cpe import CPE
+from tornado import gen
 
 
 class Scan(object):
@@ -1030,3 +1031,7 @@ class ScanContext:
             return False
 
         return True
+
+    async def wait_on_tasks_finish(self):
+        while not self.is_scan_end():
+            await gen.sleep(1)

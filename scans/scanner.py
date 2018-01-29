@@ -11,7 +11,6 @@ import time
 
 import netifaces
 
-from tornado import gen
 from tornado.httpclient import HTTPError
 
 from aucote_cfg import cfg
@@ -71,6 +70,7 @@ class Scanner(ScanAsyncTask):
 
             self.current_scan = []
 
+            await self.context.wait_on_tasks_finish()
             scan.end = time.time()
             self.storage.update_scan(scan)
             self.diff_with_last_scan(scan)
@@ -110,9 +110,6 @@ class Scanner(ScanAsyncTask):
 
         self.context.add_task(Executor(context=self.context, nodes=nodes, ports=self._get_special_ports(),
                                        scan_only=scan_only, scan=scan, scanner=self))
-
-        while not self.context.is_scan_end():
-            await gen.sleep(1)
 
     async def _scan_ports(self, scan_only, scan, ports):
 
