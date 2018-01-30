@@ -141,3 +141,12 @@ class Task(object):
 
         """
         pass
+
+    def is_end(self):
+        """
+        Checks if task finished
+        """
+        if self.finish_time is None:
+            return False
+
+        return True

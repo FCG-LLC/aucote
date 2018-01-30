@@ -1026,7 +1026,7 @@ class ScanContext:
         self.aucote.add_async_task(task)
 
     def is_scan_end(self):
-        unfinished_tasks = [task for task in self.tasks if task.finish_time is None]
+        unfinished_tasks = [task for task in self.tasks if not task.is_end()]
         if unfinished_tasks:
             return False
 
