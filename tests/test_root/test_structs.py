@@ -3,9 +3,10 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from cpe import CPE
+from tornado.testing import AsyncTestCase, gen_test
 
 from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState, \
-    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange, PortScan
+    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange, PortScan, ScanContext
 from structs import TransportProtocol
 
 
@@ -441,3 +442,32 @@ class PortDetectionChangeTest(TestCase):
     def test_port_protocol(self):
         self.assertEqual(self.change_1.port_protocol, TransportProtocol.TCP)
         self.assertEqual(self.change_2.port_protocol, TransportProtocol.UDP)
+
+
+class ScanContextTest(AsyncTestCase):
+    def setUp(self):
+        super(ScanContextTest, self).setUp()
+        self.scan = MagicMock()
+        self.aucote = MagicMock()
+        self.context = ScanContext(aucote=self.aucote, scan=self.scan)
+
+    def test_add_task(self):
+        task = MagicMock()
+        self.context.add_task(task)
+
+        self.assertIn(task, self.context.tasks)
+        self.aucote.add_async_task.assert_called_once_with(task)
+
+    def test_non_end_scan(self):
+        self.context.tasks = [MagicMock(has_finished=MagicMock(return_value=False))]
+
+        result = self.context.is_scan_end()
+
+        self.assertFalse(result)
+
+    def test_scan_end(self):
+        self.context.tasks = [MagicMock(has_finished=MagicMock(return_value=True))]
+
+        result = self.context.is_scan_end()
+
+        self.assertTrue(result)

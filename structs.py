@@ -10,6 +10,7 @@ from enum import Enum
 import time
 
 from cpe import CPE
+from tornado import gen
 
 
 class Scan(object):
@@ -1007,3 +1008,30 @@ class VulnerabilityChange(VulnerabilityChangeBase):
     @property
     def current_output(self):
         return self.current_finding.output if self.current_finding else ""
+
+
+class ScanContext:
+    """
+    Scan context handle information about scan ant it progress
+    """
+    def __init__(self, aucote, scan):
+        self.aucote = aucote
+        self.scan = scan
+        self.tasks = []
+        self.start = None
+        self.end = None
+
+    def add_task(self, task):
+        self.tasks.append(task)
+        self.aucote.add_async_task(task)
+
+    def is_scan_end(self):
+        unfinished_tasks = [task for task in self.tasks if not task.has_finished()]
+        if unfinished_tasks:
+            return False
+
+        return True
+
+    async def wait_on_tasks_finish(self):
+        while not self.is_scan_end():
+            await gen.sleep(1)

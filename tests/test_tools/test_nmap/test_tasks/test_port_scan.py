@@ -8,7 +8,7 @@ from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
 from fixtures.exploits import Exploits
-from structs import Port, TransportProtocol, Node, Scan, PhysicalPort, BroadcastPort
+from structs import Port, TransportProtocol, Node, Scan, PhysicalPort, BroadcastPort, ScanContext
 
 from tools.nmap.tasks.port_scan import NmapPortScanTask
 from utils import Config
@@ -136,7 +136,8 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.script.get_result = MagicMock(return_value='test')
         self.script2 = NmapScript(port=self.port, parser=NmapInfoParser(), exploit=self.exploit_vuln_non_exist, name='test2')
         self.scan = Scan()
-        self.scan_task = NmapPortScanTask(aucote=self.aucote, port=self.port, scan=self.scan,
+        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.scan_task = NmapPortScanTask(context=self.context, port=self.port, scan=self.scan,
                                           script_classes=[self.script, self.script2], rate=1337)
         self.scan_task.store_scan_end = MagicMock()
 

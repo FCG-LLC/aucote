@@ -81,12 +81,12 @@ class Executor(Task):
         self.storage.save_ports(ports, scan=self._scan)
 
         for port in ports:
-            self.add_async_task(NmapPortInfoTask(aucote=self.aucote, port=port, scan_only=self.scan_only,
+            self.add_async_task(NmapPortInfoTask(context=self.context, port=port, scan_only=self.scan_only,
                                                  scan=self._scan, scanner=self.scanner))
 
     async def _execute_nodes(self):
         for node in set(self.nodes):
-            await TaskMapper(aucote=self.aucote, scan=self._scan, scanner=self.scanner).assign_tasks_for_node(node)
+            await TaskMapper(context=self.context, scan=self._scan, scanner=self.scanner).assign_tasks_for_node(node)
 
     def __call__(self, *args, **kwargs):
         """
@@ -125,7 +125,7 @@ class Executor(Task):
             None
 
         """
-        return self.aucote.add_async_task(task)
+        return self.context.add_task(task)
 
     @property
     def exploits(self):

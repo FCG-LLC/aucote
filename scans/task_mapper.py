@@ -2,16 +2,12 @@
 Class responsible for mapping scans and port, service
 
 """
-import time
 import logging as log
-
-from netaddr import IPSet
 
 from aucote_cfg import cfg
 from fixtures.exploits.exploit import ExploitCategory
 from scans.executor_config import EXECUTOR_CONFIG
 from structs import SpecialPort
-from utils.time import parse_period
 
 
 class TaskMapper(object):
@@ -20,16 +16,20 @@ class TaskMapper(object):
 
     """
 
-    def __init__(self, aucote, scan, scanner):
+    def __init__(self, context, scan, scanner):
         """
         Args:
             executor (Executor): tasks executor
             scan (Scan): Scan under which the mapper is working
 
         """
-        self._aucote = aucote
+        self.context = context
         self._scan = scan
         self.scanner = scanner
+
+    @property
+    def _aucote(self):
+        return self.context.aucote
 
     async def assign_tasks(self, port, scripts=None):
         """
@@ -54,10 +54,10 @@ class TaskMapper(object):
 
             log.info("Using %i exploits against %s", len(exploits), port)
             self.store_security_scan(port=port, exploits=exploits)
-            task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, port=port.copy(),
+            task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, port=port.copy(),
                                                          config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
 
-            self._aucote.add_async_task(task)
+            self.context.add_task(task)
 
     async def assign_tasks_for_node(self, node):
         """
@@ -75,10 +75,10 @@ class TaskMapper(object):
 
             log.info("Using %i exploits against %s", len(exploits), node)
 
-            task = EXECUTOR_CONFIG['apps'][app]['class'](aucote=self._aucote, exploits=exploits, node=node,
+            task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, node=node,
                                                          config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
 
-            self._aucote.add_async_task(task)
+            self.context.add_task(task)
 
     def _filter_exploits(self, exploits):
         return list(filter(self._is_exploit_allowed, exploits))

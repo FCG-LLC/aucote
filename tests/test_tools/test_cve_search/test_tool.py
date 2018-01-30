@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from tornado.testing import gen_test, AsyncTestCase
-from structs import PhysicalPort, Scan
+from structs import PhysicalPort, Scan, ScanContext
 from tools.cve_search.tool import CVESearchTool
 
 
@@ -15,7 +15,8 @@ class CVESearchToolTest(AsyncTestCase):
         self.config = MagicMock()
         self.node = MagicMock()
         self.scan = Scan()
-        self.tool = CVESearchTool(aucote=self.aucote, exploits=self.exploits, port=self.port, node=self.node,
+        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.tool = CVESearchTool(context=self.context, exploits=self.exploits, port=self.port, node=self.node,
                                   config=self.config, scan=self.scan)
 
     @patch('tools.cve_search.tool.CVESearchServiceTask')
@@ -23,7 +24,7 @@ class CVESearchToolTest(AsyncTestCase):
     async def test_call(self, mock_task):
         self.assertIsNone(await self.tool())
 
-        mock_task.assert_called_once_with(aucote=self.aucote, port=self.port, scan=self.scan,
+        mock_task.assert_called_once_with(context=self.context, port=self.port, scan=self.scan,
                                           exploits=[self.aucote.exploits.find.return_value])
         self.aucote.exploits.find.assert_called_once_with('cve-search', 'cve-search')
 

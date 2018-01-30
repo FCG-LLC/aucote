@@ -4,14 +4,13 @@ This module contains class responsible scanning tasks.
 """
 import logging as log
 import time
-from tornado.httpclient import HTTPError
 from tornado.locks import Event
 
 from croniter import croniter
 from netaddr import IPSet
 
 from aucote_cfg import cfg
-from structs import ScanType, ScanStatus
+from structs import ScanType, ScanStatus, ScanContext
 from utils.time import parse_period
 
 
@@ -30,10 +29,14 @@ class ScanAsyncTask(object):
 
     def __init__(self, aucote):
         self._current_scan = []
-        self.aucote = aucote
+        self.context = ScanContext(aucote=aucote, scan=self)
         self.scan_start = None
         self._shutdown_condition = Event()
         self.status = ScanStatus.IDLE
+
+    @property
+    def aucote(self):
+        return self.context.aucote
 
     async def __call__(self, *args, **kwargs):
         if not cfg['portdetection.{name}.scan_enabled'.format(name=self.NAME)]:

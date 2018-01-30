@@ -7,7 +7,7 @@ from tornado.testing import gen_test, AsyncTestCase
 from fixtures.exploits import Exploit
 from fixtures.exploits.exploit import ExploitCategory
 from scans.task_mapper import TaskMapper
-from structs import Port, TransportProtocol, Scan, Node, SecurityScan
+from structs import Port, TransportProtocol, Scan, Node, SecurityScan, ScanContext
 from utils import Config
 
 
@@ -50,8 +50,9 @@ class TaskMapperTest(AsyncTestCase):
         self.executor.exploits.find_all_matching.return_value = self.exploits
         self.scan = Scan()
         self.scanner = MagicMock()
+        self.context = ScanContext(aucote=self.executor, scan=None)
 
-        self.task_mapper = TaskMapper(aucote=self.executor, scan=self.scan, scanner=self.scanner)
+        self.task_mapper = TaskMapper(context=self.context, scan=self.scan, scanner=self.scanner)
 
         self.cfg = {
             'portdetection': {
@@ -220,6 +221,6 @@ class TaskMapperTest(AsyncTestCase):
 
         await self.task_mapper.assign_tasks_for_node(node)
 
-        class_mock.assert_called_once_with(aucote=self.task_mapper._aucote, exploits=[exploit], node=node,
+        class_mock.assert_called_once_with(context=self.task_mapper.context, exploits=[exploit], node=node,
                                            config=self.EXECUTOR_CONFIG['apps']['test'], scan=self.scan)
 

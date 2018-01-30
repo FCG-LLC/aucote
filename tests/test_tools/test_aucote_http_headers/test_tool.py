@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from tornado.testing import AsyncTestCase, gen_test
 
-from structs import Scan
+from structs import Scan, ScanContext
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
 
 
@@ -15,7 +15,8 @@ class AucoteHttpHeadersToolTest(AsyncTestCase):
         self.port = MagicMock()
         self.config = MagicMock()
         self.scan = Scan()
-        self.tool = AucoteHttpHeadersTool(aucote=self.aucote, exploits=self.exploits, port=self.port, scan=self.scan,
+        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.tool = AucoteHttpHeadersTool(context=self.context, exploits=self.exploits, port=self.port, scan=self.scan,
                                           config=self.config)
 
     @patch('tools.aucote_http_headers.tool.AucoteHttpHeadersTask')
@@ -23,5 +24,5 @@ class AucoteHttpHeadersToolTest(AsyncTestCase):
     async def test_call(self, mock_task):
         self.assertIsNone(await self.tool())
 
-        mock_task.assert_called_once_with(aucote=self.aucote, port=self.port, scan=self.scan,
+        mock_task.assert_called_once_with(context=self.context, port=self.port, scan=self.scan,
                                           exploits=self.exploits, config=self.config)

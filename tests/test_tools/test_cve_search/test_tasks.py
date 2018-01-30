@@ -6,7 +6,7 @@ from tornado.httpclient import HTTPError, HTTPRequest, HTTPResponse
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
-from structs import Port, Node, Scan, TransportProtocol, Service, PhysicalPort
+from structs import Port, Node, Scan, TransportProtocol, Service, PhysicalPort, ScanContext
 from tools.cve_search.exceptions import CVESearchApiException
 from tools.cve_search.structs import CVESearchVulnerabilityResults
 from tools.cve_search.tasks import CVESearchServiceTask
@@ -48,7 +48,8 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         self.exploit = Exploit(exploit_id=1)
         self.aucote = MagicMock()
         self.scan = Scan()
-        self.task = CVESearchServiceTask(aucote=self.aucote, port=self.port, exploits=[self.exploit], scan=self.scan)
+        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.task = CVESearchServiceTask(context=self.context, port=self.port, exploits=[self.exploit], scan=self.scan)
 
     def test_init(self):
         self.assertEqual(self.task.api, 'localhost:200')

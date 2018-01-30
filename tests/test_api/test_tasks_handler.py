@@ -5,7 +5,7 @@ import ipaddress
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 from api.tasks_handler import TasksHandler
-from structs import Node, Port, TransportProtocol
+from structs import Node, Port, TransportProtocol, ScanContext
 from tools.common.port_task import PortTask
 from utils.async_task_manager import AsyncTaskManager
 
@@ -16,6 +16,7 @@ class TasksHandlerTest(AsyncHTTPTestCase):
 
     def get_app(self):
         self.aucote = MagicMock(unfinished_tasks=4)
+        self.context = ScanContext(aucote=self.aucote, scan=None)
         self.tasks = AsyncTaskManager()
         tasks = [
             {'port': 45, 'id': 1, 'ip': '127.0.0.1'},
@@ -27,7 +28,7 @@ class TasksHandlerTest(AsyncHTTPTestCase):
             {'port': 89, 'id': 5, 'ip': '127.0.0.5'},
         ]
         for task in tasks:
-            self.tasks.add_task(PortTask(aucote=self.aucote,
+            self.tasks.add_task(PortTask(context=self.context,
                                          scan=None,
                                          port=Port(
                                              node=Node(node_id=task['id'], ip=ipaddress.ip_address(task['ip'])),
@@ -35,7 +36,7 @@ class TasksHandlerTest(AsyncHTTPTestCase):
                                              transport_protocol=TransportProtocol.TCP,),
                                          exploits=[]))
 
-        self.tasks._task_workers = [PortTask(aucote=self.aucote,
+        self.tasks._task_workers = [PortTask(context=self.context,
                                              scan=None,
                                              port=Port(
                                                  node=Node(node_id=task['id'], ip=ipaddress.ip_address(task['ip'])),

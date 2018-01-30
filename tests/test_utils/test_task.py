@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
-from structs import Scan, TransportProtocol, Port
+from structs import Scan, TransportProtocol, Port, ScanContext
 from utils.storage import Storage
 from utils.task import Task
 
@@ -21,8 +21,9 @@ class TaskTest(TestCase):
         self.executor.kudu_queue = MagicMock()
         self.executor.exploits = MagicMock()
         self.scan = Scan()
+        self.context = ScanContext(aucote=self.executor, scan=None)
 
-        self.task = Task(aucote=self.executor, scan=self.scan)
+        self.task = Task(context=self.context, scan=self.scan)
 
     def test_init(self):
         """

@@ -7,7 +7,7 @@ from tornado.concurrent import Future
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
-from structs import Port, TransportProtocol, Node, Scan
+from structs import Port, TransportProtocol, Node, Scan, ScanContext
 from tools.hydra.parsers import HydraParser
 from tools.hydra.tasks import HydraScriptTask
 from utils import Config
@@ -31,8 +31,9 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.port.scan = Scan()
         self.exploit = Exploit(exploit_id=1)
         self.scan = Scan()
+        self.context = ScanContext(aucote=self.aucote, scan=None)
 
-        self.hydra_script_task = HydraScriptTask(exploits=[self.exploit], aucote=self.aucote, port=self.port,
+        self.hydra_script_task = HydraScriptTask(exploits=[self.exploit], context=self.context, port=self.port,
                                                  service=self.port.service_name, scan=self.scan,)
         self.hydra_script_task.store_scan_end = MagicMock()
         self.hydra_script_task.aucote.exploits.find.return_value = self.exploit

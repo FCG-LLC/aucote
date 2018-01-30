@@ -6,6 +6,7 @@ from functools import partial
 import logging as log
 from threading import Thread
 
+import time
 from pycslib.utils import RabbitConsumer
 from tornado import gen
 from tornado.gen import sleep
@@ -48,6 +49,7 @@ class _Executor(Thread):
             log.exception("Exception while executing task on worker %s", self.number)
         finally:
             self.ioloop.stop()
+            self.task.finish_time = int(time.time())
 
     def stop(self):
         """
