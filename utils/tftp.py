@@ -121,7 +121,7 @@ class TFTP:
 
         while not event.is_set():
             time.sleep(1)
-        return_value = self._files[address]['path']
+        return_value = self._files[address].get('path')
 
         try:
             if self._files[address]['exception'] is not None:

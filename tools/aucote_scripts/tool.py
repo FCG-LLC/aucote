@@ -15,4 +15,4 @@ class AucoteScriptsTool(Tool):
             return
 
         self.context.add_task(SietTask(context=self.context, port=self.port, scan=self._scan,
-                                       exploits=self.exploits.find('aucote-scripts', 'siet')))
+                                       exploits=[self.context.aucote.exploits.find('aucote-scripts', 'siet')]))
