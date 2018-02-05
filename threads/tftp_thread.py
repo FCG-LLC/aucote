@@ -20,6 +20,7 @@ class TFTPThread(Thread):
         return self
 
     def run(self):
+        self.started_event.set()
         self._tftp.start()
         self._tftp.listen()
 
@@ -27,8 +28,10 @@ class TFTPThread(Thread):
         self._tftp.stop()
         self.join()
 
-    async def async_get_file(self, address, timeout=DEFAULT_TIMEOUT):
+    async def async_get_file(self, address, callback, timeout=DEFAULT_TIMEOUT):
         event = self._tftp.register_address(address, timeout=timeout)
+
+        callback()
 
         while not event.is_set():
             await sleep(1)

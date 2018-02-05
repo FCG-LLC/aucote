@@ -23,6 +23,7 @@ from scans.tcp_scanner import TCPScanner
 from scans.tools_scanner import ToolsScanner
 from scans.udp_scanner import UDPScanner
 from threads.storage_thread import StorageThread
+from threads.tftp_thread import TFTPThread
 from utils.async_task_manager import AsyncTaskManager, ThrottlingConsumer
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
@@ -133,6 +134,8 @@ class Aucote(object):
         self.ioloop.add_callback(self._throttling_consumer.consume)
 
         self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'])
+        self._tftp_thread = TFTPThread('0.0.0.0', cfg['tftp.port'], timeout=cfg['tftp.timeout'])
+
         self._storage_thread = StorageThread(storage=self._storage)
         self.scanners = []
 
@@ -145,6 +148,10 @@ class Aucote(object):
         """
         return self._kudu_queue
 
+    @property
+    def tftp_server(self):
+        return self._tftp_thread
+
     async def run_scan(self, as_service=True):
         """
         Start scanning ports.
@@ -153,7 +160,7 @@ class Aucote(object):
 
         """
         try:
-            with self._storage_thread:
+            with self._storage_thread, self._tftp_thread:
                 self.async_task_manager.clear()
                 self._storage.init_schema()
                 async with self.web_server:

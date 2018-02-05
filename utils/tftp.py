@@ -67,7 +67,7 @@ class TFTP:
     PUT_BYTE = 2
 
     MAX_BLKSIZE = 0x10000
-    MAX_FILE_SIZE = 0x1000  # Max file size in bytes
+    MAX_FILE_SIZE = 0x100000  # Max file size in bytes
     TFTP_MIN_DATA_PORT = 44000  # range of UDP data port
     TFTP_MAX_DATA_PORT = 65000  # -//-
 
@@ -285,8 +285,10 @@ class TFTP:
             self._epoll.unregister(receiver.fileno())
             receiver.close()
 
-        self._epoll.unregister(self._socket.fileno)
-        self._socket.close()
+        if self._socket is not None:
+            self._epoll.unregister(self._socket.fileno())
+            self._socket.close()
+
         self._stop = True
 
     def _open_port(self, host, port):
