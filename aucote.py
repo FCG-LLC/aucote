@@ -134,7 +134,8 @@ class Aucote(object):
         self.ioloop.add_callback(self._throttling_consumer.consume)
 
         self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'])
-        self._tftp_thread = TFTPThread(cfg['tftp.host'], cfg['tftp.port'], timeout=cfg['tftp.timeout'])
+        self._tftp_thread = TFTPThread(cfg['tftp.host'], cfg['tftp.port'], timeout=cfg['tftp.timeout'],
+                                       min_port=cfg['tftp.min_port'], max_port=cfg['tftp.max_port'])
 
         self._storage_thread = StorageThread(storage=self._storage)
         self.scanners = []

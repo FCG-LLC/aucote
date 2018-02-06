@@ -7,9 +7,9 @@ class TFTPThread(Thread):
     DEFAULT_TIMEOUT = 120  # Time to wait on file in seconds
     DATA_DIR = 'tmp/tftp/'
 
-    def __init__(self, host, port, timeout, *args, **kwargs):
+    def __init__(self, host, port, timeout, min_port, max_port, *args, **kwargs):
         super(TFTPThread, self).__init__(*args, **kwargs)
-        self._tftp = TFTP(host, port, timeout, self.DATA_DIR)
+        self._tftp = TFTP(host, port, timeout, self.DATA_DIR, min_port=min_port, max_port=max_port)
         self.name = "TFTP"
         self.started_event = Event()
         self._close = False

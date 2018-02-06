@@ -126,8 +126,12 @@ tcpportscan:
 #   host: <str> - host
 #   port: <int> - port number
 #   timeout: <int> - timeout in seconds
+#   min_port: <int> - minimum port of data exchange
+#   max_port: <int> - maximum port of data exchange
 
 tftp:
     host: 0.0.0.0
     port: 6969
     timeout: 60
+    min_port: 60000
+    max_port: 61000

@@ -68,21 +68,21 @@ class TFTP:
 
     MAX_BLKSIZE = 0x10000
     MAX_FILE_SIZE = 0x100000  # Max file size in bytes
-    TFTP_MIN_DATA_PORT = 44000  # range of UDP data port
-    TFTP_MAX_DATA_PORT = 65000  # -//-
 
     OPCODE_LEN = BLOCK_NUMBER_LEN = 2
     PREFIX_LEN = OPCODE_LEN + BLOCK_NUMBER_LEN
 
     DEF_BLKSIZE = 512  # size of data block in TFTP-packet
 
-    def __init__(self, ip, port, timeout, data_dir):
+    def __init__(self, ip, port, timeout, data_dir, min_port, max_port):
         self.ip = ip
         self.port = port
         self._timeout = timeout
         self._dir = data_dir
         self._socket = None
-        self._current_receive_port = self.TFTP_MIN_DATA_PORT
+        self._min_port = min_port
+        self._max_port = max_port
+        self._current_receive_port = self._min_port
         self._epoll = select.epoll()
         self._receivers = {}
         self._files = {}
@@ -137,8 +137,8 @@ class TFTP:
 
         """
         self._current_receive_port += 1
-        if self._current_receive_port > self.TFTP_MAX_DATA_PORT:
-            self._current_receive_port = self.TFTP_MIN_DATA_PORT
+        if self._current_receive_port > self._max_port:
+            self._current_receive_port = self._min_port
 
         return self._current_receive_port
 
