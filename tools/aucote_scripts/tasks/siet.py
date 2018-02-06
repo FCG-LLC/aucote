@@ -1,5 +1,5 @@
 import time
-
+import logging as log
 from structs import Vulnerability
 from tools.common.port_task import PortTask
 import socket
@@ -53,3 +53,5 @@ class SietTask(PortTask):
         sTcp = sTcp + c3 + b'\x00' * (336 - len(c3))
 
         conn_with_host.send(sTcp)
+
+        log.debug("Sending TFTP packet from %s to %s", my_ip, ip)
