@@ -120,3 +120,14 @@ rabbit:
 tcpportscan:
     host: portscan
     port: 1339
+
+# TFTP server is used by some security checks. Should be available from outside on port 69
+# tftp:
+#   host: <str> - host
+#   port: <int> - port number
+#   timeout: <int> - timeout in seconds
+
+tftp:
+    host: 0.0.0.0
+    port: 6969
+    timeout: 60

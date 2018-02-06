@@ -72,7 +72,8 @@ class AucoteTest(AsyncTestCase):
             },
             'tftp': {
                 'port': 6969,
-                'timeout': 120
+                'timeout': 120,
+                'host': '127.0.0.1'
             }
         }
         self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=MagicMock())
