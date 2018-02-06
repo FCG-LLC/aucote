@@ -191,6 +191,7 @@ class AucoteTest(AsyncTestCase):
         self.assertEqual(mock_aucote.return_value.run_syncdb.call_count, 1)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
+    @patch('aucote.TFTPThread', MagicMock())
     @patch('aucote.Storage')
     @patch('aucote.ToolsScanner')
     @patch('aucote.UDPScanner')
@@ -225,6 +226,7 @@ class AucoteTest(AsyncTestCase):
         self.assertFalse(tools_scanner.called)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
+    @patch('aucote.TFTPThread', MagicMock())
     @patch('aucote.Storage')
     @patch('aucote.ToolsScanner')
     @patch('aucote.UDPScanner')
