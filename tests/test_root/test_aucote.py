@@ -78,6 +78,7 @@ class AucoteTest(AsyncTestCase):
         self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=MagicMock())
         self.aucote.ioloop = MagicMock()
         self.aucote._storage_thread = MagicMock()
+        self.aucote._tftp_thread = MagicMock()
 
         future = Future()
         future.set_result(MagicMock())
@@ -191,7 +192,6 @@ class AucoteTest(AsyncTestCase):
         self.assertEqual(mock_aucote.return_value.run_syncdb.call_count, 1)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
-    @patch('aucote.TFTPThread', MagicMock())
     @patch('aucote.Storage')
     @patch('aucote.ToolsScanner')
     @patch('aucote.UDPScanner')
@@ -226,7 +226,6 @@ class AucoteTest(AsyncTestCase):
         self.assertFalse(tools_scanner.called)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
-    @patch('aucote.TFTPThread', MagicMock())
     @patch('aucote.Storage')
     @patch('aucote.ToolsScanner')
     @patch('aucote.UDPScanner')
