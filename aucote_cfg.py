@@ -88,10 +88,11 @@ async def start_toucan(default_config):
         await cfg.start_rabbit(cfg['rabbit.host'], int(cfg['rabbit.port']), cfg['rabbit.username'],
                                cfg['rabbit.password'])
 
-    with open(default_config, "r") as file:
-        config = yaml.safe_load(file)
+    if cfg['toucan.push_default']:
+        with open(default_config, "r") as file:
+            config = yaml.safe_load(file)
 
-    await cfg.toucan.push_config(config, overwrite=cfg['toucan.overwrite'])
+        await cfg.toucan.push_config(config, overwrite=cfg['toucan.overwrite'])
 
 
 async def load(file_name=None):
