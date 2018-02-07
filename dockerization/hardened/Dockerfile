@@ -22,6 +22,9 @@ RUN apt-get install -y python-pip && pip install supervisor-stdout
 ADD files/supervisor_aucote.conf /etc/supervisor/conf.d/
 ADD files/supervisor_mq-broker-aucote.conf /etc/supervisor/conf.d/
 
+# Capabilities to bind to low ports by other than root users
+RUN setcap 'cap_net_bind_service=+ep' /opt/aucote/venv/bin/python
+
 EXPOSE 1235
 
 CMD /usr/bin/supervisord -n
