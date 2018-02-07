@@ -359,3 +359,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
         }
 
         cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True, keep_history=False)
+
+    def test_run_asap(self):
+        self.thread.run_now = False
+
+        self.thread.run_asap()
+
+        self.assertTrue(self.thread.run_now)
