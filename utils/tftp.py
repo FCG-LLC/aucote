@@ -183,14 +183,14 @@ class TFTP:
         """
         try:
             buffer, (address, port) = self._socket.recvfrom(self.MAX_BLKSIZE)
-        except (OSError, socket.error):
+        except OSError:
             # Dont do anything in case of socket timeout/error
             log.warning("Error while obtaining data by TFTP server")
             return
 
         if address not in self._files:
             # Unexpected packet, do nothing
-            log.warning("TFTP server got packet from unexpected address")
+            log.warning("TFTP server got packet from unexpected address: %s", address)
             return
 
         log.debug('Connection from %s:%s', address, port)
