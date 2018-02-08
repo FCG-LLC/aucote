@@ -56,7 +56,8 @@ class CommandTaskTest(AsyncTestCase):
         await self.task()
 
         self.command.async_call.assert_called_once_with(self.task.prepare_args(), timeout=0)
-        mock_vuln.assert_called_once_with(exploit=self.exploit, port=self.port, output=self.future_return)
+        mock_vuln.assert_called_once_with(exploit=self.exploit, port=self.port, output=self.future_return,
+                                          context=self.context)
         self.task.store_vulnerability.assert_called_once_with(mock_vuln())
 
     @patch('tools.common.command_task.cfg', new_callable=Config)

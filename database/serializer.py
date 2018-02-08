@@ -46,6 +46,7 @@ class Serializer:
         msg.add_datetime(vuln.when_discovered if vuln is not None else None)
         msg.add_str(port.node.os.name_with_version if port.node.os.name_with_version is not None else '')
         msg.add_str(vuln.exploit.metric.name if vuln is not None and vuln.exploit.metric is not None else '')
+        msg.add_str(vuln.context.scan.NAME if vuln is not None and vuln.context is not None else '')
         return msg
 
     @classmethod

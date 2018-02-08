@@ -4,7 +4,7 @@ from tools.common.command_task import CommandTask
 
 class Enum4linuxTask(CommandTask):
     def get_vulnerabilities(self, results):
-        return Vulnerability(exploit=self.exploit, output=str(results), port=self.port)
+        return Vulnerability(exploit=self.exploit, output=str(results), port=self.port, context=self.context)
 
     def __init__(self, username, password, domain, *args, **kwargs):
         self.username = username
