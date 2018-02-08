@@ -2,6 +2,7 @@ from structs import PhysicalPort, Scan
 from tools.aucote_scripts.tasks.siet import SietTask
 from tools.base import Tool
 from tools.cve_search.tasks import CVESearchServiceTask
+from utils.exceptions import PortNotSpecifiedException
 
 
 class AucoteScriptsTool(Tool):
@@ -12,7 +13,7 @@ class AucoteScriptsTool(Tool):
 
     async def call(self, *args, **kwargs):
         if not self.port:
-            return
+            raise PortNotSpecifiedException()
 
         self.context.add_task(SietTask(context=self.context, port=self.port, scan=self._scan,
                                        exploits=[self.context.aucote.exploits.find('aucote-scripts', 'siet')]))
