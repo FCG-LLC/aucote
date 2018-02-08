@@ -32,6 +32,9 @@ service:
 
 # This section contains port detection configuration
 # portdetection:
+#   security_scans: [] - list of `tool` scans. Every scan should be configured in this yaml. Example scans are
+#                        `tools_basic` and `tools_advanced`
+#
 #   (tcp|udp|sctp|tools): - Type of scan
 #     scan_enabled: <bool> - Defines if scan is enable or not
 #     scan_type: <LIVE | PERIODIC> - Type of scan:
@@ -69,7 +72,8 @@ service:
 #        scan_start: <int> - When current scan started
 #        previous_scan_duration: <int> - Duration of previous scan
 #
-#     run_after: [<str>, ...] - list of scans, which should be fired after ending particular scan
+#     run_after: [<str>, ...] - list of scans, which should be fired after ending particular scan.
+#                               Should be taken from `security_scans`
 #
 #   (tcp|udp|sctp):  Options related only to tcp, udp and sctp scans
 #     ports: - Defines list of ports which should be or shouldn't be scanned

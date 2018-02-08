@@ -61,7 +61,7 @@ class ScanAsyncTask(object):
 
     def run_asap(self):
         """
-        Wait on finish of current scan and 'force' to run in next iteration
+        Wait until current scan is finished and force this scan to be run afterwards (i.e. in next iteration)
 
         """
         log.info('%s will be set to start as soon as possible', self.NAME)
