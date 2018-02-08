@@ -311,12 +311,16 @@ class NmapPortInfoTaskTest(AsyncTestCase):
                                                                          scan=self.port_info._scan)
 
         vulnerability.assert_has_calls([
-            call(exploit=exploit, port=self.port, output='http', subid=vulnerability.SERVICE_PROTOCOL),
-            call(exploit=exploit, port=self.port, output='Apache httpd', subid=vulnerability.SERVICE_NAME),
-            call(exploit=exploit, port=self.port, output='2.4.23', subid=vulnerability.SERVICE_VERSION),
-            call(exploit=exploit, port=self.port, output=None, subid=vulnerability.SERVICE_BANNER),
+            call(exploit=exploit, port=self.port, output='http', subid=vulnerability.SERVICE_PROTOCOL,
+                 context=self.context),
+            call(exploit=exploit, port=self.port, output='Apache httpd', subid=vulnerability.SERVICE_NAME,
+                 context=self.context),
+            call(exploit=exploit, port=self.port, output='2.4.23', subid=vulnerability.SERVICE_VERSION,
+                 context=self.context),
+            call(exploit=exploit, port=self.port, output=None, subid=vulnerability.SERVICE_BANNER,
+                 context=self.context),
             call(exploit=exploit, port=self.port, output='cpe:2.3:a:apache:http_server:2.4.23:*:*:*:*:*:*:*',
-                 subid=vulnerability.SERVICE_CPE)
+                 subid=vulnerability.SERVICE_CPE, context=self.context)
         ])
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability_change')

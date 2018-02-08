@@ -112,15 +112,15 @@ class NmapPortInfoTask(PortTask):
 
         vulnerabilities = [
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.protocol,
-                          subid=Vulnerability.SERVICE_PROTOCOL),
+                          subid=Vulnerability.SERVICE_PROTOCOL, context=self.context),
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.service.name,
-                          subid=Vulnerability.SERVICE_NAME),
+                          subid=Vulnerability.SERVICE_NAME, context=self.context),
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.service.version,
-                          subid=Vulnerability.SERVICE_VERSION),
+                          subid=Vulnerability.SERVICE_VERSION, context=self.context),
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.banner,
-                          subid=Vulnerability.SERVICE_BANNER),
+                          subid=Vulnerability.SERVICE_BANNER, context=self.context),
             Vulnerability(exploit=self.exploit, port=self.port, output=cpe,
-                          subid=Vulnerability.SERVICE_CPE)
+                          subid=Vulnerability.SERVICE_CPE, context=self.context)
         ]
         self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self._scan)
 

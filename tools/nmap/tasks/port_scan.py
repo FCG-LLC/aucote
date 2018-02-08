@@ -129,6 +129,7 @@ class NmapPortScanTask(CommandTask):
             if result is None:
                 continue
 
-            vulnerabilities.append(Vulnerability(exploit=found_handler.exploit, port=self._port, output=result))
+            vulnerabilities.append(Vulnerability(exploit=found_handler.exploit, port=self._port, output=result,
+                                                 context=self.context))
 
         return vulnerabilities
