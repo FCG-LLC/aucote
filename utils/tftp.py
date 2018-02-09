@@ -12,7 +12,7 @@ import time
 from threading import Event
 
 
-log = logging.getLogger()
+log = logging.getLogger('aucote.tftp')
 
 
 class TFTPError(Exception):
@@ -67,22 +67,22 @@ class TFTP:
     PUT_BYTE = 2
 
     MAX_BLKSIZE = 0x10000
-    MAX_FILE_SIZE = 0x1000  # Max file size in bytes
-    TFTP_MIN_DATA_PORT = 44000  # range of UDP data port
-    TFTP_MAX_DATA_PORT = 65000  # -//-
+    MAX_FILE_SIZE = 0x100000  # Max file size in bytes
 
     OPCODE_LEN = BLOCK_NUMBER_LEN = 2
     PREFIX_LEN = OPCODE_LEN + BLOCK_NUMBER_LEN
 
     DEF_BLKSIZE = 512  # size of data block in TFTP-packet
 
-    def __init__(self, ip, port, timeout, data_dir):
+    def __init__(self, ip, port, timeout, data_dir, min_port, max_port):
         self.ip = ip
         self.port = port
         self._timeout = timeout
         self._dir = data_dir
         self._socket = None
-        self._current_receive_port = self.TFTP_MIN_DATA_PORT
+        self._min_port = min_port
+        self._max_port = max_port
+        self._current_receive_port = self._min_port
         self._epoll = select.epoll()
         self._receivers = {}
         self._files = {}
@@ -106,6 +106,8 @@ class TFTP:
             'size': 0
         }
 
+        log.debug('Add %s to the TFTP server', address)
+
         return event
 
     def get_file(self, address):
@@ -121,7 +123,7 @@ class TFTP:
 
         while not event.is_set():
             time.sleep(1)
-        return_value = self._files[address]['path']
+        return_value = self._files[address].get('path')
 
         try:
             if self._files[address]['exception'] is not None:
@@ -137,8 +139,8 @@ class TFTP:
 
         """
         self._current_receive_port += 1
-        if self._current_receive_port > self.TFTP_MAX_DATA_PORT:
-            self._current_receive_port = self.TFTP_MIN_DATA_PORT
+        if self._current_receive_port > self._max_port:
+            self._current_receive_port = self._min_port
 
         return self._current_receive_port
 
@@ -181,12 +183,14 @@ class TFTP:
         """
         try:
             buffer, (address, port) = self._socket.recvfrom(self.MAX_BLKSIZE)
-        except (OSError, socket.error):
+        except OSError:
             # Dont do anything in case of socket timeout/error
+            log.warning("Error while obtaining data by TFTP server")
             return
 
         if address not in self._files:
             # Unexpected packet, do nothing
+            log.warning("TFTP server got packet from unexpected address: %s", address)
             return
 
         log.debug('Connection from %s:%s', address, port)
@@ -223,6 +227,8 @@ class TFTP:
         buffer, (remote_address, remote_port) = receiver.recvfrom(self.MAX_BLKSIZE)
         path = self._files[remote_address]['path']
 
+        log.debug("Receiving data from %s", remote_address)
+
         self._files[remote_address]['size'] += len(buffer[self.PREFIX_LEN:])
 
         if self._files[remote_address]['size'] > self.MAX_FILE_SIZE:
@@ -247,6 +253,7 @@ class TFTP:
         Close receiver basing on fd and remote_address
 
         """
+        log.debug('Closing receiver')
         self._epoll.unregister(fd)
         self._receivers[fd].close()
         del self._receivers[fd]
@@ -285,11 +292,14 @@ class TFTP:
             self._epoll.unregister(receiver.fileno())
             receiver.close()
 
-        self._epoll.unregister(self._socket.fileno)
-        self._socket.close()
+        if self._socket is not None:
+            self._epoll.unregister(self._socket.fileno())
+            self._socket.close()
+
         self._stop = True
 
     def _open_port(self, host, port):
+        log.warning('Opening port (%s, %s)', host, port)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(self._timeout)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

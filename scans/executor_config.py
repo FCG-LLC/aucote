@@ -4,6 +4,7 @@ Provides configuration for tools. Configuration is implicit and shouldn't be mod
 from tools.acuote_ad.tool import AucoteActiveDirectory
 from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
+from tools.aucote_scripts.tool import AucoteScriptsTool
 from tools.cve_search.tool import CVESearchTool
 from tools.hydra.tool import HydraTool
 from tools.nmap.parsers import NmapBrutParser, NmapInfoParser, NmapHTTPWebsphereConsoleParser
@@ -182,6 +183,9 @@ EXECUTOR_CONFIG = {
         },
         'aucote-active-directory': {
             'class': AucoteActiveDirectory
+        },
+        'aucote-scripts': {
+            'class': AucoteScriptsTool
         }
     },
     'node_scan': ['cve-search', 'aucote-active-directory']

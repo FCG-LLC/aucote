@@ -93,3 +93,9 @@ class StopCommandException(Exception):
     Raises if command should be stopped
 
     """
+
+
+class PortNotSpecifiedException(Exception):
+    """
+    Raises if tool/task is executed without specified port and cannot handle it
+    """

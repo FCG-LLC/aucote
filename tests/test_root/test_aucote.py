@@ -69,11 +69,19 @@ class AucoteTest(AsyncTestCase):
             'tcpportscan': {
                 'host': 'localhost',
                 'port': '1239'
+            },
+            'tftp': {
+                'port': 6969,
+                'timeout': 120,
+                'host': '127.0.0.1',
+                'min_port': 60000,
+                'max_port': 61000
             }
         }
         self.aucote = Aucote(exploits=MagicMock(), kudu_queue=MagicMock(), tools_config=MagicMock())
         self.aucote.ioloop = MagicMock()
         self.aucote._storage_thread = MagicMock()
+        self.aucote._tftp_thread = MagicMock()
 
         future = Future()
         future.set_result(MagicMock())
