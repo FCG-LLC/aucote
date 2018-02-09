@@ -82,5 +82,6 @@ class AucoteHttpHeadersTask(PortTask):
         return_value = []
 
         for result in results:
-            return_value.append(Vulnerability(exploit=result.exploit, port=self._port, output=result.output))
+            return_value.append(Vulnerability(exploit=result.exploit, port=self._port, output=result.output,
+                                              context=self.context))
         return return_value

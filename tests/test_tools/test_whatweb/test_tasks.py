@@ -6,6 +6,7 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from fixtures.exploits import Exploit
+from scans.tcp_scanner import TCPScanner
 from structs import Port, Node, TransportProtocol, Scan, Service, ScanContext
 from tools.whatweb.base import WhatWebBase
 from tools.whatweb.structs import WhatWebResult, WhatWebTarget, WhatWebPlugin
@@ -21,7 +22,7 @@ class WhatWebTaskTest(AsyncTestCase):
         self.aucote = MagicMock()
         self.exploit = Exploit(app='whatweb', name='whatweb', exploit_id=1)
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scan=TCPScanner)
         self.task = WhatWebTask(port=self.port, context=self.context, exploits=[self.exploit], scan=self.scan)
 
     def test_init(self):
