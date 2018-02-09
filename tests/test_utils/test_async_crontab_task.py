@@ -16,6 +16,7 @@ class AsyncCrontabTaskTest(AsyncTestCase):
         future = Future()
         future.set_result(MagicMock())
         self.func.return_value = future
+        self.func.run_now = False
 
         self.cron = '*/5 * * * *'
         self.task = AsyncCrontabTask(func=self.func, cron=self.cron)
@@ -66,6 +67,18 @@ class AsyncCrontabTaskTest(AsyncTestCase):
         self.task._last_execute = 300
         yield self.task()
         self.assertFalse(self.func.called)
+        self.task._prepare_next_iteration.assert_called_once_with()
+
+    @patch('utils.async_crontab_task.time.time', MagicMock(return_value=305))
+    @gen_test
+    def test_call_already_called_run_now(self):
+        self.task._prepare_next_iteration = MagicMock()
+        self.task._last_execute = 300
+        self.func.run_now = True
+
+        yield self.task()
+
+        self.assertTrue(self.func.called)
         self.task._prepare_next_iteration.assert_called_once_with()
 
     @patch('utils.async_crontab_task.time.time', MagicMock(return_value=205))

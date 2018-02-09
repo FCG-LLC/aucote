@@ -112,6 +112,7 @@ class AucoteCfgTest(AsyncTestCase):
                 'max_retry_time': 25,
                 'max_retry_count': 35,
                 'overwrite': False,
+                'push_default': True
             },
             'rabbit': {
                 'enable': False,
@@ -151,7 +152,8 @@ class AucoteCfgTest(AsyncTestCase):
                 'min_retry_time': 15,
                 'max_retry_time': 25,
                 'max_retry_count': 35,
-                'overwrite': True
+                'overwrite': True,
+                'push_default': True
             },
             'rabbit': {
                 'enable': False,

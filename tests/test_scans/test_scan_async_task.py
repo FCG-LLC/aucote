@@ -1,19 +1,16 @@
 import ipaddress
-from unittest.mock import patch, MagicMock, PropertyMock, call
+from unittest.mock import patch, MagicMock
 
 import time
-from tornado.httpclient import HTTPError
-
-from cpe import CPE
 from croniter import croniter
 from netaddr import IPSet
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
+from aucote import Aucote
 from fixtures.exploits import Exploit
 from scans.scan_async_task import ScanAsyncTask
-from structs import Node, PhysicalPort, Scan, Port, TransportProtocol, ScanStatus, CPEType, VulnerabilityChange, \
-    VulnerabilityChangeType, PortDetectionChange
+from structs import Node, Scan, ScanStatus
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -44,7 +41,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         }
 
         cfg._cfg = self.cfg
-        self.aucote = MagicMock(storage=MagicMock())
+        self.aucote = MagicMock()
         atm_stop_future = Future()
         self.atm_stop = MagicMock()
         atm_stop_future.set_result(self.atm_stop)
@@ -101,7 +98,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
                             '127.0.0.1/24',
                             '128.0.0.1/13'
                         ]
-                    }
+                    },
+                    'run_after': []
                 }
             }
         }
@@ -213,12 +211,49 @@ class ScanAsyncTaskTest(AsyncTestCase):
     async def test_call(self, cfg):
         self.thread.NAME = 'test_name'
         cfg['portdetection.test_name.scan_enabled'] = True
+        cfg['portdetection.test_name.run_after'] = []
         self.thread.run = MagicMock(return_value=Future())
         self.thread.run.return_value.set_result(True)
 
         await self.thread()
 
         self.thread.run.assert_called_once_with()
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_run_after(self, cfg):
+        self.thread.NAME = 'test_name'
+        cfg['portdetection.test_name.scan_enabled'] = True
+        cfg['portdetection.test_name.run_after'] = ['test_scan']
+        self.thread.run = MagicMock(return_value=Future())
+        self.thread.run.return_value.set_result(True)
+
+        task = MagicMock(NAME='test_scan')
+
+        self.thread.aucote.async_task_manager = AsyncTaskManager()
+        self.thread.aucote.async_task_manager.add_crontab_task(task=task, cron='', event=MagicMock())
+
+        await self.thread()
+
+        task.run_asap.assert_called_once_with()
+
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @gen_test
+    async def test_run_after_non_exists(self, cfg):
+        self.thread.NAME = 'test_name'
+        cfg['portdetection.test_name.scan_enabled'] = True
+        cfg['portdetection.test_name.run_after'] = ['test_scan']
+        self.thread.run = MagicMock(return_value=Future())
+        self.thread.run.return_value.set_result(True)
+
+        task = MagicMock(NAME='test_scan_other')
+
+        self.thread.aucote.async_task_manager = AsyncTaskManager()
+        self.thread.aucote.async_task_manager.add_crontab_task(task=task, cron='', event=MagicMock())
+
+        await self.thread()
+
+        self.assertFalse(task.run_asap.called)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
@@ -324,3 +359,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
         }
 
         cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True, keep_history=False)
+
+    def test_run_asap(self):
+        self.thread.run_now = False
+
+        self.thread.run_asap()
+
+        self.assertTrue(self.thread.run_now)
