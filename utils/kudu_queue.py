@@ -68,6 +68,8 @@ class KuduMsg:
         """
         Add string value to data
         """
+        if val is None:
+            val = ''
 
         assert isinstance(val, str)
         bytestring = val.encode('utf-8')
