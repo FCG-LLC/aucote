@@ -42,7 +42,7 @@ class TFTPTest(TestCase):
     def setUp(self):
         self.tmp_directory = mkdtemp()
         self.timeout = 178
-        self.tftp = TFTP('127.0.0.1', 0, self.timeout, self.tmp_directory)
+        self.tftp = TFTP('127.0.0.1', 0, self.timeout, self.tmp_directory, 60000, 61000)
         self.tftp.start()
         self.host, self.port = self.tftp._socket.getsockname()
         self.helper = TFTPHelper(self.host, self.port, True)
