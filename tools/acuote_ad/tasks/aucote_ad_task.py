@@ -12,5 +12,5 @@ class AucoteActiveDirectoryTask(PortTask):
         exploit = self.aucote.exploits.find('aucote-active-directory', 'aucote-active-directory')
         nodes = "\n".join(" - {0}".format(node.ip) for node in self.nodes)
         output = "Active Directory Controllers from {0} for {1}:\n{2}".format(self.port.node.ip, self.domain, nodes)
-        vuln = Vulnerability(port=self.port, output=output, exploit=exploit)
+        vuln = Vulnerability(port=self.port, output=output, exploit=exploit, context=self.context)
         self.store_vulnerability(vuln)

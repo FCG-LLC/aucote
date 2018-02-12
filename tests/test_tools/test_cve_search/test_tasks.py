@@ -151,7 +151,7 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         mock_results.assert_called_once_with([expected])
         self.task.store_vulnerability.assert_called_once_with(mock_vuln.return_value)
         mock_vuln.assert_called_once_with(exploit=self.task.exploit, port=self.task.port,
-                                          output=mock_results.return_value.output)
+                                          output=mock_results.return_value.output, context=self.context)
 
     def test_get_node_cpe(self):
         self.task._port = PhysicalPort(node=self.node)
@@ -216,4 +216,4 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         mock_results.assert_called_once_with([expected])
         self.task.store_vulnerability.assert_called_once_with(mock_vuln.return_value)
         mock_vuln.assert_called_once_with(exploit=self.task.exploit, port=self.task.port,
-                                          output=mock_results.return_value.output)
+                                          output=mock_results.return_value.output, context=self.context)

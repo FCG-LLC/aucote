@@ -50,7 +50,8 @@ class CVESearchServiceTask(PortTask):
             return
         cves = CVESearchParser.dict_to_results(result)
 
-        self.store_vulnerability(Vulnerability(exploit=self.exploit, port=self._port, output=cves.output))
+        self.store_vulnerability(Vulnerability(exploit=self.exploit, port=self._port, output=cves.output,
+                                               context=self.context))
 
     def get_cpes(self):
         """
@@ -131,4 +132,5 @@ class CVESearchServiceTask(PortTask):
         return ujson.loads(response.body.decode())
 
     def get_vulnerabilities(self, results):
-        return [Vulnerability(exploit=self.exploit, port=self._port, output=result.output) for result in results]
+        return [Vulnerability(exploit=self.exploit, port=self._port, output=result.output,
+                              context=self.context) for result in results]
