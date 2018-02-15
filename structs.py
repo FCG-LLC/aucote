@@ -88,6 +88,7 @@ class Node:
     """
     Represents node in the network. Every pair ip:node_id is considered as separated node
     """
+    DEFAULT_VALUE = 0
 
     def __init__(self, node_id, ip):
         """
@@ -99,7 +100,7 @@ class Node:
         """
         self.name = None
         self.ip = ip
-        self._id = 0
+        self._id = self.DEFAULT_VALUE
         self.id = node_id
         self.scan = None
         self.os = Service()
@@ -114,7 +115,7 @@ class Node:
         Set node id. If it's negative, convert to unsigned int
         """
         if value is None:
-            value = 0
+            value = self.DEFAULT_VALUE
 
         self._id = c_uint32(value).value
 
