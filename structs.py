@@ -99,7 +99,7 @@ class Node:
         """
         self.name = None
         self.ip = ip
-        self._id = None
+        self._id = 0
         self.id = node_id
         self.scan = None
         self.os = Service()
@@ -113,8 +113,10 @@ class Node:
         """
         Set node id. If it's negative, convert to unsigned int
         """
-        if value is not None:
-            value = c_uint32(value).value
+        if value is None:
+            value = 0
+
+        value = c_uint32(value).value
         self._id = value
 
     def __eq__(self, other):
