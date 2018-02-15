@@ -88,6 +88,11 @@ class NodeTest(TestCase):
         result = repr(self.node)
         self.assertEqual(result, expected)
 
+    def test_node_id_none(self):
+        self.node.id = None
+
+        self.assertEqual(self.node.id, 0)
+
 
 class PortTest(TestCase):
     def test_ports_comparison_eq(self):
