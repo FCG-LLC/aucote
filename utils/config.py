@@ -124,7 +124,7 @@ class Config:
 
         """
         with contextlib.closing(IOLoop()) as ioloop:
-            return ioloop.run_sync(partial(self.toucan.get, key))
+            return ioloop.run_sync(partial(self.toucan.async_get, key))
 
     def set(self, key, value):
         """

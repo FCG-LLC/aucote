@@ -123,14 +123,14 @@ class AucoteCfgTest(AsyncTestCase):
             }
         }
 
-        toucan().push_config.return_value = Future()
-        toucan().push_config.return_value.set_result(MagicMock())
+        toucan().async_push_config.return_value = Future()
+        toucan().async_push_config.return_value.set_result(MagicMock())
 
-        toucan().get.return_value = Future()
-        toucan().get.return_value.set_result(MagicMock())
+        toucan().async_get.return_value = Future()
+        toucan().async_get.return_value.set_result(MagicMock())
 
         await start_toucan('test_file')
-        toucan.return_value.push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=False)
+        toucan.return_value.async_push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=False)
         self.assertEqual(cfg.toucan, toucan.return_value)
         self.assertEqual(toucan.min_retry_time, 15)
         self.assertEqual(toucan.max_retry_count, 35)
@@ -164,11 +164,11 @@ class AucoteCfgTest(AsyncTestCase):
             }
         }
 
-        toucan().push_config.return_value = Future()
-        toucan().push_config.return_value.set_result(MagicMock())
+        toucan().async_push_config.return_value = Future()
+        toucan().async_push_config.return_value.set_result(MagicMock())
 
-        toucan().get.return_value = Future()
-        toucan().get.return_value.set_result(MagicMock())
+        toucan().async_get.return_value = Future()
+        toucan().async_get.return_value.set_result(MagicMock())
 
         await start_toucan('test_file')
-        toucan.return_value.push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=True)
+        toucan.return_value.async_push_config.assert_called_once_with({'alice': {'has': {'a': 'dog'}}}, overwrite=True)
