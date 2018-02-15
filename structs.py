@@ -116,8 +116,7 @@ class Node:
         if value is None:
             value = 0
 
-        value = c_uint32(value).value
-        self._id = value
+        self._id = c_uint32(value).value
 
     def __eq__(self, other):
         return isinstance(other, Node) and self.ip == other.ip and self.id == other.id
