@@ -52,8 +52,9 @@ async def main():
     parser = argparse.ArgumentParser(description='Tests compliance of devices.')
     parser.add_argument("--cfg", help="config file path")
     parser.add_argument('cmd', help="aucote command", type=str, default='service',
-                        choices=['scan', 'service', 'syncdb'],
+                        choices=['scan', 'service'],
                         nargs='?')
+    parser.add_argument("--syncdb", action="store_true", help="Synchronize database")
     args = parser.parse_args()
 
     # read configuration
@@ -96,6 +97,9 @@ async def main():
 
         aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=EXECUTOR_CONFIG)
 
+        if args.syncdb:
+            aucote.run_syncdb()
+
         if args.cmd == 'scan':
             await aucote.run_scan(as_service=False)
             IOLoop.current().stop()
@@ -103,8 +107,6 @@ async def main():
             while True:
                 await aucote.run_scan()
                 cfg.reload(cfg['config_filename'])
-        elif args.cmd == 'syncdb':
-            aucote.run_syncdb()
 
 
 # =============== functions ==============
