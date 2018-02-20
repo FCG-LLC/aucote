@@ -98,6 +98,7 @@ async def main():
         aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=EXECUTOR_CONFIG)
 
         if args.syncdb:
+            log.info('Pushing %s exploits to the database', len(exploits))
             aucote.run_syncdb()
 
         if args.cmd == 'scan':
