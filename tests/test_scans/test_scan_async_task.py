@@ -299,11 +299,12 @@ class ScanAsyncTaskTest(AsyncTestCase):
         cfg.toucan.async_push_config.return_value = Future()
         cfg.toucan.async_push_config.return_value.set_result(MagicMock())
 
-        cfg.toucan.async_get.return_value = Future()
-        cfg.toucan.async_get.return_value.set_result({'portdetection.test_name.status.scan_start': 23,
-                                                'portdetection.test_name.status.next_scan_start': 23,
-                                                'portdetection.test_name.status.code': 'IDLE',
-                                                'portdetection.test_name.scan_type': 'PERIODIC'})
+        cfg.toucan.get.return_value = {
+            'portdetection.test_name.status.scan_start': 23,
+            'portdetection.test_name.status.next_scan_start': 23,
+            'portdetection.test_name.status.code': 'IDLE',
+            'portdetection.test_name.scan_type': 'PERIODIC'
+        }
 
         self.thread.scan_start = 17
         self.thread.NAME = 'test_name'
@@ -334,11 +335,12 @@ class ScanAsyncTaskTest(AsyncTestCase):
         cfg.toucan.async_push_config.return_value = Future()
         cfg.toucan.async_push_config.return_value.set_result(MagicMock())
 
-        cfg.toucan.async_get.return_value = Future()
-        cfg.toucan.async_get.return_value.set_result({'portdetection.test_name.status.scan_start': 23,
-                                                'portdetection.test_name.status.next_scan_start': 23,
-                                                'portdetection.test_name.status.code': 23,
-                                                'portdetection.test_name.scan_type': 'PERIODIC'})
+        cfg.toucan.get.return_value = {
+            'portdetection.test_name.status.scan_start': 23,
+            'portdetection.test_name.status.next_scan_start': 23,
+            'portdetection.test_name.status.code': 23,
+            'portdetection.test_name.scan_type': 'PERIODIC'
+        }
 
         self.thread.scan_start = 17
         self.thread.NAME = 'test_name'
