@@ -137,7 +137,7 @@ class ConfigTest(TestCase):
 
     def test_get_toucan_exception(self):
         self.config.toucan = MagicMock()
-        self.config.toucan.get = MagicMock(side_effect=ToucanException)
+        self.config.toucan.async_get = MagicMock(side_effect=ToucanException)
         self.assertRaises(KeyError, self.config.get, 'alice.has.a.cat.named.kitty')
 
     def test_get_non_exist(self):
@@ -210,8 +210,7 @@ class ConfigTest(TestCase):
         self.config.toucan.is_special.return_value = False
         self.cache_time = 1
         expected = 'test_value'
-        self.config.toucan.get.return_value = Future()
-        self.config.toucan.get.return_value.set_result(expected)
+        self.config.toucan.get.return_value = expected
 
         result = self.config['non.exisists.key']
 
@@ -251,8 +250,7 @@ class ConfigTest(TestCase):
     def test_get_special_config_with_toucan(self):
         self.config.toucan = MagicMock()
         self.config.toucan.is_special.return_value = True
-        self.config.toucan.get.return_value = Future()
-        self.config.toucan.get.return_value.set_result({'alice.has.a': 'cat', 'test.key': 'test_value'})
+        self.config.toucan.get.return_value = {'alice.has.a': 'cat', 'test.key': 'test_value'}
 
         self.config.timestamps = {
             'alice.has.a': 15,
@@ -277,18 +275,6 @@ class ConfigTest(TestCase):
             }
         }
 
-        self.assertEqual(result, expected)
-
-    @patch('utils.config.partial')
-    @patch('utils.config.IOLoop')
-    def test_from_toucan(self, ioloop, partial):
-        self.config.toucan = MagicMock()
-        expected = ioloop().run_sync.return_value
-        result = self.config._from_toucan('test')
-
-        partial.assert_called_once_with(self.config.toucan.get, 'test')
-        ioloop().run_sync.assert_called_once_with(partial())
-        ioloop().close.assert_called_once_with()
         self.assertEqual(result, expected)
 
 

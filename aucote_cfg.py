@@ -5,12 +5,13 @@ import os.path as path
 from sys import stderr
 
 import yaml
+from pycslib.utils import Toucan
 
 import utils.log as log_cfg
 from utils import Config
 
 # default values
-from utils.toucan import Toucan
+# from utils.toucan import Toucan
 
 LOG_DIR = path.join(path.dirname(__file__), 'logs')
 
@@ -83,7 +84,7 @@ async def start_toucan(default_config):
     Toucan.max_retry_time = cfg['toucan.max_retry_time']
     Toucan.max_retry_count = cfg['toucan.max_retry_count']
 
-    cfg.toucan = Toucan(api=cfg['toucan.api'])
+    cfg.toucan = Toucan(api=cfg['toucan.api'], prefix='aucote')
     if cfg['rabbit.enable']:
         await cfg.start_rabbit(cfg['rabbit.host'], int(cfg['rabbit.port']), cfg['rabbit.username'],
                                cfg['rabbit.password'])
@@ -92,7 +93,7 @@ async def start_toucan(default_config):
         with open(default_config, "r") as file:
             config = yaml.safe_load(file)
 
-        await cfg.toucan.push_config(config, overwrite=cfg['toucan.overwrite'])
+        await cfg.toucan.async_push_config(config, overwrite=cfg['toucan.overwrite'])
 
 
 async def load(file_name=None):

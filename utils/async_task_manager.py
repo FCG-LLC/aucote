@@ -267,7 +267,7 @@ class AsyncTaskManager(object):
         """
         Poll configuration for throttling value
         """
-        throttling = await cfg.toucan.get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
+        throttling = await cfg.toucan.async_get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
 
         self.change_throttling(throttling)
 

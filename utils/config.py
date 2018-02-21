@@ -123,8 +123,7 @@ class Config:
         Returns:
 
         """
-        with contextlib.closing(IOLoop()) as ioloop:
-            return ioloop.run_sync(partial(self.toucan.get, key))
+        return self.toucan.get(key)
 
     def set(self, key, value):
         """

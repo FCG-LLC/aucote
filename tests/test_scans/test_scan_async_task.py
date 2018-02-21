@@ -296,14 +296,15 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @gen_test
     async def test_update_scan_status_to_in_progress(self, cfg):
         cfg.toucan = MagicMock()
-        cfg.toucan.push_config.return_value = Future()
-        cfg.toucan.push_config.return_value.set_result(MagicMock())
+        cfg.toucan.async_push_config.return_value = Future()
+        cfg.toucan.async_push_config.return_value.set_result(MagicMock())
 
-        cfg.toucan.get.return_value = Future()
-        cfg.toucan.get.return_value.set_result({'portdetection.test_name.status.scan_start': 23,
-                                                'portdetection.test_name.status.next_scan_start': 23,
-                                                'portdetection.test_name.status.code': 'IDLE',
-                                                'portdetection.test_name.scan_type': 'PERIODIC'})
+        cfg.toucan.get.return_value = {
+            'portdetection.test_name.status.scan_start': 23,
+            'portdetection.test_name.status.next_scan_start': 23,
+            'portdetection.test_name.status.code': 'IDLE',
+            'portdetection.test_name.scan_type': 'PERIODIC'
+        }
 
         self.thread.scan_start = 17
         self.thread.NAME = 'test_name'
@@ -322,7 +323,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
             }
         }
 
-        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True, keep_history=False)
+        cfg.toucan.async_push_config.assert_called_once_with(expected, overwrite=True, keep_history=False)
 
     @patch('scans.scan_async_task.ScanAsyncTask.next_scan', 75)
     @patch('scans.scan_async_task.ScanAsyncTask.previous_scan', 57)
@@ -331,14 +332,15 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @gen_test
     async def test_update_scan_status_to_idle(self, cfg):
         cfg.toucan = MagicMock()
-        cfg.toucan.push_config.return_value = Future()
-        cfg.toucan.push_config.return_value.set_result(MagicMock())
+        cfg.toucan.async_push_config.return_value = Future()
+        cfg.toucan.async_push_config.return_value.set_result(MagicMock())
 
-        cfg.toucan.get.return_value = Future()
-        cfg.toucan.get.return_value.set_result({'portdetection.test_name.status.scan_start': 23,
-                                                'portdetection.test_name.status.next_scan_start': 23,
-                                                'portdetection.test_name.status.code': 23,
-                                                'portdetection.test_name.scan_type': 'PERIODIC'})
+        cfg.toucan.get.return_value = {
+            'portdetection.test_name.status.scan_start': 23,
+            'portdetection.test_name.status.next_scan_start': 23,
+            'portdetection.test_name.status.code': 23,
+            'portdetection.test_name.scan_type': 'PERIODIC'
+        }
 
         self.thread.scan_start = 17
         self.thread.NAME = 'test_name'
@@ -358,7 +360,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
             }
         }
 
-        cfg.toucan.push_config.assert_called_once_with(expected, overwrite=True, keep_history=False)
+        cfg.toucan.async_push_config.assert_called_once_with(expected, overwrite=True, keep_history=False)
 
     def test_run_asap(self):
         self.thread.run_now = False
