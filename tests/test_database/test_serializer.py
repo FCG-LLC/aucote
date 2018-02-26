@@ -13,6 +13,7 @@ from tests.time.test_utils import UTC
 
 utc = UTC()
 
+
 class SerializerTest(TestCase):
 
     def setUp(self):
