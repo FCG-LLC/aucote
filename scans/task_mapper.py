@@ -84,13 +84,8 @@ class TaskMapper(object):
         return list(filter(self._is_exploit_allowed, exploits))
 
     def _is_exploit_allowed(self, exploit):
-        categories = {ExploitCategory[cat.upper()] for cat in cfg.get('portdetection._internal.categories').cfg}
         if not self.scanner.is_exploit_allowed(exploit):
             log.debug("Exploit %s is not allowed by scanner (%s) configuration", str(exploit), self.scanner.NAME)
-            return False
-
-        if exploit.categories - categories:
-            log.debug("Exploit %s is not allowed by categories configuration", str(exploit))
             return False
 
         return True
