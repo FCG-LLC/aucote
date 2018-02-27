@@ -2,14 +2,11 @@
 Configuration related module
 
 """
+import re
 import time
 import logging as log
 from asyncio import get_event_loop, ensure_future
-from functools import partial
-
-import contextlib
 import yaml
-from tornado.ioloop import IOLoop
 
 from pycslib.utils import RabbitConsumer, Rabbit
 from utils.exceptions import ToucanException
@@ -19,6 +16,12 @@ class ToucanConsumer(RabbitConsumer):
     def __init__(self, cfg):
         self.cfg = cfg
         super(ToucanConsumer, self).__init__('toucan', 'topic', 'toucan.config.aucote.#')
+        self._actions = {
+
+        }
+
+    def register_action(self, regex, action):
+        self._actions[re.compile(regex)] = action
 
     async def process_message(self, msg):
         result = msg.json()
@@ -35,6 +38,14 @@ class ToucanConsumer(RabbitConsumer):
 
         self.cfg[key] = value
         log.debug('Changing configuration key %s to %s', key, value)
+
+        for regex, action in self._actions.items():
+            result = regex.match(key)
+            if result is not None:
+                try:
+                    action(key=key, value=value, **result.groupdict())
+                except:
+                    log.warning("Error during processing Toucan action: %s", action)
 
 
 class Config:
@@ -53,6 +64,7 @@ class Config:
         self.toucan = None
         self.rabbit = None
         self.cache_time = cache_time
+        self._consumer = None
 
     def __len__(self):
         return len(self._cfg)
@@ -293,10 +305,10 @@ class Config:
         await self.rabbit.connect()
         self.rabbit.start_monitoring()
 
-        consumer = ToucanConsumer(self)
+        self._consumer = ToucanConsumer(self)
 
-        ensure_future(self.rabbit.add_consumer(consumer), loop=io_loop)
-        ensure_future(consumer.consume(), loop=io_loop)
+        ensure_future(self.rabbit.add_consumer(self._consumer), loop=io_loop)
+        ensure_future(self._consumer.consume(), loop=io_loop)
 
     async def add_rabbit_consumer(self, consumer):
         """

@@ -204,6 +204,7 @@ class AucoteTest(AsyncTestCase):
     @gen_test
     async def test_scan(self, cfg, tcp_scanner, udp_scanner, tools_scanner, mock_storage_task):
         cfg._cfg = self.cfg._cfg
+        cfg._consumer = MagicMock()
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
@@ -238,6 +239,7 @@ class AucoteTest(AsyncTestCase):
     @gen_test
     async def test_service(self, cfg, tcp_scanner, udp_scanner, tools_scanner, mock_storage_task):
         cfg._cfg = self.cfg._cfg
+        cfg._consumer = MagicMock()
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
 
@@ -286,6 +288,7 @@ class AucoteTest(AsyncTestCase):
         self.mock_web_server()
 
         cfg._cfg = self.cfg._cfg
+        cfg._consumer = MagicMock()
         await self.aucote.run_scan()
         self.assertEqual(mock_executor.call_count, 0)
 

@@ -220,8 +220,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread.run.assert_called_once_with()
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
+    @patch('scans.scan_async_task.partial')
+    @patch('utils.async_task_manager.AsyncCrontabTask')
     @gen_test
-    async def test_run_after(self, cfg):
+    async def test_run_after(self, async_task, partial, cfg):
         self.thread.NAME = 'test_name'
         cfg['portdetection.test_name.scan_enabled'] = True
         cfg['portdetection.test_name.run_after'] = ['test_scan']
@@ -235,7 +237,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         await self.thread()
 
-        task.run_asap.assert_called_once_with()
+        partial.assert_called_once_with(async_task.return_value, run_now=True)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test

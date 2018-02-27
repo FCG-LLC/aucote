@@ -117,6 +117,7 @@ class Aucote(object):
     """
     Main aucote class. It Provides run functions (service, single instance, sync db)
     """
+    _instance = None
 
     def __init__(self, exploits, kudu_queue, tools_config):
         self.exploits = exploits
@@ -152,6 +153,9 @@ class Aucote(object):
         """
         return self._kudu_queue
 
+    def instance(self):
+        return
+
     @property
     def tftp_server(self):
         return self._tftp_thread
@@ -164,6 +168,8 @@ class Aucote(object):
 
         """
         try:
+            cfg._consumer.register_action('portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control.start',
+                                          self.start_scan)
             with self._storage_thread, self._tftp_thread:
                 self.async_task_manager.clear()
                 self._storage.init_schema()
@@ -299,6 +305,16 @@ class Aucote(object):
 
         """
         return self._storage
+
+    def start_scan(self, key, value, scan_name):
+        """
+        Start scan with given name (scan_name) as soon as possible
+        """
+        log.debug('Starting %s basing on Toucan request', scan_name)
+        if value is True:
+            cfg.toucan.put(key, False)
+            self.async_task_manager.cron_task(scan_name).run_asap()
+            self.ioloop.add_callback(partial(self.async_task_manager.crontab_task(scan_name), run_now=True))
 
 # =================== start app =================
 

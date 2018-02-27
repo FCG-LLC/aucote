@@ -263,6 +263,11 @@ class AsyncTaskManager(object):
             if task.NAME == name:
                 return task
 
+    def crontab_task(self, name):
+        for task, crontab in self._cron_tasks.items():
+            if task.NAME == name:
+                return crontab
+
     async def monitor_limit(self):
         """
         Poll configuration for throttling value
