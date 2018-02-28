@@ -5,6 +5,7 @@ This is executable file of aucote project.
 import argparse
 import logging as log
 import os
+import re
 from os import chdir
 from os.path import dirname, realpath
 import sys
@@ -119,6 +120,8 @@ class Aucote(object):
     """
     _instance = None
 
+    SCAN_CONTROL_START = re.compile('portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control.start')
+
     def __init__(self, exploits, kudu_queue, tools_config):
         self.exploits = exploits
         self._kudu_queue = kudu_queue
@@ -168,8 +171,7 @@ class Aucote(object):
 
         """
         try:
-            cfg._consumer.register_action('portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control.start',
-                                          self.start_scan)
+            cfg._consumer.register_action(self.SCAN_CONTROL_START, self.start_scan)
             with self._storage_thread, self._tftp_thread:
                 self.async_task_manager.clear()
                 self._storage.init_schema()
@@ -187,11 +189,17 @@ class Aucote(object):
                     if as_service:
                         for scanner in self.scanners:
                             self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron)
+                            toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
+                            self.ioloop.add_callback(partial(self.async_task_manager.monitor_toucan, toucan_key,
+                                                             callback=self.start_scan, default=False, add_prefix=True))
 
                         for scanner_name in cfg['portdetection.security_scans'].cfg:
                             scanner = ToolsScanner(aucote=self, name=scanner_name)
+                            toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
                             self.scanners.append(scanner)
                             self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron, event='tools')
+                            self.ioloop.add_callback(partial(self.async_task_manager.monitor_toucan, toucan_key,
+                                                             callback=self.start_scan, default=False, add_prefix=True))
 
                         self.async_task_manager.start()
                     else:
@@ -306,15 +314,25 @@ class Aucote(object):
         """
         return self._storage
 
-    def start_scan(self, key, value, scan_name):
+    def start_scan(self, key, value, scan_name=None):
         """
         Start scan with given name (scan_name) as soon as possible
         """
-        log.debug('Starting %s basing on Toucan request', scan_name)
+
+        if scan_name is None:
+            match = self.SCAN_CONTROL_START.match(key)
+            if match is None:
+                log.warning('Cannot find scan_name for key %s', key)
+                return
+
+            scan_name = match.groupdict().get('scan_name')
+
         if value is True:
+            log.debug('Starting %s basing on Toucan request', scan_name)
             cfg.toucan.put(key, False)
             self.async_task_manager.cron_task(scan_name).run_asap()
-            self.ioloop.add_callback(partial(self.async_task_manager.crontab_task(scan_name), run_now=True))
+            self.ioloop.add_callback(partial(self.async_task_manager.crontab_task(scan_name), skip_cron=True))
+
 
 # =================== start app =================
 

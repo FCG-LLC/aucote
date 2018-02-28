@@ -272,12 +272,28 @@ class AsyncTaskManager(object):
         """
         Poll configuration for throttling value
         """
-        throttling = await cfg.toucan.async_get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
+        await self.monitor_toucan(key='throttling.rate', add_prefix=False, default=1,
+                                  callback=self.change_throttling_toucan)
 
-        self.change_throttling(throttling)
+    async def monitor_toucan(self, key, callback, default, add_prefix=True):
+        """
+        Poll Toucan for given key. Request for value, pass to callback and run again in THROTTLE_POLL_TIME secs.
+        Request is synchronous, to freeze if Toucan in unreachable.
+        If exception occurs, the default value is passed to the callback
+        """
+        try:
+            value = cfg.toucan.get(key, add_prefix=add_prefix) if cfg.toucan is not None else 1
+        except Exception:  # pylint: disable=broad-except
+            value = default
+
+        callback(key=key, value=value)
 
         await sleep(self.THROTTLE_POLL_TIME)
-        IOLoop.current().add_callback(self.monitor_limit)
+        IOLoop.current().add_callback(partial(self.monitor_toucan, key=key, callback=callback, default=default,
+                                              add_prefix=add_prefix))
+
+    def change_throttling_toucan(self, key, value):
+        self.change_throttling(value)
 
     def change_throttling(self, new_value):
         """

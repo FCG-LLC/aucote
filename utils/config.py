@@ -21,7 +21,7 @@ class ToucanConsumer(RabbitConsumer):
         }
 
     def register_action(self, regex, action):
-        self._actions[re.compile(regex)] = action
+        self._actions[regex] = action
 
     async def process_message(self, msg):
         result = msg.json()
