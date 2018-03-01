@@ -2,7 +2,6 @@
 Configuration related module
 
 """
-import re
 import time
 import logging as log
 from asyncio import get_event_loop, ensure_future

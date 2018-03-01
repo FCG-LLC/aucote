@@ -118,7 +118,6 @@ class Aucote(object):
     """
     Main aucote class. It Provides run functions (service, single instance, sync db)
     """
-    _instance = None
 
     SCAN_CONTROL_START = re.compile('portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control.start')
 
@@ -155,9 +154,6 @@ class Aucote(object):
 
         """
         return self._kudu_queue
-
-    def instance(self):
-        return
 
     @property
     def tftp_server(self):
