@@ -2,6 +2,9 @@ from tornado.ioloop import IOLoop
 
 
 class ToucanMonitor:
+    """
+    Monitor Toucan for keys added via `register_toucan_key` and perform action related to it
+    """
     THROTTLE_POLL_TIME = 60
 
     def __init__(self, toucan, ioloop=None):
@@ -10,6 +13,9 @@ class ToucanMonitor:
         self._ioloop = ioloop if ioloop is not None else IOLoop.current()
 
     def register_toucan_key(self, key, callback, default, add_prefix=True):
+        """
+        Register key for monitoring. The callback is executed even if value didn't changed
+        """
         self._toucan_keys[key] = {
             'callback': callback,
             'default': default,
