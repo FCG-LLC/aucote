@@ -71,7 +71,6 @@ class AsyncTaskManager(object):
 
     """
     _instance = None
-    THROTTLE_POLL_TIME = 60
 
     TASKS_POLITIC_WAIT = 0
     TASKS_POLITIC_KILL_WORKING_FIRST = 1
@@ -128,9 +127,6 @@ class AsyncTaskManager(object):
             self._task_workers[number] = IOLoop.current().add_callback(partial(self.process_tasks, number))
 
         self._next_task_number = self._parallel_tasks
-        self.register_toucan_key(key='throttling.rate', add_prefix=False, default=1,
-                                 callback=self.change_throttling_toucan)
-        IOLoop.current().add_callback(self.monitor_toucan)
 
     def add_crontab_task(self, task, cron, event=None):
         """
@@ -270,30 +266,6 @@ class AsyncTaskManager(object):
         for task, crontab in self._cron_tasks.items():
             if task.NAME == name:
                 return crontab
-
-    def register_toucan_key(self, key, callback, default, add_prefix=True):
-        self._toucan_keys[key] = {
-            'callback': callback,
-            'default': default,
-            'add_prefix': add_prefix
-        }
-
-    async def monitor_toucan(self):
-        """
-        Poll Toucan for given keys. Request for value, pass to callback and run again in THROTTLE_POLL_TIME secs.
-        Request is synchronous, to freeze if Toucan in unreachable.
-        If exception occurs, the default value is passed to the callback
-        """
-        try:
-            for key, details in self._toucan_keys.items():
-                try:
-                    value = cfg.toucan.get(key, add_prefix=details['add_prefix']) if cfg.toucan is not None else 1
-                except Exception:  # pylint: disable=broad-except
-                    value = details['default']
-
-                details['callback'](key=key, value=value)
-        finally:
-            IOLoop.current().call_later(self.THROTTLE_POLL_TIME, self.monitor_toucan)
 
     def change_throttling_toucan(self, key, value):
         self.change_throttling(value)

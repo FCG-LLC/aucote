@@ -48,11 +48,11 @@ class ToucanConsumer(RabbitConsumer):
 
 
 class Config:
-    '''
+    """
     Creates a configuration using data from YAML file.
     Has ability to provide default values (including dynamic ones)
     Except for loading data, this class is read-only and therefore may be used from multiple threads.
-    '''
+    """
 
     def __init__(self, cfg=None, cache_time=60):
         self.timestamps = {}
@@ -64,12 +64,12 @@ class Config:
         self.rabbit = None
         self.cache_time = cache_time
         self._consumer = None
+        self.toucan_monitor = None
 
     def __len__(self):
         return len(self._cfg)
 
     def __getitem__(self, key):
-        ''' Works like "get()" '''
         if isinstance(self._cfg, list):
             return self._cfg[key]
         return self.get(key)

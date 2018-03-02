@@ -146,6 +146,10 @@ class Aucote(object):
         self._storage_thread = StorageThread(storage=self._storage)
         self.scanners = []
 
+        if cfg.toucan:
+            cfg.toucan_monitor.register_toucan_key(key='throttling.rate', add_prefix=False, default=1,
+                                                   callback=self.async_task_manager.change_throttling_toucan)
+
     @property
     def kudu_queue(self):
         """
@@ -185,17 +189,20 @@ class Aucote(object):
                     if as_service:
                         for scanner in self.scanners:
                             self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron)
-                            toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
-                            self.async_task_manager.register_toucan_key(toucan_key, callback=self.start_scan,
-                                                                        default=False, add_prefix=True)
+                            if cfg.toucan:
+                                toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
+                                cfg.toucan_monitor.register_toucan_key(toucan_key, callback=self.start_scan,
+                                                                       default=False, add_prefix=True)
 
                         for scanner_name in cfg['portdetection.security_scans'].cfg:
                             scanner = ToolsScanner(aucote=self, name=scanner_name)
-                            toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
                             self.scanners.append(scanner)
                             self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron, event='tools')
-                            self.async_task_manager.register_toucan_key(toucan_key, callback=self.start_scan,
-                                                                        default=False, add_prefix=True)
+
+                            if cfg.toucan:
+                                toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
+                                cfg.toucan_monitor.register_toucan_key(toucan_key, callback=self.start_scan,
+                                                                       default=False, add_prefix=True)
 
                         self.async_task_manager.start()
                     else:
