@@ -69,6 +69,7 @@ class Serializer:
         msg.add_str(exploit.title)
         msg.add_str(exploit.description)
         msg.add_byte(exploit.risk_level.number)
+        msg.add_str(",".join(cat.value for cat in exploit.categories) if exploit.categories else '')
         return msg
 
     @classmethod

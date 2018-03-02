@@ -5,13 +5,14 @@ from unittest.mock import PropertyMock, patch, MagicMock
 
 from database.serializer import Serializer
 from fixtures.exploits import Exploit
-from fixtures.exploits.exploit import ExploitMetric
+from fixtures.exploits.exploit import ExploitMetric, ExploitCategory
 from scans.tcp_scanner import TCPScanner
 from structs import Vulnerability, Port, Node, Scan, TransportProtocol, RiskLevel, VulnerabilityChangeType, \
     VulnerabilityChange, PortDetectionChange, PortScan, ScanContext
 from tests.time.test_utils import UTC
 
 utc = UTC()
+
 
 class SerializerTest(TestCase):
 
@@ -44,6 +45,7 @@ class SerializerTest(TestCase):
         self.exploit.description = 'test_description'
         self.exploit.risk_level = RiskLevel.from_name('High')
         self.exploit.metric = ExploitMetric.VNC_INFO
+        self.exploit.categories = (ExploitCategory.DOS, ExploitCategory.BRUTE)
 
         self.vuln.exploit = self.exploit
         self.vuln.when_discovered = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
@@ -62,7 +64,7 @@ class SerializerTest(TestCase):
 
         result = self.serializer.serialize_exploit(self.exploit).data
         expected = b'\x01\x00\x01\x00\x00\x00\x08\x00test_app\t\x00test_name\n\x00test_title\x10\x00test_description' \
-                   b'\x03'
+                   b'\x03\t\x00dos,brute'
 
         self.assertEqual(result, expected)
 
