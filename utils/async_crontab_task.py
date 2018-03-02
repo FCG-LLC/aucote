@@ -25,6 +25,7 @@ class AsyncCrontabTask(object):
         self.func = func
         self._event = event
         self._loop = IOLoop.current().instance()
+        self._future = None
 
     @property
     def name(self):
@@ -51,7 +52,7 @@ class AsyncCrontabTask(object):
 
         return self._cron
 
-    async def __call__(self):
+    async def __call__(self, skip_cron=False):
         """
         Execute function. Do it only if it is no currently executing
 
@@ -59,6 +60,15 @@ class AsyncCrontabTask(object):
             None
 
         """
+
+        if self._is_running:
+            log.error("AsyncCrontabTask[%s]: Already run. Skipping scan", self.name)
+            return
+
+        if self._future is not None:
+            self._loop.remove_timeout(self._future)
+            self._future = None
+
         if self._stop:
             self._started = False
             return
@@ -74,7 +84,7 @@ class AsyncCrontabTask(object):
                 log.error("AsyncCrontabTask[%s]: %s is invalid cron value. Skipping scan", self.name, self.cron)
                 return
 
-            if not self.func.run_now:
+            if not skip_cron:
                 # Check if time meet the cron time
                 if current_cron != current_cron_time:
                     await self.func.update_scan_status()
@@ -92,9 +102,6 @@ class AsyncCrontabTask(object):
                 if time.time() - current_cron_time > 60:
                     log.warning("Cannot run scan because similar scan is already scanning")
                     return
-
-            # Do not autostart scan next time
-            self.func.run_now = False
 
             if self._event is not None:
                 self._event.set()
@@ -144,4 +151,6 @@ class AsyncCrontabTask(object):
 
     def _prepare_next_iteration(self):
         self._is_running = False
-        self._loop.call_later(60 - int(time.time()) % 60, self)
+        if self._future is not None:
+            log.error("AsyncCrontabTask[%s]: For some reason other scan is already working", self.name)
+        self._future = self._loop.call_later(60 - int(time.time()) % 60, self)

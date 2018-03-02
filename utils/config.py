@@ -5,11 +5,7 @@ Configuration related module
 import time
 import logging as log
 from asyncio import get_event_loop, ensure_future
-from functools import partial
-
-import contextlib
 import yaml
-from tornado.ioloop import IOLoop
 
 from pycslib.utils import RabbitConsumer, Rabbit
 from utils.exceptions import ToucanException
@@ -19,6 +15,12 @@ class ToucanConsumer(RabbitConsumer):
     def __init__(self, cfg):
         self.cfg = cfg
         super(ToucanConsumer, self).__init__('toucan', 'topic', 'toucan.config.aucote.#')
+        self._actions = {
+
+        }
+
+    def register_action(self, regex, action):
+        self._actions[regex] = action
 
     async def process_message(self, msg):
         result = msg.json()
@@ -36,13 +38,21 @@ class ToucanConsumer(RabbitConsumer):
         self.cfg[key] = value
         log.debug('Changing configuration key %s to %s', key, value)
 
+        for regex, action in self._actions.items():
+            result = regex.match(key)
+            if result is not None:
+                try:
+                    action(key=key, value=value, **result.groupdict())
+                except:
+                    log.warning("Error during processing Toucan action: %s", action)
+
 
 class Config:
-    '''
+    """
     Creates a configuration using data from YAML file.
     Has ability to provide default values (including dynamic ones)
     Except for loading data, this class is read-only and therefore may be used from multiple threads.
-    '''
+    """
 
     def __init__(self, cfg=None, cache_time=60):
         self.timestamps = {}
@@ -53,12 +63,13 @@ class Config:
         self.toucan = None
         self.rabbit = None
         self.cache_time = cache_time
+        self._consumer = None
+        self.toucan_monitor = None
 
     def __len__(self):
         return len(self._cfg)
 
     def __getitem__(self, key):
-        ''' Works like "get()" '''
         if isinstance(self._cfg, list):
             return self._cfg[key]
         return self.get(key)
@@ -293,10 +304,10 @@ class Config:
         await self.rabbit.connect()
         self.rabbit.start_monitoring()
 
-        consumer = ToucanConsumer(self)
+        self._consumer = ToucanConsumer(self)
 
-        ensure_future(self.rabbit.add_consumer(consumer), loop=io_loop)
-        ensure_future(consumer.consume(), loop=io_loop)
+        ensure_future(self.rabbit.add_consumer(self._consumer), loop=io_loop)
+        ensure_future(self._consumer.consume(), loop=io_loop)
 
     async def add_rabbit_consumer(self, consumer):
         """

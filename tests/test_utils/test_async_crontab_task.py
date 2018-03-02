@@ -74,9 +74,8 @@ class AsyncCrontabTaskTest(AsyncTestCase):
     def test_call_already_called_run_now(self):
         self.task._prepare_next_iteration = MagicMock()
         self.task._last_execute = 300
-        self.func.run_now = True
 
-        yield self.task()
+        yield self.task(skip_cron=True)
 
         self.assertTrue(self.func.called)
         self.task._prepare_next_iteration.assert_called_once_with()

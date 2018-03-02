@@ -12,6 +12,7 @@ from utils import Config
 
 # default values
 # from utils.toucan import Toucan
+from utils.toucan_monitor import ToucanMonitor
 
 LOG_DIR = path.join(path.dirname(__file__), 'logs')
 
@@ -85,6 +86,11 @@ async def start_toucan(default_config):
     Toucan.max_retry_count = cfg['toucan.max_retry_count']
 
     cfg.toucan = Toucan(api=cfg['toucan.api'], prefix='aucote')
+
+    # Add toucan monitor
+    cfg.toucan_monitor = ToucanMonitor(toucan=cfg.toucan)
+    cfg.toucan_monitor.start()
+
     if cfg['rabbit.enable']:
         await cfg.start_rabbit(cfg['rabbit.host'], int(cfg['rabbit.port']), cfg['rabbit.username'],
                                cfg['rabbit.password'])

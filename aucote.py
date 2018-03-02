@@ -5,6 +5,7 @@ This is executable file of aucote project.
 import argparse
 import logging as log
 import os
+import re
 from os import chdir
 from os.path import dirname, realpath
 import sys
@@ -118,6 +119,8 @@ class Aucote(object):
     Main aucote class. It Provides run functions (service, single instance, sync db)
     """
 
+    SCAN_CONTROL_START = re.compile(r'portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control\.start')
+
     def __init__(self, exploits, kudu_queue, tools_config):
         self.exploits = exploits
         self._kudu_queue = kudu_queue
@@ -143,6 +146,10 @@ class Aucote(object):
         self._storage_thread = StorageThread(storage=self._storage)
         self.scanners = []
 
+        if cfg.toucan:
+            cfg.toucan_monitor.register_toucan_key(key='throttling.rate', add_prefix=False, default=1,
+                                                   callback=self.async_task_manager.change_throttling_toucan)
+
     @property
     def kudu_queue(self):
         """
@@ -156,6 +163,11 @@ class Aucote(object):
     def tftp_server(self):
         return self._tftp_thread
 
+    def _control_scanner(self, scanner):
+        if cfg.toucan:
+            toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
+            cfg.toucan_monitor.register_toucan_key(toucan_key, callback=self.start_scan, default=False, add_prefix=True)
+
     async def run_scan(self, as_service=True):
         """
         Start scanning ports.
@@ -164,6 +176,7 @@ class Aucote(object):
 
         """
         try:
+            cfg._consumer.register_action(self.SCAN_CONTROL_START, self.start_scan)
             with self._storage_thread, self._tftp_thread:
                 self.async_task_manager.clear()
                 self._storage.init_schema()
@@ -181,11 +194,13 @@ class Aucote(object):
                     if as_service:
                         for scanner in self.scanners:
                             self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron)
+                            self._control_scanner(scanner)
 
                         for scanner_name in cfg['portdetection.security_scans'].cfg:
                             scanner = ToolsScanner(aucote=self, name=scanner_name)
                             self.scanners.append(scanner)
                             self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron, event='tools')
+                            self._control_scanner(scanner)
 
                         self.async_task_manager.start()
                     else:
@@ -299,6 +314,25 @@ class Aucote(object):
 
         """
         return self._storage
+
+    def start_scan(self, key, value, scan_name=None):
+        """
+        Start scan with given name (scan_name) as soon as possible
+        """
+
+        if scan_name is None:
+            match = self.SCAN_CONTROL_START.match(key)
+            if match is None:
+                raise KeyError('Cannot find scan_name for key %s'.format(key))
+
+            scan_name = match.groupdict().get('scan_name')
+
+        if value is True:
+            log.debug('Starting %s basing on Toucan request', scan_name)
+            cfg.toucan.put(key, False)
+            self.async_task_manager.cron_task(scan_name).run_asap()
+            self.ioloop.add_callback(partial(self.async_task_manager.crontab_task(scan_name), skip_cron=True))
+
 
 # =================== start app =================
 

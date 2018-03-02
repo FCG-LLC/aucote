@@ -71,7 +71,6 @@ class AsyncTaskManager(object):
 
     """
     _instance = None
-    THROTTLE_POLL_TIME = 60
 
     TASKS_POLITIC_WAIT = 0
     TASKS_POLITIC_KILL_WORKING_FIRST = 1
@@ -88,6 +87,7 @@ class AsyncTaskManager(object):
         self._events = {}
         self._limit = self._parallel_tasks
         self._next_task_number = 0
+        self._toucan_keys = {}
 
     @classmethod
     def instance(cls, *args, **kwargs):
@@ -127,7 +127,6 @@ class AsyncTaskManager(object):
             self._task_workers[number] = IOLoop.current().add_callback(partial(self.process_tasks, number))
 
         self._next_task_number = self._parallel_tasks
-        IOLoop.current().add_callback(self.monitor_limit)
 
     def add_crontab_task(self, task, cron, event=None):
         """
@@ -263,16 +262,13 @@ class AsyncTaskManager(object):
             if task.NAME == name:
                 return task
 
-    async def monitor_limit(self):
-        """
-        Poll configuration for throttling value
-        """
-        throttling = await cfg.toucan.async_get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
+    def crontab_task(self, name):
+        for task, crontab in self._cron_tasks.items():
+            if task.NAME == name:
+                return crontab
 
-        self.change_throttling(throttling)
-
-        await sleep(self.THROTTLE_POLL_TIME)
-        IOLoop.current().add_callback(self.monitor_limit)
+    def change_throttling_toucan(self, key, value):
+        self.change_throttling(value)
 
     def change_throttling(self, new_value):
         """
