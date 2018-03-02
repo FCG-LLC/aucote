@@ -1,4 +1,9 @@
+import logging
+
 from tornado.ioloop import IOLoop
+
+
+log = logging.getLogger(None)
 
 
 class ToucanMonitor:
@@ -14,7 +19,12 @@ class ToucanMonitor:
 
     def register_toucan_key(self, key, callback, default, add_prefix=True):
         """
-        Register key for monitoring. The callback is executed even if value didn't changed
+        Register key for monitoring. The callback is executed even if value didn't changed, so basically it means
+        for every poll. (See monitor docstring)
+
+        ToDo: Move class to pycslib with improved behavior. It should be an additional option to call callback only if
+        value change
+
         """
         self._toucan_keys[key] = {
             'callback': callback,
@@ -35,7 +45,10 @@ class ToucanMonitor:
                 except Exception:  # pylint: disable=broad-except
                     value = details['default']
 
-                details['callback'](key=key, value=value)
+                try:
+                    details['callback'](key=key, value=value)
+                except Exception:  # pylint: disable=broad-except
+                    log.exception("Error during executing callback for %s", key)
         finally:
             self._ioloop.call_later(self.THROTTLE_POLL_TIME, self.monitor)
 

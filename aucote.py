@@ -119,7 +119,7 @@ class Aucote(object):
     Main aucote class. It Provides run functions (service, single instance, sync db)
     """
 
-    SCAN_CONTROL_START = re.compile('portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control.start')
+    SCAN_CONTROL_START = re.compile(r'portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control\.start')
 
     def __init__(self, exploits, kudu_queue, tools_config):
         self.exploits = exploits
@@ -163,6 +163,11 @@ class Aucote(object):
     def tftp_server(self):
         return self._tftp_thread
 
+    def _control_scanner(self, scanner):
+        if cfg.toucan:
+            toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
+            cfg.toucan_monitor.register_toucan_key(toucan_key, callback=self.start_scan, default=False, add_prefix=True)
+
     async def run_scan(self, as_service=True):
         """
         Start scanning ports.
@@ -189,20 +194,13 @@ class Aucote(object):
                     if as_service:
                         for scanner in self.scanners:
                             self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron)
-                            if cfg.toucan:
-                                toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
-                                cfg.toucan_monitor.register_toucan_key(toucan_key, callback=self.start_scan,
-                                                                       default=False, add_prefix=True)
+                            self._control_scanner(scanner)
 
                         for scanner_name in cfg['portdetection.security_scans'].cfg:
                             scanner = ToolsScanner(aucote=self, name=scanner_name)
                             self.scanners.append(scanner)
                             self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron, event='tools')
-
-                            if cfg.toucan:
-                                toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
-                                cfg.toucan_monitor.register_toucan_key(toucan_key, callback=self.start_scan,
-                                                                       default=False, add_prefix=True)
+                            self._control_scanner(scanner)
 
                         self.async_task_manager.start()
                     else:
@@ -325,8 +323,7 @@ class Aucote(object):
         if scan_name is None:
             match = self.SCAN_CONTROL_START.match(key)
             if match is None:
-                log.warning('Cannot find scan_name for key %s', key)
-                return
+                raise KeyError('Cannot find scan_name for key %s'.format(key))
 
             scan_name = match.groupdict().get('scan_name')
 
