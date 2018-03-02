@@ -186,16 +186,16 @@ class Aucote(object):
                         for scanner in self.scanners:
                             self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron)
                             toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
-                            self.ioloop.add_callback(partial(self.async_task_manager.monitor_toucan, toucan_key,
-                                                             callback=self.start_scan, default=False, add_prefix=True))
+                            self.async_task_manager.register_toucan_key(toucan_key, callback=self.start_scan,
+                                                                        default=False, add_prefix=True)
 
                         for scanner_name in cfg['portdetection.security_scans'].cfg:
                             scanner = ToolsScanner(aucote=self, name=scanner_name)
                             toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
                             self.scanners.append(scanner)
                             self.async_task_manager.add_crontab_task(scanner, scanner._scan_cron, event='tools')
-                            self.ioloop.add_callback(partial(self.async_task_manager.monitor_toucan, toucan_key,
-                                                             callback=self.start_scan, default=False, add_prefix=True))
+                            self.async_task_manager.register_toucan_key(toucan_key, callback=self.start_scan,
+                                                                        default=False, add_prefix=True)
 
                         self.async_task_manager.start()
                     else:

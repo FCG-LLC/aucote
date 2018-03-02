@@ -88,6 +88,7 @@ class AsyncTaskManager(object):
         self._events = {}
         self._limit = self._parallel_tasks
         self._next_task_number = 0
+        self._toucan_keys = {}
 
     @classmethod
     def instance(cls, *args, **kwargs):
@@ -127,7 +128,9 @@ class AsyncTaskManager(object):
             self._task_workers[number] = IOLoop.current().add_callback(partial(self.process_tasks, number))
 
         self._next_task_number = self._parallel_tasks
-        IOLoop.current().add_callback(self.monitor_limit)
+        self.register_toucan_key(key='throttling.rate', add_prefix=False, default=1,
+                                 callback=self.change_throttling_toucan)
+        IOLoop.current().add_callback(self.monitor_toucan)
 
     def add_crontab_task(self, task, cron, event=None):
         """
@@ -268,29 +271,29 @@ class AsyncTaskManager(object):
             if task.NAME == name:
                 return crontab
 
-    async def monitor_limit(self):
-        """
-        Poll configuration for throttling value
-        """
-        await self.monitor_toucan(key='throttling.rate', add_prefix=False, default=1,
-                                  callback=self.change_throttling_toucan)
+    def register_toucan_key(self, key, callback, default, add_prefix=True):
+        self._toucan_keys[key] = {
+            'callback': callback,
+            'default': default,
+            'add_prefix': add_prefix
+        }
 
-    async def monitor_toucan(self, key, callback, default, add_prefix=True):
+    async def monitor_toucan(self):
         """
-        Poll Toucan for given key. Request for value, pass to callback and run again in THROTTLE_POLL_TIME secs.
+        Poll Toucan for given keys. Request for value, pass to callback and run again in THROTTLE_POLL_TIME secs.
         Request is synchronous, to freeze if Toucan in unreachable.
         If exception occurs, the default value is passed to the callback
         """
         try:
-            value = cfg.toucan.get(key, add_prefix=add_prefix) if cfg.toucan is not None else 1
-        except Exception:  # pylint: disable=broad-except
-            value = default
+            for key, details in self._toucan_keys.items():
+                try:
+                    value = cfg.toucan.get(key, add_prefix=details['add_prefix']) if cfg.toucan is not None else 1
+                except Exception:  # pylint: disable=broad-except
+                    value = details['default']
 
-        callback(key=key, value=value)
-
-        await sleep(self.THROTTLE_POLL_TIME)
-        IOLoop.current().add_callback(partial(self.monitor_toucan, key=key, callback=callback, default=default,
-                                              add_prefix=add_prefix))
+                details['callback'](key=key, value=value)
+        finally:
+            IOLoop.current().call_later(self.THROTTLE_POLL_TIME, self.monitor_toucan)
 
     def change_throttling_toucan(self, key, value):
         self.change_throttling(value)
