@@ -230,7 +230,6 @@ portdetection:
     _internal:
         port_period: 0s
         broadcast: False
-        categories: ['auth', 'exploit', 'fuzzer', 'intrusive', 'malware', 'safe', 'version', 'vuln', 'brute', 'dos']
 
 
 # In this section there is configuration related to the tools used by the aucote
