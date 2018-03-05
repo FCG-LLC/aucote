@@ -1021,20 +1021,36 @@ class ScanContext:
         self.aucote = aucote
         self.scan = scan
         self.tasks = []
+        self._cancelled = False
         self.start = None
         self.end = None
 
     def add_task(self, task):
         self.tasks.append(task)
+        if self._cancelled:
+            task.cancel()
+            return
+
         self.aucote.add_async_task(task)
 
     def is_scan_end(self):
-        unfinished_tasks = [task for task in self.tasks if not task.has_finished()]
-        if unfinished_tasks:
+        if self.end is None or self.unfinished_tasks():
             return False
 
         return True
 
+    def unfinished_tasks(self):
+        return [task for task in self.tasks if not task.has_finished()]
+
     async def wait_on_tasks_finish(self):
-        while not self.is_scan_end():
+        while self.unfinished_tasks():
             await gen.sleep(1)
+
+    def unfinished_tasks(self):
+        return [task for task in self.tasks if not task.has_finished()]
+
+    def cancel(self):
+        self._cancelled = True
+
+    def cancelled(self):
+        return self._cancelled

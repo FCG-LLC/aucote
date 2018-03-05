@@ -6,6 +6,7 @@ import logging as log
 import time
 from functools import partial
 
+from tornado import gen
 from tornado.locks import Event
 
 from croniter import croniter
@@ -284,10 +285,20 @@ class ScanAsyncTask(object):
         """
         return self.aucote.topdis
 
-    def stop(self):
+    async def stop(self):
         """
         Stopping scan
 
         """
         log.info('Stopping scan %s', self.NAME)
-        pass
+        self.context.cancel()
+
+        if not self.context.is_scan_end():
+            tasks = self.context.unfinished_tasks()
+
+            log.warning('Cancelling %s tasks for scan %s', len(tasks), self.NAME)
+            for task in tasks:
+                task.cancel()
+            await self.context.wait_on_tasks_finish()
+
+        log.info('Scan %s cancelled successfully', self.NAME)

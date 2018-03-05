@@ -351,7 +351,7 @@ class Aucote(object):
         if value is True:
             log.debug('Stopping %s basing on Toucan request', scan_name)
             cfg.toucan.put(key, False)
-            self.async_task_manager.cron_task(scan_name).stop()
+            self.ioloop.add_callback(self.async_task_manager.cron_task(scan_name).stop)
 
 
 # =================== start app =================

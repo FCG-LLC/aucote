@@ -24,6 +24,11 @@ class Task(object):
         self.finish_time = None
         self._name = None
         self._scan = scan
+        self._cancelled = False
+
+    @property
+    def cancelled(self):
+        return self._cancelled
 
     @property
     def aucote(self):
@@ -132,7 +137,8 @@ class Task(object):
         Cancels tasks. As for now part of tasks are executed in ioloop and terminated externally by stopping ioloop,
         the default behaviour is to do nothing
         """
-        pass
+        self._cancelled = True
+        self.finish_time = 0
 
     def clear(self):
         """

@@ -32,6 +32,9 @@ class _Executor(Thread):
         self.number = number
 
     def run(self):
+        if self.task.cancelled:
+            return
+
         self.ioloop = IOLoop()
         self.ioloop.make_current()
         self.ioloop.add_callback(self.execute)

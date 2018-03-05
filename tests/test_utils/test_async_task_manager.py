@@ -141,7 +141,7 @@ class TestAsyncTaskManager(AsyncTestCase):
     def test_process_queue(self):
         future = Future()
         future.set_result(MagicMock())
-        task = MagicMock(return_value=future)
+        task = MagicMock(return_value=future, cancelled=False)
 
         class queue(MagicMock):
             def __init__(self, task):
