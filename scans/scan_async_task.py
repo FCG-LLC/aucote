@@ -6,7 +6,6 @@ import logging as log
 import time
 from functools import partial
 
-from tornado import gen
 from tornado.locks import Event
 
 from croniter import croniter
