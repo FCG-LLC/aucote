@@ -120,6 +120,7 @@ class Aucote(object):
     """
 
     SCAN_CONTROL_START = re.compile(r'portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control\.start')
+    SCAN_CONTROL_STOP = re.compile(r'portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control\.stop')
 
     def __init__(self, exploits, kudu_queue, tools_config):
         self.exploits = exploits
@@ -165,8 +166,10 @@ class Aucote(object):
 
     def _control_scanner(self, scanner):
         if cfg.toucan:
-            toucan_key = 'portdetection.{}.control.start'.format(scanner.NAME)
-            cfg.toucan_monitor.register_toucan_key(toucan_key, callback=self.start_scan, default=False, add_prefix=True)
+            start_key = 'portdetection.{}.control.start'.format(scanner.NAME)
+            stop_key = 'portdetection.{}.control.stop'.format(scanner.NAME)
+            cfg.toucan_monitor.register_toucan_key(start_key, callback=self.start_scan, default=False, add_prefix=True)
+            cfg.toucan_monitor.register_toucan_key(stop_key, callback=self.stop_scan, default=False, add_prefix=True)
 
     async def run_scan(self, as_service=True):
         """
@@ -177,6 +180,7 @@ class Aucote(object):
         """
         try:
             cfg._consumer.register_action(self.SCAN_CONTROL_START, self.start_scan)
+            cfg._consumer.register_action(self.SCAN_CONTROL_STOP, self.stop_scan)
             with self._storage_thread, self._tftp_thread:
                 self.async_task_manager.clear()
                 self._storage.init_schema()
@@ -330,8 +334,24 @@ class Aucote(object):
         if value is True:
             log.debug('Starting %s basing on Toucan request', scan_name)
             cfg.toucan.put(key, False)
-            self.async_task_manager.cron_task(scan_name).run_asap()
             self.ioloop.add_callback(partial(self.async_task_manager.crontab_task(scan_name), skip_cron=True))
+
+    def stop_scan(self, key, value, scan_name=None):
+        """
+        Stop scan with given name (scan_name)
+        """
+
+        if scan_name is None:
+            match = self.SCAN_CONTROL_STOP.match(key)
+            if match is None:
+                raise KeyError('Cannot find scan_name for key %s'.format(key))
+
+            scan_name = match.groupdict().get('scan_name')
+
+        if value is True:
+            log.debug('Stopping %s basing on Toucan request', scan_name)
+            cfg.toucan.put(key, False)
+            self.async_task_manager.cron_task(scan_name).stop()
 
 
 # =================== start app =================

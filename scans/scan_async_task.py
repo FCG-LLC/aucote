@@ -61,14 +61,6 @@ class ScanAsyncTask(object):
     async def run(self):
         raise NotImplementedError()
 
-    def run_asap(self):
-        """
-        Wait until current scan is finished and force this scan to be run afterwards (i.e. in next iteration)
-
-        """
-        log.info('%s will be set to start as soon as possible', self.NAME)
-        self.run_now = True
-
     @property
     def shutdown_condition(self):
         """
@@ -291,3 +283,11 @@ class ScanAsyncTask(object):
 
         """
         return self.aucote.topdis
+
+    def stop(self):
+        """
+        Stopping scan
+
+        """
+        log.info('Stopping scan %s', self.NAME)
+        pass
