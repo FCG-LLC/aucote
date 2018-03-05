@@ -298,7 +298,7 @@ class ScanAsyncTask(object):
 
             log.warning('Cancelling %s tasks for scan %s', len(tasks), self.NAME)
             for task in tasks:
-                task.cancel()
+                task.stop()
             await self.context.wait_on_tasks_finish()
 
         log.info('Scan %s cancelled successfully', self.NAME)

@@ -35,6 +35,8 @@ class _Executor(Thread):
         if self.task.cancelled:
             return
 
+        self.task.executor = self
+
         self.ioloop = IOLoop()
         self.ioloop.make_current()
         self.ioloop.add_callback(self.execute)

@@ -25,6 +25,7 @@ class Task(object):
         self._name = None
         self._scan = scan
         self._cancelled = False
+        self.executor = None
 
     @property
     def cancelled(self):
@@ -140,13 +141,20 @@ class Task(object):
         self._cancelled = True
         self.finish_time = 0
 
+    def stop(self):
+        """
+        Stop task executing
+        """
+        if self.executor is not None:
+            self.executor.stop()
+
     def clear(self):
         """
         Clear after task. By default task doesn't require any special clearing,
         some task (especially which uses external tools) can need it
 
         """
-        pass
+        self.executor = None
 
     def has_finished(self):
         """
