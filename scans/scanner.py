@@ -73,9 +73,6 @@ class Scanner(ScanAsyncTask):
             await self.context.wait_on_tasks_finish()
             scan.end = time.time()
             self.storage.update_scan(scan)
-            if self.context.cancelled():
-                return
-
             self.diff_with_last_scan(scan)
         except (HTTPError, ConnectionError) as exception:
             log.error('Cannot connect to topdis: %s, %s', self.topdis.api, exception)
