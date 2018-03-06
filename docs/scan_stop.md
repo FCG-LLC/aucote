@@ -5,7 +5,7 @@
 
  ## External
 
- When the `portdetection.{scan_name}.control.start` is changed to `true` user expects that scan is going to be stopped.
+ When the `portdetection.{scan_name}.control.stop` is changed to `true` user expects that scan is going to be stopped.
  It should happen immediately, excepts task related to portscan. Scan will be stopped after obtain response on lately
  sent request. The scan will be taken to make differentiation with previous scan. It may be reason of potential issues.
 
