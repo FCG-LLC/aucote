@@ -13,8 +13,8 @@
  ## Implementation
 
  Every scan contains `ScanContext` which handle information about tasks related to given scan. If scan is cancelled,
- the `_cancelled` flag is set to `True` and all new tasks are skipped automatically and don't put into task queue.
+ the `_cancelled` flag is set to `True` and all new tasks are skipped automatically and aren't put into task queue.
 
- If task is already working, the worker which handle it will be stopped.
+ If task has been processing already, the worker that handles it will be stopped.
 
- All tasks in queue are flag as cancelled, and will be skip as soon as worker get it from queue.
+ All tasks in queue are flagged as cancelled, and will be skipped as soon as worker get it from queue.

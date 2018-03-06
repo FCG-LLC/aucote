@@ -286,7 +286,7 @@ class ScanAsyncTask(object):
 
     async def stop(self):
         """
-        Stopping scan
+        Stops scan by stopping/cancelling all its related tasks
 
         """
         log.info('Stopping scan %s', self.NAME)

@@ -329,7 +329,7 @@ class Aucote(object):
             if match is None:
                 raise KeyError('Cannot find scan_name for key %s'.format(key))
 
-            scan_name = match.groupdict().get('scan_name')
+            scan_name = match.groupdict()['scan_name']
 
         if value is True:
             log.debug('Starting %s basing on Toucan request', scan_name)
