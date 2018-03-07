@@ -71,7 +71,7 @@ class Serializer:
         msg.add_str(exploit.description)
         msg.add_byte(exploit.risk_level.number)
         msg.add_str(exploit.category.value)
-        msg.add_int(exploit.tags_mask)
+        msg.add_long(exploit.tags_mask)
         return msg
 
     @classmethod
