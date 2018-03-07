@@ -65,7 +65,7 @@ class SerializerTest(TestCase):
 
         result = self.serializer.serialize_exploit(self.exploit).data
         expected = b'\x01\x00\x01\x00\x00\x00\x08\x00test_app\t\x00test_name\n\x00test_title\x10\x00test_description' \
-                   b'\x03\x04\x00vuln'
+                   b'\x03\x04\x00vuln\x1a\x00\x00\x00'
 
         self.assertEqual(result, expected)
 
