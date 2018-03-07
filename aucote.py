@@ -319,17 +319,19 @@ class Aucote(object):
         """
         return self._storage
 
+    def _get_scan_name(self, regex, key):
+        match = regex.match(key)
+        if match is None:
+            raise KeyError('Cannot find scan_name for key %s'.format(key))
+
+        return match.groupdict()['scan_name']
+
     def start_scan(self, key, value, scan_name=None):
         """
         Start scan with given name (scan_name) as soon as possible
+
         """
-
-        if scan_name is None:
-            match = self.SCAN_CONTROL_START.match(key)
-            if match is None:
-                raise KeyError('Cannot find scan_name for key %s'.format(key))
-
-            scan_name = match.groupdict()['scan_name']
+        scan_name = self._get_scan_name(self.SCAN_CONTROL_START, key) if scan_name is None else scan_name
 
         if value is True:
             log.debug('Starting %s basing on Toucan request', scan_name)
@@ -339,14 +341,9 @@ class Aucote(object):
     def stop_scan(self, key, value, scan_name=None):
         """
         Stop scan with given name (scan_name)
+
         """
-
-        if scan_name is None:
-            match = self.SCAN_CONTROL_STOP.match(key)
-            if match is None:
-                raise KeyError('Cannot find scan_name for key %s'.format(key))
-
-            scan_name = match.groupdict().get('scan_name')
+        scan_name = self._get_scan_name(self.SCAN_CONTROL_STOP, key) if scan_name is None else scan_name
 
         if value is True:
             log.debug('Stopping %s basing on Toucan request', scan_name)

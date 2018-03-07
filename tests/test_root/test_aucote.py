@@ -405,3 +405,40 @@ class AucoteTest(AsyncTestCase):
         self.aucote.web_server = WebServer(MagicMock(), None, None)
         self.aucote.web_server.run = MagicMock(return_value=self.get_future())
         self.aucote.web_server.stop = MagicMock(return_value=self.get_future())
+
+    @patch('aucote.cfg', new_callable=Config)
+    def test_start_scan(self, cfg):
+        cfg.toucan = MagicMock()
+        key = 'portdetection.test_scan.control.start'
+        self.aucote.ioloop = MagicMock()
+
+        self.aucote.start_scan(key, True, 'test_scan')
+
+        cfg.toucan.put.assert_called_once_with(key, False)
+
+    @patch('aucote.cfg', new_callable=Config)
+    def test_start_scan_key_is_false(self, cfg):
+        cfg.toucan = MagicMock()
+        key = 'portdetection.test_scan.control.start'
+        self.aucote.ioloop = MagicMock()
+
+        self.aucote.start_scan(key, False, 'test_scan')
+
+        self.assertFalse(cfg.toucan.called)
+
+    @patch('aucote.cfg', new_callable=Config)
+    def test_start_scan_without_scan_name(self, cfg):
+        cfg.toucan = MagicMock()
+        key = 'portdetection.test_scan.control.start'
+        self.aucote.ioloop = MagicMock()
+
+        self.aucote.start_scan(key, True)
+        cfg.toucan.put.assert_called_once_with(key, False)
+
+    @patch('aucote.cfg', new_callable=Config)
+    def test_start_scan_without_scan_name_critical(self, cfg):
+        cfg.toucan = MagicMock()
+        key = 'portdetecton.test_scan.control.start'
+        self.aucote.ioloop = MagicMock()
+        with self.assertRaises(KeyError):
+            self.aucote.start_scan(key, True)
