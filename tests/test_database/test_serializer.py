@@ -5,7 +5,7 @@ from unittest.mock import PropertyMock, patch, MagicMock
 
 from database.serializer import Serializer
 from fixtures.exploits import Exploit
-from fixtures.exploits.exploit import ExploitMetric, ExploitCategory
+from fixtures.exploits.exploit import ExploitMetric, ExploitCategory, ExploitTag
 from scans.tcp_scanner import TCPScanner
 from structs import Vulnerability, Port, Node, Scan, TransportProtocol, RiskLevel, VulnerabilityChangeType, \
     VulnerabilityChange, PortDetectionChange, PortScan, ScanContext
@@ -46,6 +46,7 @@ class SerializerTest(TestCase):
         self.exploit.risk_level = RiskLevel.from_name('High')
         self.exploit.metric = ExploitMetric.VNC_INFO
         self.exploit.category = ExploitCategory.VULN
+        self.exploit.tags = {ExploitTag.HTTP, ExploitTag.SSL, ExploitTag.HTTPS}
 
         self.vuln.exploit = self.exploit
         self.vuln.when_discovered = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
@@ -56,7 +57,7 @@ class SerializerTest(TestCase):
         expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
                              b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
                              b'\x00\x00\x04\x00Test\x01\x00\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x15\x00test_na'
-                             b'me_and_version\x08\00VNC_INFO\x03\x00tcp\x08\x00test_app\t\x00test_name')
+                             b'me_and_version\x08\00VNC_INFO\x03\x00tcp\x08\x00test_app\t\x00test_name\x1a\x00\x00\x00')
 
         self.assertEqual(result, expected)
 
