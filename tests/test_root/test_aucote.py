@@ -227,6 +227,10 @@ class AucoteTest(AsyncTestCase):
 
         tcp_scanner.assert_called_once_with(aucote=self.aucote, as_service=False, host='localhost', port=1239)
         udp_scanner.assert_called_once_with(aucote=self.aucote, as_service=False)
+        cfg._consumer.register_action.assert_has_calls((
+            call(self.aucote.SCAN_CONTROL_START, self.aucote.start_scan),
+            call(self.aucote.SCAN_CONTROL_STOP, self.aucote.stop_scan)
+        ))
         self.assertFalse(tools_scanner.called)
 
     @patch('scans.executor.Executor.__init__', MagicMock(return_value=None))
