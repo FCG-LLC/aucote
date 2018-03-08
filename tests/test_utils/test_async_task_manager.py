@@ -1,4 +1,3 @@
-from functools import partial
 from random import randint
 from unittest.mock import MagicMock, patch, call
 
@@ -216,3 +215,13 @@ class _ExecutorTest(AsyncTestCase):
         await self.executor.execute()
 
         self.executor.ioloop.stop.assert_called_once()
+        self.assertEqual(self.executor.task.executor, self.executor)
+
+    @gen_test
+    @patch('utils.async_task_manager.IOLoop')
+    async def test_execute_cancelled(self, ioloop):
+        self.executor.task = MagicMock(cancelled=True)
+
+        await self.executor.execute()
+
+        self.assertFalse(ioloop.called)
