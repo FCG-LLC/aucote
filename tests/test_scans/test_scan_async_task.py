@@ -7,7 +7,6 @@ from netaddr import IPSet
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
-from aucote import Aucote
 from fixtures.exploits import Exploit
 from scans.scan_async_task import ScanAsyncTask
 from structs import Node, Scan, ScanStatus
@@ -363,3 +362,19 @@ class ScanAsyncTaskTest(AsyncTestCase):
         }
 
         cfg.toucan.async_push_config.assert_called_once_with(expected, overwrite=True, keep_history=False)
+
+    @gen_test
+    async def test_stop(self):
+        tasks = [MagicMock(), MagicMock()]
+        self.thread.context.cancel = MagicMock()
+        self.thread.context.is_scan_end = MagicMock(return_value=False)
+        self.thread.context.unfinished_tasks = MagicMock(return_value=tasks)
+        self.thread.context.wait_on_tasks_finish = MagicMock(return_value=Future())
+        self.thread.context.wait_on_tasks_finish.return_value.set_result(None)
+
+        await self.thread.stop()
+
+        for task in tasks:
+            task.stop.assert_called_once_with()
+
+        self.thread.context.cancel.assert_called_once_with()
