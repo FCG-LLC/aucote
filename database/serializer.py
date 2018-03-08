@@ -49,6 +49,7 @@ class Serializer:
         msg.add_str(vuln.context.scan.NAME if vuln is not None and vuln.context is not None else '')
         msg.add_str(vuln.exploit.app if vuln is not None and vuln.exploit is not None else '')
         msg.add_str(vuln.exploit.name if vuln is not None and vuln.exploit is not None else '')
+        msg.add_long(vuln.exploit.tags_mask if vuln is not None and vuln.exploit is not None else 0)
         return msg
 
     @classmethod
@@ -69,7 +70,8 @@ class Serializer:
         msg.add_str(exploit.title)
         msg.add_str(exploit.description)
         msg.add_byte(exploit.risk_level.number)
-        msg.add_str(",".join(cat.value for cat in exploit.categories) if exploit.categories else '')
+        msg.add_str(exploit.category.value)
+        msg.add_long(exploit.tags_mask)
         return msg
 
     @classmethod
