@@ -472,6 +472,7 @@ class ScanContextTest(AsyncTestCase):
 
     def test_scan_end(self):
         self.context.tasks = [MagicMock(has_finished=MagicMock(return_value=True))]
+        self.context.end = 0
 
         result = self.context.is_scan_end()
 

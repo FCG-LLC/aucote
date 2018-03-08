@@ -287,3 +287,87 @@ class ScannerTest(AsyncTestCase):
         result = self.aucote.storage.save_changes.call_args[0][0]
         self.assertCountEqual(result, expected)
         self.assertCountEqual([serializer.call_args_list[0][0][0], serializer.call_args_list[1][0][0]], expected)
+
+    @patch('scans.scanner.PhysicalPort')
+    @patch('scans.scanner.netifaces')
+    @patch('scans.scanner.Executor')
+    @patch('scans.scanner.cfg', new_callable=Config)
+    @gen_test
+    async def test_run_scan_as_service_cancelled(self, cfg, mock_executor, mock_netiface, physical_port):
+        cfg._cfg = {
+            'service': {
+                'scans': {
+                    'physical': True,
+                }
+            },
+            'topdis': {
+                'fetch_os': False
+            },
+            'portdetection': {
+                'tcp': {
+                    'ports': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                },
+                'udp': {
+                    'ports': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                },
+                'sctp': {
+                    'ports': {
+                        'include': ['0-65535'],
+                        'exclude': []
+                    },
+                }
+            }
+        }
+        self.thread.context.cancelled = MagicMock(return_value=True)
+        node_ipv4 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=1)
+        node_ipv6 = Node(ip=ipaddress.ip_address('::6'), node_id=2)
+        nodes = [node_ipv4, node_ipv6]
+
+        ipv4_scanner = MagicMock()
+        ipv6_scanner = MagicMock()
+        scanners = {
+            self.thread.IPV4: [ipv4_scanner],
+            self.thread.IPV6: [ipv6_scanner]
+        }
+
+        ports_ipv4 = [Port(node=node_ipv4, transport_protocol=TransportProtocol.TCP, number=80)]
+        ports_ipv6 = [Port(node=node_ipv6, transport_protocol=TransportProtocol.TCP, number=80)]
+
+        ipv4_scanner.scan_ports.return_value = Future()
+        ipv4_scanner.scan_ports.return_value.set_result(ports_ipv4)
+
+        ipv6_scanner.scan_ports.return_value = Future()
+        ipv6_scanner.scan_ports.return_value.set_result(ports_ipv6)
+
+        mock_netiface.interfaces.return_value = ['test', 'test2']
+        mock_netiface.ifaddresses.side_effect = ([mock_netiface.AF_INET], [''])
+
+        port = physical_port()
+        port.interface = 'test'
+
+        self.thread._get_special_ports = MagicMock(return_value=[port])
+
+        ports = [ports_ipv4[0], ports_ipv6[0], port]
+
+        scan = Scan()
+
+        futures = []
+
+        for i in range(20):
+            future = Future()
+            future.set_result(True)
+            futures.append(future)
+
+        mock_executor.return_value.side_effect = futures
+
+        await self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock(), scan=scan)
+
+        mock_executor.assert_called_once_with(context=self.thread.context, nodes=nodes, ports=[port], scan_only=False,
+                                              scan=scan, scanner=self.thread)
+        self.thread.aucote.add_task.called_once_with(mock_executor.return_value)

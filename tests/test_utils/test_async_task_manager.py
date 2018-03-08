@@ -1,4 +1,3 @@
-from functools import partial
 from random import randint
 from unittest.mock import MagicMock, patch, call
 
@@ -141,7 +140,7 @@ class TestAsyncTaskManager(AsyncTestCase):
     def test_process_queue(self):
         future = Future()
         future.set_result(MagicMock())
-        task = MagicMock(return_value=future)
+        task = MagicMock(return_value=future, cancelled=False)
 
         class queue(MagicMock):
             def __init__(self, task):
@@ -216,3 +215,13 @@ class _ExecutorTest(AsyncTestCase):
         await self.executor.execute()
 
         self.executor.ioloop.stop.assert_called_once()
+        self.assertEqual(self.executor.task.executor, self.executor)
+
+    @gen_test
+    @patch('utils.async_task_manager.IOLoop')
+    async def test_execute_cancelled(self, ioloop):
+        self.executor.task = MagicMock(cancelled=True)
+
+        await self.executor.execute()
+
+        self.assertFalse(ioloop.called)

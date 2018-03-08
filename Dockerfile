@@ -10,7 +10,7 @@ RUN echo "deb http://aptly.cs.int/public xenial $destEnv" >> /etc/apt/sources.li
 RUN printf "Package: * \nPin: release a=xenial, o=aptly.cs.int \nPin-Priority: 1600 \n" > /etc/apt/preferences
 
 
-RUN apt-get update && apt-get install -y software-properties-common python3-setuptools python3-pip python3-dev libyaml-dev libpq-dev libnanomsg5 libnanomsg-dev curl git bash
+RUN apt-get update && apt-get install -y software-properties-common libffi-dev python3-setuptools python3-pip python3-dev libyaml-dev libpq-dev libnanomsg5 libnanomsg-dev curl git bash
 RUN easy_install3 -U setuptools
 ADD internal_deps /internal_deps
 ADD requirements.txt requirements.txt

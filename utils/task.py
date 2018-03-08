@@ -24,6 +24,12 @@ class Task(object):
         self.finish_time = None
         self._name = None
         self._scan = scan
+        self._cancelled = False
+        self.executor = None
+
+    @property
+    def cancelled(self):
+        return self._cancelled
 
     @property
     def aucote(self):
@@ -132,7 +138,15 @@ class Task(object):
         Cancels tasks. As for now part of tasks are executed in ioloop and terminated externally by stopping ioloop,
         the default behaviour is to do nothing
         """
-        pass
+        self._cancelled = True
+        self.finish_time = 0
+
+    def stop(self):
+        """
+        Stop task executing
+        """
+        if self.executor is not None:
+            self.executor.stop()
 
     def clear(self):
         """
@@ -140,7 +154,7 @@ class Task(object):
         some task (especially which uses external tools) can need it
 
         """
-        pass
+        self.executor = None
 
     def has_finished(self):
         """

@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
 from structs import Scan, TransportProtocol, Port, ScanContext
-from utils.storage import Storage
 from utils.task import Task
 
 

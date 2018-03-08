@@ -87,8 +87,6 @@ class Scanner(ScanAsyncTask):
             None
 
         """
-        ports = []
-
         dict_nodes = {
             self.IPV4: [node for node in nodes if isinstance(node.ip, ipaddress.IPv4Address)],
             self.IPV6: [node for node in nodes if isinstance(node.ip, ipaddress.IPv6Address)]
@@ -100,11 +98,19 @@ class Scanner(ScanAsyncTask):
             for scanner in scanners[ip_protocol]:
                 log.info("Scanning %i %s %s nodes for open ports.", len(dict_nodes[ip_protocol]), protocol.name,
                          ip_protocol)
+                if self.context.cancelled():
+                    log.warning('Skip scanning %s:%s because of cancelling scan %s', ip_protocol, protocol.name,
+                                self.NAME)
+                    continue
+
                 if protocol == TransportProtocol.UDP:
                     await self._scan_ports(ports=await scanner.scan_ports(dict_nodes[ip_protocol]),
                                            scan_only=scan_only, scan=scan)
                 else:
                     for node in dict_nodes[ip_protocol]:
+                        if self.context.cancelled():
+                            log.warning('Skip scanning %s because of cancelling scan %s', node.ip, self.NAME)
+                            continue
                         ports = await scanner.scan_ports([node])
                         await self._scan_ports(ports=ports, scan_only=scan_only, scan=scan)
 

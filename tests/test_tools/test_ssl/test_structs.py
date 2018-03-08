@@ -1,4 +1,3 @@
-import copy
 from unittest import TestCase
 
 from tools.ssl.structs import SSLSeverity, SSLResult, SSLResults
