@@ -653,7 +653,7 @@ class Vulnerability(object):
     SERVICE_BANNER = 4
     SERVICE_CPE = 5
 
-    def __init__(self, exploit=None, port=None, output=None, cve=None, cvss=0, subid=None, vuln_time=None,
+    def __init__(self, exploit=None, port=None, output='', cve=None, cvss=0, subid=None, vuln_time=None,
                  rowid=None, scan=None, context=None):
         """
         Init values
