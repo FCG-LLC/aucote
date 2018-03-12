@@ -7,8 +7,9 @@ from database.serializer import Serializer
 from fixtures.exploits import Exploit
 from fixtures.exploits.exploit import ExploitMetric, ExploitCategory, ExploitTag
 from scans.tcp_scanner import TCPScanner
-from structs import Vulnerability, Port, Node, Scan, TransportProtocol, RiskLevel, VulnerabilityChangeType, \
+from structs import Vulnerability, Port, Node, Scan, TransportProtocol, \
     VulnerabilityChange, PortDetectionChange, PortScan, ScanContext
+from structs.risk_level import RiskLevel
 from tests.time.test_utils import UTC
 
 utc = UTC()
@@ -62,13 +63,13 @@ class SerializerTest(TestCase):
 
         self.assertEqual(result, expected)
 
-    @patch('structs.time.time', MagicMock(return_value=13452534))
+    @patch('structs.old.time.time', MagicMock(return_value=13452534))
     def test_vulnerability_serializer_port_only(self):
         result = self.serializer.serialize_vulnerability(Vulnerability(port=self.port)).data
         expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
                              b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
                              b'\x00\x00\x00\x00\x00\x00\x00\x00\xf0`\xd5!\x03\x00\x00\x00\x15\x00test_name_and_version'
-                             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+                             b'\x05\x00OTHER\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 
         self.assertEqual(result, expected)
 
