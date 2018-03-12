@@ -8,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 from ctypes import c_uint32
 from enum import Enum
 import time
+import logging as log
 
 from cpe import CPE
 from tornado import gen
@@ -989,7 +990,23 @@ class ScanContext:
         self.tasks = []
         self._cancelled = False
         self.start = None
-        self.end = None
+        self._end = None
+
+    @property
+    def end(self):
+        return self._end
+
+    @end.setter
+    def end(self, val):
+        self._end = val
+        self._post_scan_hook()
+
+    def _post_scan_hook(self):
+        """
+        Executes post scan operations
+
+        """
+        log.debug('Executing post scan hook for scan %s', self.scan.NAME)
 
     def add_task(self, task):
         self.tasks.append(task)
