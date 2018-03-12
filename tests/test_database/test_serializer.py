@@ -53,7 +53,7 @@ class SerializerTest(TestCase):
 
     def test_vulnerability_serializer(self):
 
-        result = self.serializer.serialize_port_vuln(self.vuln.port, self.vuln).data
+        result = self.serializer.serialize_vulnerability(self.vuln.port, self.vuln).data
         expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
                              b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
                              b'\x00\x00\x04\x00Test\x01\x00\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x15\x00test_na'

@@ -2,6 +2,8 @@
 Provides serializers for database
 """
 from enum import Enum
+
+from structs import Vulnerability, Port
 from utils.kudu_queue import KuduMsg
 
 
@@ -20,15 +22,9 @@ class Serializer:
     """
 
     @classmethod
-    def serialize_port_vuln(cls, port, vuln):
+    def serialize_vulnerability(cls, port: Port, vuln: Vulnerability) -> KuduMsg:
         """
-        Function which return serialized port and vuln objects
-        Args:
-            port: Port object
-            vuln: Vulnerability object
-
-        Returns: Serialized objects as string
-
+        Returns serialized vulnerability object
         """
         msg = KuduMsg()
         msg.add_short(MsgType.VULNERABILITY.value)
