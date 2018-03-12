@@ -8,7 +8,7 @@ from tornado.testing import AsyncTestCase, gen_test
 from structs import Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState, \
     VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange, PortScan, ScanContext
 from structs import TransportProtocol
-from structs.risk_level import RiskLevel
+from fixtures.exploits import RiskLevel
 
 
 class TransportProtocolTest(TestCase):

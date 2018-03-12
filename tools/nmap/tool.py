@@ -8,8 +8,8 @@ from collections import defaultdict
 import itertools
 
 from aucote_cfg import cfg
+from fixtures.exploits.exploit import RiskLevel
 from structs import TransportProtocol
-from structs.risk_level import RiskLevel
 from tools.base import Tool
 from tools.nmap.base import NmapScript
 from tools.nmap.parsers import NmapVulnParser, NmapInfoParser
