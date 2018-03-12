@@ -52,6 +52,8 @@ class KuduMsg:
         """
         Add int value to data
         """
+        if val is None:
+            val = 0
 
         assert isinstance(val, int)
         self._data.extend(val.to_bytes(4, self._ENDIANNESS))
