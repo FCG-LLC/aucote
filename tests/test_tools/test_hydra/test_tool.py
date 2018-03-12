@@ -4,7 +4,8 @@ from unittest.mock import patch, MagicMock
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
-from structs import RiskLevel, Port, Scan, Node, TransportProtocol, ScanContext
+from structs import Port, Scan, Node, TransportProtocol, ScanContext
+from structs.risk_level import RiskLevel
 from tools.hydra.tool import HydraTool
 from utils import Config
 

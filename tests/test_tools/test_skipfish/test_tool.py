@@ -4,7 +4,8 @@ from unittest.mock import patch, MagicMock
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
-from structs import RiskLevel, Port, Node, TransportProtocol, Scan, ScanContext
+from structs import Port, Node, TransportProtocol, Scan, ScanContext
+from structs.risk_level import RiskLevel
 from tools.skipfish.tool import SkipfishTool
 
 

@@ -12,6 +12,8 @@ import time
 from cpe import CPE
 from tornado import gen
 
+from fixtures.exploits import Exploit
+
 
 class Scan(object):
     """
@@ -289,42 +291,6 @@ class TransportProtocol(Enum):
             if val.iana == number:
                 return val
         raise ValueError('Invalid transport protocol number: %s' % number)
-
-
-class RiskLevel(Enum):
-    """
-    Risk level object
-
-    """
-
-    def __init__(self, txt, number):
-        self.txt = txt
-        self.number = number
-
-    HIGH = ('High', 3)
-    MEDIUM = ('Medium', 2)
-    LOW = ('Low', 1)
-    NONE = ('None', 0)
-
-    @classmethod
-    def from_name(cls, name):
-        """
-        Create RiskLevel object basing on string name
-
-        Args:
-            name: string representation of risk level, eg. "medium"
-
-        Returns:
-            RiskLevel object
-
-        Raises:
-            ValueError if not: High, Medium, Low or None
-
-        """
-        for val in cls:
-            if val.txt == name:
-                return val
-        raise ValueError('Unsupported risk level name: %s' % name)
 
 
 class Service(object):
@@ -666,7 +632,7 @@ class Vulnerability(object):
         """
         self.when_discovered = time.time()
         self.output = str(output)
-        self.exploit = exploit
+        self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
         self.port = port
         self.cve = cve
         self.cvss = float(cvss)
