@@ -3,7 +3,8 @@ Provides serializers for database
 """
 from enum import Enum
 
-from structs import Vulnerability, Port
+from fixtures.exploits import Exploit
+from structs import Vulnerability, Port, VulnerabilityChange
 from utils.kudu_queue import KuduMsg
 
 
@@ -24,7 +25,7 @@ class Serializer:
     @classmethod
     def serialize_vulnerability(cls, vuln: Vulnerability) -> KuduMsg:
         """
-        Returns serialized vulnerability object
+        Serializes Vulnerability
         """
         msg = KuduMsg()
         msg.add_short(MsgType.VULNERABILITY.value)
@@ -49,14 +50,9 @@ class Serializer:
         return msg
 
     @classmethod
-    def serialize_exploit(cls, exploit):
+    def serialize_exploit(cls, exploit: Exploit) -> KuduMsg:
         """
-        Function which return serialized exploit object
-        Args:
-            exploit: Exploit object
-
-        Returns: Serialized object as string
-
+        Serializes Exploit
         """
         msg = KuduMsg()
         msg.add_short(MsgType.EXPLOIT.value)
@@ -71,14 +67,9 @@ class Serializer:
         return msg
 
     @classmethod
-    def serialize_vulnerability_change(cls, vuln_change):
+    def serialize_vulnerability_change(cls, vuln_change: VulnerabilityChange) -> KuduMsg:
         """
-
-        Args:
-            vuln_change (VulnerabilityChangeBase):
-
-        Returns:
-
+        Serializes VulnerabilityChange
         """
         msg = KuduMsg()
         msg.add_short(MsgType.CHANGE.value)
