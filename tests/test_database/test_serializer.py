@@ -4,12 +4,10 @@ from unittest import TestCase
 from unittest.mock import PropertyMock, patch, MagicMock
 
 from database.serializer import Serializer
-from fixtures.exploits import Exploit
-from fixtures.exploits.exploit import ExploitMetric, ExploitCategory, ExploitTag
+from fixtures.exploits import Exploit, RiskLevel, ExploitMetric, ExploitCategory, ExploitTag
 from scans.tcp_scanner import TCPScanner
 from structs import Vulnerability, Port, Node, Scan, TransportProtocol, \
     VulnerabilityChange, PortDetectionChange, PortScan, ScanContext
-from structs.risk_level import RiskLevel
 from tests.time.test_utils import UTC
 
 utc = UTC()
@@ -63,7 +61,7 @@ class SerializerTest(TestCase):
 
         self.assertEqual(result, expected)
 
-    @patch('structs.old.time.time', MagicMock(return_value=13452534))
+    @patch('structs.time.time', MagicMock(return_value=13452534))
     def test_vulnerability_serializer_port_only(self):
         result = self.serializer.serialize_vulnerability(Vulnerability(port=self.port)).data
         expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
