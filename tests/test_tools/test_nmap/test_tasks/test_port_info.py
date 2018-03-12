@@ -127,7 +127,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
             }
         }
 
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability', MagicMock())
     @gen_test
     async def test_prepare_args(self):
         future = Future()
@@ -152,7 +152,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
     def test_init(self):
         self.assertEqual(self.port_info.aucote, self.aucote)
 
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability', MagicMock())
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     def test_udp_scan(self, cfg):
         self.port_info._port.transport_protocol = TransportProtocol.UDP
@@ -165,7 +165,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         self.assertEqual(result, expected)
 
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability', MagicMock())
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     @gen_test
     async def test_parser_with_banner(self, cfg):
@@ -180,7 +180,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.assertEqual(result.protocol, 'ntp')
         self.assertEqual(result.service.version, '1.2.3')
 
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln', MagicMock())
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability', MagicMock())
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     @gen_test
     async def test_parser_with_banner_and_without_service(self, cfg):
@@ -207,17 +207,20 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         self.aucote.task_mapper.assign_tasks.assert_called_once_with(BroadcastPort())
 
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
+    @patch('tools.nmap.tasks.port_info.Vulnerability')
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     @gen_test
-    async def test_add_port_scan_info(self, cfg, mock_serializer):
+    async def test_add_port_scan_info(self, cfg, mock_serializer, vulnerability):
         cfg._cfg = self.cfg
         future = Future()
         future.set_result(ElementTree.fromstring(self.XML_BANNER))
         self.port_info.command.async_call = MagicMock(return_value=future)
         await self.port_info()
 
-        mock_serializer.assert_called_once_with(self.port_info._port, None)
+        vulnerability.assert_has_calls((call(port=self.port_info._port),))
+        mock_serializer.assert_called_once_with(vulnerability.return_value.port,
+                                                vulnerability.return_value)
 
         self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)
 
@@ -231,7 +234,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         self.assertIn(expected, result)
 
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     @gen_test
     async def test_http_with_tunnel(self, cfg, mock_serializer):
@@ -246,7 +249,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         self.assertEqual(result, expected)
 
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     @gen_test
     async def test_scan_only_true(self, cfg, mock_serializer):
@@ -260,7 +263,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.assertFalse(self.aucote.task_mapper.assign_tasks.called)
 
     @patch('tools.nmap.tasks.port_info.TaskMapper')
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     @gen_test
     async def test_scan_only_false(self, cfg, mock_serializer, task_mapper):
@@ -278,7 +281,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         self.assertTrue(task_mapper.return_value.assign_tasks.called)
 
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability')
     @gen_test
     async def test_cpe(self, mock_serializer):
         self.port_info.scan_only = True
@@ -295,7 +298,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
     @patch('tools.nmap.tasks.port_info.NmapPortInfoTask.exploit')
     @patch('tools.nmap.tasks.port_info.Vulnerability')
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_port_vuln')
+    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     @gen_test
     async def test_store_vulnerabilities(self, cfg, mock_serializer, vulnerability, exploit):
