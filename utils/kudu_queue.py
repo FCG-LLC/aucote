@@ -64,7 +64,7 @@ class KuduMsg:
         assert isinstance(val, int)
         self._data.extend(val.to_bytes(8, self._ENDIANNESS))
 
-    def add_str(self, val):
+    def add_str(self, val=None):
         """
         Add string value to data
         """
