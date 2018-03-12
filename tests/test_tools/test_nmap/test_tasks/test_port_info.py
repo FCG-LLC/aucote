@@ -219,8 +219,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         await self.port_info()
 
         vulnerability.assert_has_calls((call(port=self.port_info._port),))
-        mock_serializer.assert_called_once_with(vulnerability.return_value.port,
-                                                vulnerability.return_value)
+        mock_serializer.assert_called_once_with(vulnerability.return_value)
 
         self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)
 
@@ -244,7 +243,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port_info.command.async_call = MagicMock(return_value=future)
         await self.port_info()
 
-        result = mock_serializer.call_args[0][0].protocol
+        result = mock_serializer.call_args[0][0].port.protocol
         expected = 'https'
 
         self.assertEqual(result, expected)
@@ -291,7 +290,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port_info.prepare_args = MagicMock()
         await self.port_info()
 
-        result = mock_serializer.call_args[0][0].service.cpe
+        result = mock_serializer.call_args[0][0].port.service.cpe
         expected = CPE('cpe:/a:apache:http_server:2.4.23')
 
         self.assertEqual(result, expected)

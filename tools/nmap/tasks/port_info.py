@@ -125,7 +125,7 @@ class NmapPortInfoTask(PortTask):
         self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self._scan)
 
         vuln = Vulnerability(port=self._port)
-        self.kudu_queue.send_msg(Serializer.serialize_vulnerability(vuln.port, vuln))
+        self.kudu_queue.send_msg(Serializer.serialize_vulnerability(vuln))
         self.diff_with_last_scan()
 
         if not self.scan_only:

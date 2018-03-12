@@ -3,9 +3,8 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from fixtures.exploits import Exploit
-from structs import Port, Node, TransportProtocol, Vulnerability, Scan, ScanContext
+from structs import Port, Node, TransportProtocol, Scan, ScanContext
 from tools.ssl.base import SSLBase
-from tools.ssl.structs import SSLResults
 from tools.ssl.tasks import SSLScriptTask
 
 
