@@ -34,7 +34,7 @@ class MasscanPorts(PortScanTask):
         args = list(cfg['tools.masscan.args'])
 
         base_rate = cfg['portdetection.tcp.scan_rate'] if self.tcp else cfg['portdetection.udp.scan_rate']
-        throttling = await cfg.toucan.get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
+        throttling = cfg.toucan.get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
 
         if throttling > 1:
             throttling = 1
