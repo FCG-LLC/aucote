@@ -6,6 +6,7 @@ import logging as log
 
 from tornado import gen
 
+from aucote_cfg import cfg
 from tools.common import OpenPortsParser
 from utils.exceptions import NonXMLOutputException, StopCommandException
 
@@ -16,8 +17,10 @@ class PortScanTask(object):
 
     """
 
-    def __init__(self, command):
+    def __init__(self, command, tcp=True, udp=True):
         self.command = command
+        self.tcp = tcp
+        self.udp = udp
 
     async def prepare_args(self, nodes):
         """
@@ -67,3 +70,20 @@ class PortScanTask(object):
     def cancel(self):
         if self.command:
             self.command.kill()
+
+    def scan_rate(self):
+        base_rate = cfg['portdetection.tcp.scan_rate'] if self.tcp else cfg['portdetection.udp.scan_rate']
+        throttling = cfg.toucan.get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
+
+        if throttling > 1:
+            throttling = 1
+
+        if throttling < 0:
+            throttling = 0
+
+        rate = str(int(float(throttling) * int(base_rate)))
+
+        if rate == '0':
+            raise StopCommandException("Cancel scan due to low throttling rate {}".format(throttling))
+
+        return rate

@@ -20,21 +20,12 @@ class PortsScan(PortScanTask):
         self.ipv6 = ipv6
         self.udp = udp
         self.tcp = tcp
-        super(PortsScan, self).__init__(NmapBase())
+        super(PortsScan, self).__init__(NmapBase(), tcp=tcp, udp=udp)
 
     async def prepare_args(self, nodes):
         args = ['-Pn']
 
-        base_rate = cfg['portdetection.tcp.scan_rate'] if self.tcp else cfg['portdetection.udp.scan_rate']
-        throttling = cfg.toucan.get('throttling.rate', add_prefix=False) if cfg.toucan is not None else 1
-
-        if throttling > 1:
-            throttling = 1
-
-        if throttling < 0:
-            throttling = 0
-
-        rate = str(int(float(throttling) * int(base_rate)))
+        rate = self.scan_rate()
 
         if rate == '0':
             raise StopCommandException("Cancel scan due to low throttling rate {}".format(throttling))
