@@ -1007,6 +1007,10 @@ class ScanContext:
 
         """
         log.debug('Executing post scan hook for scan %s', self.scan.NAME)
+        security_scans = self.aucote.storage.security_scan_by_scan(self.scan.scan)
+        vulnerabilities = self.aucote.storage.vulnerabilities_by_scan(self.scan.scan)
+
+        pass
 
     def add_task(self, task):
         self.tasks.append(task)

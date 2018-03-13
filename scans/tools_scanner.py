@@ -57,6 +57,7 @@ class ToolsScanner(ScanAsyncTask):
             await self.context.wait_on_tasks_finish()
 
             scan.end = time.time()
+            self.scan = scan
             self.storage.update_scan(scan)
         except (HTTPError, ConnectionError) as exception:
             log.error('Cannot connect to topdis: %s, %s', self.topdis.api, exception)
