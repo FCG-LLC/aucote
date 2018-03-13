@@ -67,40 +67,48 @@ class PortScanTest(AsyncTestCase):
         node.scan = Scan()
         self.nodes = [node]
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_scan_ports(self, cfg):
+    async def test_scan_ports(self, cfg, cfg2):
         cfg._cfg = self.cfg
+        cfg2._cfg = cfg._cfg
 
         result = await self.scanner.prepare_args(nodes=self.nodes)
         expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
         self.assertEqual(result, expected)
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_no_scan_ports(self, cfg):
+    async def test_no_scan_ports(self, cfg, cfg2):
         cfg._cfg = self.cfg
         cfg['portdetection.tcp.ports.include'] = []
+        cfg2._cfg = cfg._cfg
 
         with self.assertRaises(StopCommandException):
             await self.scanner.prepare_args(nodes=self.nodes)
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_scan_ports_excluded(self, cfg):
+    async def test_scan_ports_excluded(self, cfg, cfg2):
         cfg._cfg = self.cfg
         cfg['portdetection.tcp.ports.exclude'] = ['45-89']
+        cfg2._cfg = cfg._cfg
 
         result = await self.scanner.prepare_args(nodes=self.nodes)
         expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '-p', 'T:55', '--exclude-ports', 'T:45-89',
                     '--max-rate', '1030', '192.168.1.5']
         self.assertEqual(result, expected)
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_arguments(self, cfg):
+    async def test_arguments(self, cfg, cfg2):
         cfg._cfg = self.cfg
         cfg['tools.nmap.scripts_dir'] = 'test'
+        cfg2._cfg = cfg._cfg
 
         result = await self.scanner.prepare_args(self.nodes)
         expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '--datadir', 'test', '-p', 'T:55',
@@ -108,51 +116,59 @@ class PortScanTest(AsyncTestCase):
 
         self.assertEqual(result, expected)
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_arguments_tcp(self, cfg):
+    async def test_arguments_tcp(self, cfg, cfg2):
         self.scanner.tcp = True
         self.scanner.ipv6 = False
         cfg._cfg = self.cfg
+        cfg2._cfg = cfg._cfg
 
         result = await self.scanner.prepare_args(self.nodes)
         expected = ['-Pn', '-sS', '--host-timeout', '600', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']
 
         self.assertEqual(result, expected)
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_arguments_udp(self, cfg):
+    async def test_arguments_udp(self, cfg, cfg2):
         self.scanner.udp = True
         self.scanner.tcp = False
         self.scanner.ipv6 = False
         cfg._cfg = self.cfg
         cfg['portdetection.udp.ports.include'] = ['12-16']
+        cfg2._cfg = cfg._cfg
 
         result = await self.scanner.prepare_args(self.nodes)
         expected = ['-Pn', '-sU', '--max-retries', '77',
                     '-p', 'U:12-16', '--max-rate', '30', '192.168.1.5']
         self.assertEqual(result, expected)
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_arguments_udp_defeat_icmp(self, cfg):
+    async def test_arguments_udp_defeat_icmp(self, cfg, cfg2):
         self.scanner.udp = True
         self.scanner.tcp = False
         self.scanner.ipv6 = False
         cfg._cfg = self.cfg
         cfg['portdetection.udp.ports.include'] = ['12-16']
         cfg['portdetection.udp.defeat_icmp_ratelimit'] = True
+        cfg2._cfg = cfg._cfg
 
         result = await self.scanner.prepare_args(self.nodes)
         expected = ['-Pn', '--min-rate', '30', '--defeat-icmp-ratelimit', '-sU', '--max-retries', '77',
                     '-p', 'U:12-16', '--max-rate', '30', '192.168.1.5']
         self.assertEqual(result, expected)
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.nmap.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_string_ports(self, cfg):
+    async def test_string_ports(self, cfg, cfg2):
         cfg._cfg = self.cfg
+        cfg2._cfg = cfg._cfg
 
         result = await self.scanner.prepare_args(self.nodes)
         expected = ['-Pn', '-6', '-sS', '--host-timeout', '600', '-p', 'T:55', '--max-rate', '1030', '192.168.1.5']

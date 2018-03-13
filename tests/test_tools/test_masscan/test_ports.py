@@ -48,10 +48,12 @@ class MasscanPortsTest(AsyncTestCase):
         self.nodes = [node]
 
     @patch('tools.masscan.ports.cfg', new_callable=Config)
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @gen_test
-    async def test_arguments(self, mock_config):
-        mock_config._cfg = self.cfg
-        mock_config['tools.masscan.args'] = ['test_additional_arg1', 'test_additional_arg2']
+    async def test_arguments(self, cfg, cfg2):
+        cfg._cfg = self.cfg
+        cfg['tools.masscan.args'] = ['test_additional_arg1', 'test_additional_arg2']
+        cfg2._cfg = cfg._cfg
 
         result = await self.masscanports.prepare_args(self.nodes)
         expected = ['test_additional_arg1', 'test_additional_arg2', '--rate', '1000',
@@ -59,19 +61,23 @@ class MasscanPortsTest(AsyncTestCase):
 
         self.assertEqual(result, expected)
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_no_scan_ports(self, cfg):
+    async def test_no_scan_ports(self, cfg, cfg2):
         cfg._cfg = self.cfg
         cfg['portdetection.tcp.ports.include'] = []
+        cfg2._cfg = cfg._cfg
 
         with self.assertRaises(StopCommandException):
             await self.masscanports.prepare_args(self.nodes)
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_string_ports(self, mock_config):
-        mock_config._cfg = self.cfg
+    async def test_string_ports(self, cfg, cfg2):
+        cfg._cfg = self.cfg
+        cfg2._cfg = cfg._cfg
 
         result = await self.masscanports.prepare_args(self.nodes)
         expected = ['--rate', '1000',
@@ -79,11 +85,13 @@ class MasscanPortsTest(AsyncTestCase):
 
         self.assertEqual(result, expected)
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_scan_ports_excluded(self, cfg):
+    async def test_scan_ports_excluded(self, cfg, cfg2):
         cfg._cfg = self.cfg
         cfg['portdetection.tcp.ports.exclude'] = ['45-89']
+        cfg2._cfg = cfg._cfg
 
         result = await self.masscanports.prepare_args(nodes=self.nodes)
         expected = ['--rate', '1000',
@@ -91,13 +99,15 @@ class MasscanPortsTest(AsyncTestCase):
                     '--exclude-ports', 'T:45-89', '127.0.0.1']
         self.assertEqual(result, expected)
 
+    @patch('tools.common.port_scan_task.cfg', new_callable=Config)
     @patch('tools.masscan.ports.cfg', new_callable=Config)
     @gen_test
-    async def test_scan_without_udp(self, cfg):
+    async def test_scan_without_udp(self, cfg, cfg2):
         cfg._cfg = self.cfg
         cfg['portdetection.udp.ports.include'] = ['15']
         cfg['portdetection.udp.ports.exclude'] = ['34']
         masscanports = MasscanPorts(udp=False)
+        cfg2._cfg = cfg._cfg
 
         result = await masscanports.prepare_args(nodes=self.nodes)
         expected = ['--rate', '1000', '--ports', 'T:9', '127.0.0.1']
