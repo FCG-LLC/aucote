@@ -323,13 +323,13 @@ class Storage(DbInterface):
         if scan.rowid is None:
             scan.rowid = self.get_scan_id(scan)
 
-        return self.select('security_scans', limit=1, scan_id=scan.rowid)
+        return self.select('security_scans', scan_id=scan.rowid)
 
     def vulnerabilities_by_scan(self, scan):
         if scan.rowid is None:
             scan.rowid = self.get_scan_id(scan)
 
-        return self.select('vulnerabilities', limit=1, scan_id=scan.rowid)
+        return self.select('vulnerabilities', scan_id=scan.rowid)
 
     def _save_node(self, node, scan, scan_id=None, timestamp=None):
         """
