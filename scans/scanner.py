@@ -196,3 +196,8 @@ class Scanner(ScanAsyncTask):
         self.storage.save_changes(changes)
         for change in changes:
             self.aucote.kudu_queue.send_msg(Serializer.serialize_vulnerability_change(change))
+
+    async def stop(self):
+        for scanner in self.scanners:
+            scanner.cancel()
+        await super().stop()

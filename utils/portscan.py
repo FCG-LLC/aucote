@@ -30,3 +30,6 @@ class PortscanScanner(object):
             for node in nodes
             for port in found_ports.get(str(node.ip))
         })
+
+    def cancel(self):
+        pass
