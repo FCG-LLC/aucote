@@ -2,6 +2,9 @@
 Provides serializers for database
 """
 from enum import Enum
+
+from fixtures.exploits import Exploit
+from structs import Vulnerability, Port, VulnerabilityChange
 from utils.kudu_queue import KuduMsg
 
 
@@ -20,47 +23,36 @@ class Serializer:
     """
 
     @classmethod
-    def serialize_port_vuln(cls, port, vuln):
+    def serialize_vulnerability(cls, vuln: Vulnerability) -> KuduMsg:
         """
-        Function which return serialized port and vuln objects
-        Args:
-            port: Port object
-            vuln: Vulnerability object
-
-        Returns: Serialized objects as string
-
+        Serializes Vulnerability
         """
         msg = KuduMsg()
         msg.add_short(MsgType.VULNERABILITY.value)
-        msg.add_datetime(port.scan.start)  # scan_start
-        msg.add_short(port.number)
-        msg.add_ip(port.node.ip)
-        msg.add_int(port.node.id)
-        msg.add_str(port.protocol or '')
-        msg.add_str(str(port.service) or '')
-        msg.add_str(port.banner or "")
-        msg.add_byte(port.transport_protocol.iana)
-        msg.add_datetime(port.when_discovered)  # port_scan_start
-        msg.add_str(vuln.output if vuln is not None else '')
-        msg.add_int(vuln.exploit.id if vuln is not None else 0)
-        msg.add_datetime(vuln.when_discovered if vuln is not None else None)
-        msg.add_str(port.node.os.name_with_version if port.node.os.name_with_version is not None else '')
-        msg.add_str(vuln.exploit.metric.name if vuln is not None and vuln.exploit.metric is not None else '')
-        msg.add_str(vuln.context.scan.NAME if vuln is not None and vuln.context is not None else '')
-        msg.add_str(vuln.exploit.app if vuln is not None and vuln.exploit is not None else '')
-        msg.add_str(vuln.exploit.name if vuln is not None and vuln.exploit is not None else '')
-        msg.add_long(vuln.exploit.tags_mask if vuln is not None and vuln.exploit is not None else 0)
+        msg.add_datetime(vuln.port.scan.start)  # scan_start
+        msg.add_short(vuln.port.number)
+        msg.add_ip(vuln.port.node.ip)
+        msg.add_int(vuln.port.node.id)
+        msg.add_str(vuln.port.protocol)
+        msg.add_str(str(vuln.port.service))
+        msg.add_str(vuln.port.banner)
+        msg.add_byte(vuln.port.transport_protocol.iana)
+        msg.add_datetime(vuln.port.when_discovered)  # port_scan_start
+        msg.add_str(vuln.output)
+        msg.add_int(vuln.exploit.id if vuln.exploit is not None else 0)
+        msg.add_datetime(vuln.when_discovered)
+        msg.add_str(vuln.port.node.os.name_with_version)
+        msg.add_str(vuln.exploit.metric.name if vuln.exploit is not None and vuln.exploit.metric is not None else '')
+        msg.add_str(vuln.context.scan.NAME if vuln.context is not None else '')
+        msg.add_str(vuln.exploit.app if vuln.exploit is not None else '')
+        msg.add_str(vuln.exploit.name if vuln.exploit is not None else '')
+        msg.add_long(vuln.exploit.tags_mask if vuln.exploit is not None else 0)
         return msg
 
     @classmethod
-    def serialize_exploit(cls, exploit):
+    def serialize_exploit(cls, exploit: Exploit) -> KuduMsg:
         """
-        Function which return serialized exploit object
-        Args:
-            exploit: Exploit object
-
-        Returns: Serialized object as string
-
+        Serializes Exploit
         """
         msg = KuduMsg()
         msg.add_short(MsgType.EXPLOIT.value)
@@ -75,14 +67,9 @@ class Serializer:
         return msg
 
     @classmethod
-    def serialize_vulnerability_change(cls, vuln_change):
+    def serialize_vulnerability_change(cls, vuln_change: VulnerabilityChange) -> KuduMsg:
         """
-
-        Args:
-            vuln_change (VulnerabilityChangeBase):
-
-        Returns:
-
+        Serializes VulnerabilityChange
         """
         msg = KuduMsg()
         msg.add_short(MsgType.CHANGE.value)

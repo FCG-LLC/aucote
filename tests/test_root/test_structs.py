@@ -5,9 +5,10 @@ from unittest.mock import MagicMock
 from cpe import CPE
 from tornado.testing import AsyncTestCase, gen_test
 
-from structs import RiskLevel, Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState, \
+from structs import Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState, \
     VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange, PortScan, ScanContext
 from structs import TransportProtocol
+from fixtures.exploits import RiskLevel
 
 
 class TransportProtocolTest(TestCase):

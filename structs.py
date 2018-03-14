@@ -8,9 +8,12 @@ from abc import ABCMeta, abstractmethod
 from ctypes import c_uint32
 from enum import Enum
 import time
+import logging as log
 
 from cpe import CPE
 from tornado import gen
+
+from fixtures.exploits import Exploit
 
 
 class Scan(object):
@@ -289,42 +292,6 @@ class TransportProtocol(Enum):
             if val.iana == number:
                 return val
         raise ValueError('Invalid transport protocol number: %s' % number)
-
-
-class RiskLevel(Enum):
-    """
-    Risk level object
-
-    """
-
-    def __init__(self, txt, number):
-        self.txt = txt
-        self.number = number
-
-    HIGH = ('High', 3)
-    MEDIUM = ('Medium', 2)
-    LOW = ('Low', 1)
-    NONE = ('None', 0)
-
-    @classmethod
-    def from_name(cls, name):
-        """
-        Create RiskLevel object basing on string name
-
-        Args:
-            name: string representation of risk level, eg. "medium"
-
-        Returns:
-            RiskLevel object
-
-        Raises:
-            ValueError if not: High, Medium, Low or None
-
-        """
-        for val in cls:
-            if val.txt == name:
-                return val
-        raise ValueError('Unsupported risk level name: %s' % name)
 
 
 class Service(object):
@@ -653,7 +620,7 @@ class Vulnerability(object):
     SERVICE_BANNER = 4
     SERVICE_CPE = 5
 
-    def __init__(self, exploit=None, port=None, output=None, cve=None, cvss=0, subid=None, vuln_time=None,
+    def __init__(self, exploit=None, port=None, output='', cve=None, cvss=0, subid=None, vuln_time=None,
                  rowid=None, scan=None, context=None):
         """
         Init values
@@ -666,7 +633,7 @@ class Vulnerability(object):
         """
         self.when_discovered = time.time()
         self.output = str(output)
-        self.exploit = exploit
+        self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
         self.port = port
         self.cve = cve
         self.cvss = float(cvss)
@@ -1023,7 +990,23 @@ class ScanContext:
         self.tasks = []
         self._cancelled = False
         self.start = None
-        self.end = None
+        self._end = None
+
+    @property
+    def end(self):
+        return self._end
+
+    @end.setter
+    def end(self, val):
+        self._end = val
+        self._post_scan_hook()
+
+    def _post_scan_hook(self):
+        """
+        Executes post scan operations
+
+        """
+        log.debug('Executing post scan hook for scan %s', self.scan.NAME)
 
     def add_task(self, task):
         self.tasks.append(task)

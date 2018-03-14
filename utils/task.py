@@ -82,8 +82,8 @@ class Task(object):
             None
 
         """
-        log.debug('Found vulnerability %s for %s', vuln.exploit.id, vuln.port)
-        msg = Serializer.serialize_port_vuln(vuln.port, vuln)
+        log.debug('Found vulnerability %s for %s', vuln.exploit.id if vuln.exploit is not None else None, vuln.port)
+        msg = Serializer.serialize_vulnerability(vuln)
         self.kudu_queue.send_msg(msg)
 
         self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self._scan)

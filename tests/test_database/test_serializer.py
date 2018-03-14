@@ -4,10 +4,9 @@ from unittest import TestCase
 from unittest.mock import PropertyMock, patch, MagicMock
 
 from database.serializer import Serializer
-from fixtures.exploits import Exploit
-from fixtures.exploits.exploit import ExploitMetric, ExploitCategory, ExploitTag
+from fixtures.exploits import Exploit, RiskLevel, ExploitMetric, ExploitCategory, ExploitTag
 from scans.tcp_scanner import TCPScanner
-from structs import Vulnerability, Port, Node, Scan, TransportProtocol, RiskLevel, VulnerabilityChangeType, \
+from structs import Vulnerability, Port, Node, Scan, TransportProtocol, \
     VulnerabilityChange, PortDetectionChange, PortScan, ScanContext
 from tests.time.test_utils import UTC
 
@@ -28,14 +27,14 @@ class SerializerTest(TestCase):
 
         self.vuln.context = self.context
 
-        port = Port(node=node, number=22, transport_protocol=TransportProtocol.TCP)
-        port.protocol = 'ssh'
+        self.port = Port(node=node, number=22, transport_protocol=TransportProtocol.TCP)
+        self.port.protocol = 'ssh'
 
-        port.scan = Scan()
-        port.scan._start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
-        port.when_discovered = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
+        self.port.scan = Scan()
+        self.port.scan._start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
+        self.port.when_discovered = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
 
-        self.vuln.port = port
+        self.vuln.port = self.port
         self.vuln.output = 'Test'
 
         self.exploit = Exploit(exploit_id=1)
@@ -53,12 +52,22 @@ class SerializerTest(TestCase):
 
     def test_vulnerability_serializer(self):
 
-        result = self.serializer.serialize_port_vuln(self.vuln.port, self.vuln).data
+        result = self.serializer.serialize_vulnerability(self.vuln).data
         expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
                              b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
                              b'\x00\x00\x04\x00Test\x01\x00\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x15\x00test_na'
                              b'me_and_version\x08\00VNC_INFO\x03\x00tcp\x08\x00test_app\t\x00test_name\x1a\x00\x00\x00'
                              b'\x00\x00\x00\x00')
+
+        self.assertEqual(result, expected)
+
+    @patch('structs.time.time', MagicMock(return_value=13452534))
+    def test_vulnerability_serializer_port_only(self):
+        result = self.serializer.serialize_vulnerability(Vulnerability(port=self.port)).data
+        expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
+                             b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
+                             b'\x00\x00\x00\x00\x00\x00\x00\x00\xf0`\xd5!\x03\x00\x00\x00\x15\x00test_name_and_version'
+                             b'\x05\x00OTHER\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 
         self.assertEqual(result, expected)
 

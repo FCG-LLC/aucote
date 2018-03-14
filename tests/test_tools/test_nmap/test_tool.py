@@ -4,8 +4,8 @@ from unittest.mock import patch, MagicMock, call
 
 from tornado.testing import gen_test, AsyncTestCase
 
-from fixtures.exploits import Exploit
-from structs import RiskLevel, Port, TransportProtocol, Node, Scan, ScanContext
+from fixtures.exploits import Exploit, RiskLevel
+from structs import Port, TransportProtocol, Node, Scan, ScanContext
 from tools.nmap.base import NmapScript
 from tools.nmap.tool import NmapTool
 from tools.nmap.parsers import NmapParser

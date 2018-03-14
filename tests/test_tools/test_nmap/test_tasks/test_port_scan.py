@@ -16,7 +16,7 @@ from tools.nmap.parsers import NmapParser, NmapInfoParser
 from tools.nmap.base import NmapScript
 
 
-@patch('database.serializer.Serializer.serialize_port_vuln', MagicMock(return_value='test'))
+@patch('database.serializer.Serializer.serialize_vulnerability', MagicMock(return_value='test'))
 class NmapPortScanTaskTest(AsyncTestCase):
     """
     Testing nmap port scanning task
