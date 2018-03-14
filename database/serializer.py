@@ -46,6 +46,7 @@ class Serializer:
         msg.add_str(vuln.exploit.app if vuln.exploit is not None else '')
         msg.add_str(vuln.exploit.name if vuln.exploit is not None else '')
         msg.add_long(vuln.exploit.tags_mask if vuln.exploit is not None else 0)
+        msg.add_bool(vuln.active)
         return msg
 
     @classmethod
