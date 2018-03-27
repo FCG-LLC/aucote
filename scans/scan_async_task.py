@@ -42,6 +42,7 @@ class ScanAsyncTask(object):
         return self.context.aucote
 
     async def __call__(self, *args, **kwargs):
+        self.context = ScanContext(aucote=self.context.aucote, scan=self)  # FixMe: Really bad
         if not cfg['portdetection.{name}.scan_enabled'.format(name=self.NAME)]:
             log.info("Scanner %s is disabled", self.NAME)
             return

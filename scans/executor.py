@@ -99,7 +99,10 @@ class Executor(Task):
         Returns:
 
         """
-        return self.run()
+        try:
+            return self.run()
+        finally:
+            self.finish_time = time.time()
 
     def add_task(self, task):
         """
