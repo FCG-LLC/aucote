@@ -28,5 +28,5 @@ class PortscanScanner(object):
         return list({
             Port(number=port, node=node, transport_protocol=TransportProtocol.TCP, scan=Scan(start=node.scan.start))
             for node in nodes
-            for port in found_ports.get(str(node.ip))
+            for port in found_ports.get(str(node.ip), [])
         })

@@ -29,11 +29,13 @@ class Command(object):
 
     def __init__(self):
         self.proc = None
+        self._cancelled = False
 
     def kill(self):
         if self.proc is None:
             return
 
+        self._cancelled = True
         self.proc.kill()
 
     def call(self, args=None, timeout=None):
@@ -49,6 +51,9 @@ class Command(object):
         all_args.extend(args)
         cmd = ' '.join(all_args),
         log.debug('Executing: %s', cmd)
+
+        if self._cancelled:
+            raise Exception('Task was cancelled')
 
         self.proc = subprocess.Popen(all_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -88,6 +93,8 @@ class Command(object):
         cmd = ' '.join(all_args),
         log.debug('Executing: %s', cmd)
 
+        if self._cancelled:
+            raise Exception('Task was cancelled')
         task = process.Subprocess(all_args, stderr=process.Subprocess.STREAM, stdout=process.Subprocess.STREAM)
         self.proc = task.proc
 

@@ -191,3 +191,5 @@ class NmapPortInfoTask(PortTask):
     def cancel(self):
         if self.command:
             self.command.kill()
+
+        super().cancel()

@@ -146,7 +146,11 @@ class Task(object):
         Stop task executing
         """
         if self.executor is not None:
+            log.debug('Stopping task %s', self)
             self.executor.stop()
+        else:
+            log.debug('Cancelling task %s', self)
+            self.cancel()
 
     def clear(self):
         """
