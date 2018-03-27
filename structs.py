@@ -1018,8 +1018,7 @@ class ScanContext:
         unactive_scans = all_scans - found_scans
 
         for exploit_id, port in unactive_scans:
-            vuln = Vulnerability(exploit=self.aucote.exploits.by_id(exploit_id))
-            vuln.port = port
+            vuln = Vulnerability(exploit=self.aucote.exploits.by_id(exploit_id), port=port)
 
             msg = Serializer.serialize_vulnerability(vuln)
             self.aucote.kudu_queue.send_msg(msg)
