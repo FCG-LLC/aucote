@@ -365,6 +365,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
     @gen_test
     async def test_stop(self):
+        self.thread.init()
         tasks = [MagicMock(), MagicMock()]
         self.thread.context.cancel = MagicMock()
         self.thread.context.is_scan_end = MagicMock(return_value=False)

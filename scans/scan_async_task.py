@@ -31,7 +31,8 @@ class ScanAsyncTask(object):
 
     def __init__(self, aucote):
         self._current_scan = []
-        self.context = ScanContext(aucote=aucote, scan=self)
+        self._aucote = aucote
+        self.context = None
         self.scan_start = None
         self._shutdown_condition = Event()
         self.status = ScanStatus.IDLE
@@ -39,25 +40,34 @@ class ScanAsyncTask(object):
 
     @property
     def aucote(self):
-        return self.context.aucote
+        return self._aucote
+
+    def init(self):
+        if self.context is not None:
+            raise Exception("Scan context already exists")
+        self.context = ScanContext(aucote=self.aucote, scan=self)
 
     async def __call__(self, *args, **kwargs):
-        self.context = ScanContext(aucote=self.context.aucote, scan=self)  # FixMe: Really bad
-        if not cfg['portdetection.{name}.scan_enabled'.format(name=self.NAME)]:
-            log.info("Scanner %s is disabled", self.NAME)
-            return
-        log.info("Starting %s scanner", self.NAME)
+        try:
+            self.init()
 
-        result = await self.run()
+            if not cfg['portdetection.{name}.scan_enabled'.format(name=self.NAME)]:
+                log.info("Scanner %s is disabled", self.NAME)
+                return
+            log.info("Starting %s scanner", self.NAME)
 
-        run_after = cfg['portdetection.{name}.run_after'.format(name=self.NAME)]
-        for scan_name in run_after:
+            result = await self.run()
 
-            scan_task = self.aucote.async_task_manager.crontab_task(scan_name)
-            if scan_task is not None:
-                self.aucote.ioloop.add_callback(partial(scan_task, run_now=True))
+            run_after = cfg['portdetection.{name}.run_after'.format(name=self.NAME)]
+            for scan_name in run_after:
 
-        return result
+                scan_task = self.aucote.async_task_manager.crontab_task(scan_name)
+                if scan_task is not None:
+                    self.aucote.ioloop.add_callback(partial(scan_task, run_now=True))
+
+            return result
+        finally:
+            self.context = None
 
     async def run(self):
         raise NotImplementedError()
