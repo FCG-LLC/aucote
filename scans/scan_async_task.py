@@ -301,6 +301,10 @@ class ScanAsyncTask(object):
 
         """
         log.info('Stopping scan %s', self.NAME)
+        if self.context is None:
+            log.warning("There is no %s scan in progress")
+            return
+        
         self.context.cancel()
 
         if not self.context.is_scan_end():
