@@ -188,8 +188,6 @@ class NmapPortInfoTask(PortTask):
         for change in changes:
             self.aucote.kudu_queue.send_msg(Serializer.serialize_vulnerability_change(change))
 
-    def cancel(self):
+    def kill(self):
         if self.command:
             self.command.kill()
-
-        super().cancel()

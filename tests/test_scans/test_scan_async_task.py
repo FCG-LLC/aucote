@@ -376,6 +376,6 @@ class ScanAsyncTaskTest(AsyncTestCase):
         await self.thread.stop()
 
         for task in tasks:
-            task.stop.assert_called_once_with()
+            task.cancel.assert_called_once_with()
 
         self.thread.context.cancel.assert_called_once_with()
