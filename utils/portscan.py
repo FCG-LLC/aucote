@@ -1,7 +1,9 @@
 from asyncio import ensure_future
 from collections import namedtuple
+import logging as log
 
 from pycslib.scan_engines import Portscan
+from pycslib.scan_engines.portscan import PortscanError
 from pycslib.utils.nmap import ports_to_string
 
 from aucote_cfg import cfg
@@ -23,7 +25,11 @@ class PortscanScanner(object):
 
         task = {str(node.ip): ports_to_string(set(ports)) for node in nodes}
 
-        found_ports = await self.portscan.send(task)
+        try:
+            found_ports = await self.portscan.send(task)
+        except PortscanError as exception:
+            log.error("Error during performing scan: %s", str(exception))
+            found_ports = []
 
         return list({
             Port(number=port, node=node, transport_protocol=TransportProtocol.TCP, scan=Scan(start=node.scan.start))
