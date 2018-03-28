@@ -5,33 +5,37 @@ from tools.common.port_task import PortTask
 import socket
 import os
 
+from utils.tftp import TFTPError
+
 
 class SietTask(PortTask):
 
     async def __call__(self, *args, **kwargs):
-
-        result = await self.context.aucote.tftp_server.async_get_file(str(self._port.node.ip), self.callback)
-
         try:
-            with open(result, 'r') as f:
-                lines = f.readlines()
+            result = await self.context.aucote.tftp_server.async_get_file(str(self._port.node.ip), self.callback)
 
-                data = lines[:10]
+            try:
+                with open(result, 'r') as f:
+                    lines = f.readlines()
 
-                data.extend([line for line in lines if line.startswith('hostname')])
+                    data = lines[:10]
 
+                    data.extend([line for line in lines if line.startswith('hostname')])
+
+            finally:
+                os.unlink(result)
+
+            if data:
+                output = "".join(data)
+
+                vulnerability = Vulnerability(exploit=self.exploit, port=self._port, output=output, scan=self._scan)
+
+                self.store_vulnerability(vuln=vulnerability)
+        except TFTPError as exception:
+            log.warning(str(exception))
         finally:
-            os.unlink(result)
-
-        if data:
-            output = "".join(data)
-
-            vulnerability = Vulnerability(exploit=self.exploit, port=self._port, output=output, scan=self._scan)
-
-            self.store_vulnerability(vuln=vulnerability)
-
-        self._port.scan.end = int(time.time())
-        self.store_scan_end(exploits=self.current_exploits, port=self._port)
+            self._port.scan.end = int(time.time())
+            self.store_scan_end(exploits=self.current_exploits, port=self._port)
 
     def callback(self):
         ip = str(self._port.node.ip)
