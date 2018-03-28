@@ -1,6 +1,6 @@
-'''
+"""
 Configures logging subsystem.
-'''
+"""
 import logging as log
 import sys
 

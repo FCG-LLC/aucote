@@ -10,10 +10,10 @@ from utils.log import config
 class ConfigFileTest(AsyncTestCase):
 
     @patch('builtins.open', mock_open(read_data=""))
-    @patch('utils.log.RotatingFileHandler')
+    @patch('utils.log.setup_logger')
     @patch('utils.log.log')
     @gen_test
-    async def test_config(self, mock_log, mock_rotate):
+    async def test_config(self, mock_log, setup_logger):
         expected = [MagicMock(), MagicMock()]
         mock_log.getLogger().handlers = expected
         cfg = Config()
@@ -29,11 +29,8 @@ class ConfigFileTest(AsyncTestCase):
         }
         await config(cfg)
 
-        self.assertTrue(mock_log.StreamHandler.called)
-        self.assertTrue(mock_log.getLogger.called)
-        self.assertTrue(mock_log.getLogger.return_value.addHandler.called)
-
-        mock_rotate.assert_called_once_with('test_file', maxBytes=45678, backupCount=13)
-
-        mock_log.Formatter.assert_called_once_with('TEST format')
-        mock_log.getLogger().removeHandler.assert_has_calls((call(expected[1]), call(expected[0])))
+        setup_logger.assert_has_calls((
+            call(filename='test_file', level='info', log_format='TEST format', max_file_size=45678, max_files=13,
+                 name=None, propagate=True),
+            call(filename='test_file.WARNING', level='warning', log_format='TEST format', max_file_size=45678,
+                 max_files=13, name=None, propagate=True)))
