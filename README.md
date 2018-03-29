@@ -38,6 +38,15 @@ source venv/bin/activate # activate virtualenv
 pip install -r requirements.txt
 ```
 
+##### Documentation
+To build documentation
+
+```
+make -C docs/gen/ clean
+make -C docs/gen/ rst
+make -C docs/gen/ html
+```
+
 ##### Install tools:
 ```
 apt-get install nmap masscan skipfish hydra -y
