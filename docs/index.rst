@@ -14,7 +14,6 @@ Welcome to Aucote's documentation!
    custom/throttling
    custom/scans
    custom/api/index
-   custom/api/kill
 
 Indices and tables
 ==================
