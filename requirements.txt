@@ -18,3 +18,4 @@ defusedxml==0.5.0
 ./internal_deps/py_cslib/
 MarkupSafe==0.23  # 1.0 is not installable via simple pip install
 Sphinx==1.7.2
+sphinx_rtd_theme==0.2.4
