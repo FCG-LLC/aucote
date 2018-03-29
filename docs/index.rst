@@ -8,9 +8,12 @@ Welcome to Aucote's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :numbered:
+   :titlesonly:
+   :glob:
+   :hidden:
 
-
+   throttling
 
 Indices and tables
 ==================
