@@ -14,14 +14,6 @@ class SSLTool(Tool):
     async def call(self, *args, **kwargs):
         """
         Prepares tasks for executing
-
-        Args:
-            *args:
-            **kwargs:
-
-        Returns:
-            None
-
         """
         self.context.add_task(SSLScriptTask(context=self.context, port=self.port, scan=self._scan,
                                             exploits=[self.aucote.exploits.find('testssl', 'testssl')]))

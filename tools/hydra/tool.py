@@ -16,14 +16,6 @@ class HydraTool(Tool):
     async def call(self, *args, **kwargs):
         """
         This function is executed by task manager. Based on configuration adds scan task to the tak manager.
-
-        Args:
-            *args:
-            **kwargs:
-
-        Returns:
-            None
-
         """
         service_name = self.config.get('mapper').get(self.port.protocol, None) or self.port.protocol
 

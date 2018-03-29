@@ -18,47 +18,25 @@ class SSLParser(Parser):
         self.tempfile = tempfile
         super(SSLParser, self).__init__()
 
-    def parse(self, *args, **kwargs):
+    def parse(self, *args, **kwargs) -> 'SSLResults':
         """
         Parses output json file and returns SSLResults
-
-        Args:
-            *args:
-            **kwargs:
-
-        Returns:
-            SSLResults
-
         """
         file = Path(self.tempfile.name)
         text = "[{content}]".format(content=file.read_text().strip(","))
         return self._dict_to_results(json.loads(text))
 
-    def _dict_to_results(self, data):
+    def _dict_to_results(self, data: dict) -> 'SSLResults':
         """
         Create results from dict
-
-        Args:
-            data (dict):
-
-        Returns:
-            SSLResults
-
         """
         return_value = SSLResults()
         return_value.results = [self._dict_to_result(single_json) for single_json in data]
         return return_value
 
-    def _dict_to_result(self, data):
+    def _dict_to_result(self, data: dict) -> 'SSLResult':
         """
         Create result from dict
-
-        Args:
-            data (dict):
-
-        Returns:
-            SSLResult
-
         """
         return_value = SSLResult()
         return_value.id = data.get('id')

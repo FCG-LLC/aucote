@@ -105,14 +105,10 @@ class Storage(DbInterface):
     SAVE_CHANGE = "INSERT INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
                   "current_id, time) VALUES (?, ?, ?, ?, ?, ?)"
 
-    def __init__(self, filename="storage.sqlite3", nodes_limit=200):
+    def __init__(self, filename: str = "storage.sqlite3", nodes_limit: int = 200):
 
         """
         Init storage
-
-        Args:
-            filename (str): filename of provided storage
-
         """
         self.filename = filename
         self.conn = None
@@ -138,10 +134,6 @@ class Storage(DbInterface):
     def init_schema(self):
         """
         Initialize database schema
-
-        Returns:
-            None
-
         """
         self.execute(self._create_tables())
         self.execute(self._clear_security_scans())
@@ -164,24 +156,17 @@ class Storage(DbInterface):
     @property
     def cursor(self):
         """
-        Returns:
-            handler to the database cursor
-
+        Returns handler to the database cursor
         """
         return self._cursor
 
-    def _select_where(self, table, args, operator='='):
+    def _select_where(self, table: str, args: dict, operator: str = '=') -> (list, list):
         """
         Prepares list of AND conditions for WHERE, and list of arguments to pass for prepare statement
 
-        Args:
-            table (str):
-            args (dict): dict of args. Every key is treat as column name except `operator` and `or`
-            operator (str): Operator which is used for comparison
-
-        Returns:
-            list, list
-
+        table
+        args - dict of args. Every key is treat as column name except `operator` and `or`
+        operator - Operator which is used for comparison
         """
         arguments = []
         where = []
