@@ -104,3 +104,6 @@ scan.txt
 
 # Locking file
 *.pid
+
+# built documentation
+docs/build/
