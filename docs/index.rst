@@ -7,13 +7,14 @@ Welcome to Aucote's documentation!
 ==================================
 
 .. toctree::
+   :caption: Table of Contents
    :maxdepth: 2
    :numbered:
    :titlesonly:
    :glob:
-   :hidden:
 
-   throttling
+   custom/throttling
+   custom/scans
 
 Indices and tables
 ==================
