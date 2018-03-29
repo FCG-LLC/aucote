@@ -8,13 +8,13 @@ Welcome to Aucote's documentation!
 
 .. toctree::
    :caption: Table of Contents
-   :maxdepth: 2
-   :numbered:
+   :maxdepth: 3
    :titlesonly:
-   :glob:
 
    custom/throttling
    custom/scans
+   custom/api/index
+   custom/api/kill
 
 Indices and tables
 ==================
