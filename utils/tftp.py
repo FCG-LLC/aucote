@@ -25,30 +25,30 @@ class TFTPError(Exception):
 
 class TFTPTimeoutError(TFTPError):
     def __init__(self, address, *args, **kwargs):
-        super(TFTPError, self).__init__(*args, **kwargs)
         self.address = address
         self.msg = 'Timeout Error while waiting for file from {}'.format(address)
+        super(TFTPError, self).__init__(self.msg, *args, **kwargs)
 
 
 class TFTPAlreadyExists(TFTPError):
     def __init__(self, address, *args, **kwargs):
-        super(TFTPError, self).__init__(*args, **kwargs)
         self.address = address
         self.msg = 'Already listening on file from {}. Try again later'.format(address)
+        super(TFTPError, self).__init__(self.msg, *args, **kwargs)
 
 
 class TFTPNotFound(TFTPError):
     def __init__(self, address, *args, **kwargs):
-        super(TFTPError, self).__init__(*args, **kwargs)
         self.address = address
         self.msg = 'Cannot find request for {}. Make sure anything is waiting on it'.format(address)
+        super(TFTPError, self).__init__(self.msg, *args, **kwargs)
 
 
 class TFTPMaxSizeExceeded(TFTPError):
     def __init__(self, address, *args, **kwargs):
-        super(TFTPError, self).__init__(*args, **kwargs)
         self.address = address
         self.msg = 'Maximum file size exceeded for {}'.format(address)
+        super(TFTPError, self).__init__(self.msg, *args, **kwargs)
 
 
 class TFTP:

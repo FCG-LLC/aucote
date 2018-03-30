@@ -10,7 +10,7 @@ import select
 
 from os import path
 
-from utils.tftp import TFTP, TFTPTimeoutError
+from utils.tftp import TFTP, TFTPTimeoutError, TFTPError
 
 
 class TFTPHelper(Thread):
@@ -217,12 +217,12 @@ class TFTPTest(TestCase):
             '127.0.0.1': {
                 'event': event,
                 'time': 113,
-                'exception': Exception(),
+                'exception': TFTPError(),
                 'size': 0
             },
         }
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(TFTPError):
             self.tftp.get_file('127.0.0.1')
 
     def test_get_file(self):
