@@ -1,19 +1,10 @@
-'''
+"""
 Configures logging subsystem.
-'''
+"""
 import logging as log
-from logging.handlers import RotatingFileHandler
 import sys
 
-import time
-
-_LOG_LEVEL = {
-    'critical': log.CRITICAL,
-    'error': log.ERROR,
-    'warning': log.WARNING,
-    'info': log.INFO,
-    'debug': log.DEBUG
-}
+from pycslib.logger import setup_logger
 
 
 async def config(cfg):
@@ -49,15 +40,13 @@ async def config(cfg):
         if logger == 'root':
             logger = None
 
-        file_handler = RotatingFileHandler(_cfg['file'], maxBytes=_cfg['max_file_size'], backupCount=_cfg['max_files'])
-        formatter = log.Formatter(_cfg['format'])
-        formatter.converter = time.gmtime
-        file_handler.setFormatter(formatter)
-        log.getLogger(logger).addHandler(file_handler)
-        log_level = _LOG_LEVEL[_cfg['level']]
-        log.getLogger(logger).setLevel(log_level)
-        log.getLogger(logger).propagate = _cfg['propagate']
+        setup_logger(name=logger, max_file_size=_cfg['max_file_size'], max_files=_cfg['max_files'],
+                     log_format=_cfg['format'], filename=_cfg['file'], level=_cfg['level'], propagate=_cfg['propagate'])
 
-        log.getLogger(logger).info("Logger %s configured", logger)
+        # Log errors to separate file
+        if _cfg['level'] not in {'error', 'warning'}:
+            setup_logger(name=logger, max_file_size=_cfg['max_file_size'], max_files=_cfg['max_files'],
+                         log_format=_cfg['format'], filename=_cfg['file']+'.WARNING', level='warning',
+                         propagate=_cfg['propagate'])
 
     log.info("========================= Starting application =========================")
