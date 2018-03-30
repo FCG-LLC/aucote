@@ -222,25 +222,28 @@ class Storage(DbInterface):
         Builder for select function.
 
         Args:
-            table (str): table name
-            limit (int): LIMIT value
-            page (int): OFFSET = page*limit
-            where (dict): dict which can contains special conditions like `or` or comparisons other than `=`.
-                          list of special keys:
-                           - or - contains list of `where` dicts
-                           - operator - operator:value dict, where value is a `where` dict and operator is SQL operator
-                                        e.g. `<`, `!=`
-                          all other keys are treat as column names
-            join (dict): It requires 4 keys:
-             - table - which table should be joined
-             - from - column name from base table for join
-             - to - column name from joining table
-             - where - this same like `where`
-            **kwargs (dict): dict of column_name: value, which is treat as list of conditions for query
 
-        Returns:
-            object base on table type
+        * table (str): table name
+        * limit (int): LIMIT value
+        * page (int): OFFSET = page*limit
+        * where (dict): dict which can contains special conditions like `or` or comparisons other than `=`.
 
+        list of special keys:
+
+            * or - contains list of `where` dicts
+            * operator - operator:value dict, where value is a `where` dict and operator is SQL operator e.g. `<`, `!=`
+            * all other keys are treat as column names
+
+        * join (dict): It requires 4 keys:
+
+            * table - which table should be joined
+            * from - column name from base table for join
+            * to - column name from joining table
+            * where - this same like `where`
+
+        * ** kwargs (dict): dict of column_name: value, which is treat as list of conditions for query
+
+        Returns object base on table type
         """
         arguments = []
         _where = []
@@ -304,78 +307,46 @@ class Storage(DbInterface):
     def security_scan_by_id(self, sec_scan_id):
         return self.select_by_id('security_scans', sec_scan_id)
 
-    def _save_node(self, node, scan, scan_id=None, timestamp=None):
+    def _save_node(self, node: 'Node', scan: 'Scan', scan_id: int = None, timestamp: float = None) -> tuple:
         """
         Saves node into to the storage
-
-        Args:
-            node (Node): node to save into storage
-
-        Returns:
-            tuple
-
         """
         if not scan_id:
             scan_id = self.get_scan_id(scan)
 
         return self.SAVE_NODE_QUERY, (scan_id, node.id, str(node.ip), timestamp or time.time())
 
-    def _save_nodes(self, nodes, scan):
+    def _save_nodes(self, nodes: list, scan: 'Scan') -> list:
         """
         Saves nodes into local storage
-
-        Args:
-            nodes (list):
-            scan (Scan):
-
-        Returns:
-            list
-
         """
         scan_id = self.get_scan_id(scan)
         return [self._save_node(node=node, scan=scan, scan_id=scan_id) for node in nodes]
 
-    def _save_port(self, port, scan, scan_id=None, timestamp=None):
+    def _save_port(self, port: 'Port', scan: 'Scan', scan_id: int = None, timestamp: float = None) -> tuple:
         """
         Query for saving port scan into database
-
-        Args:
-            port (Port): port to save into storage
-
-        Returns:
-            tuple
-
         """
         if not scan_id:
             scan_id = self.get_scan_id(scan)
         return self.SAVE_PORT_QUERY, (scan_id, port.node.id, str(port.node.ip), port.number,
                                       self._protocol_to_iana(port.transport_protocol), timestamp or time.time())
 
-    def _save_ports(self, ports, scan):
+    def _save_ports(self, ports: list, scan: 'Scan') -> list:
         """
         Queries for saving ports scans into database
-
-        Args:
-            ports (list):
-
-        Returns:
-            list
 
         """
         scan_id = self.get_scan_id(scan)
         return [self._save_port(port=port, scan=scan, scan_id=scan_id) for port in ports]
 
-    def _save_security_scan(self, exploit, port, scan):
+    def _save_security_scan(self, exploit: 'Exploit', port: 'Port', scan: 'Scan') -> list:
         """
         Queries for saving scan into database
 
         Args:
-            exploit (Exploit): needs some exploit details to save into storage
-            port (Port): needs some port details to save into storage
-            scan (Scan):
-
-        Returns:
-            list
+        * exploit - needs some exploit details to save into storage
+        * port - needs some port details to save into storage
 
         """
         log.debug("Saving scan details: scan_start(%s), scan_end(%s), exploit_id(%s), node_id(%s), node(%s), port(%s)",
@@ -398,67 +369,41 @@ class Storage(DbInterface):
                                                                  port.number, scan_id)))
         return queries
 
-    def _save_security_scans(self, exploits, port, scan):
+    def _save_security_scans(self, exploits: list, port: 'Port', scan: 'Scan') -> list:
         """
         Queries for saving scans into database
-
-        Args:
-            exploits (list): List of Exploits
-            port (Port):
-
-        Returns:
-            list
- .
 
         """
         return [query for exploit in exploits for query in self._save_security_scan(exploit=exploit, port=port,
                                                                                     scan=scan)]
 
-    def _save_change(self, change):
+    def _save_change(self, change: 'VulnerabilityChange') -> tuple:
         """
         Query for saving changes between scans
-
-        Args:
-            change: VulnerabilityChange
-
-        Returns:
-            tuple
 
         """
         return self.SAVE_CHANGE, (change.type.value, change.vulnerability_id, change.vulnerability_subid,
                                   change.previous_finding.rowid if change.previous_finding else None,
                                   change.current_finding.rowid if change.current_finding else None, change.time)
 
-    def _save_changes(self, changes):
+    def _save_changes(self, changes: list) -> list:
         """
         Queries for saving multiple changes into database
-
-        Args:
-            changes (list):
-
-        Returns:
-            list
 
         """
         return [self._save_change(change) for change in changes]
 
-    def _clear_security_scans(self):
+    def _clear_security_scans(self) -> tuple:
         """
         Query for cleaning table
-
-        Returns:
-            tuple
 
         """
         log.debug('Cleaning scan details')
         return self.CLEAR_SECURITY_SCANS,
 
-    def _create_tables(self):
+    def _create_tables(self) -> list:
         """
         List of queries for table creation
-
-        Returns:
-            list
 
         """
         queries = [(self.CREATE_SCANS_TABLE,),
@@ -470,15 +415,9 @@ class Storage(DbInterface):
 
         return queries
 
-    def execute(self, query):
+    def execute(self, query: [list, tuple, str]) -> list:
         """
         Execute query or queries.
-
-        Args:
-            query (list|tuple|str):
-
-        Returns:
-            None|list
 
         """
         if not self.is_correct_thread:
@@ -501,45 +440,23 @@ class Storage(DbInterface):
 
             self.conn.commit()
 
-    def save_node(self, node, scan):
+    def save_node(self, node: 'Node', scan: 'Scan'):
         """
         Save node to database
-
-        Args:
-            node (Node):
-            scan (Scan):
-
-        Returns:
-            None
 
         """
         return self.execute(self._save_node(node=node, scan=scan))
 
-    def save_nodes(self, nodes, scan):
+    def save_nodes(self, nodes: list, scan: 'Scan'):
         """
         Save nodes to database
-
-        Args:
-            nodes (list[Node]):
-            scan (Scan):
-
-        Returns:
-            None
 
         """
         return self.execute(self._save_nodes(nodes=nodes, scan=scan))
 
-    def get_nodes(self, scan, pasttime=0, timestamp=None):
+    def get_nodes(self, scan: 'Scan', pasttime: float = 0, timestamp: float = None) -> list:
         """
         Get nodes from database since timestamp. If timestamp is not given, it's computed basing on pastime.
-
-        Args:
-            pasttime (int):
-            timestamp (int):
-            scan (Scan):
-
-        Returns:
-            list[Node]
 
         """
         if timestamp is None:
@@ -550,58 +467,31 @@ class Storage(DbInterface):
             join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where': {
                 'protocol': scan.protocol, 'scanner_name': scan.scanner}})]
 
-    def get_vulnerabilities(self, port, exploit, scan):
+    def get_vulnerabilities(self, port: 'Port', exploit: 'Exploit', scan: 'Scan') -> list:
         """
         Get vulnerabilities for given port, exploit and scan
-
-        Args:
-            port (Port):
-            exploit (Exploit):
-            scan (Scan):
-
-        Returns:
-            list[Node]
 
         """
         return self.select(table='vulnerabilities', node_id=port.node.id, node_ip=port.node.ip, port=port.number,
                            port_protocol=port.transport_protocol, vulnerability_id=exploit.id, scan_id=scan.rowid)
 
-    def save_port(self, port, scan):
+    def save_port(self, port: 'Port', scan: 'Scan'):
         """
         Save port to database
-
-        Args:
-            port (Port):
-
-        Returns:
-            None
 
         """
         return self.execute(self._save_port(port=port, scan=scan))
 
-    def save_ports(self, ports, scan):
+    def save_ports(self, ports: list, scan: 'Scan'):
         """
         Save ports to database
-
-        Args:
-            ports (list):
-
-        Returns:
-            None
 
         """
         return self.execute(self._save_ports(ports=ports, scan=scan))
 
-    def get_ports(self, scan, pasttime=900):
+    def get_ports(self, scan: 'Scan', pasttime: float = 900) -> list:
         """
         Get ports from database from pasttime.
-
-        Args:
-            scan (Scan):
-            pasttime (int):
-
-        Returns:
-            list[Port]
 
         """
         timestamp = time.time() - pasttime
@@ -613,29 +503,16 @@ class Storage(DbInterface):
             }}
         )]
 
-    def get_ports_by_scan_and_node(self, node, scan):
+    def get_ports_by_scan_and_node(self, node: 'Node', scan: 'Scan') -> list:
         """
         Get ports from database for given node and scan.
-
-        Args:
-            node (Node):
-            scan (Scan):
-
-        Returns:
-            list[Port]
 
         """
         return self.select("ports_scans", node_id=node.id, node_ip=node.ip, scan_id=scan.rowid)
 
-    def get_nodes_by_scan(self, scan):
+    def get_nodes_by_scan(self, scan: 'Scan') -> list:
         """
         Get nodes from database for given scan.
-
-        Args:
-            scan (Scan):
-
-        Returns:
-            list[Port]
 
         """
         nodes = [el.node for el in self.select("nodes_scans", scan_id=scan.rowid)]
@@ -645,47 +522,22 @@ class Storage(DbInterface):
 
         return nodes
 
-    def save_security_scan(self, exploit, port, scan):
+    def save_security_scan(self, exploit: 'Explot', port: 'Port', scan: 'Scan'):
         """
         Save scan of port by exploit to database
-
-        Args:
-            exploit (Exploit):
-            port (Port):
-            scan (Scan):
-
-        Returns:
-            None
-
         """
         return self.execute(self._save_security_scan(exploit=exploit, port=port, scan=scan))
 
-    def save_security_scans(self, exploits, port, scan):
+    def save_security_scans(self, exploits: list, port: 'Port', scan: 'Scan'):
         """
         Save scans of port to database basing on given exploits
-
-        Args:
-            exploits (list):
-            port (Port):
-            scan (Scan):
-
-        Returns:
-            None
 
         """
         return self.execute(self._save_security_scans(exploits=exploits, port=port, scan=scan))
 
-    def get_security_scan_info(self, port, app, scan):
+    def get_security_scan_info(self, port: 'Port', app: str, scan: 'Scan') -> list:
         """
         Get security scan info from database
-
-        Args:
-            port (Port):
-            app (str):
-            scan (Scan):
-
-        Returns:
-            tuple
 
         """
         return self.select("security_scans", exploit_app=app, node_id=port.node.id, node_ip=port.node.ip,
@@ -693,15 +545,9 @@ class Storage(DbInterface):
                            join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where':
                                {'protocol': scan.protocol, 'scanner_name': scan.scanner}})
 
-    def save_changes(self, changes):
+    def save_changes(self, changes: list):
         """
         Save changes to database
-
-        Args:
-            changes (list):
-
-        Returns:
-            None
 
         """
         return self.execute(self._save_changes(changes=changes))
@@ -710,9 +556,6 @@ class Storage(DbInterface):
         """
         Clear broken scan details
 
-        Returns:
-            None
-
         """
         return self.execute(self._clear_security_scans())
 
@@ -720,30 +563,19 @@ class Storage(DbInterface):
         """
         Create tables in storage
 
-        Returns:
-            None
-
         """
         return self.execute(self._create_tables())
 
-    def get_ports_by_nodes(self, nodes, pasttime=0, timestamp=None, protocol=None, portdetection_only=False):
+    def get_ports_by_nodes(self, nodes: list, pasttime: float = 0, timestamp: float = None,
+                           protocol: 'TransportProtocol' = None, portdetection_only: bool = False):
         """
         Returns list of port for given list of nodes. protocol and portdetection_only has special meanings
         (in this order):
-             - If portdetection_only is True, then function returns ports only from portdetection scans
-             - If protocol is None then returns ports belonging to any protocol
-             - If protocol is not None then returns ports only fot this protocol
+        * If portdetection_only is True, then function returns ports only from portdetection scans
+        * If protocol is None then returns ports belonging to any protocol
+        * If protocol is not None then returns ports only fot this protocol
 
         ToDo: Split on three different functions and validate usability of code paths
-
-        Args:
-            nodes (list[Node]):
-            pasttime (int):
-            timestamp (int):
-            protocol (TransportProtocol|None):
-            portdetection_only (bool):
-
-        Returns:
 
         """
         if not nodes:
@@ -795,15 +627,9 @@ class Storage(DbInterface):
                           for node in nodes[i*self.nodes_limit:(i+1)*self.nodes_limit]],
                    'operator': {'>': {'time': timestamp}}}
 
-    def _transport_protocol(self, number):
+    def _transport_protocol(self, number: int):
         """
         Convert database protocol to TransportProtocol
-
-        Args:
-            number (int|None):
-
-        Returns:
-            TransportProtocol|None - None if number is None
 
         """
         if number is None:
@@ -811,15 +637,9 @@ class Storage(DbInterface):
 
         return TransportProtocol.from_iana(number)
 
-    def _protocol_to_iana(self, protocol):
+    def _protocol_to_iana(self, protocol: 'TransportProtocol') -> [int, None]:
         """
         Convert database protocol to TransportProtocol
-
-        Args:
-            protocol (TransportProtocol):
-
-        Returns:
-            int|None - None if number is None
 
         """
         if protocol is None:
@@ -827,57 +647,35 @@ class Storage(DbInterface):
 
         return protocol.iana
 
-    def _save_scan(self, scan):
+    def _save_scan(self, scan: 'Scan') -> tuple:
         """
         Queries for saving scan into database
-
-        Args:
-            scan (Scan):
-
-        Returns:
-            list
 
         """
         return self.SAVE_SCAN_QUERY, (self._protocol_to_iana(scan.protocol), scan.scanner, scan.start, scan.end)
 
-    def _update_scan(self, scan):
+    def _update_scan(self, scan: 'Scan') -> tuple:
         return self.UPDATE_SCAN_END_QUERY, (scan.end, scan.rowid)
 
-    def save_scan(self, scan):
+    def save_scan(self, scan: 'Scan') -> 'Scan':
         """
         Save scan into storage
-
-        Args:
-            scan (Scan):
-
-        Returns:
 
         """
         self.execute(self._save_scan(scan=scan))
         scan.rowid = self.get_last_rowid()
         return scan
 
-    def update_scan(self, scan):
+    def update_scan(self, scan: 'Scan'):
         """
         Update scan in storage
-
-        Args:
-            scan (Scan):
-
-        Returns:
 
         """
         return self.execute(self._update_scan(scan=scan))
 
-    def get_scan_id(self, scan):
+    def get_scan_id(self, scan: 'Scan') -> int:
         """
         Get scan_id
-
-        Args:
-            scan (Scan):
-
-        Returns:
-            int
 
         """
         if scan.rowid:
@@ -886,31 +684,16 @@ class Storage(DbInterface):
         _scan = self.select("scans", limit=1, protocol=scan.protocol, scanner_name=scan.scanner, scan_start=scan.start)
         return _scan[0].rowid if _scan else None
 
-    def get_scans(self, protocol, scanner_name, amount=2):
+    def get_scans(self, protocol: 'TransportProtocol', scanner_name: 'str', amount: int = 2) -> list:
         """
         Obtain scans from storage. Scans are taken from newest to oldest
-
-        Args:
-            protocol (TransportProtocol):
-            scanner_name (str):
-            amount (int):
-
-        Returns:
-            list[Scan]
 
         """
         return self.select("scans", protocol=protocol, limit=amount, scanner_name=scanner_name)
 
-    def get_scans_by_node(self, node, scan):
+    def get_scans_by_node(self, node: 'Node', scan: 'Scan') -> list:
         """
         Obtain scans from storage based on given node and scan
-
-        Args:
-            node (Node):
-            scan (Scan):
-
-        Returns:
-            list[Scan]
 
         """
         return self.select("scans", limit=2, protocol=scan.protocol, scanner_name=scan.scanner, join={
@@ -920,16 +703,9 @@ class Storage(DbInterface):
             'where': {'node_id': node.id, 'node_ip': node.ip}
         })
 
-    def get_scans_by_security_scan(self, exploit, port):
+    def get_scans_by_security_scan(self, exploit: 'Exploit', port: 'Port') -> list:
         """
         Obtain scans from storage based on given exploit and port
-
-        Args:
-            exploit (Exploit):
-            port (Port):
-
-        Returns:
-            list[Scan]
 
         """
         return self.select(table='scans', join={'table': 'security_scans', 'from': 'rowid', 'to': 'scan_id', 'where':{
@@ -938,88 +714,61 @@ class Storage(DbInterface):
             'exploit_name': exploit.name
         }})
 
-    def get_scan_by_id(self, scan_id):
+    def get_scan_by_id(self, scan_id: int) -> Scan:
         """
         Obtain scan from storage
-
-        Args:
-            scan_id (int):
-
-        Returns:
-            Scan
 
         """
         return self.scan_by_id(scan_id)
 
-    def _save_vulnerabilities(self, vulnerabilities, scan):
+    def _save_vulnerabilities(self, vulnerabilities: list, scan: 'Scan') -> list:
         """
         Save vulnerabilities into local storage
-
-        Args:
-            vulnerabilities (list[Vulnerability]): list of Vulnerability
-            scan (Scan):
-
-        Returns:
-            None
 
         """
         scan_id = self.get_scan_id(scan)
-        queries = [(self.SAVE_VULNERABILITY, (scan_id, vuln.port.node.id, str(vuln.port.node.ip),
-                                              self._protocol_to_iana(vuln.port.transport_protocol), vuln.port.number,
-                                              vuln.exploit.id, vuln.subid, vuln.cve, vuln.cvss, vuln.output,
-                                              vuln.time))
-                   for vuln in vulnerabilities]
-        return queries
+        return [(self.SAVE_VULNERABILITY, (scan_id, vuln.port.node.id, str(vuln.port.node.ip),
+                                           self._protocol_to_iana(vuln.port.transport_protocol), vuln.port.number,
+                                           vuln.exploit.id, vuln.subid, vuln.cve, vuln.cvss, vuln.output,
+                                           vuln.time))
+                for vuln in vulnerabilities]
 
-    def save_vulnerabilities(self, vulnerabilities, scan):
+    def save_vulnerabilities(self, vulnerabilities: list, scan: 'Scan'):
         """
         Save vulnerabilities into local storage
-
-        Args:
-            vulnerabilities (list[Vulnerability]): list of Vulnerability
-            scan (Scan):
-
-        Returns:
-            None
 
         """
         return self.execute(self._save_vulnerabilities(vulnerabilities=vulnerabilities, scan=scan))
 
-    def _scan_from_row(self, row):
+    def _scan_from_row(self, row: list) -> 'Scan':
         return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]), scanner=row[2], rowid=row[0])
 
-    def _nodes_scan_from_row(self, row):
+    def _nodes_scan_from_row(self, row: list) -> 'NodeScan':
         return NodeScan(node=Node(node_id=row[1], ip=ipaddress.ip_address(row[2])), rowid=row[0], timestamp=row[4],
                         scan=self.get_scan_by_id(row[3]))
 
-    def _port_scan_from_row(self, row):
+    def _port_scan_from_row(self, row: list) -> 'PortScan':
         return PortScan(port=Port(node=Node(node_id=row[1], ip=ipaddress.ip_address(row[2])),
                                   number=row[4], transport_protocol=TransportProtocol.from_iana(row[5])),
                         rowid=row[0],
                         timestamp=row[6],
                         scan=self.get_scan_by_id(row[3]))
 
-    def _vulnerability_from_row(self, row):
+    def _vulnerability_from_row(self, row: list) -> 'Vulnerability':
         return Vulnerability(port=Port(transport_protocol=self._transport_protocol(row[4]), number=row[5],
                                        node=Node(node_id=row[2], ip=ipaddress.ip_address(row[3]))),
                              exploit=Exploit(exploit_id=row[6]), subid=row[7], cve=row[8], cvss=row[9], output=row[10],
                              vuln_time=row[11], rowid=row[0], scan=self.get_scan_by_id(row[1]))
 
-    def _sec_scan_from_row(self, row):
+    def _sec_scan_from_row(self, row: list) -> SecurityScan:
         return SecurityScan(port=Port(node=Node(node_id=row[5], ip=ipaddress.ip_address(row[6])),
                                       transport_protocol=self._transport_protocol(row[7]), number=row[8]),
                             rowid=row[0], scan=self.get_scan_by_id(row[1]), scan_start=row[9], scan_end=row[10],
                             exploit=Exploit(exploit_id=row[2], app=row[3], name=row[4]))
 
-    def scans_by_node_scan(self, node_scan):
+    def scans_by_node_scan(self, node_scan: 'NodeScan') -> list:
         """
         Return list of scans related to given NodeScan
-
-        Args:
-            node_scan (NodeScan):
-
-        Returns:
-            list[Scan]
 
         """
         return self.select('scans', 30, 0, join={'from': 'rowid', 'to': 'scan_id', 'table': 'nodes_scans', 'where': {
@@ -1027,15 +776,9 @@ class Storage(DbInterface):
             'node_ip': str(node_scan.node.ip),
         }})
 
-    def scans_by_port_scan(self, port_scan):
+    def scans_by_port_scan(self, port_scan: 'PortScan') -> list:
         """
         Return list of scans related to given PortScan
-
-        Args:
-            port_scan (PortScan):
-
-        Returns:
-            list[Scan]
 
         """
         return self.select('scans', 30, 0, join={'from': 'rowid', 'to': 'scan_id', 'table': 'ports_scans', 'where': {
@@ -1045,69 +788,39 @@ class Storage(DbInterface):
             'port_protocol': port_scan.port.transport_protocol
         }})
 
-    def nodes_scans_by_scan(self, scan):
+    def nodes_scans_by_scan(self, scan: 'Scan') -> list:
         """
         Return list of NodeScan for given Scan
-
-        Args:
-            scan (Scan):
-
-        Returns:
-            list[NodeScan]
 
         """
         return self.select("nodes_scans", scan_id=scan.rowid)
 
-    def ports_scans_by_scan(self, scan):
+    def ports_scans_by_scan(self, scan: 'Scan') -> list:
         """
         Return list of PortScan for given Scan
-
-        Args:
-            scan (Scan):
-
-        Returns:
-            list[PortScan]
 
         """
         return self.select("ports_scans", scan_id=scan.rowid)
 
-    def save_node_scan(self, node_scan):
+    def save_node_scan(self, node_scan: 'NodeScan') -> 'NodeScan':
         """
         Save NodeScan to the storage. Returns NodeScan with updated ROWID
-
-        Args:
-            node_scan (NodeScan):
-
-        Returns:
-            NodeScan
 
         """
         self.execute(self._save_node(node_scan.node, node_scan.scan, timestamp=node_scan.timestamp))
         node_scan.rowid = self.get_last_rowid()
         return node_scan
 
-    def save_port_scan(self, port_scan):
+    def save_port_scan(self, port_scan: 'PortScan'):
         """
         Save PortScan to the storage. Returns PortScan with updated ROWID
-
-        Args:
-            port_scan (PortScan):
-
-        Returns:
-            PortScan
 
         """
         self.execute(self._save_port(port_scan.port, port_scan.scan, timestamp=port_scan.timestamp))
 
-    def save_sec_scan(self, sec_scan):
+    def save_sec_scan(self, sec_scan: 'SecurityScan') -> 'SecurityScan':
         """
         Save SecurityScan to the storage. Returns SecurityScan with updated rowid
-
-        Args:
-            sec_scan (SecurityScan):
-
-        Returns:
-            SecurityScan
 
         """
         self.execute((self.SAVE_SECURITY_SCAN, (sec_scan.scan.rowid, sec_scan.exploit.id, sec_scan.exploit.app,
@@ -1116,16 +829,11 @@ class Storage(DbInterface):
                                                 sec_scan.port.number, sec_scan.scan_start, sec_scan.scan_end)))
 
         sec_scan.rowid = self.get_last_rowid()
+        return sec_scan
 
-    def scans_by_security_scan(self, sec_scan):
+    def scans_by_security_scan(self, sec_scan: 'SecurityScan') -> list:
         """
         Returns scans for given SecurityScan
-
-        Args:
-            sec_scan (SecurityScan):
-
-        Returns:
-            list [Scan]
 
         """
         return self.select('scans', 30, 0,
@@ -1139,15 +847,9 @@ class Storage(DbInterface):
                                     'exploit_name': sec_scan.exploit.name,
                                 }})
 
-    def scans_by_vulnerability(self, vuln):
+    def scans_by_vulnerability(self, vuln: 'Vulnerability') -> list:
         """
         Returns scans for given vulnerability
-
-        Args:
-            vuln (Vulnerability):
-
-        Returns:
-            list [Scan]
 
         """
         return self.select('scans', 30, 0,
@@ -1160,15 +862,9 @@ class Storage(DbInterface):
                                     'vulnerability_subid': vuln.subid,
                                 }})
 
-    def save_vulnerability(self, vuln):
+    def save_vulnerability(self, vuln: 'Vulnerability'):
         """
         Save vulnerability into storage
-
-        Args:
-            vuln (Vulnerability):
-
-        Returns:
-            None
 
         """
         self.execute((self.SAVE_VULNERABILITY, (vuln.scan.rowid, vuln.port.node.id, str(vuln.port.node.ip),
