@@ -13,6 +13,7 @@ import logging as log
 from cpe import CPE
 from tornado import gen
 
+from database.serializer import Serializer
 from fixtures.exploits import Exploit
 
 
@@ -621,7 +622,7 @@ class Vulnerability(object):
     SERVICE_CPE = 5
 
     def __init__(self, exploit=None, port=None, output='', cve=None, cvss=0, subid=None, vuln_time=None,
-                 rowid=None, scan=None, context=None):
+                 rowid=None, scan=None, context=None, active=True):
         """
         Init values
 
@@ -642,6 +643,7 @@ class Vulnerability(object):
         self.rowid = rowid
         self.scan = scan
         self.context = context
+        self.active = active
 
     def __eq__(self, other):
         return isinstance(other, Vulnerability) and self.port == other.port and self.exploit == other.exploit and \
@@ -999,7 +1001,7 @@ class ScanContext:
     @end.setter
     def end(self, val):
         self._end = val
-        self._post_scan_hook()
+        # self._post_scan_hook()  # ToDo/FixMe: uncomment it when active column in kudu will be implemented
 
     def _post_scan_hook(self):
         """
@@ -1007,6 +1009,19 @@ class ScanContext:
 
         """
         log.debug('Executing post scan hook for scan %s', self.scan.NAME)
+        security_scans = self.aucote.storage.security_scan_by_scan(self.scan.scan)
+        vulnerabilities = self.aucote.storage.vulnerabilities_by_scan(self.scan.scan)
+
+        all_scans = {(scan.exploit.id, scan.port) for scan in security_scans}
+        found_scans = {(vuln.exploit.id, vuln.port) for vuln in vulnerabilities}
+
+        unactive_scans = all_scans - found_scans
+
+        for exploit_id, port in unactive_scans:
+            vuln = Vulnerability(exploit=self.aucote.exploits.by_id(exploit_id), port=port)
+
+            msg = Serializer.serialize_vulnerability(vuln)
+            self.aucote.kudu_queue.send_msg(msg)
 
     def add_task(self, task):
         self.tasks.append(task)

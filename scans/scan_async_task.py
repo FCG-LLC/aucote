@@ -36,6 +36,7 @@ class ScanAsyncTask(object):
         self._shutdown_condition = Event()
         self.status = ScanStatus.IDLE
         self.run_now = False
+        self.scan = None
 
     @property
     def aucote(self):
@@ -222,6 +223,7 @@ class ScanAsyncTask(object):
 
         """
         await self.update_scan_status(ScanStatus.IDLE)
+        self.context.end = time.time()
         self._shutdown_condition.set()
 
     async def update_scan_status(self, status=None):
