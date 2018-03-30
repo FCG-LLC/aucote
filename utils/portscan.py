@@ -28,7 +28,7 @@ class PortscanScanner(object):
         try:
             found_ports = await self.portscan.send(task)
         except PortscanError as exception:
-            log.error("Error during performing scan: %s", str(exception))
+            log.error("Error during performing scan: %s", exception)
             found_ports = []
 
         return list({
