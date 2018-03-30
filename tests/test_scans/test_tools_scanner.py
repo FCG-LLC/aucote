@@ -13,7 +13,7 @@ class ToolsScannerTest(AsyncTestCase):
         super(ToolsScannerTest, self).setUp()
         self.aucote = MagicMock()
         self.task = ToolsScanner(aucote=self.aucote, name='tools')
-        self.task.init()
+        self.task._init()
 
     @patch('scans.tools_scanner.Scan')
     @patch('scans.tools_scanner.Executor')

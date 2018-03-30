@@ -42,14 +42,14 @@ class ScanAsyncTask(object):
     def aucote(self):
         return self._aucote
 
-    def init(self):
+    def _init(self):
         if self.context is not None:
             raise Exception("Scan context already exists")
         self.context = ScanContext(aucote=self.aucote, scan=self)
 
-    async def __call__(self, *args, **kwargs):
+    async def __call__(self):
         try:
-            self.init()
+            self._init()
 
             if not cfg['portdetection.{name}.scan_enabled'.format(name=self.NAME)]:
                 log.info("Scanner %s is disabled", self.NAME)
