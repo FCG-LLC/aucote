@@ -105,6 +105,6 @@ scan.txt
 # Locking file
 *.pid
 
-# built documentation. rst files should be add manually
+# built documentation
 docs/build/
 *.txz
