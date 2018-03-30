@@ -1,6 +1,5 @@
 """
 Class responsible for mapping scans and port, service
-
 """
 import logging as log
 
@@ -59,13 +58,9 @@ class TaskMapper(object):
 
             self.context.add_task(task)
 
-    async def assign_tasks_for_node(self, node):
+    async def assign_tasks_for_node(self, node: 'Node') -> None:
         """
         Assign tasks for provided node
-        Args:
-            node:
-        Returns:
-            None
         """
         apps = EXECUTOR_CONFIG['node_scan']
         scripts = self._aucote.exploits.find_by_apps(apps)

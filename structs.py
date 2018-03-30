@@ -310,13 +310,9 @@ class Service(object):
         self.cpe = cpe
 
     @property
-    def cpe(self):
+    def cpe(self) -> CPE:
         """
         CPE representation of service
-
-        Returns:
-            CPE
-
         """
         return self._cpe
 
@@ -326,50 +322,34 @@ class Service(object):
             self._cpe = CPE(value)
 
     @property
-    def cpe_vendor(self):
+    def cpe_vendor(self) -> str:
         """
         Get vendor name based on CPE
-
-        Returns:
-            str|None
-
         """
         if isinstance(self._cpe, CPE):
             return self._unescape_cpe(" ".join(self._cpe.get_vendor()))
 
     @property
-    def name_with_version(self):
+    def name_with_version(self) -> str:
         """
         Service name with version included
-
-        Returns:
-            str
-
         """
         if self.version is None or self.name is None:
             return None
         return "{name} {version}".format(name=self.name, version=self.version)
 
     @property
-    def cpe_product(self):
+    def cpe_product(self) -> str:
         """
         Get product name based on CPE
-
-        Returns:
-            str|None
-
         """
         if isinstance(self._cpe, CPE):
             return self._unescape_cpe(" ".join(self._cpe.get_product()))
 
     @property
-    def cpe_version(self):
+    def cpe_version(self) -> str:
         """
         Get product name based on CPE
-
-        Returns:
-            str|None
-
         """
         if isinstance(self._cpe, CPE):
             return self._unescape_cpe(" ".join(self._cpe.get_version()))
@@ -377,29 +357,18 @@ class Service(object):
     def __str__(self):
         return "{name} {version}".format(name=self.name or '', version=self.version or '').strip()
 
-    def copy(self):
+    def copy(self) -> 'Service':
         """
         Make copy of service
-
-        Returns:
-            Service
-
         """
         return_value = Service(name=self.name, version=self.version)
         return_value._cpe = self._cpe
         return return_value
 
     @classmethod
-    def _escape_cpe(cls, text):
+    def _escape_cpe(cls, text: str) -> str:
         """
         Special characters should be escaped before building CPE string
-
-        Args:
-            text (str):
-
-        Returns:
-            str
-
         """
         text = text.lower()
 
@@ -412,7 +381,7 @@ class Service(object):
         return cls._ESCAPE_CPE.sub(_replace, text)
 
     @classmethod
-    def _unescape_cpe(cls, text):
+    def _unescape_cpe(cls, text: str) -> str:
         text = text.lower()
 
         def _replace(txt):
@@ -421,15 +390,9 @@ class Service(object):
         return cls._UNESCAPE_CPE.sub(_replace, text)
 
     @classmethod
-    def validate_cpe_arguments(cls, vendor, product, version):
+    def validate_cpe_arguments(cls, vendor: str, product: str, version: str) -> (str, str, str):
         """
         Validate cpe arguments, and fix as much as possible
-        Args:
-            vendor (str):
-            product (str):
-            version (str):
-        Returns:
-            tuple
         """
         if " " in version:
             if product.lower() == "ios":
@@ -442,16 +405,9 @@ class Service(object):
         return cls._escape_cpe(vendor), cls._escape_cpe(product), cls._escape_cpe(version)
 
     @classmethod
-    def build_cpe(cls, part, vendor='*', product='*', version='*'):
+    def build_cpe(cls, part: 'CPEType', vendor: str = '*', product: str = '*', version: str = '*') -> str:
         """
         Build cpe 2.3 string base on vendor, product, version and part
-        Args:
-            part (CPEType):
-            vendor (str):
-            product (str):
-            version (str):
-        Returns:
-            str: cpe2.3 string
         """
         vendor, product, version = cls.validate_cpe_arguments(vendor=vendor, product=product, version=version)
 

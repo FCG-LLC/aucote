@@ -10,16 +10,9 @@ class Tool(Task):
     Tool is a object, which can execute one of more scripts, e.g. Nmap, Hydra
 
     """
-    def __init__(self, exploits, port, config, *args, **kwargs):
+    def __init__(self, exploits: list, port: 'Port', config: dict, *args, **kwargs):
         """
         Init values needed to run and proceed command
-
-        Args:
-            executor: tasks executor
-            exploits: list of exploits for using by tool
-            port: port used by tool
-            config: tool configuration
-
         """
         super(Tool, self).__init__(*args, **kwargs)
         self._port = None
@@ -37,24 +30,13 @@ class Tool(Task):
     def call(self, *args, **kwargs):
         """
         It is main call for executor. Should be override by inherits classes
-
-        Args:
-            *args:
-            **kwargs:
-
-        Returns:
-
         """
         raise NotImplementedError
 
     @property
-    def port(self):
+    def port(self) -> 'Port':
         """
         Port, which is under testing
-
-        Returns:
-            Port
-
         """
         return self._port
 

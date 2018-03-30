@@ -26,14 +26,6 @@ class NmapTool(Tool):
         Prepares nmap args, executes and manages nmap scripts.
 
         If there is a list of different arguments and this same script name, they shouldn't be executed together
-
-        Args:
-            *args:
-            **kwargs:
-
-        Returns:
-            None
-
         """
         tasks = self._get_tasks()
 
