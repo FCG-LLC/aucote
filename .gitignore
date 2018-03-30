@@ -107,5 +107,4 @@ scan.txt
 
 # built documentation. rst files should be add manually
 docs/build/
-*.rst
 *.txz
