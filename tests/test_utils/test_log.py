@@ -33,4 +33,4 @@ class ConfigFileTest(AsyncTestCase):
             call(filename='test_file', level='info', log_format='TEST format', max_file_size=45678, max_files=13,
                  name=None, propagate=True),
             call(filename='test_file.WARNING', level='warning', log_format='TEST format', max_file_size=45678,
-                 max_files=13, name=None, propagate=True)))
+                 max_files=13, name=None, propagate=True, fresh=False, stderr=False)))

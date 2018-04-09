@@ -3,8 +3,17 @@ Configures logging subsystem.
 """
 import logging as log
 import sys
-
 from pycslib.logger import setup_logger
+
+
+# FixMe: update pycslib and reuse variables from it
+LOG_LEVEL = {
+    'critical': log.CRITICAL,
+    'error': log.ERROR,
+    'warning': log.WARNING,
+    'info': log.INFO,
+    'debug': log.DEBUG
+}
 
 
 async def config(cfg: dict):
@@ -42,9 +51,10 @@ async def config(cfg: dict):
                      log_format=_cfg['format'], filename=_cfg['file'], level=_cfg['level'], propagate=_cfg['propagate'])
 
         # Log errors to separate file
-        if _cfg['level'] not in {'error', 'warning'}:
-            setup_logger(name=logger, max_file_size=_cfg['max_file_size'], max_files=_cfg['max_files'],
-                         log_format=_cfg['format'], filename=_cfg['file']+'.WARNING', level='warning',
-                         propagate=_cfg['propagate'])
+        for error_level in ('warning', 'error'):
+            if LOG_LEVEL[_cfg['level']] < LOG_LEVEL[error_level]:
+                setup_logger(name=logger, max_file_size=_cfg['max_file_size'], max_files=_cfg['max_files'],
+                             log_format=_cfg['format'], filename=_cfg['file']+'.{}'.format(error_level.upper()),
+                             level=error_level, propagate=_cfg['propagate'], fresh=False, stderr=False)
 
     log.info("========================= Starting application =========================")
