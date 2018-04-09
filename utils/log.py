@@ -55,6 +55,6 @@ async def config(cfg: dict):
             if LOG_LEVEL[_cfg['level']] < LOG_LEVEL[error_level]:
                 setup_logger(name=logger, max_file_size=_cfg['max_file_size'], max_files=_cfg['max_files'],
                              log_format=_cfg['format'], filename=_cfg['file']+'.{}'.format(error_level.upper()),
-                             level=error_level, propagate=_cfg['propagate'])
+                             level=error_level, propagate=_cfg['propagate'], fresh=False, stderr=False)
 
     log.info("========================= Starting application =========================")
