@@ -982,6 +982,10 @@ class ScanContext:
         while self.unfinished_tasks():
             await gen.sleep(1)
 
+    async def wait_on_scan_end(self):
+        while not self.is_scan_end():
+            await gen.sleep(1)
+
     def unfinished_tasks(self):
         return [task for task in self.tasks if not task.has_finished()]
 

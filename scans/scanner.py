@@ -111,7 +111,9 @@ class Scanner(ScanAsyncTask):
                         if self.context.cancelled():
                             log.warning('Skip scanning %s because of cancelling scan %s', node.ip, self.NAME)
                             continue
+                        log.debug('Scanning %s by scan %s', node.ip, self.NAME)
                         ports = await scanner.scan_ports([node])
+                        log.debug('Found %s ports for %s for scan %s', len(ports), node.ip, self.NAME)
                         await self._scan_ports(ports=ports, scan_only=scan_only, scan=scan)
 
         self.context.add_task(Executor(context=self.context, nodes=nodes, ports=self._get_special_ports(),

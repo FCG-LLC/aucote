@@ -365,16 +365,17 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
     @gen_test
     async def test_stop(self):
+        self.thread._init()
         tasks = [MagicMock(), MagicMock()]
         self.thread.context.cancel = MagicMock()
         self.thread.context.is_scan_end = MagicMock(return_value=False)
         self.thread.context.unfinished_tasks = MagicMock(return_value=tasks)
-        self.thread.context.wait_on_tasks_finish = MagicMock(return_value=Future())
-        self.thread.context.wait_on_tasks_finish.return_value.set_result(None)
+        self.thread.context.wait_on_scan_end = MagicMock(return_value=Future())
+        self.thread.context.wait_on_scan_end.return_value.set_result(None)
 
         await self.thread.stop()
 
         for task in tasks:
-            task.stop.assert_called_once_with()
+            task.cancel.assert_called_once_with()
 
         self.thread.context.cancel.assert_called_once_with()

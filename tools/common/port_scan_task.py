@@ -67,7 +67,7 @@ class PortScanTask(object):
         ports = OpenPortsParser.parse(xml, node_by_ip)
         return ports
 
-    def cancel(self):
+    def kill(self):
         if self.command:
             self.command.kill()
 

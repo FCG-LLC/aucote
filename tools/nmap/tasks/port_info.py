@@ -88,12 +88,12 @@ class NmapPortInfoTask(PortTask):
         xml = await self.command.async_call(args=args)
         banner = xml.find("host/ports/port/script[@id='banner']")
         if banner is None:
-            log.warning('No banner for %s:%i', self._port.node.ip, self._port.number)
+            log.debug('No banner for %s:%i', self._port.node.ip, self._port.number)
         else:
             self._port.banner = banner.get('output')
         service = xml.find("host/ports/port/service")
         if service is None:
-            log.warning('No service for %s:%i', self._port.node.ip, self._port.number)
+            log.debug('No service for %s:%i', self._port.node.ip, self._port.number)
         else:
             self._port.protocol = service.get('name')
             if self._port.protocol == 'http':
@@ -188,8 +188,6 @@ class NmapPortInfoTask(PortTask):
         for change in changes:
             self.aucote.kudu_queue.send_msg(Serializer.serialize_vulnerability_change(change))
 
-    def cancel(self):
+    def kill(self):
         if self.command:
             self.command.kill()
-
-        super().cancel()

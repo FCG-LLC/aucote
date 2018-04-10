@@ -31,7 +31,8 @@ class ScanAsyncTask(object):
 
     def __init__(self, aucote):
         self._current_scan = []
-        self.context = ScanContext(aucote=aucote, scan=self)
+        self._aucote = aucote
+        self.context = None
         self.scan_start = None
         self._shutdown_condition = Event()
         self.status = ScanStatus.IDLE
@@ -39,25 +40,35 @@ class ScanAsyncTask(object):
 
     @property
     def aucote(self):
-        return self.context.aucote
+        return self._aucote
 
-    async def __call__(self, *args, **kwargs):
-        self.context = ScanContext(aucote=self.context.aucote, scan=self)  # FixMe: Really bad
-        if not cfg['portdetection.{name}.scan_enabled'.format(name=self.NAME)]:
-            log.info("Scanner %s is disabled", self.NAME)
-            return
-        log.info("Starting %s scanner", self.NAME)
+    def _init(self):
+        if self.context is not None:
+            raise Exception("Scan context already exists")
+        self.context = ScanContext(aucote=self.aucote, scan=self)
 
-        result = await self.run()
+    async def __call__(self):
+        try:
+            self._init()
 
-        run_after = cfg['portdetection.{name}.run_after'.format(name=self.NAME)]
-        for scan_name in run_after:
+            if not cfg['portdetection.{name}.scan_enabled'.format(name=self.NAME)]:
+                log.info("Scanner %s is disabled", self.NAME)
+                return
+            log.info("Starting %s scanner", self.NAME)
 
-            scan_task = self.aucote.async_task_manager.crontab_task(scan_name)
-            if scan_task is not None:
-                self.aucote.ioloop.add_callback(partial(scan_task, run_now=True))
+            result = await self.run()
 
-        return result
+            run_after = cfg['portdetection.{name}.run_after'.format(name=self.NAME)]
+            for scan_name in run_after:
+
+                scan_task = self.aucote.async_task_manager.crontab_task(scan_name)
+                if scan_task is not None:
+                    self.aucote.ioloop.add_callback(partial(scan_task, run_now=True))
+
+            return result
+        finally:
+            self.context.end = time.time()
+            self.context = None
 
     async def run(self):
         raise NotImplementedError()
@@ -291,6 +302,10 @@ class ScanAsyncTask(object):
 
         """
         log.info('Stopping scan %s', self.NAME)
+        if self.context is None:
+            log.warning("There is no %s scan in progress", self.NAME)
+            return
+        
         self.context.cancel()
 
         if not self.context.is_scan_end():
@@ -298,7 +313,8 @@ class ScanAsyncTask(object):
 
             log.warning('Cancelling %s tasks for scan %s', len(tasks), self.NAME)
             for task in tasks:
-                task.stop()
-            await self.context.wait_on_tasks_finish()
+                task.cancel()
+
+        await self.context.wait_on_scan_end()
 
         log.info('Scan %s cancelled successfully', self.NAME)

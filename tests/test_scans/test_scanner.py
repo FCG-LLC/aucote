@@ -38,6 +38,7 @@ class ScannerTest(AsyncTestCase):
         self.aucote.async_task_manager.stop.return_value = atm_stop_future
 
         self.thread = Scanner(aucote=self.aucote)
+        self.thread._init()
         self.thread._cron_tasks = {
             1: MagicMock(),
             2: MagicMock()

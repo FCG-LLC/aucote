@@ -60,7 +60,7 @@ class _Executor(Thread):
         """
         Stop task. Important especially for Subprocess based tasks
         """
-        self.task.cancel()
+        self.task.kill()
 
         # As Subprocess based tasks generate traffic only using external tool, they should exit gracefully
         if not isinstance(self.task, (CommandTask, NmapPortInfoTask, PortScanTask)):

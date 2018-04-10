@@ -135,22 +135,28 @@ class Task(object):
 
     def cancel(self):
         """
-        Cancels tasks. As for now part of tasks are executed in ioloop and terminated externally by stopping ioloop,
-        the default behaviour is to do nothing
+        Cancels tasks. If task is already executing stop it
         """
-        self._cancelled = True
-        self.finish_time = 0
+        log.debug('Cancelling task %s', self)
 
-    def stop(self):
-        """
-        Stop task executing
-        """
         if self.executor is not None:
-            log.debug('Stopping task %s', self)
-            self.executor.stop()
-        else:
-            log.debug('Cancelling task %s', self)
-            self.cancel()
+            log.debug('Task %s is already processing. Stopping it', self)
+            self._stop()
+
+        self._cancelled = True
+        self.finish_time = time.time()
+
+    def _stop(self):
+        """
+        Stop executing task
+        """
+        self.executor.stop()
+
+    def kill(self):
+        """
+        Kill task, by default do nothing
+        """
+        pass
 
     def clear(self):
         """
