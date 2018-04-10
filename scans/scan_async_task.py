@@ -67,6 +67,7 @@ class ScanAsyncTask(object):
 
             return result
         finally:
+            self.context.end = time.time()
             self.context = None
 
     async def run(self):
