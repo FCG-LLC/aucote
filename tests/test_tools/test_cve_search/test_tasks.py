@@ -58,6 +58,18 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         self.context = ScanContext(aucote=self.aucote, scan=None)
         self.task = CVESearchServiceTask(context=self.context, port=self.port, exploits=[self.exploit], scan=self.scan)
 
+        self.vuln_1 = Vulnerability(port=self.port, exploit=self.exploit, cve='CVE-2016-8612', cvss=3.3,
+                                    output='CVE: CVE-2016-8612\nCWE: CWE-20\nCVSS: 3.3\n\ntest summary 1',
+                                    context=self.context, subid=0)
+
+        self.vuln_2 = Vulnerability(port=self.port, exploit=self.exploit, cve='CVE-2017-9798', cvss=5.0,
+                                    output='CVE: CVE-2017-9798\nCWE: CWE-416\nCVSS: 5.0\n\ntest summary 2',
+                                    context=self.context, subid=1)
+
+        self.vuln_3 = Vulnerability(port=self.port, exploit=self.exploit, cve='CVE-2017-9788', cvss=6.4,
+                                    output='CVE: CVE-2017-9788\nCWE: CWE-200\nCVSS: 6.4\n\ntest summary 3',
+                                    context=self.context, subid=2)
+
     def test_init(self):
         self.assertEqual(self.task.api, 'localhost:200')
 
@@ -103,7 +115,7 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         results = CVESearchVulnerabilityResults()
 
         vulnerability_1 = MagicMock()
-        vulnerability_1.summary = 'test_vuln'
+        vulnerability_1.output = 'test_vuln'
 
         results.vulnerabilities = (vulnerability_1, )
 
@@ -156,19 +168,10 @@ class CVESearchServiceTaskTest(AsyncTestCase):
 
         await self.task()
 
-        vuln_1 = Vulnerability(port=self.port, exploit=self.exploit, cve='CVE-2016-8612', cvss=3.3,
-                               output='test summary 1', context=self.context, subid=0)
-
-        vuln_2 = Vulnerability(port=self.port, exploit=self.exploit, cve='CVE-2017-9798', cvss=5.0,
-                               output='test summary 2', context=self.context, subid=1)
-
-        vuln_3 = Vulnerability(port=self.port, exploit=self.exploit, cve='CVE-2017-9788', cvss=6.4,
-                               output='test summary 3', context=self.context, subid=2)
-
         self.task.store_vulnerability.assert_has_calls((
-            call(vuln_1),
-            call(vuln_2),
-            call(vuln_3),
+            call(self.vuln_1),
+            call(self.vuln_2),
+            call(self.vuln_3),
         ), any_order=True)
 
     def test_get_node_cpe(self):
