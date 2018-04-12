@@ -40,6 +40,7 @@ class Serializer:
         msg.add_datetime(vuln.port.when_discovered)  # port_scan_start
         msg.add_str(vuln.output)
         msg.add_int(vuln.exploit.id if vuln.exploit is not None else 0)
+        msg.add_int(vuln.subid)
         msg.add_datetime(vuln.when_discovered)
         msg.add_str(vuln.port.node.os.name_with_version)
         msg.add_str(vuln.exploit.metric.name if vuln.exploit is not None and vuln.exploit.metric is not None else '')
@@ -47,7 +48,6 @@ class Serializer:
         msg.add_str(vuln.exploit.app if vuln.exploit is not None else '')
         msg.add_str(vuln.exploit.name if vuln.exploit is not None else '')
         msg.add_long(vuln.exploit.tags_mask if vuln.exploit is not None else 0)
-        msg.add_int(vuln.subid)
         return msg
 
     @classmethod
