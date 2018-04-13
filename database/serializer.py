@@ -3,6 +3,8 @@ Provides serializers for database
 """
 from enum import Enum
 
+from math import floor
+
 from fixtures.exploits import Exploit
 from structs import Vulnerability, Port, VulnerabilityChange
 from utils.kudu_queue import KuduMsg
@@ -48,6 +50,8 @@ class Serializer:
         msg.add_str(vuln.exploit.app if vuln.exploit is not None else '')
         msg.add_str(vuln.exploit.name if vuln.exploit is not None else '')
         msg.add_long(vuln.exploit.tags_mask if vuln.exploit is not None else 0)
+        msg.add_str(vuln.cve)
+        msg.add_byte(floor(vuln.cvss*10))
         return msg
 
     @classmethod

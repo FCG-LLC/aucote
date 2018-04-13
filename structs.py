@@ -591,13 +591,21 @@ class Vulnerability(object):
         self.output = str(output)
         self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
         self.port = port
-        self.cve = cve if cve is not None else exploit.cve if exploit else None
-        self.cvss = float(cvss) if cvss is not None else exploit.cvss if exploit is not None else 0.
+        self._cve = cve
+        self._cvss = cvss
         self.subid = subid
         self.time = vuln_time or time.time()
         self.rowid = rowid
         self.scan = scan
         self.context = context
+
+    @property
+    def cve(self):
+        return self._cve if self._cve is not None else self.exploit.cve if self.exploit else ''
+
+    @property
+    def cvss(self):
+        return float(self._cvss) if self._cvss is not None else self.exploit.cvss if self.exploit is not None else 0.
 
     def __eq__(self, other):
         return isinstance(other, Vulnerability) and self.port == other.port and self.exploit == other.exploit and \

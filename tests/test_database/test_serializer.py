@@ -43,6 +43,8 @@ class SerializerTest(TestCase):
         self.exploit.title = 'test_title'
         self.exploit.description = 'test_description'
         self.exploit.risk_level = RiskLevel.from_name('High')
+        self.exploit.cve = 'CVE-2018-0001'
+        self.exploit.cvss = 9.8
         self.exploit.metric = ExploitMetric.VNC_INFO
         self.exploit.category = ExploitCategory.VULN
         self.exploit.tags = {ExploitTag.HTTP, ExploitTag.SSL, ExploitTag.HTTPS}
@@ -57,7 +59,7 @@ class SerializerTest(TestCase):
                              b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
                              b'\x00\x00\x04\x00Test\x01\x00\x00\x00\x0f\x00\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x15'
                              b'\x00test_name_and_version\x08\00VNC_INFO\x03\x00tcp\x08\x00test_app\t\x00test_name\x1a'
-                             b'\x00\x00\x00\x00\x00\x00\x00')
+                             b'\x00\x00\x00\x00\x00\x00\x00\r\x00CVE-2018-0001b')
 
         self.assertEqual(result, expected)
 
@@ -68,7 +70,7 @@ class SerializerTest(TestCase):
                              b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
                              b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0`\xd5!\x03\x00\x00\x00\x15\x00'
                              b'test_name_and_version\x05\x00OTHER\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                             b'\x00')
+                             b'\x00\x00\x00\x00')
 
         self.assertEqual(result, expected)
 

@@ -488,7 +488,7 @@ class VulnerabilityTest(TestCase):
     def test_init(self):
         vulnerability = Vulnerability()
 
-        self.assertEqual(vulnerability.cve, None)
+        self.assertEqual(vulnerability.cve, '')
         self.assertEqual(vulnerability.cvss, 0.)
 
     def test_init_with_exploit(self):
