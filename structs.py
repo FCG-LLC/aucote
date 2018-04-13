@@ -576,7 +576,7 @@ class Vulnerability(object):
     SERVICE_BANNER = 4
     SERVICE_CPE = 5
 
-    def __init__(self, exploit=None, port=None, output='', cve=None, cvss=0, subid=0, vuln_time=None,
+    def __init__(self, exploit=None, port=None, output='', cve=None, cvss=None, subid=0, vuln_time=None,
                  rowid=None, scan=None, context=None):
         """
         Init values
@@ -591,8 +591,8 @@ class Vulnerability(object):
         self.output = str(output)
         self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
         self.port = port
-        self.cve = cve
-        self.cvss = float(cvss)
+        self.cve = cve if cve is not None else exploit.cve if exploit else None
+        self.cvss = float(cvss) if cvss is not None else exploit.cvss if exploit is not None else 0.
         self.subid = subid
         self.time = vuln_time or time.time()
         self.rowid = rowid
