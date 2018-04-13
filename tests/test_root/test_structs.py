@@ -6,9 +6,9 @@ from cpe import CPE
 from tornado.testing import AsyncTestCase, gen_test
 
 from structs import Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState, \
-    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange, PortScan, ScanContext
+    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange, PortScan, ScanContext, Vulnerability
 from structs import TransportProtocol
-from fixtures.exploits import RiskLevel
+from fixtures.exploits import RiskLevel, Exploit
 
 
 class TransportProtocolTest(TestCase):
@@ -478,3 +478,27 @@ class ScanContextTest(AsyncTestCase):
         result = self.context.is_scan_end()
 
         self.assertTrue(result)
+
+
+class VulnerabilityTest(TestCase):
+    def setUp(self):
+        self.exploit = Exploit(exploit_id=15, name='test_name', app='test_app', cve='CVE-2017-XXXX,CVE-2018-XXX',
+                               cvss='4.6')
+
+    def test_init(self):
+        vulnerability = Vulnerability()
+
+        self.assertEqual(vulnerability.cve, None)
+        self.assertEqual(vulnerability.cvss, 0.)
+
+    def test_init_with_exploit(self):
+        vulnerability = Vulnerability(exploit=self.exploit)
+
+        self.assertEqual(vulnerability.cve, 'CVE-2017-XXXX,CVE-2018-XXX')
+        self.assertEqual(vulnerability.cvss, 4.6)
+
+    def test_init_with_params(self):
+        vulnerability = Vulnerability(exploit=self.exploit, cve='CVE-XXXX-XXXX', cvss=6.7)
+
+        self.assertEqual(vulnerability.cve, 'CVE-XXXX-XXXX')
+        self.assertEqual(vulnerability.cvss, 6.7)
