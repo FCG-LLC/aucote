@@ -14,81 +14,60 @@ class KuduMsg:
     """
     Class which represents message for Kudu
     """
+    MAGIC_WORD = 0xEDB7
+    PROTOCOL_VERSION = 0x1
+
+    SECURITY_AUDITS = 0x8
+    SECURITY_EXPLOITS = 0x9
+    SECURITY_CHANGES = 0xf
 
     _ENDIANNESS = 'little'
 
-    def __init__(self):
+    def __init__(self, queue_type=None):
         """
         init variables
         """
 
         self._data = bytearray()
+        self._type = queue_type
 
-    def add_bool(self, val):
-        """
-        Add boolean value to data
-        """
-
+    def _convert_bool(self, val):
         assert isinstance(val, bool)
-        self._data.extend(val.to_bytes(1, self._ENDIANNESS))
+        return val.to_bytes(1, self._ENDIANNESS)
 
-    def add_byte(self, val):
-        """
-        Add byte to data
-        """
-
+    def _convert_byte(self, val):
         assert isinstance(val, int)
-        self._data.extend(val.to_bytes(1, self._ENDIANNESS))
+        return val.to_bytes(1, self._ENDIANNESS)
 
-    def add_short(self, val):
-        """
-        Add short value to data
-        """
-
+    def _convert_short(self, val):
         assert isinstance(val, int)
-        self._data.extend(val.to_bytes(2, self._ENDIANNESS))
+        return val.to_bytes(2, self._ENDIANNESS)
 
-    def add_int(self, val):
-        """
-        Add int value to data
-        """
+    def _convert_int(self, val):
         if val is None:
             val = 0
 
         assert isinstance(val, int)
-        self._data.extend(val.to_bytes(4, self._ENDIANNESS))
+        return val.to_bytes(4, self._ENDIANNESS)
 
-    def add_long(self, val):
-        """
-        Add long value to data
-        """
-
+    def _convert_long(self, val):
         assert isinstance(val, int)
-        self._data.extend(val.to_bytes(8, self._ENDIANNESS))
+        return val.to_bytes(8, self._ENDIANNESS)
 
-    def add_str(self, val=None):
-        """
-        Add string value to data
-        """
+    def _convert_str(self, val=None):
         if val is None:
             val = ''
 
         assert isinstance(val, str)
         bytestring = val.encode('utf-8')
-        self.add_short(len(bytestring))
-        self._data.extend(bytestring)
+        return self._convert_short(len(bytestring)) + bytestring
 
-    def add_datetime(self, val):
-        """
-        Add timestamp value to data
-
-        """
+    def _convert_datetime(self, val):
         if val is None:
-            self.add_long(0)
-            return
-        self.add_long(round(1000*val))
+            return self._convert_long(0)
+        return self._convert_long(round(1000*val))
 
-    def add_ip(self, val):
+    def _convert_ip(self, val):
         """
         Add ip value to data
         """
@@ -97,7 +76,57 @@ class KuduMsg:
         if isinstance(val, IPv4Address):
             txt = '2002:%02x%02x:%02x%02x::' % tuple(val.packed)
             val = IPv6Address(txt)
-        self._data.extend(val.packed)
+        return val.packed
+
+    def add_bool(self, val):
+        """
+        Add boolean value to data
+        """
+
+        self._data.extend(self._convert_bool(val))
+
+    def add_byte(self, val):
+        """
+        Add byte to data
+        """
+        self._data.extend(self._convert_byte(val))
+
+    def add_short(self, val):
+        """
+        Add short value to data
+        """
+        self._data.extend(self._convert_short(val))
+
+    def add_int(self, val):
+        """
+        Add int value to data
+        """
+        self._data.extend(self._convert_int(val))
+
+    def add_long(self, val):
+        """
+        Add long value to data
+        """
+        self._data.extend(self._convert_long(val))
+
+    def add_str(self, val=None):
+        """
+        Add string value to data
+        """
+        self._data.extend(self._convert_str(val))
+
+    def add_datetime(self, val):
+        """
+        Add timestamp value to data
+
+        """
+        self._data.extend(self._convert_datetime(val))
+
+    def add_ip(self, val):
+        """
+        Add ip value to data
+        """
+        self._data.extend(self._convert_ip(val))
 
     @property
     def data(self):

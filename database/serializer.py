@@ -27,7 +27,7 @@ class Serializer:
         """
         Serializes Vulnerability
         """
-        msg = KuduMsg()
+        msg = KuduMsg(KuduMsg.SECURITY_AUDITS)
         msg.add_short(MsgType.VULNERABILITY.value)
         msg.add_datetime(vuln.port.scan.start)  # scan_start
         msg.add_short(vuln.port.number)
@@ -57,7 +57,7 @@ class Serializer:
         """
         Serializes Exploit
         """
-        msg = KuduMsg()
+        msg = KuduMsg(KuduMsg.SECURITY_EXPLOITS)
         msg.add_short(MsgType.EXPLOIT.value)
         msg.add_int(exploit.id)
         msg.add_str(exploit.app)
@@ -74,7 +74,7 @@ class Serializer:
         """
         Serializes VulnerabilityChange
         """
-        msg = KuduMsg()
+        msg = KuduMsg(KuduMsg.SECURITY_CHANGES)
         msg.add_short(MsgType.CHANGE.value)
         msg.add_ip(vuln_change.node_ip)
         msg.add_short(vuln_change.port_number)
