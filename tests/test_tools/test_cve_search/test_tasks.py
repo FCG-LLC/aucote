@@ -1,12 +1,14 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 
 from cpe import CPE
+
+from os import path
 from tornado.concurrent import Future
 from tornado.httpclient import HTTPError, HTTPRequest, HTTPResponse
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
-from structs import Port, Node, Scan, TransportProtocol, Service, PhysicalPort, ScanContext
+from structs import Port, Node, Scan, TransportProtocol, Service, PhysicalPort, ScanContext, Vulnerability
 from tools.cve_search.exceptions import CVESearchApiException
 from tools.cve_search.structs import CVESearchVulnerabilityResults
 from tools.cve_search.tasks import CVESearchServiceTask
@@ -30,6 +32,11 @@ class CVESearchServiceTaskTest(AsyncTestCase):
             }
         }
 
+        self.example_output = ''
+
+        with open(path.join(path.dirname(path.abspath(__file__)), 'example_output.json'), 'rb') as f:
+            self.example_output = f.read()
+
         self.node = Node(ip='127.0.0.1', node_id=None)
 
         self.port = Port(node=self.node, transport_protocol=TransportProtocol.TCP, number=22)
@@ -45,11 +52,23 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         self.cpe_without_version = 'cpe:/o:cisco:ios'
         self.node.os.cpe = self.os_cpe_txt
         self.port.service.cpe = self.cpe_txt
-        self.exploit = Exploit(exploit_id=1)
+        self.exploit = Exploit(exploit_id=1337, name='cve-search', app='cve-search')
         self.aucote = MagicMock()
         self.scan = Scan()
         self.context = ScanContext(aucote=self.aucote, scan=None)
         self.task = CVESearchServiceTask(context=self.context, port=self.port, exploits=[self.exploit], scan=self.scan)
+
+        self.vuln_1 = Vulnerability(port=self.port, exploit=self.exploit, cve='CVE-2016-8612', cvss=3.3,
+                                    output='CVE: CVE-2016-8612\nCWE: CWE-20\nCVSS: 3.3\n\ntest summary 1',
+                                    context=self.context, subid=0)
+
+        self.vuln_2 = Vulnerability(port=self.port, exploit=self.exploit, cve='CVE-2017-9798', cvss=5.0,
+                                    output='CVE: CVE-2017-9798\nCWE: CWE-416\nCVSS: 5.0\n\ntest summary 2',
+                                    context=self.context, subid=1)
+
+        self.vuln_3 = Vulnerability(port=self.port, exploit=self.exploit, cve='CVE-2017-9788', cvss=6.4,
+                                    output='CVE: CVE-2017-9788\nCWE: CWE-200\nCVSS: 6.4\n\ntest summary 3',
+                                    context=self.context, subid=2)
 
     def test_init(self):
         self.assertEqual(self.task.api, 'localhost:200')
@@ -136,22 +155,24 @@ class CVESearchServiceTaskTest(AsyncTestCase):
 
         self.assertFalse(self.task.store_vulnerability.called)
 
-    @patch('tools.cve_search.tasks.Vulnerability')
-    @patch('tools.cve_search.tasks.CVESearchParser.dict_to_results')
+    @patch('structs.time.time', MagicMock(return_value=13))
+    @patch('tools.cve_search.tasks.HTTPClient')
     @gen_test
-    async def test_call(self, mock_results, mock_vuln):
-        expected = MagicMock()
-        self.task.api_cvefor = MagicMock(return_value=Future())
-        self.task.api_cvefor.return_value.set_result([expected])
-        self.task.get_vulnerabilities = MagicMock()
+    async def test_call(self, http_client):
+        response = MagicMock()
+        response.body = self.example_output
+        http_client.instance().get.return_value = Future()
+        http_client.instance().get.return_value.set_result(response)
+
         self.task.store_vulnerability = MagicMock()
 
         await self.task()
 
-        mock_results.assert_called_once_with([expected])
-        self.task.store_vulnerability.assert_called_once_with(mock_vuln.return_value)
-        mock_vuln.assert_called_once_with(exploit=self.task.exploit, port=self.task.port,
-                                          output=mock_results.return_value.output, context=self.context)
+        self.task.store_vulnerability.assert_has_calls((
+            call(self.vuln_1),
+            call(self.vuln_2),
+            call(self.vuln_3),
+        ), any_order=True)
 
     def test_get_node_cpe(self):
         self.task._port = PhysicalPort(node=self.node)
@@ -199,21 +220,20 @@ class CVESearchServiceTaskTest(AsyncTestCase):
 
         self.assertCountEqual(result, expected)
 
-    @patch('tools.cve_search.tasks.Vulnerability')
-    @patch('tools.cve_search.tasks.CVESearchParser.dict_to_results')
+    @patch('structs.time.time', MagicMock(return_value=13))
+    @patch('tools.cve_search.tasks.CVESearchParser')
     @gen_test
-    async def test_call_with_api_exception(self, mock_results, mock_vuln):
-        expected = MagicMock()
+    async def test_call_with_api_exception(self, parser):
+        response = MagicMock()
+
         future = Future()
-        future.set_result([expected])
+        future.set_result([response])
+
         self.port.apps = [self.app, self.app_2]
         self.task.api_cvefor = MagicMock(side_effect=(CVESearchApiException('just test'), future))
-        self.task.get_vulnerabilities = MagicMock()
+
         self.task.store_vulnerability = MagicMock()
 
         await self.task()
 
-        mock_results.assert_called_once_with([expected])
-        self.task.store_vulnerability.assert_called_once_with(mock_vuln.return_value)
-        mock_vuln.assert_called_once_with(exploit=self.task.exploit, port=self.task.port,
-                                          output=mock_results.return_value.output, context=self.context)
+        parser.dict_to_results.assert_called_once_with([response])

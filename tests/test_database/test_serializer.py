@@ -17,7 +17,7 @@ class SerializerTest(TestCase):
 
     def setUp(self):
         self.serializer = Serializer()
-        self.vuln = Vulnerability()
+        self.vuln = Vulnerability(subid=15)
 
         node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         node.os = MagicMock()
@@ -55,9 +55,9 @@ class SerializerTest(TestCase):
         result = self.serializer.serialize_vulnerability(self.vuln).data
         expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
                              b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
-                             b'\x00\x00\x04\x00Test\x01\x00\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x15\x00test_na'
-                             b'me_and_version\x08\00VNC_INFO\x03\x00tcp\x08\x00test_app\t\x00test_name\x1a\x00\x00\x00'
-                             b'\x00\x00\x00\x00')
+                             b'\x00\x00\x04\x00Test\x01\x00\x00\x00\x0f\x00\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x15'
+                             b'\x00test_name_and_version\x08\00VNC_INFO\x03\x00tcp\x08\x00test_app\t\x00test_name\x1a'
+                             b'\x00\x00\x00\x00\x00\x00\x00')
 
         self.assertEqual(result, expected)
 
@@ -66,8 +66,9 @@ class SerializerTest(TestCase):
         result = self.serializer.serialize_vulnerability(Vulnerability(port=self.port)).data
         expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
                              b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
-                             b'\x00\x00\x00\x00\x00\x00\x00\x00\xf0`\xd5!\x03\x00\x00\x00\x15\x00test_name_and_version'
-                             b'\x05\x00OTHER\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+                             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0`\xd5!\x03\x00\x00\x00\x15\x00'
+                             b'test_name_and_version\x05\x00OTHER\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                             b'\x00')
 
         self.assertEqual(result, expected)
 

@@ -43,6 +43,10 @@ class CVESearchVulnerabilityResult(object):
         self.vulnerable_configuration = vulnerable_configuration or []
 
     @property
+    def cve(self):
+        return self.id
+
+    @property
     def output(self):
         """
         CVE-Search output in human readable form
@@ -55,7 +59,7 @@ class CVESearchVulnerabilityResult(object):
 CWE: {cwe}
 CVSS: {cvss}
 
-{summary}""".format(cve=self.id, cwe=self.cwe, cvss=self.cvss, summary=self.summary)
+{summary}""".format(cve=self.cve, cwe=self.cwe, cvss=self.cvss, summary=self.summary)
 
 
 class CVESearchVulnerabilityResults(object):
