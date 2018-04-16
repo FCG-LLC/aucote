@@ -12,9 +12,9 @@ class MsgType(Enum):
     """
     Class for message type
     """
-    VULNERABILITY = 0
-    EXPLOIT = 1
-    CHANGE = 2
+    VULNERABILITY = 0x8
+    EXPLOIT = 0x9
+    CHANGE = 0xf
 
 
 class Serializer:
@@ -27,8 +27,7 @@ class Serializer:
         """
         Serializes Vulnerability
         """
-        msg = KuduMsg(KuduMsg.SECURITY_AUDITS)
-        msg.add_short(MsgType.VULNERABILITY.value)
+        msg = KuduMsg(MsgType.VULNERABILITY.value)
         msg.add_datetime(vuln.port.scan.start)  # scan_start
         msg.add_short(vuln.port.number)
         msg.add_ip(vuln.port.node.ip)
@@ -57,8 +56,7 @@ class Serializer:
         """
         Serializes Exploit
         """
-        msg = KuduMsg(KuduMsg.SECURITY_EXPLOITS)
-        msg.add_short(MsgType.EXPLOIT.value)
+        msg = KuduMsg(MsgType.EXPLOIT.value)
         msg.add_int(exploit.id)
         msg.add_str(exploit.app)
         msg.add_str(exploit.name)
@@ -74,8 +72,7 @@ class Serializer:
         """
         Serializes VulnerabilityChange
         """
-        msg = KuduMsg(KuduMsg.SECURITY_CHANGES)
-        msg.add_short(MsgType.CHANGE.value)
+        msg = KuduMsg(MsgType.CHANGE.value)
         msg.add_ip(vuln_change.node_ip)
         msg.add_short(vuln_change.port_number)
         msg.add_byte(vuln_change.port_protocol.iana)

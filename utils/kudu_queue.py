@@ -14,22 +14,19 @@ class KuduMsg:
     """
     Class which represents message for Kudu
     """
-    MAGIC_WORD = 0xEDB7
+    MAGIC_WORD = 0xB7ED  # Reversed order to use in self,_convert_short
     PROTOCOL_VERSION = 0x1
-
-    SECURITY_AUDITS = 0x8
-    SECURITY_EXPLOITS = 0x9
-    SECURITY_CHANGES = 0xf
 
     _ENDIANNESS = 'little'
 
-    def __init__(self, queue_type=None):
+    def __init__(self, queue_type=None, queue_version=1):
         """
         init variables
         """
 
         self._data = bytearray()
         self._type = queue_type
+        self._version = queue_version
 
     def _convert_bool(self, val):
         assert isinstance(val, bool)
@@ -40,6 +37,8 @@ class KuduMsg:
         return val.to_bytes(1, self._ENDIANNESS)
 
     def _convert_short(self, val):
+        if val is None:
+            val = 0
         assert isinstance(val, int)
         return val.to_bytes(2, self._ENDIANNESS)
 
@@ -134,7 +133,9 @@ class KuduMsg:
         Returns kudu data
         """
 
-        return self._data
+        return self._convert_short(self.MAGIC_WORD) + self._convert_short(self.PROTOCOL_VERSION) + \
+               self._convert_int(len(self._data)) + self._convert_short(self._type) + \
+               self._convert_short(self._version) + self._data
 
 
 class KuduQueue(DbInterface):

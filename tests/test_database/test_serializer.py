@@ -54,8 +54,19 @@ class SerializerTest(TestCase):
 
     def test_vulnerability_serializer(self):
 
+        result = self.serializer.serialize_vulnerability(self.vuln)._data
+        expected = bytearray(b'\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
+                             b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
+                             b'\x00\x00\x04\x00Test\x01\x00\x00\x00\x0f\x00\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x15'
+                             b'\x00test_name_and_version\x08\00VNC_INFO\x03\x00tcp\x08\x00test_app\t\x00test_name\x1a'
+                             b'\x00\x00\x00\x00\x00\x00\x00')
+
+        self.assertEqual(result, expected)
+
+    def test_vulnerability_serializer_full_message(self):
         result = self.serializer.serialize_vulnerability(self.vuln).data
-        expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
+        expected = bytearray(b'\xed\xb7\x01\x00\x89\x00\x00\x00\x08\x00\x01\x00'
+                             b'\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
                              b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
                              b'\x00\x00\x04\x00Test\x01\x00\x00\x00\x0f\x00\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x15'
                              b'\x00test_name_and_version\x08\00VNC_INFO\x03\x00tcp\x08\x00test_app\t\x00test_name\x1a'
@@ -65,8 +76,8 @@ class SerializerTest(TestCase):
 
     @patch('structs.time.time', MagicMock(return_value=13452534))
     def test_vulnerability_serializer_port_only(self):
-        result = self.serializer.serialize_vulnerability(Vulnerability(port=self.port)).data
-        expected = bytearray(b'\x00\x00\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
+        result = self.serializer.serialize_vulnerability(Vulnerability(port=self.port))._data
+        expected = bytearray(b'\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00'
                              b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
                              b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0`\xd5!\x03\x00\x00\x00\x15\x00'
                              b'test_name_and_version\x05\x00OTHER\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -76,8 +87,8 @@ class SerializerTest(TestCase):
 
     def test_serialize_exploit(self):
 
-        result = self.serializer.serialize_exploit(self.exploit).data
-        expected = b'\x01\x00\x01\x00\x00\x00\x08\x00test_app\t\x00test_name\n\x00test_title\x10\x00test_description' \
+        result = self.serializer.serialize_exploit(self.exploit)._data
+        expected = b'\x01\x00\x00\x00\x08\x00test_app\t\x00test_name\n\x00test_title\x10\x00test_description' \
                    b'\x03\x04\x00vuln\x1a\x00\x00\x00\x00\x00\x00\x00'
 
         self.assertEqual(result, expected)
@@ -94,11 +105,11 @@ class SerializerTest(TestCase):
         current_finding = PortScan(port=port_2, scan=scan_2, rowid=15)
         change = PortDetectionChange(current_finding=current_finding, change_time=124445,
                                      previous_finding=previous_finding)
-        expected = bytearray(b'\x02\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00X\x00\x06\x00\x00'
+        expected = bytearray(b' \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00X\x00\x06\x00\x00'
                              b'\x00\x00\x00\x00\x00\x00H\xe1j\x07\x00\x00\x00\x00\x01\x00\x00\x00\x00\xf8\r@F\x00'
                              b'\x00\x00\x00\xc8\xa4(\x0b\x00\x00\x00\x00\x00\x00\x00\x00\x0b\x00test_output')
 
-        result = self.serializer.serialize_vulnerability_change(change).data
+        result = self.serializer.serialize_vulnerability_change(change)._data
 
         self.assertEqual(result, expected)
 
@@ -118,11 +129,11 @@ class SerializerTest(TestCase):
         current_finding.scan = scan_2
         change = VulnerabilityChange(current_finding=current_finding, change_time=124445,
                                      previous_finding=previous_finding)
-        expected = bytearray(b'\x02\x00 \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00X\x00\x06\x12\x00'
+        expected = bytearray(b' \x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00X\x00\x06\x12\x00'
                              b'\x00\x00\r\x00\x00\x00H\xe1j\x07\x00\x00\x00\x00\x01\x00\x00\x00\x00\x80R\xcd\x00\x00'
                              b'\x00\x00\x00\xa8\x01\xd4\x80\x01\x00\x00\x00\r\x00test_output_1\r\x00test_output_2\x15'
                              b'\x00Vulnerability changed')
 
-        result = self.serializer.serialize_vulnerability_change(change).data
+        result = self.serializer.serialize_vulnerability_change(change)._data
 
         self.assertEqual(result, expected)
