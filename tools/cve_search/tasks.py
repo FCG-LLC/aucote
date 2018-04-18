@@ -132,6 +132,6 @@ class CVESearchServiceTask(PortTask):
         return ujson.loads(response.body.decode())
 
     def get_vulnerabilities(self, results):
-        return [Vulnerability(exploit=self.exploit, port=self._port, output=result.output,
+        return [Vulnerability(exploit=self.exploit, port=self._port, output=result.summary,
                               context=self.context, cve=result.cve, cvss=result.cvss, subid=subid)
                 for subid, result in enumerate(results)]
