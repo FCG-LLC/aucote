@@ -36,14 +36,15 @@ class TasksHandlerTest(AsyncHTTPTestCase):
                                              transport_protocol=TransportProtocol.TCP,),
                                          exploits=[]))
 
-        self.tasks._task_workers = [PortTask(context=self.context,
-                                             scan=None,
-                                             port=Port(
-                                                 node=Node(node_id=task['id'], ip=ipaddress.ip_address(task['ip'])),
-                                                 number=task['port'],
-                                                 transport_protocol=TransportProtocol.TCP,),
-                                             exploits=[]) for task in worker_tasks]
-        self.tasks._task_workers.extend([None, None, None])
+        self.tasks._task_workers = {number: PortTask(context=self.context,
+                                                     scan=None,
+                                                     port=Port(
+                                                         node=Node(node_id=task['id'],
+                                                                   ip=ipaddress.ip_address(task['ip'])),
+                                                         number=task['port'],
+                                                         transport_protocol=TransportProtocol.TCP,),
+                                                     exploits=[]) for number, task in enumerate(worker_tasks)}
+        self.tasks._task_workers.update({2: None, 3: None, 4: None})
 
         self.aucote.async_task_manager = self.tasks
         self.app = Application([
@@ -60,10 +61,13 @@ class TasksHandlerTest(AsyncHTTPTestCase):
             ],
             'workers': {
                 'count': 5,
-                'jobs': [
-                    'PortTask on 127.0.0.4:78',
-                    'PortTask on 127.0.0.5:89'
-                ]
+                'jobs': {
+                    '0': 'PortTask on 127.0.0.4:78',
+                    '1': 'PortTask on 127.0.0.5:89',
+                    '2': None,
+                    '3': None,
+                    '4': None
+                }
             }
         }
         response = self.fetch('/api/v1/tasks', method='GET')
