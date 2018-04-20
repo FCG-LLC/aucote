@@ -131,7 +131,8 @@ class Task(object):
         return self.aucote.storage
 
     def __str__(self):
-        return "{} for {}".format(self.__class__.__name__, self._scan.scanner)
+        cancelled = ' ({})'.format('cancelled') if self._cancelled is True else ''
+        return "{} for {}{}".format(self.__class__.__name__, self._scan.scanner, cancelled)
 
     def cancel(self):
         """
