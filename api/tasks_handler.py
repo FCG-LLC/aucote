@@ -16,6 +16,6 @@ class TasksHandler(Handler):
             'queue': [str(task) for task in queue_tasks],
             'workers': {
                 'count': len(workers),
-                'jobs': [str(item) for item in workers if item is not None],
+                'jobs': {number: str(worker) if worker is not None else None for number, worker in workers.items()},
             }
         })
