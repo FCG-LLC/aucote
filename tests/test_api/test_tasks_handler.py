@@ -55,15 +55,15 @@ class TasksHandlerTest(AsyncHTTPTestCase):
         expected = {
             'unfinished_tasks': 4,
             'queue': [
-                'PortTask on 127.0.0.1:45',
-                'PortTask on 127.0.0.2:56',
-                'PortTask on 127.0.0.3:67'
+                '[+] [None] PortTask [on 127.0.0.1:45]',
+                '[+] [None] PortTask [on 127.0.0.2:56]',
+                '[+] [None] PortTask [on 127.0.0.3:67]'
             ],
             'workers': {
                 'count': 5,
                 'jobs': {
-                    '0': 'PortTask on 127.0.0.4:78',
-                    '1': 'PortTask on 127.0.0.5:89',
+                    '0': '[+] [None] PortTask [on 127.0.0.4:78]',
+                    '1': '[+] [None] PortTask [on 127.0.0.5:89]',
                     '2': None,
                     '3': None,
                     '4': None
