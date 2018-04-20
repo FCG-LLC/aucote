@@ -11,9 +11,8 @@ RUN apt-add-repository ppa:pi-rho/security
 
 RUN apt-get update \
     && apt-get install -y \
+         gosu \
          aucote \
-         python-pip \
-    && pip install supervisor-stdout \
     && rm -rf /var/lib/apt/lists/*
 
 RUN setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap
@@ -22,11 +21,10 @@ RUN setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/masscan
 RUN groupadd -g 10014 aucote
 RUN adduser --no-create-home --system --shell /bin/false --gecos 'aucote dedicated user' --uid 10014 --gid 10014 --disabled-password aucote
 
-COPY files/supervisor_aucote.conf /etc/supervisor/conf.d/
-
 # Capabilities to bind to low ports by other than root users
 RUN setcap 'cap_net_bind_service=+ep' /opt/aucote/venv/bin/python
 
 EXPOSE 1235
 
-CMD /usr/bin/supervisord -n
+COPY files/docker-entrypoint.sh /entrypoint.sh
+CMD ["/entrypoint.sh"]
