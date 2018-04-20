@@ -50,6 +50,17 @@ class Serializer:
         msg.add_long(vuln.exploit.tags_mask if vuln.exploit is not None else 0)
         msg.add_str(vuln.cve)
         msg.add_byte(round(vuln.cvss*10))
+        import logging as log
+
+        log.error(MsgType.VULNERABILITY.value, vuln.port.scan.start, vuln.port.number, vuln.port.node.ip,
+                  vuln.port.node.id, vuln.port.protocol, str(vuln.port.service), vuln.port.banner,
+                  vuln.port.transport_protocol.iana, vuln.port.when_discovered, vuln.output, vuln.exploit.id if vuln.exploit is not None else 0,
+                  vuln.subid, vuln.when_discovered, vuln.port.node.os.name_with_version, vuln.port.node.os.name_with_version,
+                  vuln.exploit.metric.name if vuln.exploit is not None and vuln.exploit.metric is not None else '',
+                  vuln.context.scan.NAME if vuln.context is not None else '', vuln.exploit.app if vuln.exploit is not None else '',
+                  vuln.exploit.name if vuln.exploit is not None else '', vuln.exploit.tags_mask if vuln.exploit is not None else 0,
+                  vuln.cve, round(vuln.cvss*10))
+        log.error(msg)
         return msg
 
     @classmethod
