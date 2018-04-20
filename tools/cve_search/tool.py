@@ -25,5 +25,5 @@ class CVESearchTool(Tool):
         self.context.add_task(CVESearchServiceTask(context=self.context, port=self.port, scan=self._scan,
                                                    exploits=[self.aucote.exploits.find('cve-search', 'cve-search')]))
 
-    def __str__(self):
-        return "{name} on {port}".format(name=type(self).__name__, port=self.port if self.port else self.node)
+    def additional_info(self):
+        return "on {port}".format(port=self.port if self.port else self.node)

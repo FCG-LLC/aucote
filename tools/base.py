@@ -44,5 +44,5 @@ class Tool(Task):
     def port(self, val):
         self._port = val
 
-    def __str__(self):
-        return "{name} on {port}".format(name=type(self).__name__, port=self.port)
+    def additional_info(self):
+        return "on {port}".format(port=self.port)

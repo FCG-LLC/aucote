@@ -130,9 +130,18 @@ class Task(object):
         """
         return self.aucote.storage
 
+    def additional_info(self):
+        """
+        Additional info which should be used in task name
+        """
+        return ''
+
     def __str__(self):
-        cancelled = ' ({})'.format('cancelled') if self._cancelled is True else ''
-        return "{} for {}{}".format(self.__class__.__name__, self._scan.scanner, cancelled)
+        return '[{status}] [{scan}] {task_name} [{info}]'.format(
+            scan=self.context.scan.NAME if self.context is not None and self.context.scan is not None else None,
+            status='-' if self._cancelled is True else '+', task_name=self.__class__.__name__,
+            info=self.additional_info()
+        )
 
     def cancel(self):
         """
