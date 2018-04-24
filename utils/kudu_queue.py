@@ -6,7 +6,6 @@ import logging as log
 from ipaddress import IPv4Address, IPv6Address
 
 from utils.database_interface import DbInterface
-from utils.string import bytes_str
 from nanomsg import Socket, PUSH, DONTWAIT, NanoMsgAPIError  # pylint: disable=no-name-in-module
 
 
