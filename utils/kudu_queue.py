@@ -13,7 +13,7 @@ class KuduMsg:
     """
     Class which represents message for Kudu
     """
-    MAGIC_WORD = 0xB7ED  # Reversed order to use in self,_convert_short
+    MAGIC_WORD = 0xEDB7
     PROTOCOL_VERSION = 0x1
 
     _ENDIANNESS = 'little'
@@ -172,6 +172,7 @@ class KuduQueue(DbInterface):
         """
 
         assert isinstance(msg, KuduMsg)
+        print(msg.data)
         log.debug('sending bytes to kuduworker: %s', len(msg.data))
         flags = DONTWAIT if dont_wait else 0
         try:
