@@ -55,8 +55,8 @@ class KuduMsgTest(TestCase):
     def test_add_ip(self):
         self.kudu_msg.add_ip(ipaddress.ip_address('127.0.0.1'))
 
-        self.assertEqual(self.kudu_msg._data, bytearray(b'\x20\x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                                                        b'\x00'))
+        self.assertEqual(self.kudu_msg._data, bytearray(b'\x00\x64\xff\x9b\x00\x00\x00\x00'
+                                                        b'\x00\x00\x00\x00\x7f\x00\x00\x01'))
 
 
 class KuduQueueTest(TestCase):

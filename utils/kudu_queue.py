@@ -72,7 +72,7 @@ class KuduMsg:
 
         assert isinstance(val, (IPv4Address, IPv6Address))
         if isinstance(val, IPv4Address):
-            txt = '2002:%02x%02x:%02x%02x::' % tuple(val.packed)
+            txt = '64:ff9b::%02x%02x:%02x%02x' % tuple(val.packed)
             val = IPv6Address(txt)
         return val.packed
 
