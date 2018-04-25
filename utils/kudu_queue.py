@@ -66,10 +66,6 @@ class KuduMsg:
         return self._convert_long(round(1000*val))
 
     def _convert_ip(self, val):
-        """
-        Add ip value to data
-        """
-
         assert isinstance(val, (IPv4Address, IPv6Address))
         if isinstance(val, IPv4Address):
             txt = '64:ff9b::%02x%02x:%02x%02x' % tuple(val.packed)
@@ -172,7 +168,6 @@ class KuduQueue(DbInterface):
         """
 
         assert isinstance(msg, KuduMsg)
-        print(msg.data)
         log.debug('sending bytes to kuduworker: %s', len(msg.data))
         flags = DONTWAIT if dont_wait else 0
         try:
