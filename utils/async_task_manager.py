@@ -66,6 +66,9 @@ class _Executor(Thread):
         if not isinstance(self.task, (CommandTask, NmapPortInfoTask, PortScanTask)):
             self.ioloop.stop()
 
+    def __str__(self):
+        return str(self.task)
+
 
 class AsyncTaskManager(object):
     """
