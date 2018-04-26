@@ -14,7 +14,7 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 rst:
-	@$(SPHINX_RST) -f -o .. ../..
+	@$(SPHINX_RST) -f -e -o .. ../..
 
 .PHONY: help Makefile
 

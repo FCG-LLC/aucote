@@ -4,22 +4,10 @@ tools.acuote\_ad package
 Submodules
 ----------
 
-tools.acuote\_ad.structs module
--------------------------------
+.. toctree::
 
-.. automodule:: tools.acuote_ad.structs
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tools.acuote\_ad.tool module
-----------------------------
-
-.. automodule:: tools.acuote_ad.tool
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   tools.acuote_ad.structs
+   tools.acuote_ad.tool
 
 Module contents
 ---------------

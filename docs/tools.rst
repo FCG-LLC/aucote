@@ -20,14 +20,9 @@ Subpackages
 Submodules
 ----------
 
-tools.base module
------------------
+.. toctree::
 
-.. automodule:: tools.base
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   tools.base
 
 Module contents
 ---------------
