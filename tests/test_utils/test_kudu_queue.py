@@ -15,48 +15,48 @@ class KuduMsgTest(TestCase):
     def test_add_bool(self):
         self.kudu_msg.add_bool(True)
 
-        self.assertEqual(self.kudu_msg.data, bytearray(b'\x01'))
+        self.assertEqual(self.kudu_msg._data, bytearray(b'\x01'))
 
     def test_add_byte(self):
         self.kudu_msg.add_byte(127)
 
-        self.assertEqual(self.kudu_msg.data, bytearray(b'\x7f'))
+        self.assertEqual(self.kudu_msg._data, bytearray(b'\x7f'))
 
     def test_add_short(self):
         self.kudu_msg.add_short(317)
 
-        self.assertEqual(self.kudu_msg.data, bytearray(b'\x3d\x01'))
+        self.assertEqual(self.kudu_msg._data, bytearray(b'\x3d\x01'))
 
     def test_add_int(self):
         self.kudu_msg.add_int(3171545)
 
-        self.assertEqual(self.kudu_msg.data, bytearray(b'\xd9\x64\x30\x00'))
+        self.assertEqual(self.kudu_msg._data, bytearray(b'\xd9\x64\x30\x00'))
 
     def test_add_long(self):
         self.kudu_msg.add_long(3171545)
 
-        self.assertEqual(self.kudu_msg.data, bytearray(b'\xd9\x64\x30\x00\x00\x00\x00\x00'))
+        self.assertEqual(self.kudu_msg._data, bytearray(b'\xd9\x64\x30\x00\x00\x00\x00\x00'))
 
     def test_add_str(self):
         self.kudu_msg.add_str('Test')
 
-        self.assertEqual(self.kudu_msg.data, bytearray(b'\x04\x00Test'))
+        self.assertEqual(self.kudu_msg._data, bytearray(b'\x04\x00Test'))
 
     def test_add_datetime(self):
         self.kudu_msg.add_datetime(datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp())
 
-        self.assertEqual(self.kudu_msg.data, bytearray(b'\xe7\xfb\xf2\x93V\x01\x00\x00'))
+        self.assertEqual(self.kudu_msg._data, bytearray(b'\xe7\xfb\xf2\x93V\x01\x00\x00'))
 
     def test_add_empty_datetime(self):
         self.kudu_msg.add_datetime(None)
 
-        self.assertEqual(self.kudu_msg.data, bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00'))
+        self.assertEqual(self.kudu_msg._data, bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00'))
 
     def test_add_ip(self):
         self.kudu_msg.add_ip(ipaddress.ip_address('127.0.0.1'))
 
-        self.assertEqual(self.kudu_msg.data, bytearray(b'\x20\x02\x7f\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                                                       b'\x00'))
+        self.assertEqual(self.kudu_msg._data, bytearray(b'\x00\x64\xff\x9b\x00\x00\x00\x00'
+                                                        b'\x00\x00\x00\x00\x7f\x00\x00\x01'))
 
 
 class KuduQueueTest(TestCase):
