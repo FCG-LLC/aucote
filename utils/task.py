@@ -86,7 +86,11 @@ class Task(object):
         msg = Serializer.serialize_vulnerability(vuln)
         self.kudu_queue.send_msg(msg)
 
-        self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self._scan)
+        try:
+            self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self._scan)
+        except Exception:
+            log.warning('Error during saving vulnerability (%s, %s) to the storage',
+                        vuln.explot.id if vuln.exploit is not None else None, vuln.subid)
 
     def store_vulnerabilities(self, vulnerabilities):
         """
