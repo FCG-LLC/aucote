@@ -49,10 +49,11 @@ class StorageThread(Thread):
                 with self.lock:
                     try:
                         query['result'] = self._storage.execute(query['query'])
-                        self._queue.task_done()
-                        query['event'].set()
                     except Exception as exception:
                         query['result'] = exception
+                    finally:
+                        self._queue.task_done()
+                        query['event'].set()
 
         log.debug("Exit")
 
