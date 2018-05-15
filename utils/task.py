@@ -90,7 +90,7 @@ class Task(object):
             self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self._scan)
         except Exception:
             log.warning('Error during saving vulnerability (%s, %s) to the storage',
-                        vuln.explot.id if vuln.exploit is not None else None, vuln.subid)
+                        vuln.exploit.id if vuln.exploit is not None else None, vuln.subid)
 
     def store_vulnerabilities(self, vulnerabilities):
         """
