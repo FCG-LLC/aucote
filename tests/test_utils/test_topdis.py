@@ -61,7 +61,7 @@ class TopdisTest(AsyncTestCase):
             "10.1.10.1",
             "10.12.10.1",
             "10.12.2.4",
-            "10.12.2.1"
+            "10.3.3.60"
           ],
           "managementIp": "10.12.2.1",
           "snmp": {
@@ -210,7 +210,7 @@ class TopdisTest(AsyncTestCase):
 
         nodes = await self.topdis.get_nodes()
         self.assertEqual(len(nodes), 1)
-        result = nodes[0]
+        result = list(nodes)[0]
 
         self.assertIsNone(result.os.name)
         self.assertIsNone(result.os.version)
@@ -223,10 +223,16 @@ class TopdisTest(AsyncTestCase):
 
         nodes = await self.topdis.get_nodes()
 
-        self.assertEqual(len(nodes), 9)
-        self.assertEqual(nodes[0].id, 573)
-        self.assertEqual(nodes[0].ip.exploded, '10.3.3.99')
-        self.assertEqual(nodes[0].name, 'EPSON1B0407')
+        node = None
+        for obj in nodes:
+            if obj.id == 573:
+                node = obj
+        self.assertIsNotNone(node)
+
+        self.assertEqual(len(nodes), 8)
+        self.assertEqual(node.id, 573)
+        self.assertEqual(node.ip.exploded, '10.3.3.99')
+        self.assertEqual(node.name, 'EPSON1B0407')
 
     @patch('utils.topdis.HTTPClient')
     @patch('utils.topdis.Service.build_cpe')
@@ -238,7 +244,7 @@ class TopdisTest(AsyncTestCase):
 
         nodes = await self.topdis.get_nodes()
         self.assertEqual(len(nodes), 1)
-        result = nodes[0]
+        result = list(nodes)[0]
 
         self.assertEqual(result.os.name, 'test_name')
         self.assertEqual(result.os.version, '11')
@@ -255,7 +261,7 @@ class TopdisTest(AsyncTestCase):
 
         nodes = await self.topdis.get_nodes()
         self.assertEqual(len(nodes), 1)
-        result = nodes[0]
+        result = list(nodes)[0]
 
         self.assertEqual(result.os.name, 'test_name')
         self.assertEqual(result.os.version, '11 abcde')
@@ -267,10 +273,12 @@ class TopdisTest(AsyncTestCase):
         self.req_future.set_result(self.http_client_response)
         http_client.instance().get.return_value = self.req_future
 
-        result = await self.topdis.get_nodes()
+        nodes = await self.topdis.get_nodes()
         expected = 1470915752.842891
 
-        self.assertEqual(result[0].scan.start, expected)
+        node = list(nodes)[0]
+
+        self.assertEqual(node.scan.start, expected)
 
         @patch('utils.topdis.HTTPClient')
         @gen_test
