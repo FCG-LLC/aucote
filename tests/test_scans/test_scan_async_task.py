@@ -71,9 +71,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
         node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
-        node_4 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)  # This same like node_3 for testing uniqueness
 
-        nodes = [node_1, node_2, node_3, node_4]
+        nodes = {node_1, node_2, node_3}
         future = Future()
         future.set_result(nodes)
         self.aucote.topdis.get_nodes.return_value = future
