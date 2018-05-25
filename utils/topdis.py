@@ -32,7 +32,7 @@ class Topdis(object):
         Get nodes from Topdis
 
         Returns:
-            list - list of unique nodes (Node object)
+            set of unique nodes (Node object)
 
         """
         url = '{0}/nodes?ip=t'.format(self.api)
