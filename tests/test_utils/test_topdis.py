@@ -227,6 +227,8 @@ class TopdisTest(AsyncTestCase):
         for obj in nodes:
             if obj.id == 573:
                 node = obj
+                break
+
         self.assertIsNotNone(node)
 
         self.assertEqual(len(nodes), 8)
