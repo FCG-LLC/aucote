@@ -44,7 +44,7 @@ class Task(object):
         """
         return self.aucote.kudu_queue
 
-    def __call__(self, *args, **kwargs):
+    async def __call__(self, *args, **kwargs):
         """
         Call executed by executor
 

@@ -107,6 +107,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.node_ipv6 = Node(ip=ipaddress.ip_address('::1'), node_id=None)
 
         self.port = Port(number=22, transport_protocol=TransportProtocol.TCP, node=self.node)
+        self.port.scan = Scan()
         self.port_ipv6 = Port(number=22, node=self.node_ipv6, transport_protocol=TransportProtocol.TCP)
         self.scan = Scan()
         self.scanner = MagicMock(NAME='tools')
