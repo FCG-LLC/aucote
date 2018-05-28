@@ -29,7 +29,7 @@ class AucoteHttpHeadersTask(PortTask):
         self.config = config
         super(AucoteHttpHeadersTask, self).__init__(*args, **kwargs)
 
-    async def __call__(self, *args, **kwargs):
+    async def execute(self, *args, **kwargs):
         custom_headers = {
             'Accept-Encoding': 'gzip, deflate'
         }

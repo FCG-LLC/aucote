@@ -45,7 +45,7 @@ class CommandTask(PortTask):
         """
         raise NotImplementedError
 
-    async def __call__(self):
+    async def execute(self):
         """
         Call command, parse output and stores vulnerabilities
 

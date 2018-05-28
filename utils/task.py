@@ -45,10 +45,9 @@ class Task(object):
         return self.aucote.kudu_queue
 
     async def __call__(self, *args, **kwargs):
-        """
-        Call executed by executor
+        return await self.execute(*args, **kwargs)
 
-        """
+    async def execute(self, *args, **kwargs):
         raise NotImplementedError
 
     def send_msg(self, msg):

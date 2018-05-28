@@ -34,7 +34,7 @@ class WhatWebTaskTest(AsyncTestCase):
         self.assertEqual(result, expected)
 
     @patch('scans.task_mapper.TaskMapper')
-    @patch('tools.whatweb.tasks.CommandTask.__call__')
+    @patch('tools.whatweb.tasks.CommandTask.execute')
     @gen_test
     async def test_call(self, mock_call, task_mapper):
         plugin = WhatWebPlugin()

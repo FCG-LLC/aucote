@@ -36,7 +36,7 @@ class CVESearchServiceTask(PortTask):
         self.api = cfg['tools.cve-search.api'].strip("/")
         super(CVESearchServiceTask, self).__init__(*args, **kwargs)
 
-    async def __call__(self, *args, **kwargs):
+    async def execute(self, *args, **kwargs):
         cpes = self.get_cpes()
         if not cpes:
             return

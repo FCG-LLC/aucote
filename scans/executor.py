@@ -89,7 +89,7 @@ class Executor(Task):
         for node in set(self.nodes):
             await TaskMapper(context=self.context, scan=self._scan, scanner=self.scanner).assign_tasks_for_node(node)
 
-    async def __call__(self, *args, **kwargs):
+    async def execute(self, *args, **kwargs):
         """
         Making executor callable for working as task
 

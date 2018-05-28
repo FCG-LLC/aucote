@@ -10,7 +10,7 @@ from utils.tftp import TFTPError
 
 class SietTask(PortTask):
 
-    async def __call__(self, *args, **kwargs):
+    async def execute(self, *args, **kwargs):
         try:
             result = await self.context.aucote.tftp_server.async_get_file(str(self._port.node.ip), self.callback)
 

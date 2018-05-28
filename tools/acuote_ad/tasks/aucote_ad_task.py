@@ -10,7 +10,7 @@ class AucoteActiveDirectoryTask(PortTask):
         self.nodes = nodes
         super(AucoteActiveDirectoryTask, self).__init__(*args, **kwargs)
 
-    async def __call__(self, *args, **kwargs):
+    async def execute(self, *args, **kwargs):
         self._port.scan.end = int(time.time())
         self.store_scan_end(exploits=self.current_exploits, port=self._port)
 

@@ -20,7 +20,7 @@ class Tool(Task):
         self.config = config
         self.port = port
 
-    async def __call__(self, *args, **kwargs):
+    async def execute(self, *args, **kwargs):
         """
         Called by task managers
 
