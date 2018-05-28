@@ -86,6 +86,8 @@ class NmapPortInfoTask(PortTask):
         args = self.prepare_args()
 
         xml = await self.command.async_call(args=args)
+        self.port.scan.end = int(time.time())
+
         banner = xml.find("host/ports/port/script[@id='banner']")
         if banner is None:
             log.debug('No banner for %s:%i', self._port.node.ip, self._port.number)
@@ -108,6 +110,7 @@ class NmapPortInfoTask(PortTask):
                 self._port.service.cpe = cpe.text
 
         self.storage.save_security_scan(port=self.port, exploit=self.exploit, scan=self._scan)
+
         cpe = self.port.service.cpe.as_fs() if self.port.service.cpe else None
 
         vulnerabilities = [

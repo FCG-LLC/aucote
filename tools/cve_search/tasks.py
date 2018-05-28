@@ -8,6 +8,7 @@ import re
 from urllib.parse import quote
 import ujson
 
+import time
 from cpe import CPE
 from tornado.httpclient import HTTPError
 
@@ -45,6 +46,9 @@ class CVESearchServiceTask(PortTask):
                 result.extend(await self.api_cvefor(cpe))
             except CVESearchApiException:
                 log.warning("Error during connection to cve-search server")
+
+        self._port.scan.end = int(time.time())
+        self.store_scan_end(exploits=self.current_exploits, port=self._port)
 
         if not result:
             return

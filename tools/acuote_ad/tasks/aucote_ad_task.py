@@ -1,3 +1,5 @@
+import time
+
 from structs import Vulnerability
 from tools.common.port_task import PortTask
 
@@ -9,6 +11,9 @@ class AucoteActiveDirectoryTask(PortTask):
         super(AucoteActiveDirectoryTask, self).__init__(*args, **kwargs)
 
     async def __call__(self, *args, **kwargs):
+        self._port.scan.end = int(time.time())
+        self.store_scan_end(exploits=self.current_exploits, port=self._port)
+
         exploit = self.aucote.exploits.find('aucote-active-directory', 'aucote-active-directory')
         nodes = "\n".join(" - {0}".format(node.ip) for node in self.nodes)
         output = "Active Directory Controllers from {0} for {1}:\n{2}".format(self.port.node.ip, self.domain, nodes)
