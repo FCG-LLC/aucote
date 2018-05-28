@@ -4,46 +4,13 @@ tools.whatweb package
 Submodules
 ----------
 
-tools.whatweb.base module
--------------------------
+.. toctree::
 
-.. automodule:: tools.whatweb.base
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tools.whatweb.parsers module
-----------------------------
-
-.. automodule:: tools.whatweb.parsers
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tools.whatweb.structs module
-----------------------------
-
-.. automodule:: tools.whatweb.structs
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tools.whatweb.tasks module
---------------------------
-
-.. automodule:: tools.whatweb.tasks
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tools.whatweb.tool module
--------------------------
-
-.. automodule:: tools.whatweb.tool
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   tools.whatweb.base
+   tools.whatweb.parsers
+   tools.whatweb.structs
+   tools.whatweb.tasks
+   tools.whatweb.tool
 
 Module contents
 ---------------

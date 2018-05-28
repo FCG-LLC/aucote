@@ -4,14 +4,9 @@ database package
 Submodules
 ----------
 
-database.serializer module
---------------------------
+.. toctree::
 
-.. automodule:: database.serializer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   database.serializer
 
 Module contents
 ---------------
