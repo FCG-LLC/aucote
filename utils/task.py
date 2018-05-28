@@ -1,5 +1,6 @@
 """
-Provide class for tasks
+Abstract class for tasks. Provides interface compatible with task manager.
+All Task based class should override __call__ function
 
 """
 import logging as log

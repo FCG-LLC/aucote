@@ -1,5 +1,6 @@
 """
-This is main module of aucote scanning functionality.
+Executor decides which nodes and ports should be scanned. Later run TaskMapper for nodes or NmapPortInfoTask for ports.
+In second case the NmapPortInfoTask is responsible for executing TaskMapper
 
 """
 import logging as log

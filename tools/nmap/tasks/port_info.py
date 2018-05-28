@@ -1,5 +1,6 @@
 """
-Provides task responsible for obtain detailed information about port
+Obtains port details and executes TaskMapper for script scans.
+
 """
 import logging as log
 
