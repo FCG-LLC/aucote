@@ -23,7 +23,7 @@ class SSLParser(Parser):
         Parses output json file and returns SSLResults
         """
         file = Path(self.tempfile.name)
-        text = "[{content}]".format(content=file.read_text().strip(","))
+        text = "[{content}]".format(content=file.read_text(encoding='utf-8').strip(","))
         return self._dict_to_results(json.loads(text))
 
     def _dict_to_results(self, data: dict) -> 'SSLResults':
