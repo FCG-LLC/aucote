@@ -94,7 +94,7 @@ class Storage(DbInterface):
     CREATE_VULNERABILITIES_TABLE = "CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, "\
                                    "port_protocol int, port int, vulnerability_id int, vulnerability_subid int, "\
                                    "cve text, cvss text, output text, time int, primary key(scan_id, node_id, "\
-                                   "node_ip, port_protocol, port, vulnerability_subid))"
+                                   "node_ip, port_protocol, port, vulnerability_id, vulnerability_subid))"
     SAVE_VULNERABILITY = "INSERT INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
                          "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
