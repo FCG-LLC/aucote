@@ -186,8 +186,17 @@ class Scanner(ScanAsyncTask):
             else:
                 previous_ports_scans = set(self.storage.get_ports_by_scan_and_node(node=node, scan=last_scans[1]))
 
-            new_ports_scans = current_ports_scans - previous_ports_scans
-            removed_ports_scans = previous_ports_scans - current_ports_scans
+            current_ports_scans_dict = {port_scan.port: port_scan for port_scan in current_ports_scans}
+            previous_ports_scans_dict = {port_scan.port: port_scan for port_scan in previous_ports_scans}
+
+            current_ports = set(current_ports_scans_dict.keys())
+            previous_ports = set(previous_ports_scans_dict.keys())
+
+            new_ports = current_ports - previous_ports
+            removed_ports = previous_ports - current_ports
+
+            new_ports_scans = [current_ports_scans_dict[port] for port in new_ports]
+            removed_ports_scans = [previous_ports_scans_dict[port] for port in removed_ports]
 
             changes.extend(PortDetectionChange(change_time=time.time(), previous_finding=None,
                                                current_finding=port_scan) for port_scan in new_ports_scans)

@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock, PropertyMock, call
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 from scans.scanner import Scanner
-from structs import Node, Port, TransportProtocol, ScanStatus, Scan, PortDetectionChange
+from structs import Node, Port, TransportProtocol, ScanStatus, Scan, PortDetectionChange, PortScan
 from utils import Config
 from utils.async_task_manager import AsyncTaskManager
 
@@ -246,12 +246,17 @@ class ScannerTest(AsyncTestCase):
         port_unchanged = Port(node, transport_protocol=TransportProtocol.TCP, number=22)
         port_unchanged.row_id = 19
 
+        port_scans_current = [PortScan(port=port_unchanged, scan=current_scan),
+                              PortScan(port=port_added, scan=current_scan)]
+        port_scans_previous = [PortScan(port=port_unchanged, scan=previous_scan),
+                               PortScan(port=port_removed, scan=previous_scan)]
+
         self.aucote.storage.get_scans_by_node.return_value = [current_scan, previous_scan]
-        self.aucote.storage.get_ports_by_scan_and_node.side_effect = ([port_unchanged, port_added],
-                                                                      [port_unchanged, port_removed])
+        self.aucote.storage.get_ports_by_scan_and_node.side_effect = (port_scans_current, port_scans_previous)
+
         expected = [
-            PortDetectionChange(current_finding=port_added, previous_finding=None),
-            PortDetectionChange(current_finding=None, previous_finding=port_removed)
+            PortDetectionChange(current_finding=port_scans_current[1], previous_finding=None),
+            PortDetectionChange(current_finding=None, previous_finding=port_scans_previous[1])
         ]
 
         self.thread.diff_with_last_scan(current_scan)
@@ -274,11 +279,14 @@ class ScannerTest(AsyncTestCase):
         port_unchanged = Port(node, transport_protocol=TransportProtocol.TCP, number=22)
         port_unchanged.row_id = 19
 
+        port_scans_current = [PortScan(port=port_unchanged, scan=current_scan),
+                              PortScan(port=port_added, scan=current_scan)]
+
         self.aucote.storage.get_scans_by_node.return_value = [current_scan]
-        self.aucote.storage.get_ports_by_scan_and_node.side_effect = ([port_unchanged, port_added],)
+        self.aucote.storage.get_ports_by_scan_and_node.side_effect = (port_scans_current,)
         expected = [
-            PortDetectionChange(current_finding=port_added, previous_finding=None),
-            PortDetectionChange(current_finding=port_unchanged, previous_finding=None)
+            PortDetectionChange(current_finding=port_scans_current[1], previous_finding=None),
+            PortDetectionChange(current_finding=port_scans_current[0], previous_finding=None)
         ]
 
         self.thread.diff_with_last_scan(current_scan)
