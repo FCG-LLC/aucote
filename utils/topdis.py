@@ -27,12 +27,12 @@ class Topdis(object):
         self.api = 'http://{0}:{1}{2}'.format(hostname, port, api)
 
     @retry_if_fail(min_retry_time, max_retry_time, max_retry_count, HTTPError)
-    async def get_nodes(self):
+    async def get_nodes(self) -> set:
         """
         Get nodes from Topdis
 
         Returns:
-            list - list of unique nodes (Node object)
+            set of unique nodes (Node object)
 
         """
         url = '{0}/nodes?ip=t'.format(self.api)
@@ -41,7 +41,8 @@ class Topdis(object):
         nodes_cfg = ujson.loads(resource.body)
 
         timestamp = parse_time_to_timestamp(nodes_cfg['meta']['requestTime'])
-        nodes = []
+        ip_node = {}
+
         for node_struct in nodes_cfg['nodes']:
             for node_ip in node_struct['ips']:
                 node = Node(ip=ipaddress.ip_address(node_ip), node_id=node_struct['id'])
@@ -58,8 +59,9 @@ class Topdis(object):
                         node.os.cpe = Service.build_cpe(product=node.os.name, version=node.os.version, part=CPEType.OS)
                     except:
                         node.os.cpe = None
+                ip_node[node.ip] = node
 
-                nodes.append(node)
+        nodes = set(ip_node.values())
 
         log.debug('Got %i nodes from topdis', len(nodes))
         return nodes
