@@ -11,7 +11,7 @@ from scans.task_mapper import TaskMapper
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.task import Task
 from utils.time import parse_period
-from structs import Scan, BroadcastPort
+from structs import BroadcastPort
 
 
 class Executor(Task):
@@ -33,7 +33,6 @@ class Executor(Task):
         self.scan_only = scan_only
         if cfg['portdetection._internal.broadcast']:
             broadcast_port = BroadcastPort()
-            broadcast_port.scan = Scan(start=time.time())
             self._ports.append(broadcast_port)
 
     @property

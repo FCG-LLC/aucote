@@ -3,7 +3,7 @@ CVESearch is module which requests CVE server for vulnerabilities basing on appl
 
 """
 
-from structs import PhysicalPort, Scan
+from structs import PhysicalPort
 from tools.base import Tool
 from tools.cve_search.tasks import CVESearchServiceTask
 
@@ -20,7 +20,6 @@ class CVESearchTool(Tool):
     async def call(self, *args, **kwargs):
         if not self.port:
             self.port = PhysicalPort(node=self.node)
-            self.port.scan = Scan()
 
         self.context.add_task(CVESearchServiceTask(context=self.context, port=self.port, scan=self._scan,
                                                    exploits=[self.aucote.exploits.find('cve-search', 'cve-search')]))

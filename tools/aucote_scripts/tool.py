@@ -1,8 +1,6 @@
 from fixtures.exploits import Exploit
-from structs import PhysicalPort, Scan
 from tools.aucote_scripts.tasks.siet import SietTask
 from tools.base import Tool
-from tools.cve_search.tasks import CVESearchServiceTask
 from utils.exceptions import PortNotSpecifiedException
 
 
