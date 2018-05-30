@@ -8,12 +8,11 @@ import re
 from urllib.parse import quote
 import ujson
 
-import time
 from cpe import CPE
 from tornado.httpclient import HTTPError
 
 from aucote_cfg import cfg
-from structs import Vulnerability, PhysicalPort, Port, Scan
+from structs import Vulnerability, PhysicalPort, Port
 from tools.common.port_task import PortTask
 from tools.cve_search.exceptions import CVESearchApiException
 from tools.cve_search.parsers import CVESearchParser

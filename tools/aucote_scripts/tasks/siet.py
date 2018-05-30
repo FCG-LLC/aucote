@@ -1,6 +1,5 @@
-import time
 import logging as log
-from structs import Vulnerability, Scan
+from structs import Vulnerability
 from tools.common.port_task import PortTask
 import socket
 import os

@@ -3,13 +3,12 @@ Contains base class for tasks, which run shell command
 
 """
 import subprocess
-import time
 import logging as log
 
 from tornado import gen
 
 from aucote_cfg import cfg
-from structs import Scan, Vulnerability
+from structs import Vulnerability
 from tools.common.port_task import PortTask
 from utils.exceptions import StopCommandException
 

@@ -2,13 +2,12 @@
 This module contains tasks related to Aucote HTTP Headers
 
 """
-import time
 import logging as log
 
 from tornado.httpclient import HTTPError
 
 from aucote_cfg import cfg
-from structs import Vulnerability, Scan
+from structs import Vulnerability
 from tools.aucote_http_headers.structs import AucoteHttpHeaderResult as Result
 from tools.common.port_task import PortTask
 from utils.http_client import HTTPClient
