@@ -45,14 +45,6 @@ class CommandTask(PortTask):
         """
         raise NotImplementedError
 
-    def _prepare(self):
-        self._port.scan = Scan()
-        self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port, scan=self._scan)
-
-    def _clean(self):
-        self._port.scan.end = int(time.time())
-        self.store_scan_end(exploits=self.current_exploits, port=self._port)
-
     async def execute(self):
         """
         Call command, parse output and stores vulnerabilities

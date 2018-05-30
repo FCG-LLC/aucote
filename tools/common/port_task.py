@@ -2,6 +2,9 @@
 This module contains task related to port.
 
 """
+import time
+
+from structs import Scan
 from utils.task import Task
 
 
@@ -79,3 +82,11 @@ class PortTask(Task):
 
     def additional_info(self):
         return "on {port}".format(port=self.port)
+
+    def _prepare(self):
+        self._port.scan = Scan()
+        self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port, scan=self._scan)
+
+    def _clean(self):
+        self._port.scan.end = int(time.time())
+        self.store_scan_end(exploits=self.current_exploits, port=self._port)

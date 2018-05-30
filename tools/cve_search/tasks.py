@@ -36,14 +36,6 @@ class CVESearchServiceTask(PortTask):
         self.api = cfg['tools.cve-search.api'].strip("/")
         super(CVESearchServiceTask, self).__init__(*args, **kwargs)
 
-    def _prepare(self):
-        self._port.scan = Scan()
-        self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port, scan=self._scan)
-
-    def _clean(self):
-        self._port.scan.end = int(time.time())
-        self.store_scan_end(exploits=self.current_exploits, port=self._port)
-
     async def execute(self, *args, **kwargs):
         cpes = self.get_cpes()
         if not cpes:
