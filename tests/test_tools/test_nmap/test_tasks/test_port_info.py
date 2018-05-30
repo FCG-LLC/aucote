@@ -219,7 +219,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port_info.command.async_call = MagicMock(return_value=future)
         await self.port_info()
 
-        vulnerability.assert_has_calls((call(port=self.port_info._port),))
+        vulnerability.assert_has_calls((call(port=self.port_info._port, context=self.context),))
         mock_serializer.assert_called_once_with(vulnerability.return_value)
 
         self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)

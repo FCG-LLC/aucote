@@ -478,7 +478,6 @@ class Port(object):
         """
         return_value = type(self)(node=self.node, number=self.number, transport_protocol=self.transport_protocol)
         return_value.vulnerabilities = self.vulnerabilities
-        return_value.when_discovered = self.when_discovered
         return_value.service = self.service.copy()
         return_value.apps = [app.copy() for app in self.apps]
         return_value.banner = self.banner

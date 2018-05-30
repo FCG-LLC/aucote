@@ -26,7 +26,8 @@ class SietTask(PortTask):
             if data:
                 output = "".join(data)
 
-                vulnerability = Vulnerability(exploit=self.exploit, port=self._port, output=output, scan=self._scan)
+                vulnerability = Vulnerability(exploit=self.exploit, port=self._port, output=output, scan=self._scan,
+                                              context=self.context)
 
                 self.store_vulnerability(vuln=vulnerability)
         except TFTPError as exception:

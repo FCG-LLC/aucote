@@ -6,14 +6,16 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from fixtures.exploits import Exploit
-from structs import Port, Node, TransportProtocol, Scan
+from scans.tcp_scanner import TCPScanner
+from structs import Port, Node, TransportProtocol, Scan, ScanContext
 from tools.aucote_scripts.tasks.siet import SietTask
 
 
 class SietTaskTest(AsyncTestCase):
     def setUp(self):
         super(SietTaskTest, self).setUp()
-        self.context = MagicMock()
+        self.context = ScanContext(aucote=MagicMock(),
+                                   scan=TCPScanner(MagicMock(), MagicMock(), MagicMock(), MagicMock()))
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=14)
         self.scan = Scan()
         self.port = Port(node=self.node, number=46, transport_protocol=TransportProtocol.TCP, scan=self.scan)

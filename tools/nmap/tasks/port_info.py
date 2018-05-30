@@ -128,7 +128,7 @@ class NmapPortInfoTask(PortTask):
         ]
         self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self._scan)
 
-        self.store_vulnerability(Vulnerability(port=self._port))
+        self.store_vulnerability(Vulnerability(port=self._port, context=self.context))
         self.diff_with_last_scan()
 
         if not self.scan_only:
