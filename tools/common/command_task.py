@@ -45,6 +45,14 @@ class CommandTask(PortTask):
         """
         raise NotImplementedError
 
+    def _prepare(self):
+        self._port.scan = Scan()
+        self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port, scan=self._scan)
+
+    def _clean(self):
+        self._port.scan.end = int(time.time())
+        self.store_scan_end(exploits=self.current_exploits, port=self._port)
+
     async def execute(self):
         """
         Call command, parse output and stores vulnerabilities
@@ -63,15 +71,10 @@ class CommandTask(PortTask):
         try:
             results = await self.command.async_call(args, timeout=timeout)
         except subprocess.CalledProcessError:
-            self._port.scan = Scan(0, 0)
-            self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port, scan=self._scan)
             log.error("Exiting process %s", self.command.NAME)
             return None
         except gen.TimeoutError:
             return None
-
-        self._port.scan.end = int(time.time())
-        self.store_scan_end(exploits=self.current_exploits, port=self._port)
 
         if results is None:
             return None

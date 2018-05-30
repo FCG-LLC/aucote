@@ -45,7 +45,11 @@ class Task(object):
         return self.aucote.kudu_queue
 
     async def __call__(self, *args, **kwargs):
-        return await self.execute(*args, **kwargs)
+        try:
+            self._prepare()
+            return await self.execute(*args, **kwargs)
+        finally:
+            self._clean()
 
     async def execute(self, *args, **kwargs):
         raise NotImplementedError
@@ -56,6 +60,12 @@ class Task(object):
 
         """
         return self.kudu_queue.send_msg(msg)
+
+    def _prepare(self):
+        pass
+
+    def _clean(self):
+        pass
 
     def store_scan_end(self, exploits, port):
         """

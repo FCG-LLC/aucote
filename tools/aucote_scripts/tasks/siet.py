@@ -1,6 +1,6 @@
 import time
 import logging as log
-from structs import Vulnerability
+from structs import Vulnerability, Scan
 from tools.common.port_task import PortTask
 import socket
 import os
@@ -9,6 +9,13 @@ from utils.tftp import TFTPError
 
 
 class SietTask(PortTask):
+    def _prepare(self):
+        self._port.scan = Scan()
+        self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port, scan=self._scan)
+
+    def _clean(self):
+        self._port.scan.end = int(time.time())
+        self.store_scan_end(exploits=self.current_exploits, port=self._port)
 
     async def execute(self, *args, **kwargs):
         try:

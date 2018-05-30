@@ -8,7 +8,7 @@ import logging as log
 from tornado.httpclient import HTTPError
 
 from aucote_cfg import cfg
-from structs import Vulnerability
+from structs import Vulnerability, Scan
 from tools.aucote_http_headers.structs import AucoteHttpHeaderResult as Result
 from tools.common.port_task import PortTask
 from utils.http_client import HTTPClient
@@ -28,6 +28,14 @@ class AucoteHttpHeadersTask(PortTask):
     def __init__(self, config, *args, **kwargs):
         self.config = config
         super(AucoteHttpHeadersTask, self).__init__(*args, **kwargs)
+
+    def _prepare(self):
+        self._port.scan = Scan()
+        self.aucote.storage.save_security_scans(exploits=self.current_exploits, port=self._port, scan=self._scan)
+
+    def _clean(self):
+        self._port.scan.end = int(time.time())
+        self.store_scan_end(exploits=self.current_exploits, port=self._port)
 
     async def execute(self, *args, **kwargs):
         custom_headers = {
@@ -66,9 +74,6 @@ class AucoteHttpHeadersTask(PortTask):
                                           exploit=exploit))
             elif header.obligatory:
                 results.append(Result(output=self.MISSING_HEADER.format(name=exploit.title), exploit=exploit))
-
-        self._port.scan.end = int(time.time())
-        self.store_scan_end(exploits=self.current_exploits, port=self._port)
 
         if not results:
             return results
