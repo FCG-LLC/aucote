@@ -2,7 +2,7 @@ FROM portus.cs.int:5000/prod/cs-base
 LABEL maintainer "devops@collective-sense.com"
 
 ARG destEnv
-
+ARG debVer
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN echo "deb http://aptly.cs.int/public xenial $destEnv" >> /etc/apt/sources.list
@@ -12,7 +12,7 @@ RUN apt-add-repository ppa:pi-rho/security
 RUN apt-get update \
     && apt-get install -y \
          gosu \
-         aucote \
+         aucote=$debVer \
     && rm -rf /var/lib/apt/lists/*
 
 RUN setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap
