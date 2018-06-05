@@ -32,7 +32,7 @@ class SietTask(PortTask):
 
                 self.store_vulnerability(vuln=vulnerability)
         except TFTPError as exception:
-            log.warning(str(exception))
+            log.warning('Exception during executing %s: %s', self, str(exception))
         finally:
             self._port.scan.end = int(time.time())
             self.store_scan_end(exploits=self.current_exploits, port=self._port)

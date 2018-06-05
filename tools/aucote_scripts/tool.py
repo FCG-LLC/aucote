@@ -1,3 +1,4 @@
+from fixtures.exploits import Exploit
 from structs import PhysicalPort, Scan
 from tools.aucote_scripts.tasks.siet import SietTask
 from tools.base import Tool
@@ -15,5 +16,6 @@ class AucoteScriptsTool(Tool):
         if not self.port:
             raise PortNotSpecifiedException()
 
-        self.context.add_task(SietTask(context=self.context, port=self.port, scan=self._scan,
-                                       exploits=[self.context.aucote.exploits.find('aucote-scripts', 'siet')]))
+        if Exploit(exploit_id=178) in self.exploits:
+            self.context.add_task(SietTask(context=self.context, port=self.port, scan=self._scan,
+                                           exploits=[self.context.aucote.exploits.find('aucote-scripts', 'siet')]))
