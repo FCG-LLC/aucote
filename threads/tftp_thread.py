@@ -1,6 +1,7 @@
 from threading import Thread, Event
 from tornado.gen import sleep
-from utils.tftp import TFTP
+from utils.tftp import TFTP, TFTPError
+import logging as log
 
 
 class TFTPThread(Thread):
@@ -13,6 +14,7 @@ class TFTPThread(Thread):
         self.name = "TFTP"
         self.started_event = Event()
         self._close = False
+        self._error = False
 
     def __enter__(self):
         self.start()
@@ -21,19 +23,28 @@ class TFTPThread(Thread):
 
     def run(self):
         self.started_event.set()
-        self._tftp.start()
-        self._tftp.listen()
+        try:
+            self._tftp.start()
+            self._tftp.listen()
+        except Exception as exception:  # pylint: disable=broad-exception
+            log.error("Cannot start TFTP server: %s", exception)
+            self._error = True
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._tftp.stop()
         self.join()
 
     async def async_get_file(self, address, callback, timeout=DEFAULT_TIMEOUT):
+        if self._error:
+            raise TFTPError('Cancel task due to tftp fatal error')
+
         event = self._tftp.register_address(address, timeout=timeout)
 
         callback()
 
         while not event.is_set():
+            if self._error:
+                raise TFTPError('Cancel task due to tftp fatal error')
             await sleep(1)
 
         return self._tftp.get_file(address)
