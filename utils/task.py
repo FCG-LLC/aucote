@@ -109,10 +109,6 @@ class Task(object):
             for vulnerability in vulnerabilities:
                 self.store_vulnerability(vulnerability)
 
-        self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self._scan)
-
-        return None
-
     def reload_config(self):
         """
         Should be executed by executor when, configuration is reloaded
