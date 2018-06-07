@@ -50,7 +50,7 @@ class SerializerTest(TestCase):
         self.exploit.tags = {ExploitTag.HTTP, ExploitTag.SSL, ExploitTag.HTTPS}
 
         self.vuln.exploit = self.exploit
-        self.vuln.when_discovered = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
+        self.vuln.time = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
 
     def test_vulnerability_serializer(self):
 

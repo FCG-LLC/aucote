@@ -621,10 +621,8 @@ class Vulnerability(object):
             output(str): string or stringable output
 
         """
-        self._when_discovered = None
         self._time = None
 
-        self.when_discovered = time.time()
         self.output = str(output)
         self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
         self.port = port
@@ -635,14 +633,6 @@ class Vulnerability(object):
         self.rowid = rowid
         self.scan = scan
         self.context = context
-
-    @property
-    def when_discovered(self):
-        return self._when_discovered/1000 if self._when_discovered is not None else None
-
-    @when_discovered.setter
-    def when_discovered(self, value):
-        self._when_discovered = round(value*1000) if value is not None else None
 
     @property
     def time(self):
