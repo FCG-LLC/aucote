@@ -467,6 +467,8 @@ class Port(object):
             transport_protocol (TransportProtocol):
 
         """
+        self._when_discovered = None
+
         self.vulnerabilities = []
         self.when_discovered = time.time()
         self.node = node
@@ -478,6 +480,14 @@ class Port(object):
         self.banner = None
         self.scan = scan
         self.interface = None
+
+    @property
+    def when_discovered(self):
+        return self._when_discovered/1000 if self._when_discovered is not None else None
+
+    @when_discovered.setter
+    def when_discovered(self, value):
+        self._when_discovered = round(value*1000) if value is not None else None
 
     def __eq__(self, other):
         return isinstance(other, Port) and self.transport_protocol == other.transport_protocol \
@@ -611,6 +621,8 @@ class Vulnerability(object):
             output(str): string or stringable output
 
         """
+        self._when_discovered = None
+
         self.when_discovered = time.time()
         self.output = str(output)
         self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
@@ -622,6 +634,14 @@ class Vulnerability(object):
         self.rowid = rowid
         self.scan = scan
         self.context = context
+
+    @property
+    def when_discovered(self):
+        return self._when_discovered/1000 if self._when_discovered is not None else None
+
+    @when_discovered.setter
+    def when_discovered(self, value):
+        self._when_discovered = round(value*1000) if value is not None else None
 
     @property
     def cve(self):
