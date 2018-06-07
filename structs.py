@@ -228,6 +228,8 @@ class SecurityScan(object):
 
     """
     def __init__(self, scan, port, exploit, scan_start=None, scan_end=None, rowid=None):
+        self._scan_start = None
+
         self.port = port
         self.exploit = exploit
         self.scan_start = scan_start
@@ -245,6 +247,14 @@ class SecurityScan(object):
 
         """
         return self.port.node
+    
+    @property
+    def scan_start(self):
+        return self._scan_start / 1000 if self._scan_start is not None else None
+
+    @scan_start.setter
+    def scan_start(self, value):
+        self._scan_start = round(value * 1000) if value is not None else None
 
     def __eq__(self, other):
         return isinstance(other, SecurityScan) and all((self.port == other.port, self.exploit == other.exploit,
