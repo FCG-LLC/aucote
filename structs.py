@@ -622,6 +622,7 @@ class Vulnerability(object):
 
         """
         self._when_discovered = None
+        self._time = None
 
         self.when_discovered = time.time()
         self.output = str(output)
@@ -642,6 +643,14 @@ class Vulnerability(object):
     @when_discovered.setter
     def when_discovered(self, value):
         self._when_discovered = round(value*1000) if value is not None else None
+
+    @property
+    def time(self):
+        return self._time/1000 if self._time is not None else None
+
+    @time.setter
+    def time(self, value):
+        self._time = round(value*1000) if value is not None else None
 
     @property
     def cve(self):
