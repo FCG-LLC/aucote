@@ -32,7 +32,7 @@ class SerializerTest(TestCase):
         self.port.protocol = 'ssh'
 
         self.port.scan = Scan()
-        self.port.scan._start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
+        self.port.scan.start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
 
         self.vuln.port = self.port
         self.vuln.output = 'Test'

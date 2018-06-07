@@ -3,6 +3,7 @@ from structs import Vulnerability
 from tools.common.port_task import PortTask
 import socket
 import os
+import time
 
 from utils.tftp import TFTPError
 

@@ -31,8 +31,11 @@ class Scan(object):
             scanner (str): scanner name
 
         """
+        self._start = None
+        self._end = None
+
         self.rowid = rowid
-        self._start = start or time.time()
+        self.start = start or time.time()
         self.end = end
         self._protocol = protocol
         self._scanner = scanner
@@ -41,12 +44,24 @@ class Scan(object):
     @property
     def start(self):
         """
-        Time, when scan start
-
-        Returns:
-            int - timestamp
+        Scan start (unix timestamp) in seconds
         """
-        return self._start
+        return self._start/1000 if self._start is not None else None
+
+    @start.setter
+    def start(self, value: int):
+        self._start = round(value*1000) if value is not None else None
+
+    @property
+    def end(self):
+        """
+        Scan end (unix timestamp) in seconds
+        """
+        return self._end/1000 if self._end is not None else None
+
+    @end.setter
+    def end(self, value):
+        self._end = round(value*1000) if value is not None else None
 
     @property
     def protocol(self):

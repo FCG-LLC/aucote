@@ -226,8 +226,8 @@ class ScanTest(TestCase):
 
     def test_init(self):
         expected = {
-            "_start": 13,
-            "end": 14.6,
+            "_start": 13000,
+            "_end": 14600,
             "_protocol": TransportProtocol.ICMP,
             "_scanner": "test_scanner",
             "rowid": 16,
