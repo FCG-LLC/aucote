@@ -611,7 +611,7 @@ class Vulnerability(object):
     SERVICE_CPE = 5
 
     def __init__(self, exploit=None, port=None, output='', cve=None, cvss=None, subid=0, vuln_time=None,
-                 rowid=None, scan=None, context=None):
+                 rowid=None, scan=None, context=None, expiration_time=None):
         """
         Init values
 
@@ -622,6 +622,7 @@ class Vulnerability(object):
 
         """
         self._time = None
+        self._expiration_time = None
 
         self.output = str(output)
         self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
@@ -633,6 +634,7 @@ class Vulnerability(object):
         self.rowid = rowid
         self.scan = scan
         self.context = context
+        self.expiration_time = expiration_time
 
     @property
     def time(self):
@@ -641,6 +643,14 @@ class Vulnerability(object):
     @time.setter
     def time(self, value):
         self._time = round(value*1000) if value is not None else None
+
+    @property
+    def expiration_time(self):
+        return self._expiration_time/1000 if self._expiration_time is not None else None
+
+    @expiration_time.setter
+    def expiration_time(self, value):
+        self._expiration_time = round(value*1000) if value is not None else None
 
     @property
     def cve(self):

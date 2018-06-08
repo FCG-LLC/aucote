@@ -186,7 +186,7 @@ class StorageTest(TestCase):
             (
             'CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, '\
             'port_protocol int, port int, vulnerability_id int, vulnerability_subid int, cve text, cvss text, '\
-            'output text, time int, primary key(scan_id, node_id, node_ip, port_protocol, port, '\
+            'output text, time int, expiration_time int, primary key(scan_id, node_id, node_ip, port_protocol, port, '\
             'vulnerability_id, vulnerability_subid))',),
 
             (

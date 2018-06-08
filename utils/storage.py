@@ -77,10 +77,10 @@ columns:
 vulnerabilities
 ---------------
 
-+-------+---------+---------+---------+---------------+------+------------------+---------------------+-----+------+---------------+
-| rowid | scan_id | node_id | node_ip | port_protocol | port | vulnerability_id | vulnerability_subid | cve | cvss | output | time |
-+=======+=========+=========+=========+===============+======+==================+=====================+=====+======+===============+
-+-------+---------+---------+---------+---------------+------+------------------+---------------------+-----+------+---------------+
++-------+---------+---------+---------+---------------+------+------------------+---------------------+-----+------+---------------+-----------------+
+| rowid | scan_id | node_id | node_ip | port_protocol | port | vulnerability_id | vulnerability_subid | cve | cvss | output | time | expiration_time |
++=======+=========+=========+=========+===============+======+==================+=====================+=====+======+===============+=================+
++-------+---------+---------+---------+---------------+------+------------------+---------------------+-----+------+---------------+-----------------+
 
 columns:
  - rowid (int) - row identifier
@@ -95,6 +95,7 @@ columns:
  - cvss (string) - CVSS value (0 to 10 with 0.1 resolution)
  - output (string) - vulnerability details
  - time (int) - vulnerability detection time
+ - expiration_time (int) - vulnerability expiration time
 
 """
 import ipaddress
@@ -143,7 +144,7 @@ class Storage(DbInterface):
         },
         'vulnerabilities': {
             'columns': ['rowid', 'scan_id', 'node_id', 'node_ip', 'port_protocol', 'port', 'vulnerability_id',
-                        'vulnerability_subid', 'cve', 'cvss', 'output', 'time'],
+                        'vulnerability_subid', 'cve', 'cvss', 'output', 'time', 'expiration_time'],
             'factor': '_vulnerability_from_row',
             'order': 'ORDER BY time DESC'
         },
@@ -184,12 +185,13 @@ class Storage(DbInterface):
                            "OR sec_scan_end IS NULL"
 
     SAVE_SECURITY_SCAN = "INSERT INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name,"\
-                                " node_id, node_ip, port_protocol, port_number, sec_scan_start, sec_scan_end) " \
+                         " node_id, node_ip, port_protocol, port_number, sec_scan_start, sec_scan_end) " \
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
     CREATE_VULNERABILITIES_TABLE = "CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, "\
                                    "port_protocol int, port int, vulnerability_id int, vulnerability_subid int, "\
-                                   "cve text, cvss text, output text, time int, primary key(scan_id, node_id, "\
+                                   "cve text, cvss text, output text, time int, expiration_time int, " \
+                                   "primary key(scan_id, node_id, "\
                                    "node_ip, port_protocol, port, vulnerability_id, vulnerability_subid))"
     SAVE_VULNERABILITY = "INSERT INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
                          "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
@@ -854,7 +856,7 @@ class Storage(DbInterface):
         return Vulnerability(port=Port(transport_protocol=self._transport_protocol(row[4]), number=row[5],
                                        node=Node(node_id=row[2], ip=ipaddress.ip_address(row[3]))),
                              exploit=Exploit(exploit_id=row[6]), subid=row[7], cve=row[8], cvss=row[9], output=row[10],
-                             vuln_time=row[11], rowid=row[0], scan=self.get_scan_by_id(row[1]))
+                             vuln_time=row[11], rowid=row[0], scan=self.get_scan_by_id(row[1]), expiration_time=row[12])
 
     def _sec_scan_from_row(self, row: list) -> SecurityScan:
         return SecurityScan(port=Port(node=Node(node_id=row[5], ip=ipaddress.ip_address(row[6])),
