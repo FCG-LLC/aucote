@@ -1,5 +1,43 @@
 """
-Provides serializers for database
+Database
+========
+
+
+Kudu database schema:
+
+security_audits (0x8)
+---------------
+
++-------------------+------------+------------+------+------+---------+------------+----------------------+---------+------------+-----------------+--------------+-----------------+----------------+-------------+--------------+------------------+--------+-----------+----------+--------------+------+-----+------+
+| time_stamp_bucket | server_ip1 | server_ip2 | port | prot | vuln_id | vuln_subid | time_stamp_remainder | node_id | scan_start | port_scan_start | service_name | service_version | service_banner | vuln_output | traffic_type | operating_system | metric | scan_name | app_name | exploit_name | tags | cve | cvss |
++===================+============+============+======+======+=========+============+======================+=========+============+=================+==============+=================+================+=============+==============+==================+========+===========+==========+==============+======+=====+======+
++-------------------+------------+------------+------+------+---------+------------+----------------------+---------+------------+-----------------+--------------+-----------------+----------------+-------------+--------------+------------------+--------+-----------+----------+--------------+------+-----+------+
+
+columns:
+ - time_stamp_bucket. time_stamp_remainder - calculated from port.scan.start
+ - server_ip1, server_ip2 - calculated from Node IP
+ - port - port based (number)
+ - prot - port based (protocol (tcp, udp))
+ - vuln_id - exploit base
+ - vuln_subid - vulnerability subidentifier (allows to push multiple records for one vulnerability)
+ - node_id - node based
+ - scan_start - context.scan.scan_start
+ - port_scan_start - port.scan.start
+ - service_name - port based service (ftp, http, etc.)
+ - service_version - port based (vuln_id=0, vuln_subid=3 for local storage)
+ - service_banner - port based (vuln_id=0, vuln_subid=4 for local storage)
+ - vuln_output - vulnerability based
+ - traffic_type - internal
+ - operating_system - port based (port.service.name and port.service.version)
+ - metric - exploit based
+ - scan_name - scan context based
+ - app_name - exploit base
+ - exploit_name - exploit base
+ - tags - explot based
+ - cve - vuln based
+ - cvss - vuln based
+
+
 """
 from enum import Enum
 

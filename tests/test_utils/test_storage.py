@@ -76,10 +76,14 @@ class StorageTest(TestCase):
                                             scan_end=851)
         self.security_scan_2 = SecurityScan(exploit=self.exploit_2, port=self.port_1, scan=self.scan_1, scan_start=109,
                                             scan_end=775)
-        self.security_scan_3 = SecurityScan(exploit=self.exploit_3, port=self.port_1, scan=self.scan_1, scan_start=113,
+        self.security_scan_3 = SecurityScan(exploit=self.exploit_3, port=self.port_1, scan=self.scan_2, scan_start=113,
                                             scan_end=353)
         self.security_scan_4 = SecurityScan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_3, scan_start=180,
                                             scan_end=222)
+        self.security_scan_5 = SecurityScan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_2, scan_start=14,
+                                            scan_end=156)
+        self.security_scan_6 = SecurityScan(exploit=self.exploit_2, port=self.port_1, scan=self.scan_2, scan_start=56,
+                                            scan_end=780)
 
         self.vuln_change_1 = PortDetectionChange(change_time=124445, current_finding=self.port_scan_1,
                                                  previous_finding=self.port_scan_2)
@@ -136,17 +140,19 @@ class StorageTest(TestCase):
         self.storage.execute(("INSERT INTO security_scans(exploit_id, exploit_name, exploit_app, scan_id, node_id, "
                               "node_ip, port_number, port_protocol, sec_scan_start, sec_scan_end) VALUES "
                               "(14, 'test_name', 'test_app', 56, 1, '127.0.0.1', 45, 17, 178, 851), "
-                              "(56, 'test_name_2', 'test_app', 56, 1, '127.0.0.1', 45, 17, 113, 353), "
+                              "(56, 'test_name_2', 'test_app', 79, 1, '127.0.0.1', 45, 17, 113, 353), "
                               "(14, 'test_name', 'test_app', 80, 1, '127.0.0.1', 45, 17, 180, 222), "
-                              "(2, 'test_name_2', 'test_app_2', 56, 1, '127.0.0.1', 45, 17, 109, 775)",))
+                              "(2, 'test_name_2', 'test_app_2', 56, 1, '127.0.0.1', 45, 17, 109, 775), "
+                              "(14, 'test_name', 'test_app', 79, 1, '127.0.0.1', 45, 17, 14, 156), "
+                              "(2, 'test_name_2', 'test_app_2', 79, 1, '127.0.0.1', 45, 17, 56, 780)",))
 
     def prepare_vulnerabilities(self):
         self.storage.execute(("INSERT INTO vulnerabilities (ROWID, scan_id, node_id, node_ip, port_protocol, port, "
-                              "vulnerability_id, vulnerability_subid, cve, cvss, output, time) VALUES "
-                              "(134, 56, 1, '127.0.0.1', 17, 45, 14, 1, 'CVE-2017', 6.7, 'test_output_1', 13),"
-                              "(152, 56, 1, '127.0.0.1', 17, 45, 2, 2, 'CWE-14', 8.9, 'test_output_2', 98),"
-                              "(153, 79, 1, '127.0.0.1', 17, 45, 14, 1, 'CVE-2016', 3.7, 'test_output_3', 15),"
-                              "(169, 79, 1, '127.0.0.1', 17, 45, 2, 2, 'CWE-15', 2.9, 'test_output_4', 124)"
+                              "vulnerability_id, vulnerability_subid, cve, cvss, output, time, expiration_time) VALUES "
+                              "(134, 56, 1, '127.0.0.1', 17, 45, 14, 1, 'CVE-2017', 6.7, 'test_output_1', 13, 600),"
+                              "(152, 56, 1, '127.0.0.1', 17, 45, 2, 2, 'CWE-14', 8.9, 'test_output_2', 98, 600),"
+                              "(153, 79, 1, '127.0.0.1', 17, 45, 14, 2, 'CVE-2016', 3.7, 'test_output_3', 15, NULL),"
+                              "(169, 79, 1, '127.0.0.1', 17, 45, 2, 1, 'CWE-15', 2.9, 'test_output_4', 124, 600)"
                               "",))
 
     def test_init(self):
@@ -376,7 +382,7 @@ class StorageTest(TestCase):
     def test_get_security_scan_info(self):
         self.prepare_tables()
 
-        expected = [self.security_scan_1, self.security_scan_3]
+        expected = [self.security_scan_1, self.security_scan_3, self.security_scan_5]
 
         result = self.storage.get_security_scan_info(self.port_1, 'test_app', scan=self.scan_1)
 
@@ -529,9 +535,18 @@ class StorageTest(TestCase):
     def test_get_scans_by_sec_scan(self):
         self.prepare_tables()
 
-        expected = [self.scan_3, self.scan_1]
+        expected = [self.scan_3, self.scan_1, self.scan_2]
 
         result = self.storage.get_scans_by_security_scan(port=self.port_1, exploit=self.exploit_1)
+
+        self.assertEqual(result, expected)
+
+    def test_get_scans_by_sec_scan_second(self):
+        self.prepare_tables()
+
+        expected = [self.scan_2]
+
+        result = self.storage.get_scans_by_security_scan(port=self.port_1, exploit=self.exploit_3)
 
         self.assertEqual(result, expected)
 
@@ -583,3 +598,29 @@ class StorageTest(TestCase):
         expected = [self.port_scan_1, self.port_scan_2, self.port_scan_3, self.port_scan_4]
 
         result = self.storage.ports_scans_by_scan(self.scan_1)
+
+    def test_expire_vulnerability(self):
+        self.prepare_tables()
+
+        result = self.storage.expire_vulnerability(self.vulnerability_3)
+
+        self.assertEqual(result.expiration_time, 178)
+
+    def test_active_vulnerabilities(self):
+        self.prepare_tables()
+
+        expected = [self.vulnerability_3]
+
+        result = self.storage.active_vulnerabilities()
+
+        self.assertEqual(result, expected)
+
+    def test_expire_vulnerabilities(self):
+        self.prepare_tables()
+
+        expected = []
+
+        self.storage.expire_vulnerabilities()
+        result = self.storage.active_vulnerabilities()
+
+        self.assertEqual(result, expected)

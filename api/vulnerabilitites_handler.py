@@ -27,7 +27,7 @@ class VulnerabilitiesHandler(StorageHandler):
             'vuln_subid': vulnerability.subid,
             'time': vulnerability.time,
             'time_human': parse_timestamp_to_time(vulnerability.time),
-            'cvss': vulnerability.cvss
+            'cvss': vulnerability.cvss,
         }
 
     def details(self, rowid):
@@ -42,6 +42,8 @@ class VulnerabilitiesHandler(StorageHandler):
             'time_human': parse_timestamp_to_time(vulnerability.time),
             'exploit': vulnerability.exploit.id,
             'output': vulnerability.output,
+            'expired': vulnerability.expiration_time,
+            'expired_human': parse_timestamp_to_time(vulnerability.expiration_time),
             'scans': [self.pretty_scan(scan)
                       for scan in self.aucote.storage.scans_by_vulnerability(vulnerability)]
         }

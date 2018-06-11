@@ -197,6 +197,10 @@ class Storage(DbInterface):
                          "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
+    UPDATE_VULNERABILITY_EXPIRATION= "UPDATE vulnerabilities SET expiration_time=? WHERE scan_id=? AND node_id=? " \
+                                     "AND node_ip=? AND port_protocol=? AND port=? AND vulnerability_id=? " \
+                                     "AND vulnerability_subid=?"
+
     CREATE_CHANGES_TABLE = "CREATE TABLE IF NOT EXISTS changes(type int, vulnerability_id int, "\
                            "vulnerability_subid int, previous_id int, current_id int, time int, PRIMARY KEY(type, " \
                            "vulnerability_id, vulnerability_subid, previous_id, current_id, time))"
@@ -643,6 +647,23 @@ class Storage(DbInterface):
                            join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where':
                                {'protocol': scan.protocol, 'scanner_name': scan.scanner}})
 
+    def security_scan_by_vuln(self, vuln):
+        return self.select('security_scans', exploit_id=vuln.exploit.id, node_id=vuln.port.node.id,
+                           node_ip=vuln.port.node.ip, port_protocol=vuln.port.transport_protocol,
+                           port_number=vuln.port.number, scan_id=vuln.scan.rowid, limit=1)
+
+    def next_security_scan(self, sec_scan):
+        """
+        Get security scan which finish after given
+
+        """
+        return self.select('security_scans', limit=1, exploit_id=sec_scan.exploit.id, node_id=sec_scan.port.node.id,
+                           node_ip=sec_scan.port.node.ip, port_protocol=sec_scan.port.transport_protocol,
+                           port_number=sec_scan.port.number, where={
+                            'operator': {
+                                '>': {'sec_scan_end': sec_scan.scan_end}
+                            }})
+
     def save_changes(self, changes: list):
         """
         Save changes to database
@@ -969,3 +990,49 @@ class Storage(DbInterface):
                                                 self._protocol_to_iana(vuln.port.transport_protocol), vuln.port.number,
                                                 vuln.exploit.id, vuln.subid, vuln.cve, vuln.cvss, vuln.output,
                                                 vuln.time)))
+
+    def expire_vulnerability(self, vuln: 'Vulnerability') -> 'Vulnerability':
+        """
+        Set vulnerability expiration time:
+
+        1. Get security scan related to given vulnerability
+        2. Get next security scan after obtained
+        3. If next security scan exists, it means that given vulnerability is no longer actual
+
+        """
+        curr_sec_scans = self.security_scan_by_vuln(vuln)
+
+        if not curr_sec_scans:
+            log.error('Cannot find security scan for given vulnerability')
+            return vuln
+
+        curr_sec_scan = curr_sec_scans[0]
+
+        next_sec_scans = self.next_security_scan(curr_sec_scan)
+
+        if not next_sec_scans:
+            return vuln
+
+        next_sec_scan = next_sec_scans[0]
+
+        vuln.expiration_time = next_sec_scan.scan_start
+        self.execute((self.UPDATE_VULNERABILITY_EXPIRATION, (vuln.expiration_time, vuln.scan.rowid, vuln.port.node.id,
+                                                             str(vuln.port.node.ip),
+                                                             self._protocol_to_iana(vuln.port.transport_protocol),
+                                                             vuln.port.number, vuln.exploit.id, vuln.subid)))
+
+        return vuln
+
+    def active_vulnerabilities(self) -> list:
+        """
+        Gets all vulnerabilites with unset expiration time
+        """
+        return self.select('vulnerabilities', expiration_time=None)
+
+    def expire_vulnerabilities(self):
+        """
+        Checks if any of vulnerability should be expired and do it if needed
+
+        """
+        for vuln in self.active_vulnerabilities():
+            self.expire_vulnerability(vuln)
