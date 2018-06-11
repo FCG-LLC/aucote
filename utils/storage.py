@@ -1034,5 +1034,10 @@ class Storage(DbInterface):
         Checks if any of vulnerability should be expired and do it if needed
 
         """
-        for vuln in self.active_vulnerabilities():
+        vulns = self.active_vulnerabilities()
+        log.debug('%s active vulnerabilities to check', len(vulns))
+
+        for vuln in vulns:
             self.expire_vulnerability(vuln)
+
+        log.debug('Left %s active vulnerabilities', len([vuln for vuln in vulns if vuln.expiration_time is None]))

@@ -69,6 +69,7 @@ class ScanAsyncTask(object):
         finally:
             self.context.end = time.time()
             self.context = None
+            self.storage.expire_vulnerabilities()
 
     async def run(self):
         raise NotImplementedError()
