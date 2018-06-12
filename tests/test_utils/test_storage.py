@@ -30,6 +30,7 @@ class StorageTest(TestCase):
         self.scan_1 = Scan(rowid=56, protocol=TransportProtocol.UDP, scanner='test_name', start=13, end=19)
         self.scan_2 = Scan(rowid=79, protocol=TransportProtocol.UDP, scanner='test_name', start=2, end=18)
         self.scan_3 = Scan(rowid=80, protocol=TransportProtocol.UDP, scanner='test_name_2', start=20, end=45)
+        self.scan_4 = Scan(rowid=78, protocol=TransportProtocol.TCP, scanner='portdetection', start=1, end=2)
 
         self.node_1 = Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))
         self.node_1.name = 'test_node_1'
@@ -42,6 +43,10 @@ class StorageTest(TestCase):
         self.node_3 = Node(node_id=3, ip=ipaddress.ip_address('127.0.0.3'))
         self.node_3.name = 'test_node_3'
         self.node_3.scan = Scan(start=98)
+
+        self.node_4 = Node(node_id=4, ip=ipaddress.ip_address('127.0.0.4'))
+        self.node_4.name = 'test_node_4'
+        self.node_4.scan = Scan(start=3)
 
         self.node_scan_1 = NodeScan(node=self.node_1, rowid=13, scan=self.scan_1, timestamp=15)
         self.node_scan_2 = NodeScan(node=self.node_2, rowid=15, scan=self.scan_1, timestamp=56)
@@ -68,9 +73,13 @@ class StorageTest(TestCase):
 
         self.port_scan_4 = PortScan(port=self.port_4, scan=self.scan_1, timestamp=650, rowid=480)
 
+        self.port_5 = Port(node=self.node_4, number=22, transport_protocol=TransportProtocol.TCP)
+        self.port_5.scan = self.scan_4
+
         self.exploit_1 = Exploit(exploit_id=14, name='test_name', app='test_app')
         self.exploit_2 = Exploit(exploit_id=2, name='test_name_2', app='test_app_2')
         self.exploit_3 = Exploit(exploit_id=56, name='test_name_2', app='test_app')
+        self.exploit_4 = Exploit(exploit_id=0, name='portdetection', app='portdetection')
 
         self.security_scan_1 = SecurityScan(exploit=self.exploit_1, port=self.port_1, scan=self.scan_1, scan_start=178,
                                             scan_end=851)
@@ -84,6 +93,8 @@ class StorageTest(TestCase):
                                             scan_end=156)
         self.security_scan_6 = SecurityScan(exploit=self.exploit_2, port=self.port_1, scan=self.scan_2, scan_start=56,
                                             scan_end=780)
+        self.security_scan_7 = SecurityScan(exploit=self.exploit_4, port=self.port_5, scan=self.scan_4, scan_start=14,
+                                            scan_end=890)
 
         self.vuln_change_1 = PortDetectionChange(change_time=124445, current_finding=self.port_scan_1,
                                                  previous_finding=self.port_scan_2)
@@ -104,6 +115,34 @@ class StorageTest(TestCase):
                                              cve='CWE-15', cvss=2.9, subid=1, vuln_time=124, rowid=169,
                                              scan=self.scan_2)
 
+        self.vulnerability_5 = Vulnerability(port=self.port_5, output='', exploit=self.exploit_4,
+                                             cve=None, cvss=None, subid=0, vuln_time=124, rowid=200,
+                                             scan=self.scan_4, expiration_time=400)
+        self.vulnerability_6 = Vulnerability(port=self.port_5, output='tftp', exploit=self.exploit_4,
+                                             cve=None, cvss=None, subid=1, vuln_time=124, rowid=201,
+                                             scan=self.scan_4, expiration_time=400)
+        self.vulnerability_7 = Vulnerability(port=self.port_5, output='tftp server name', exploit=self.exploit_4,
+                                             cve=None, cvss=None, subid=2, vuln_time=124, rowid=202,
+                                             scan=self.scan_4, expiration_time=400)
+        self.vulnerability_8 = Vulnerability(port=self.port_5, output='6.7.8', exploit=self.exploit_4,
+                                             cve=None, cvss=None, subid=3, vuln_time=124, rowid=203,
+                                             scan=self.scan_4, expiration_time=400)
+        self.vulnerability_9 = Vulnerability(port=self.port_5, output='HERE IS TFTP\n\n\n > ', exploit=self.exploit_4,
+                                             cve=None, cvss=None, subid=4, vuln_time=124, rowid=204,
+                                             scan=self.scan_4, expiration_time=400)
+        self.vulnerability_10 = Vulnerability(port=self.port_5, output='test:cpe', exploit=self.exploit_4,
+                                             cve=None, cvss=None, subid=5, vuln_time=124, rowid=205,
+                                             scan=self.scan_4, expiration_time=400)
+        self.vulnerability_10 = Vulnerability(port=self.port_5, output='os name', exploit=self.exploit_4,
+                                             cve=None, cvss=None, subid=6, vuln_time=124, rowid=206,
+                                             scan=self.scan_4, expiration_time=400)
+        self.vulnerability_10 = Vulnerability(port=self.port_5, output='os version', exploit=self.exploit_4,
+                                             cve=None, cvss=None, subid=7, vuln_time=124, rowid=207,
+                                             scan=self.scan_4, expiration_time=400)
+        self.vulnerability_10 = Vulnerability(port=self.port_5, output='test:os:cpe', exploit=self.exploit_4,
+                                             cve=None, cvss=None, subid=8, vuln_time=124, rowid=208,
+                                             scan=self.scan_4, expiration_time=400)
+
     def prepare_tables(self):
         self.storage.connect()
         self.storage.init_schema()
@@ -118,7 +157,8 @@ class StorageTest(TestCase):
                               'VALUES '
                               '(56, 17, "test_name", 13, 19), '
                               '(80, 17, "test_name_2", 20, 45), '
-                              '(79, 17, "test_name", 2, 18)',))
+                              '(79, 17, "test_name", 2, 18),'
+                              '(78, 6,  "portdetection", 1, 2)',))
 
     def prepare_nodes_scans(self):
         self.storage.execute(("INSERT INTO nodes_scans (ROWID, scan_id, node_id, node_ip, time) VALUES "
@@ -144,7 +184,8 @@ class StorageTest(TestCase):
                               "(14, 'test_name', 'test_app', 80, 1, '127.0.0.1', 45, 17, 180, 222), "
                               "(2, 'test_name_2', 'test_app_2', 56, 1, '127.0.0.1', 45, 17, 109, 775), "
                               "(14, 'test_name', 'test_app', 79, 1, '127.0.0.1', 45, 17, 14, 156), "
-                              "(2, 'test_name_2', 'test_app_2', 79, 1, '127.0.0.1', 45, 17, 56, 780)",))
+                              "(2, 'test_name_2', 'test_app_2', 79, 1, '127.0.0.1', 45, 17, 56, 780), "
+                              "(0, 'portdetection', 'portdetection', 78, 4, '127.0.0.4', 22, 6, 14, 890)",))
 
     def prepare_vulnerabilities(self):
         self.storage.execute(("INSERT INTO vulnerabilities (ROWID, scan_id, node_id, node_ip, port_protocol, port, "
@@ -152,7 +193,16 @@ class StorageTest(TestCase):
                               "(134, 56, 1, '127.0.0.1', 17, 45, 14, 1, 'CVE-2017', 6.7, 'test_output_1', 13, 600),"
                               "(152, 56, 1, '127.0.0.1', 17, 45, 2, 2, 'CWE-14', 8.9, 'test_output_2', 98, 600),"
                               "(153, 79, 1, '127.0.0.1', 17, 45, 14, 2, 'CVE-2016', 3.7, 'test_output_3', 15, NULL),"
-                              "(169, 79, 1, '127.0.0.1', 17, 45, 2, 1, 'CWE-15', 2.9, 'test_output_4', 124, 600)"
+                              "(169, 79, 1, '127.0.0.1', 17, 45, 2, 1, 'CWE-15', 2.9, 'test_output_4', 124, 600), "
+                              "(200, 78, 4, '127.0.0.4', 6, 22, 0, 0, NULL, NULL, '', 124, 400), "
+                              "(201, 78, 4, '127.0.0.4', 6, 22, 0, 1, NULL, NULL, 'tftp', 124, 400), "
+                              "(202, 78, 4, '127.0.0.4', 6, 22, 0, 2, NULL, NULL, 'tftp server name', 124, 400), "
+                              "(203, 78, 4, '127.0.0.4', 6, 22, 0, 3, NULL, NULL, '6.7.8', 124, 400), "
+                              "(204, 78, 4, '127.0.0.4', 6, 22, 0, 4, NULL, NULL, 'HERE IS TFTP\n\n\n > ', 124, 400), "
+                              "(205, 78, 4, '127.0.0.4', 6, 22, 0, 5, NULL, NULL, 'test:cpe', 124, 400), "
+                              "(206, 78, 4, '127.0.0.4', 6, 22, 0, 6, NULL, NULL, 'os name', 124, 400), "
+                              "(207, 78, 4, '127.0.0.4', 6, 22, 0, 7, NULL, NULL, 'os version', 124, 400), "
+                              "(208, 78, 4, '127.0.0.4', 6, 22, 0, 8, NULL, NULL, 'test:os:cpe', 124, 400)"
                               "",))
 
     def test_init(self):
@@ -590,7 +640,7 @@ class StorageTest(TestCase):
         self.prepare_tables()
 
         self.assertEqual(self.storage.scans(2, 0), [self.scan_3, self.scan_1])
-        self.assertEqual(self.storage.scans(2, 1), [self.scan_2])
+        self.assertEqual(self.storage.scans(2, 1), [self.scan_2, self.scan_4])
 
     def ports_scans_by_scan(self):
         self.prepare_tables()
@@ -622,5 +672,22 @@ class StorageTest(TestCase):
 
         self.storage.expire_vulnerabilities()
         result = self.storage.active_vulnerabilities()
+
+        self.assertEqual(result, expected)
+
+    def test_portdetection_vulns(self):
+        self.prepare_tables()
+
+        expected = {
+            'name': 'tftp server name',
+            'version': '6.7.8',
+            'banner': 'HERE IS TFTP\n\n\n > ',
+            'cpe': 'test:cpe',
+            'protocol': 'tftp',
+            'os_name': 'os name',
+            'os_version': 'os version',
+            'os_cpe': 'test:os:cpe'
+        }
+        result = self.storage.portdetection_vulns(self.vulnerability_5)
 
         self.assertEqual(result, expected)

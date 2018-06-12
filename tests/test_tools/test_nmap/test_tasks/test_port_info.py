@@ -7,7 +7,8 @@ from tornado.concurrent import Future
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
-from structs import Port, TransportProtocol, Node, BroadcastPort, Scan, Vulnerability, VulnerabilityChange, ScanContext
+from structs import Port, TransportProtocol, Node, BroadcastPort, Scan, Vulnerability, VulnerabilityChange, ScanContext, \
+    Service
 
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils import Config
@@ -104,6 +105,8 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.exploit = Exploit(exploit_id=4)
 
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
+        self.node.os = Service(name='os test name', version='os test version',
+                               cpe='cpe:2.3:o:vendor:product:-:*:*:*:*:*:*:*')
         self.node_ipv6 = Node(ip=ipaddress.ip_address('::1'), node_id=None)
 
         self.port = Port(number=22, transport_protocol=TransportProtocol.TCP, node=self.node)
@@ -309,7 +312,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port_info.scan_only = True
         await self.port_info()
 
-        expected = 5*[vulnerability.return_value]
+        expected = 8*[vulnerability.return_value]
         self.aucote.storage.save_vulnerabilities.assert_called_once_with(vulnerabilities=expected,
                                                                          scan=self.port_info._scan)
 
@@ -323,7 +326,13 @@ class NmapPortInfoTaskTest(AsyncTestCase):
             call(exploit=exploit, port=self.port, output=None, subid=vulnerability.SERVICE_BANNER,
                  context=self.context),
             call(exploit=exploit, port=self.port, output='cpe:2.3:a:apache:http_server:2.4.23:*:*:*:*:*:*:*',
-                 subid=vulnerability.SERVICE_CPE, context=self.context)
+                 subid=vulnerability.SERVICE_CPE, context=self.context),
+            call(exploit=exploit, port=self.port, output='os test name',
+                 subid=vulnerability.OS_NAME, context=self.context),
+            call(exploit=exploit, port=self.port, output='os test version',
+                 subid=vulnerability.OS_VERSION, context=self.context),
+            call(exploit=exploit, port=self.port, output='cpe:2.3:o:vendor:product:-:*:*:*:*:*:*:*',
+                 subid=vulnerability.OS_CPE, context=self.context)
         ])
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability_change')

@@ -1041,3 +1041,34 @@ class Storage(DbInterface):
             self.expire_vulnerability(vuln)
 
         log.debug('Left %s active vulnerabilities', len([vuln for vuln in vulns if vuln.expiration_time is None]))
+
+    def portdetection_vulns(self, vuln):
+        """
+        Returns dict which describes service details (name, version, application name, banner) for given vulnerability
+
+        """
+        return_value = {}
+
+        vulnerabilities = self.select(table='vulnerabilities', node_id=vuln.port.node.id, node_ip=vuln.port.node.ip,
+                                      port=vuln.port.number, port_protocol=vuln.port.transport_protocol,
+                                      vulnerability_id=0, scan_id=vuln.scan.rowid)
+
+        for vulnerability in vulnerabilities:
+            if vulnerability.subid == Vulnerability.SERVICE_PROTOCOL:
+                return_value['protocol'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.SERVICE_NAME:
+                return_value['name'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.SERVICE_VERSION:
+                return_value['version'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.SERVICE_BANNER:
+                return_value['banner'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.SERVICE_CPE:
+                return_value['cpe'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.OS_NAME:
+                return_value['os_name'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.OS_VERSION:
+                return_value['os_version'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.OS_CPE:
+                return_value['os_cpe'] = vulnerability.output
+
+        return return_value

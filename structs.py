@@ -609,6 +609,9 @@ class Vulnerability(object):
     SERVICE_VERSION = 3
     SERVICE_BANNER = 4
     SERVICE_CPE = 5
+    OS_NAME = 6
+    OS_VERSION = 7
+    OS_CPE = 8
 
     def __init__(self, exploit=None, port=None, output='', cve=None, cvss=None, subid=0, vuln_time=None,
                  rowid=None, scan=None, context=None, expiration_time=None):
