@@ -874,10 +874,20 @@ class Storage(DbInterface):
                         scan=self.get_scan_by_id(row[3]))
 
     def _vulnerability_from_row(self, row: list) -> 'Vulnerability':
-        return Vulnerability(port=Port(transport_protocol=self._transport_protocol(row[4]), number=row[5],
+        vuln = Vulnerability(port=Port(transport_protocol=self._transport_protocol(row[4]), number=row[5],
                                        node=Node(node_id=row[2], ip=ipaddress.ip_address(row[3]))),
                              exploit=Exploit(exploit_id=row[6]), subid=row[7], cve=row[8], cvss=row[9], output=row[10],
                              vuln_time=row[11], rowid=row[0], scan=self.get_scan_by_id(row[1]), expiration_time=row[12])
+
+        sec_scans = self.security_scan_by_vuln(vuln)
+
+        if not sec_scans:
+            log.error('Cannot find security scan for given vulnerability')
+            return vuln
+
+        sec_scan = sec_scans[0]
+        vuln.port.scan = Scan(start=sec_scan.scan_start, end=sec_scan.scan_end, scanner=vuln.scan.scanner)
+        return vuln
 
     def _sec_scan_from_row(self, row: list) -> SecurityScan:
         return SecurityScan(port=Port(node=Node(node_id=row[5], ip=ipaddress.ip_address(row[6])),
@@ -1031,7 +1041,7 @@ class Storage(DbInterface):
 
     def expire_vulnerabilities(self):
         """
-        Checks if any of vulnerability should be expired and do it if needed
+        Checks if any of vulnerability should be expired and do it if needed. Returns expired vulnerabilities
 
         """
         vulns = self.active_vulnerabilities()
@@ -1042,7 +1052,9 @@ class Storage(DbInterface):
 
         log.debug('Left %s active vulnerabilities', len([vuln for vuln in vulns if vuln.expiration_time is None]))
 
-    def portdetection_vulns(self, vuln):
+        return [vuln for vuln in vulns if vuln.expiration_time is not None]
+
+    def portdetection_vulns(self, vuln: 'Vulnerability'):
         """
         Returns dict which describes service details (name, version, application name, banner) for given vulnerability
 

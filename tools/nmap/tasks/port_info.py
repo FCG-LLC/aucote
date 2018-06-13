@@ -116,26 +116,26 @@ class NmapPortInfoTask(PortTask):
 
         vulnerabilities = [
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.protocol,
-                          subid=Vulnerability.SERVICE_PROTOCOL, context=self.context),
+                          subid=Vulnerability.SERVICE_PROTOCOL, context=self.context, scan=self._scan),
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.service.name,
-                          subid=Vulnerability.SERVICE_NAME, context=self.context),
+                          subid=Vulnerability.SERVICE_NAME, context=self.context, scan=self._scan),
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.service.version,
-                          subid=Vulnerability.SERVICE_VERSION, context=self.context),
+                          subid=Vulnerability.SERVICE_VERSION, context=self.context, scan=self._scan),
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.banner,
-                          subid=Vulnerability.SERVICE_BANNER, context=self.context),
+                          subid=Vulnerability.SERVICE_BANNER, context=self.context, scan=self._scan),
             Vulnerability(exploit=self.exploit, port=self.port, output=cpe,
-                          subid=Vulnerability.SERVICE_CPE, context=self.context),
+                          subid=Vulnerability.SERVICE_CPE, context=self.context, scan=self._scan),
 
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.node.os.name,
-                          subid=Vulnerability.OS_NAME, context=self.context),
+                          subid=Vulnerability.OS_NAME, context=self.context, scan=self._scan),
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.node.os.version,
-                          subid=Vulnerability.OS_VERSION, context=self.context),
-            Vulnerability(exploit=self.exploit, port=self.port, output=str(self.port.node.os.cpe.cpe_str),
-                          subid=Vulnerability.OS_CPE, context=self.context)
+                          subid=Vulnerability.OS_VERSION, context=self.context, scan=self._scan),
+            Vulnerability(exploit=self.exploit, port=self.port, subid=Vulnerability.OS_CPE, context=self.context,
+                          output=str(self.port.node.os.cpe.cpe_str) if self.port.node.os.cpe else None, scan=self._scan)
         ]
         self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self._scan)
 
-        self.store_vulnerability(Vulnerability(port=self._port, context=self.context))
+        self.store_vulnerability(Vulnerability(port=self._port, context=self.context, scan=self._scan))
         self.diff_with_last_scan()
 
         if not self.scan_only:

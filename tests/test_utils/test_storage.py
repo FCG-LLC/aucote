@@ -133,13 +133,13 @@ class StorageTest(TestCase):
         self.vulnerability_10 = Vulnerability(port=self.port_5, output='test:cpe', exploit=self.exploit_4,
                                              cve=None, cvss=None, subid=5, vuln_time=124, rowid=205,
                                              scan=self.scan_4, expiration_time=400)
-        self.vulnerability_10 = Vulnerability(port=self.port_5, output='os name', exploit=self.exploit_4,
+        self.vulnerability_11 = Vulnerability(port=self.port_5, output='os name', exploit=self.exploit_4,
                                              cve=None, cvss=None, subid=6, vuln_time=124, rowid=206,
                                              scan=self.scan_4, expiration_time=400)
-        self.vulnerability_10 = Vulnerability(port=self.port_5, output='os version', exploit=self.exploit_4,
+        self.vulnerability_12 = Vulnerability(port=self.port_5, output='os version', exploit=self.exploit_4,
                                              cve=None, cvss=None, subid=7, vuln_time=124, rowid=207,
                                              scan=self.scan_4, expiration_time=400)
-        self.vulnerability_10 = Vulnerability(port=self.port_5, output='test:os:cpe', exploit=self.exploit_4,
+        self.vulnerability_13 = Vulnerability(port=self.port_5, output='test:os:cpe', exploit=self.exploit_4,
                                              cve=None, cvss=None, subid=8, vuln_time=124, rowid=208,
                                              scan=self.scan_4, expiration_time=400)
 

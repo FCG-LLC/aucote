@@ -36,6 +36,8 @@ class SerializerTest(TestCase):
 
         self.vuln.port = self.port
         self.vuln.output = 'Test'
+        self.vuln.scan = Scan(start=datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp(),
+                              scanner='tcp')
 
         self.exploit = Exploit(exploit_id=1)
         self.exploit.app = 'test_app'
@@ -76,16 +78,15 @@ class SerializerTest(TestCase):
 
     @patch('structs.time.time', MagicMock(return_value=13452534))
     def test_vulnerability_serializer_port_only(self):
-        context = ScanContext(aucote=None, scan=TCPScanner(MagicMock(), MagicMock(), MagicMock(), MagicMock()))
-        context.scan.scan_start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
-        context.scan.NAME = None
+        scan = Scan(start=datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp(),
+                    scanner='scanner')
 
-        result = self.serializer.serialize_vulnerability(Vulnerability(port=self.port, context=context))._data
+        result = self.serializer.serialize_vulnerability(Vulnerability(port=self.port, scan=scan))._data
         expected = bytearray(b'\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00\x00\x64\xff\x9b\x00\x00\x00\x00\x00\x00\x00\x00'
                              b'\x7f\x00\x00\x01\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
                              b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0`\xd5!\x03\x00\x00\x00\x15\x00'
-                             b'test_name_and_version\x05\x00OTHER\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+                             b'test_name_and_version\x05\x00OTHER\x07\x00scanner\x00\x00\x00\x00\x00\x00\x00\x00'
+                             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 
         self.assertEqual(result, expected)
 

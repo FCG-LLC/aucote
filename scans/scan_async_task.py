@@ -12,7 +12,8 @@ from croniter import croniter
 from netaddr import IPSet
 
 from aucote_cfg import cfg
-from structs import ScanType, ScanStatus, ScanContext
+from database.serializer import Serializer
+from structs import ScanType, ScanStatus, ScanContext, Service
 from utils.time import parse_period
 
 
@@ -69,7 +70,7 @@ class ScanAsyncTask(object):
         finally:
             self.context.end = time.time()
             self.context = None
-            self.storage.expire_vulnerabilities()
+            self.expire_vulnerabilities()
 
     async def run(self):
         raise NotImplementedError()
@@ -319,3 +320,51 @@ class ScanAsyncTask(object):
         await self.context.wait_on_scan_end()
 
         log.info('Scan %s cancelled successfully', self.NAME)
+
+    def prepare_vulnerability_for_kudu(self, vuln: 'Vulnerability'):
+        """
+        Update vulnerability to meet all fields required by kudu serializer
+
+        """
+        data = self.storage.portdetection_vulns(vuln)
+
+        os_service = Service(name=data['os_name'], version=data['os_version'], cpe=data['os_cpe'])
+        vuln.port.node.os = os_service
+        vuln.port.protocol = data['protocol']
+        vuln.port.banner = data['banner']
+        vuln.port.service.name = data['name']
+        vuln.port.service.version = data['version']
+        vuln.port.service.cpe = data['cpe']
+
+        return vuln
+
+    def expire_vulnerabilities(self):
+        """
+        Update validation time of vulnerabilites
+
+        """
+        vulns = self.storage.expire_vulnerabilities()
+        for vuln in vulns:
+            # There is some mismatch between kudu and local storage
+            if vuln.exploit.id == 0 and vuln.subid > 0:
+                continue
+            self.prepare_vulnerability_for_kudu(vuln)
+            self.store_vulnerability(vuln)
+
+    def store_vulnerability(self, vuln):
+        """
+        Saves vulnerability into database (kudu)
+        """
+        log.debug('Found vulnerability %s for %s', vuln.exploit.id if vuln.exploit is not None else None, vuln.port)
+        msg = Serializer.serialize_vulnerability(vuln)
+        self.aucote.kudu_queue.send_msg(msg)
+
+        # Do not save vulnerability which is already saved: FixMe: better save and update vulns
+        if vuln.expiration_time is not None:
+            return
+
+        try:
+            self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self)
+        except Exception:
+            log.warning('Error during saving vulnerability (%s, %s) to the storage',
+                        vuln.exploit.id if vuln.exploit is not None else None, vuln.subid)

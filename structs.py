@@ -627,7 +627,7 @@ class Vulnerability(object):
         self._time = None
         self._expiration_time = None
 
-        self.output = str(output)
+        self.output = str(output) if output is not None else None
         self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
         self.port = port
         self._cve = cve

@@ -222,7 +222,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port_info.command.async_call = MagicMock(return_value=future)
         await self.port_info()
 
-        vulnerability.assert_has_calls((call(port=self.port_info._port, context=self.context),))
+        vulnerability.assert_has_calls((call(port=self.port_info._port, context=self.context, scan=self.scan),))
         mock_serializer.assert_called_once_with(vulnerability.return_value)
 
         self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)
@@ -318,21 +318,21 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         vulnerability.assert_has_calls([
             call(exploit=exploit, port=self.port, output='http', subid=vulnerability.SERVICE_PROTOCOL,
-                 context=self.context),
+                 context=self.context, scan=self.scan),
             call(exploit=exploit, port=self.port, output='Apache httpd', subid=vulnerability.SERVICE_NAME,
-                 context=self.context),
+                 context=self.context, scan=self.scan),
             call(exploit=exploit, port=self.port, output='2.4.23', subid=vulnerability.SERVICE_VERSION,
-                 context=self.context),
+                 context=self.context, scan=self.scan),
             call(exploit=exploit, port=self.port, output=None, subid=vulnerability.SERVICE_BANNER,
-                 context=self.context),
+                 context=self.context, scan=self.scan),
             call(exploit=exploit, port=self.port, output='cpe:2.3:a:apache:http_server:2.4.23:*:*:*:*:*:*:*',
-                 subid=vulnerability.SERVICE_CPE, context=self.context),
+                 subid=vulnerability.SERVICE_CPE, context=self.context, scan=self.scan),
             call(exploit=exploit, port=self.port, output='os test name',
-                 subid=vulnerability.OS_NAME, context=self.context),
+                 subid=vulnerability.OS_NAME, context=self.context, scan=self.scan),
             call(exploit=exploit, port=self.port, output='os test version',
-                 subid=vulnerability.OS_VERSION, context=self.context),
+                 subid=vulnerability.OS_VERSION, context=self.context, scan=self.scan),
             call(exploit=exploit, port=self.port, output='cpe:2.3:o:vendor:product:-:*:*:*:*:*:*:*',
-                 subid=vulnerability.OS_CPE, context=self.context)
+                 subid=vulnerability.OS_CPE, context=self.context, scan=self.scan)
         ])
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability_change')

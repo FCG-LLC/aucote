@@ -67,7 +67,7 @@ class Serializer:
         Serializes Vulnerability
         """
         msg = KuduMsg(MsgType.VULNERABILITY.value)
-        msg.add_datetime(vuln.context.scan.scan_start)  # scan_start
+        msg.add_datetime(vuln.scan.start)  # scan_start
         msg.add_short(vuln.port.number)
         msg.add_ip(vuln.port.node.ip)
         msg.add_int(vuln.port.node.id)
@@ -82,7 +82,7 @@ class Serializer:
         msg.add_datetime(vuln.time)
         msg.add_str(vuln.port.node.os.name_with_version)
         msg.add_str(vuln.exploit.metric.name if vuln.exploit is not None and vuln.exploit.metric is not None else '')
-        msg.add_str(vuln.context.scan.NAME if vuln.context is not None else '')
+        msg.add_str(vuln.scan.scanner if vuln.scan is not None else '')
         msg.add_str(vuln.exploit.app if vuln.exploit is not None else '')
         msg.add_str(vuln.exploit.name if vuln.exploit is not None else '')
         msg.add_long(vuln.exploit.tags_mask if vuln.exploit is not None else 0)

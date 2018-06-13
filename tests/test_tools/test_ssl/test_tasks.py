@@ -40,5 +40,5 @@ class SSLScriptTaskTest(TestCase):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0], mock_vulnerability.return_value)
-        mock_vulnerability.assert_called_once_with(exploit=self.task.exploit, port=self.task.port,
+        mock_vulnerability.assert_called_once_with(exploit=self.task.exploit, port=self.task.port, scan=self.scan,
                                                    output=data.with_severity_ge().output, context=self.context)
