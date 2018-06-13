@@ -31,22 +31,37 @@ class Scan(object):
             scanner (str): scanner name
 
         """
+        self._start = None
+        self._end = None
+
         self.rowid = rowid
-        self._start = start or time.time()
+        self.start = start or time.time()
         self.end = end
         self._protocol = protocol
         self._scanner = scanner
         self.scanner_task = None
 
     @property
-    def start(self):
+    def start(self) -> float:
         """
-        Time, when scan start
+        Scan start (unix timestamp) in seconds
+        """
+        return self._start/1000 if self._start is not None else None
 
-        Returns:
-            int - timestamp
+    @start.setter
+    def start(self, value: float):
+        self._start = round(value*1000) if value is not None else None
+
+    @property
+    def end(self) -> float:
         """
-        return self._start
+        Scan end (unix timestamp) in seconds
+        """
+        return self._end/1000 if self._end is not None else None
+
+    @end.setter
+    def end(self, value: float):
+        self._end = round(value*1000) if value is not None else None
 
     @property
     def protocol(self):
@@ -213,6 +228,8 @@ class SecurityScan(object):
 
     """
     def __init__(self, scan, port, exploit, scan_start=None, scan_end=None, rowid=None):
+        self._scan_start = None
+
         self.port = port
         self.exploit = exploit
         self.scan_start = scan_start
@@ -230,6 +247,14 @@ class SecurityScan(object):
 
         """
         return self.port.node
+    
+    @property
+    def scan_start(self):
+        return self._scan_start / 1000 if self._scan_start is not None else None
+
+    @scan_start.setter
+    def scan_start(self, value):
+        self._scan_start = round(value * 1000) if value is not None else None
 
     def __eq__(self, other):
         return isinstance(other, SecurityScan) and all((self.port == other.port, self.exploit == other.exploit,
@@ -442,6 +467,8 @@ class Port(object):
             transport_protocol (TransportProtocol):
 
         """
+        self._when_discovered = None
+
         self.vulnerabilities = []
         self.when_discovered = time.time()
         self.node = node
@@ -453,6 +480,14 @@ class Port(object):
         self.banner = None
         self.scan = scan
         self.interface = None
+
+    @property
+    def when_discovered(self):
+        return self._when_discovered/1000 if self._when_discovered is not None else None
+
+    @when_discovered.setter
+    def when_discovered(self, value):
+        self._when_discovered = round(value*1000) if value is not None else None
 
     def __eq__(self, other):
         return isinstance(other, Port) and self.transport_protocol == other.transport_protocol \
@@ -478,7 +513,6 @@ class Port(object):
         """
         return_value = type(self)(node=self.node, number=self.number, transport_protocol=self.transport_protocol)
         return_value.vulnerabilities = self.vulnerabilities
-        return_value.when_discovered = self.when_discovered
         return_value.service = self.service.copy()
         return_value.apps = [app.copy() for app in self.apps]
         return_value.banner = self.banner
@@ -587,7 +621,8 @@ class Vulnerability(object):
             output(str): string or stringable output
 
         """
-        self.when_discovered = time.time()
+        self._time = None
+
         self.output = str(output)
         self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
         self.port = port
@@ -598,6 +633,14 @@ class Vulnerability(object):
         self.rowid = rowid
         self.scan = scan
         self.context = context
+
+    @property
+    def time(self):
+        return self._time/1000 if self._time is not None else None
+
+    @time.setter
+    def time(self, value):
+        self._time = round(value*1000) if value is not None else None
 
     @property
     def cve(self):

@@ -276,7 +276,7 @@ class TopdisTest(AsyncTestCase):
         http_client.instance().get.return_value = self.req_future
 
         nodes = await self.topdis.get_nodes()
-        expected = 1470915752.842891
+        expected = 1470915752.843
 
         node = list(nodes)[0]
 

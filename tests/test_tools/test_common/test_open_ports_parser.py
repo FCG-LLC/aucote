@@ -90,9 +90,6 @@ class OpenPortsParserTest(unittest.TestCase):
 
         self.assertCountEqual(result, expected)
 
-        self.assertEqual(result[0].scan.start, 1234)
-        self.assertEqual(result[1].scan.start, 1234)
-
     def test_no_ports_scan(self):
         result = self.parser.parse(self.NO_PORTS_ELEMENT, self.node_by_ip)
         expected = []

@@ -1,5 +1,6 @@
 """
-Provide class for tasks
+Abstract class for tasks. Provides interface compatible with task manager.
+All Task based class should override __call__ function
 
 """
 import logging as log
@@ -43,11 +44,14 @@ class Task(object):
         """
         return self.aucote.kudu_queue
 
-    def __call__(self, *args, **kwargs):
-        """
-        Call executed by executor
+    async def __call__(self, *args, **kwargs):
+        try:
+            self._prepare()
+            return await self.execute(*args, **kwargs)
+        finally:
+            self._clean()
 
-        """
+    async def execute(self, *args, **kwargs):
         raise NotImplementedError
 
     def send_msg(self, msg):
@@ -56,6 +60,12 @@ class Task(object):
 
         """
         return self.kudu_queue.send_msg(msg)
+
+    def _prepare(self):
+        pass
+
+    def _clean(self):
+        pass
 
     def store_scan_end(self, exploits, port):
         """

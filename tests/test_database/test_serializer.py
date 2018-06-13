@@ -23,7 +23,8 @@ class SerializerTest(TestCase):
         node.os = MagicMock()
         node.os.name_with_version = 'test_name_and_version'
 
-        self.context = ScanContext(aucote=None, scan=TCPScanner)
+        self.context = ScanContext(aucote=None, scan=TCPScanner(MagicMock(), MagicMock(), MagicMock(), MagicMock()))
+        self.context.scan.scan_start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
 
         self.vuln.context = self.context
 
@@ -31,8 +32,7 @@ class SerializerTest(TestCase):
         self.port.protocol = 'ssh'
 
         self.port.scan = Scan()
-        self.port.scan._start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
-        self.port.when_discovered = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
+        self.port.scan.start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
 
         self.vuln.port = self.port
         self.vuln.output = 'Test'
@@ -50,7 +50,7 @@ class SerializerTest(TestCase):
         self.exploit.tags = {ExploitTag.HTTP, ExploitTag.SSL, ExploitTag.HTTPS}
 
         self.vuln.exploit = self.exploit
-        self.vuln.when_discovered = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
+        self.vuln.time = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
 
     def test_vulnerability_serializer(self):
 
@@ -76,7 +76,11 @@ class SerializerTest(TestCase):
 
     @patch('structs.time.time', MagicMock(return_value=13452534))
     def test_vulnerability_serializer_port_only(self):
-        result = self.serializer.serialize_vulnerability(Vulnerability(port=self.port))._data
+        context = ScanContext(aucote=None, scan=TCPScanner(MagicMock(), MagicMock(), MagicMock(), MagicMock()))
+        context.scan.scan_start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
+        context.scan.NAME = None
+
+        result = self.serializer.serialize_vulnerability(Vulnerability(port=self.port, context=context))._data
         expected = bytearray(b'\xe7\xfb\xf2\x93V\x01\x00\x00\x16\x00\x00\x64\xff\x9b\x00\x00\x00\x00\x00\x00\x00\x00'
                              b'\x7f\x00\x00\x01\x01\x00\x00\x00\x03\x00ssh\x00\x00\x00\x00\x06\xe7\xfb\xf2\x93V\x01'
                              b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0`\xd5!\x03\x00\x00\x00\x15\x00'

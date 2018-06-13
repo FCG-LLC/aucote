@@ -107,6 +107,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.node_ipv6 = Node(ip=ipaddress.ip_address('::1'), node_id=None)
 
         self.port = Port(number=22, transport_protocol=TransportProtocol.TCP, node=self.node)
+        self.port.scan = Scan()
         self.port_ipv6 = Port(number=22, node=self.node_ipv6, transport_protocol=TransportProtocol.TCP)
         self.scan = Scan()
         self.scanner = MagicMock(NAME='tools')
@@ -218,7 +219,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port_info.command.async_call = MagicMock(return_value=future)
         await self.port_info()
 
-        vulnerability.assert_has_calls((call(port=self.port_info._port),))
+        vulnerability.assert_has_calls((call(port=self.port_info._port, context=self.context),))
         mock_serializer.assert_called_once_with(vulnerability.return_value)
 
         self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)

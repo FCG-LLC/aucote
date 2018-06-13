@@ -86,7 +86,7 @@ class CommandTaskTest(AsyncTestCase):
         result = await self.task()
         args_storage = self.aucote.storage.save_security_scans.call_args[1]
         self.assertEqual(result, None)
-        self.assertEqual(args_storage['port'].scan.end, 0)
+        self.assertEqual(args_storage['port'].scan.end, 5)
         self.assertEqual(args_storage['port'].scan.start, 5)
         self.assertEqual(args_storage['exploits'], [self.exploit])
 

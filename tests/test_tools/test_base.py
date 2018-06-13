@@ -1,12 +1,14 @@
-from unittest import TestCase
 from unittest.mock import MagicMock
+
+from tornado.testing import AsyncTestCase, gen_test
 
 from structs import Scan, ScanContext
 from tools.base import Tool
 
 
-class ToolTest(TestCase):
+class ToolTest(AsyncTestCase):
     def setUp(self):
+        super().setUp()
         self.aucote = MagicMock()
         self.aucote.storage.filename = ":memory:"
         self.exploits = MagicMock()
@@ -23,5 +25,7 @@ class ToolTest(TestCase):
         self.assertEqual(self.tool.config, self.config)
         self.assertEqual(self.tool.port, self.port)
 
-    def test_call(self):
-        self.assertRaises(NotImplementedError, self.tool)
+    @gen_test
+    async def test_call(self):
+        with self.assertRaises(NotImplementedError):
+            await self.tool()

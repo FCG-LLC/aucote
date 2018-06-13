@@ -1,5 +1,6 @@
 """
-Class responsible for mapping scans and port, service
+Maps scans to ports and services. This module is also for filtering based on configuration
+
 """
 import logging as log
 

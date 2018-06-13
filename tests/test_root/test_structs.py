@@ -196,7 +196,6 @@ class PortTest(TestCase):
         self.assertEqual(result.service.version, port.service.version)
         self.assertEqual(result.transport_protocol, port.transport_protocol)
         self.assertEqual(result.vulnerabilities, port.vulnerabilities)
-        self.assertEqual(result.when_discovered, port.when_discovered)
 
     def test_in_range(self):
         parsed_ports = {
@@ -227,8 +226,8 @@ class ScanTest(TestCase):
 
     def test_init(self):
         expected = {
-            "_start": 13,
-            "end": 14.6,
+            "_start": 13000,
+            "_end": 14600,
             "_protocol": TransportProtocol.ICMP,
             "_scanner": "test_scanner",
             "rowid": 16,

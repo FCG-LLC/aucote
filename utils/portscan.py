@@ -7,7 +7,7 @@ from pycslib.scan_engines.portscan import PortscanError
 from pycslib.utils.nmap import ports_to_string
 
 from aucote_cfg import cfg
-from structs import TransportProtocol, Port, Scan
+from structs import TransportProtocol, Port
 from tools.nmap.tool import NmapTool
 
 
@@ -32,7 +32,7 @@ class PortscanScanner(object):
             found_ports = {}
 
         return list({
-            Port(number=port, node=node, transport_protocol=TransportProtocol.TCP, scan=Scan(start=node.scan.start))
+            Port(number=port, node=node, transport_protocol=TransportProtocol.TCP)
             for node in nodes
             for port in found_ports.get(str(node.ip), [])
         })

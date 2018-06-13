@@ -1,5 +1,101 @@
 """
-This file contains class for storage temporary information like last date of scanning port
+Storage
+=======
+
+Storage is internal database which helps with processing scans. Data from storage are mostly available via API
+
+Currently storage consists of 5 tables
+
+scans
+-----
+
++-------+----------+--------------+------------+----------+
+| rowid | protocol | scanner_name | scan_start | scan_end |
++=======+==========+==============+============+==========+
++-------+----------+--------------+------------+----------+
+
+columns:
+ - rowid (int) - row identifier
+ - protocol (int) - protocol which was scanned
+ - scanner_name (string) - name of scanner
+ - scan_start (int) - scan start timestamp
+ - scan_end (int) - scan end timestamp
+
+nodes_scans
+-----------
+
++--------+---------+---------+---------+------+
+| rowid  | node_id | node_ip | scan_id | time |
++========+=========+=========+=========+======+
++--------+---------+---------+---------+------+
+
+columns:
+ - rowid (int) - row identifier
+ - node_id (int) - node identifier (topdis base)
+ - node_ip (string) - node ip address
+ - scan_id (int) - scan identifier (scans.rowid)
+ - time (int) - node detecting time
+
+ports_scans
+-----------
+
++-------+---------+---------+---------+------+---------------+------+
+| rowid | node_id | node_ip | scan_id | port | port_protocol | time |
++=======+=========+=========+=========+======+===============+======+
++-------+---------+---------+---------+------+---------------+------+
+
+columns:
+ - rowid (int) - row identifier
+ - node_id (int) - node identifier (topdis base)
+ - node_ip (string) - node ip address
+ - scan_id (int) - scan identifier (scans.rowid)
+ - port (int) - port number
+ - port_protocol (int) - port protocol
+ - time (int) - port detecting time
+
+security_scans
+--------------
+
++-------+---------+------------+-------------+--------------+---------+---------+---------------+-------------+----------------+--------------+
+| rowid | scan_id | exploit_id | exploit_app | exploit_name | node_id | node_ip | port_protocol | port_number | sec_scan_start | sec_scan_end |
++=======+=========+============+=============+==============+=========+=========+===============+=============+================+==============+
++-------+---------+------------+-------------+--------------+---------+---------+---------------+-------------+----------------+--------------+
+
+columns:
+ - rowid (int) - row identifier
+ - scan_id (int) - scan identifier (scans.rowid)
+ - exploit_id (int) - script identifier
+ - exploit_app (int) - script app name
+ - exploit_name (int) - script name
+ - node_id (int) - node identifier (topdis base)
+ - node_ip (string) - node ip address
+ - port_protocol (int) - port protocol
+ - port_number (int) - port number
+ - sec_scan_start (int) - security scan start timestamp
+ - sec_scan_end (int) security scan end timestamp
+
+vulnerabilities
+---------------
+
++-------+---------+---------+---------+---------------+------+------------------+---------------------+-----+------+---------------+
+| rowid | scan_id | node_id | node_ip | port_protocol | port | vulnerability_id | vulnerability_subid | cve | cvss | output | time |
++=======+=========+=========+=========+===============+======+==================+=====================+=====+======+===============+
++-------+---------+---------+---------+---------------+------+------------------+---------------------+-----+------+---------------+
+
+columns:
+ - rowid (int) - row identifier
+ - scan_id (int) - scan identifier (scans.rowid)
+ - node_id (int) - node identifier (topdis base)
+ - node_ip (string) - node ip address
+ - port_protocol (int) - port protocol
+ - port (int) - port number
+ - vulnerability_id (int) - script identifier
+ - vulnerability_subid (int) - vulnerability subidentifier (allows to store multiple vulnerabilites by one script)
+ - cve (string) - CVE identifier
+ - cvss (string) - CVSS value (0 to 10 with 0.1 resolution)
+ - output (string) - vulnerability details
+ - time (int) - vulnerability detection time
+
 """
 import ipaddress
 import sqlite3

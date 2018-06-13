@@ -1,12 +1,13 @@
-from unittest import TestCase
 from unittest.mock import MagicMock, patch
+
+from tornado.testing import AsyncTestCase, gen_test
 
 from fixtures.exploits import Exploit
 from structs import Scan, TransportProtocol, Port, ScanContext
 from utils.task import Task
 
 
-class TaskTest(TestCase):
+class TaskTest(AsyncTestCase):
     """
     Testing task behaviour
     """
@@ -16,6 +17,7 @@ class TaskTest(TestCase):
         """
         Set up init variables
         """
+        super().setUp()
         self.executor = MagicMock()
         self.executor.kudu_queue = MagicMock()
         self.executor.exploits = MagicMock()
@@ -32,11 +34,13 @@ class TaskTest(TestCase):
         self.assertEqual(self.task.creation_time, 17)
         self.assertEqual(self.task.kudu_queue, self.executor.kudu_queue)
 
-    def test_call(self):
+    @gen_test
+    async def test_call(self):
         """
         Test call
         """
-        self.assertRaises(NotImplementedError, self.task)
+        with self.assertRaises(NotImplementedError):
+            await self.task()
 
     def test_send_msg(self):
         """

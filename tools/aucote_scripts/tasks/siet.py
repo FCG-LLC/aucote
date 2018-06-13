@@ -1,16 +1,15 @@
-import time
 import logging as log
 from structs import Vulnerability
 from tools.common.port_task import PortTask
 import socket
 import os
+import time
 
 from utils.tftp import TFTPError
 
 
 class SietTask(PortTask):
-
-    async def __call__(self, *args, **kwargs):
+    async def execute(self, *args, **kwargs):
         try:
             result = await self.context.aucote.tftp_server.async_get_file(str(self._port.node.ip), self.callback)
 
@@ -28,7 +27,8 @@ class SietTask(PortTask):
             if data:
                 output = "".join(data)
 
-                vulnerability = Vulnerability(exploit=self.exploit, port=self._port, output=output, scan=self._scan)
+                vulnerability = Vulnerability(exploit=self.exploit, port=self._port, output=output, scan=self._scan,
+                                              context=self.context)
 
                 self.store_vulnerability(vuln=vulnerability)
         except TFTPError as exception:

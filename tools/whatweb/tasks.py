@@ -37,8 +37,8 @@ class WhatWebTask(CommandTask):
         """
         return str(self.port.url),
 
-    async def __call__(self):
-        result = await super(WhatWebTask, self).__call__()
+    async def execute(self):
+        result = await super().execute()
         if not result:
             return
 

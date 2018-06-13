@@ -2,7 +2,6 @@
 This module contains tasks related to Aucote HTTP Headers
 
 """
-import time
 import logging as log
 
 from tornado.httpclient import HTTPError
@@ -29,7 +28,7 @@ class AucoteHttpHeadersTask(PortTask):
         self.config = config
         super(AucoteHttpHeadersTask, self).__init__(*args, **kwargs)
 
-    async def __call__(self, *args, **kwargs):
+    async def execute(self, *args, **kwargs):
         custom_headers = {
             'Accept-Encoding': 'gzip, deflate'
         }
@@ -66,9 +65,6 @@ class AucoteHttpHeadersTask(PortTask):
                                           exploit=exploit))
             elif header.obligatory:
                 results.append(Result(output=self.MISSING_HEADER.format(name=exploit.title), exploit=exploit))
-
-        self._port.scan.end = int(time.time())
-        self.store_scan_end(exploits=self.current_exploits, port=self._port)
 
         if not results:
             return results

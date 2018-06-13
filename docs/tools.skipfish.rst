@@ -4,46 +4,13 @@ tools.skipfish package
 Submodules
 ----------
 
-tools.skipfish.base module
---------------------------
+.. toctree::
 
-.. automodule:: tools.skipfish.base
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tools.skipfish.parsers module
------------------------------
-
-.. automodule:: tools.skipfish.parsers
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tools.skipfish.structs module
------------------------------
-
-.. automodule:: tools.skipfish.structs
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tools.skipfish.tasks module
----------------------------
-
-.. automodule:: tools.skipfish.tasks
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tools.skipfish.tool module
---------------------------
-
-.. automodule:: tools.skipfish.tool
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   tools.skipfish.base
+   tools.skipfish.parsers
+   tools.skipfish.structs
+   tools.skipfish.tasks
+   tools.skipfish.tool
 
 Module contents
 ---------------

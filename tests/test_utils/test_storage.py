@@ -337,7 +337,7 @@ class StorageTest(TestCase):
     def test_save_security_scan_twice(self):
         self.storage.connect()
         self.storage.init_schema()
-        self.port_1.scan._start = None
+        self.port_1.scan.start = None
 
         expected = [(56, 14, 'test_app', 'test_name', 1, '127.0.0.1', 17, 45, None, 19.0)]
 
@@ -347,7 +347,7 @@ class StorageTest(TestCase):
 
         self.assertEqual(result, expected)
 
-        self.port_1.scan._start = 13
+        self.port_1.scan.start = 13
         self.port_1.scan.end = None
 
         expected = [(56, 14, 'test_app', 'test_name', 1, '127.0.0.1', 17, 45, 13.0, 19.0)]

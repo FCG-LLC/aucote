@@ -1,5 +1,6 @@
 """
-This is main module of aucote scanning functionality.
+Executor decides which nodes and ports should be scanned. Later run TaskMapper for nodes or NmapPortInfoTask for ports.
+In second case the NmapPortInfoTask is responsible for executing TaskMapper
 
 """
 import logging as log
@@ -10,7 +11,7 @@ from scans.task_mapper import TaskMapper
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.task import Task
 from utils.time import parse_period
-from structs import Scan, BroadcastPort
+from structs import BroadcastPort
 
 
 class Executor(Task):
@@ -32,7 +33,6 @@ class Executor(Task):
         self.scan_only = scan_only
         if cfg['portdetection._internal.broadcast']:
             broadcast_port = BroadcastPort()
-            broadcast_port.scan = Scan(start=time.time())
             self._ports.append(broadcast_port)
 
     @property
@@ -88,7 +88,7 @@ class Executor(Task):
         for node in set(self.nodes):
             await TaskMapper(context=self.context, scan=self._scan, scanner=self.scanner).assign_tasks_for_node(node)
 
-    def __call__(self, *args, **kwargs):
+    async def execute(self, *args, **kwargs):
         """
         Making executor callable for working as task
 
@@ -100,7 +100,7 @@ class Executor(Task):
 
         """
         try:
-            return self.run()
+            return await self.run()
         finally:
             self.finish_time = time.time()
 
