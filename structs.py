@@ -42,25 +42,25 @@ class Scan(object):
         self.scanner_task = None
 
     @property
-    def start(self):
+    def start(self) -> float:
         """
         Scan start (unix timestamp) in seconds
         """
         return self._start/1000 if self._start is not None else None
 
     @start.setter
-    def start(self, value: int):
+    def start(self, value: float):
         self._start = round(value*1000) if value is not None else None
 
     @property
-    def end(self):
+    def end(self) -> float:
         """
         Scan end (unix timestamp) in seconds
         """
         return self._end/1000 if self._end is not None else None
 
     @end.setter
-    def end(self, value):
+    def end(self, value: float):
         self._end = round(value*1000) if value is not None else None
 
     @property
