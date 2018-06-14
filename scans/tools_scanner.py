@@ -43,8 +43,7 @@ class ToolsScanner(ScanAsyncTask):
             log.info("Starting security scan")
             last_scan_start = self.get_last_scan_start()
 
-            nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, scan=self.scan,
-                                                       filter_out_storage=False)
+            nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, filter_out_storage=False)
             self.storage.save_scan(self.scan)
             self.storage.save_nodes(nodes, scan=self.scan)
 

@@ -86,7 +86,7 @@ class ScanAsyncTask(object):
         """
         return self._shutdown_condition
 
-    async def _get_nodes_for_scanning(self, scan, timestamp=None, filter_out_storage=True):
+    async def _get_nodes_for_scanning(self, timestamp=None, filter_out_storage=True):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -102,7 +102,7 @@ class ScanAsyncTask(object):
         nodes = await self.topdis.get_nodes()
 
         if filter_out_storage:
-            storage_nodes = self.storage.get_nodes(pasttime=self._scan_interval(), timestamp=timestamp, scan=scan)
+            storage_nodes = self.storage.get_nodes(pasttime=self._scan_interval(), timestamp=timestamp, scan=self.scan)
             nodes = nodes - set(storage_nodes)
 
         include_networks = self._get_networks_list()
