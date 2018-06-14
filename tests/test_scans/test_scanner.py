@@ -139,11 +139,10 @@ class ScannerTest(AsyncTestCase):
                                              scan_only=False, scan=scan, scanner=self.thread)), any_order=True)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
-    @patch('scans.scanner.Scan')
     @patch('scans.scanner.Scanner.scanners', new_callable=PropertyMock)
     @patch('scans.scanner.cfg', new_callable=Config)
     @gen_test
-    async def test_periodical_scan(self, cfg, scanners, scan):
+    async def test_periodical_scan(self, cfg, scanners):
         self.thread.PROTOCOL = TransportProtocol.UDP
         nodes = MagicMock()
         future = Future()
@@ -164,8 +163,8 @@ class ScannerTest(AsyncTestCase):
 
         await self.thread.run()
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True, protocol=TransportProtocol.UDP,
-                                                     scanners=udp_scanner, scan=scan())
-        self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True, scan=scan(),
+                                                     scanners=udp_scanner, scan=self.thread.scan)
+        self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True, scan=self.thread.scan,
                                                                     timestamp=None)
 
     @gen_test

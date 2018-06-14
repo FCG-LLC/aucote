@@ -35,8 +35,8 @@ class ScannersHandler(StorageHandler):
 
         stats = {
             'scan': scan,
-            'current_scan': scanner.scan_start,
-            'current_scan_human': parse_timestamp_to_time(scanner.scan_start),
+            'current_scan': scanner.scan.start,
+            'current_scan_human': parse_timestamp_to_time(scanner.scan.start),
             'previous_scan': scanner.previous_scan,
             'previous_scan_human': parse_timestamp_to_time(scanner.previous_scan),
             'next_scan': scanner.next_scan,

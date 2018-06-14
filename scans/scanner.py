@@ -47,33 +47,32 @@ class Scanner(ScanAsyncTask):
         """
         try:
             self._shutdown_condition.clear()
-            self.scan_start = int(time.time())
+            self.scan.start = time.time()
             log.info("Starting port scan")
 
-            scan = Scan(self.scan_start, protocol=self.PROTOCOL, scanner=self.NAME)
-
-            nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, scan=scan)
+            nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, scan=self.scan)
             if not nodes:
                 log.warning("List of nodes is empty")
-                self.scan_start = None
+                self.scan.start = None
                 return
-            self.storage.save_scan(scan)
+
+            self.storage.save_scan(self.scan)
             log.debug("Found %i nodes for potential scanning", len(nodes))
             self.nodes = nodes
             await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
-            self.storage.save_nodes(nodes, scan=scan)
+            self.storage.save_nodes(nodes, scan=self.scan)
             self.current_scan = nodes
 
             await self.run_scan(nodes, scan_only=self.as_service, scanners=self.scanners, protocol=self.PROTOCOL,
-                                scan=scan)
+                                scan=self.scan)
 
             self.current_scan = []
 
             await self.context.wait_on_tasks_finish()
-            scan.end = time.time()
-            self.storage.update_scan(scan)
-            self.diff_with_last_scan(scan)
+            self.scan.end = time.time()
+            self.storage.update_scan(self.scan)
+            self.diff_with_last_scan(self.scan)
         except (HTTPError, ConnectionError) as exception:
             log.error('Cannot connect to topdis: %s, %s', self.topdis.api, exception)
         finally:

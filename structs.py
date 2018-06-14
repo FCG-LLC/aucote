@@ -22,7 +22,7 @@ class Scan(object):
 
     """
 
-    def __init__(self, start=None, end=None, protocol=None, scanner='', rowid=None):
+    def __init__(self, start=None, end=None, protocol=None, scanner='', rowid=None, init=True):
         """
         Args:
             protocol TransportProtocol: scan protocol
@@ -35,7 +35,7 @@ class Scan(object):
         self._end = None
 
         self.rowid = rowid
-        self.start = start or time.time()
+        self.start = time.time() if start is None and init is True else start
         self.end = end
         self._protocol = protocol
         self._scanner = scanner
@@ -1008,6 +1008,10 @@ class ScanContext:
     def end(self, val):
         self._end = val
         self._post_scan_hook()
+
+    @property
+    def scan(self):
+        return self.scanner.scan
 
     def _post_scan_hook(self):
         """
