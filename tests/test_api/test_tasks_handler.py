@@ -29,7 +29,6 @@ class TasksHandlerTest(AsyncHTTPTestCase):
         ]
         for task in tasks:
             self.tasks.add_task(PortTask(context=self.context,
-                                         scan=None,
                                          port=Port(
                                              node=Node(node_id=task['id'], ip=ipaddress.ip_address(task['ip'])),
                                              number=task['port'],
@@ -37,7 +36,6 @@ class TasksHandlerTest(AsyncHTTPTestCase):
                                          exploits=[]))
 
         self.tasks._task_workers = {number: PortTask(context=self.context,
-                                                     scan=None,
                                                      port=Port(
                                                          node=Node(node_id=task['id'],
                                                                    ip=ipaddress.ip_address(task['ip'])),

@@ -15,7 +15,7 @@ class TaskMapper(object):
 
     """
 
-    def __init__(self, context, scan, scanner):
+    def __init__(self, context, scanner):
         """
         Args:
             executor (Executor): tasks executor
@@ -23,7 +23,6 @@ class TaskMapper(object):
 
         """
         self.context = context
-        self._scan = scan
         self.scanner = scanner
 
     @property
@@ -35,7 +34,7 @@ class TaskMapper(object):
         """
         Scanner's Scan
         """
-        return self._scan
+        return self.context.scanner.scan
 
     async def assign_tasks(self, port, scripts=None):
         """
@@ -61,7 +60,7 @@ class TaskMapper(object):
             log.info("Using %i exploits against %s", len(exploits), port)
             self.store_security_scan(port=port, exploits=exploits)
             task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, port=port.copy(),
-                                                         config=EXECUTOR_CONFIG['apps'][app], scan=self.scan)
+                                                         config=EXECUTOR_CONFIG['apps'][app])
 
             self.context.add_task(task)
 
@@ -78,7 +77,7 @@ class TaskMapper(object):
             log.info("Using %i exploits against %s", len(exploits), node)
 
             task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, node=node,
-                                                         config=EXECUTOR_CONFIG['apps'][app], scan=self.scan)
+                                                         config=EXECUTOR_CONFIG['apps'][app])
 
             self.context.add_task(task)
 

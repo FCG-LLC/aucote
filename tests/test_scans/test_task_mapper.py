@@ -48,11 +48,9 @@ class TaskMapperTest(AsyncTestCase):
 
         self.exploits.update(test2=[Exploit(exploit_id=3)])
         self.executor.exploits.find_all_matching.return_value = self.exploits
-        self.scan = Scan()
-        self.scanner = MagicMock()
-        self.context = ScanContext(aucote=self.executor, scanner=None)
+        self.context = ScanContext(aucote=self.executor, scanner=MagicMock(scan=Scan()))
 
-        self.task_mapper = TaskMapper(context=self.context, scan=self.scan, scanner=self.scanner)
+        self.task_mapper = TaskMapper(context=self.context, scanner=self.context.scanner)
 
         self.cfg = {
             'portdetection': {
@@ -139,7 +137,7 @@ class TaskMapperTest(AsyncTestCase):
         self.task_mapper.store_security_scan(exploits=[self.exploits['test'][0]], port=self.UDP)
 
         self.executor.storage.save_security_scans.assert_called_once_with(exploits=[self.exploits['test'][0]],
-                                                                          port=self.UDP, scan=self.scan)
+                                                                          port=self.UDP, scan=self.context.scanner.scan)
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('scans.task_mapper.cfg', new_callable=Config)
@@ -176,7 +174,7 @@ class TaskMapperTest(AsyncTestCase):
     @gen_test
     async def test_restricted_by_scanner(self, cfg):
         cfg._cfg = self.cfg
-        self.scanner.is_exploit_allowed.return_value = False
+        self.context.scanner.is_exploit_allowed.return_value = False
 
         self.task_mapper.store_security_scan = MagicMock()
         expected = []
@@ -204,5 +202,5 @@ class TaskMapperTest(AsyncTestCase):
         await self.task_mapper.assign_tasks_for_node(node)
 
         class_mock.assert_called_once_with(context=self.task_mapper.context, exploits=[exploit], node=node,
-                                           config=self.EXECUTOR_CONFIG['apps']['test'], scan=self.scan)
+                                           config=self.EXECUTOR_CONFIG['apps']['test'])
 

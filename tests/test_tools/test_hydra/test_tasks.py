@@ -34,7 +34,7 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
 
         self.hydra_script_task = HydraScriptTask(exploits=[self.exploit], context=self.context, port=self.port,
-                                                 service=self.port.service_name, scan=self.context.scanner.scan)
+                                                 service=self.port.service_name)
         self.hydra_script_task.store_scan_end = MagicMock()
         self.hydra_script_task.aucote.exploits.find.return_value = self.exploit
 

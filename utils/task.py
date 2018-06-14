@@ -14,7 +14,7 @@ class Task(object):
     Base class for tasks, e.g. scan, nmap, hydra
 
     """
-    def __init__(self, context, scan):
+    def __init__(self, context):
         """
         Assign executor
 
@@ -24,7 +24,6 @@ class Task(object):
         self.start_time = None
         self.finish_time = None
         self._name = None
-        self._scan = scan
         self._cancelled = False
         self.executor = None
 

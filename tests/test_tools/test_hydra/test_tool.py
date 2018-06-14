@@ -38,10 +38,8 @@ class HydraToolTest(AsyncTestCase):
 
         self.aucote = MagicMock()
         self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
-        self.hydra_tool = HydraTool(context=self.context, exploits=self.exploits, port=self.port, config=self.config,
-                                    scan=self.context.scanner.scan)
+        self.hydra_tool = HydraTool(context=self.context, exploits=self.exploits, port=self.port, config=self.config)
         self.hydra_tool_without_login = HydraTool(context=self.context, exploits=self.exploits,
-                                                  scan=self.context.scanner.scan,
                                                   port=self.port_no_login, config=self.config)
 
     @patch('tools.hydra.tool.HydraScriptTask')
@@ -51,8 +49,7 @@ class HydraToolTest(AsyncTestCase):
         await self.hydra_tool()
 
         hydra_task_mock.assert_called_once_with(context=self.context, service='ssh', port=self.port, login=True,
-                                                exploits=[self.aucote.exploits.find.return_value],
-                                                scan=self.context.scanner.scan,)
+                                                exploits=[self.aucote.exploits.find.return_value])
 
     @patch('tools.hydra.tool.HydraScriptTask')
     @patch('tools.hydra.tool.cfg.get', MagicMock(return_value=MagicMock(cfg=[])))
@@ -61,14 +58,12 @@ class HydraToolTest(AsyncTestCase):
         await self.hydra_tool_without_login()
 
         hydra_task_mock.assert_called_once_with(context=self.context, service='vnc', port=self.port_no_login,
-                                                login=False, exploits=[self.aucote.exploits.find.return_value],
-                                                scan=self.context.scanner.scan,)
+                                                login=False, exploits=[self.aucote.exploits.find.return_value])
 
     @gen_test
     async def test_non_implemented_service(self):
         self.config['mapper']['test'] = 'test'
-        await HydraTool(port=MagicMock(), exploits=MagicMock(), context=self.context, config=self.config,
-                        scan=self.context.scanner.scan)()
+        await HydraTool(port=MagicMock(), exploits=MagicMock(), context=self.context, config=self.config)()
 
         result = self.aucote.add_task.called
 

@@ -54,7 +54,7 @@ class AucoteHttpHeadersTaskTest(AsyncTestCase):
         self.custom_headers = {'Accept-Encoding': 'gzip, deflate', 'User-Agent': 'test'}
         self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
         self.task = AucoteHttpHeadersTask(port=self.port, context=self.context, exploits=[self.exploit],
-                                          config=self.config, scan=self.context.scanner.scan)
+                                          config=self.config)
 
     def tearDown(self):
         HTTPClient._instance = None

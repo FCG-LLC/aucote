@@ -13,7 +13,7 @@ class PortTaskTest(TestCase):
         self.exploit = MagicMock()
         self.scan = Scan()
         self.context = ScanContext(aucote=self.aucote, scanner=None)
-        self.task = PortTask(context=self.context, port=self.port, exploits=[self.exploit], scan=self.scan)
+        self.task = PortTask(context=self.context, port=self.port, exploits=[self.exploit])
 
     def test_init(self):
         self.assertEqual(self.task._port, self.port)

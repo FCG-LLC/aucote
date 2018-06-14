@@ -15,7 +15,7 @@ class SSLScriptTaskTest(TestCase):
                     transport_protocol=TransportProtocol.TCP, number=16)
         self.aucote = MagicMock()
         self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
-        self.task = SSLScriptTask(port=port, exploits=[exploit], context=self.context, scan=self.context.scanner.scan)
+        self.task = SSLScriptTask(port=port, exploits=[exploit], context=self.context)
 
     def test_init(self):
         self.assertIsInstance(self.task.command, SSLBase)
@@ -40,5 +40,4 @@ class SSLScriptTaskTest(TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0], mock_vulnerability.return_value)
         mock_vulnerability.assert_called_once_with(exploit=self.task.exploit, port=self.task.port,
-                                                   scan=self.context.scanner.scan,
                                                    output=data.with_severity_ge().output, context=self.context)

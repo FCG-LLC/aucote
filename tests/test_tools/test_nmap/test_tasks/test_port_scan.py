@@ -136,7 +136,7 @@ class NmapPortScanTaskTest(AsyncTestCase):
         self.script.get_result = MagicMock(return_value='test')
         self.script2 = NmapScript(port=self.port, parser=NmapInfoParser(), exploit=self.exploit_vuln_non_exist, name='test2')
         self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
-        self.scan_task = NmapPortScanTask(context=self.context, port=self.port, scan=self.context.scanner.scan,
+        self.scan_task = NmapPortScanTask(context=self.context, port=self.port,
                                           script_classes=[self.script, self.script2], rate=1337)
         self.scan_task.store_scan_end = MagicMock()
 

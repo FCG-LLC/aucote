@@ -17,14 +17,14 @@ class CVESearchToolTest(AsyncTestCase):
         self.scan = Scan()
         self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
         self.tool = CVESearchTool(context=self.context, exploits=self.exploits, port=self.port, node=self.node,
-                                  config=self.config, scan=self.context.scanner.scan)
+                                  config=self.config)
 
     @patch('tools.cve_search.tool.CVESearchServiceTask')
     @gen_test
     async def test_call(self, mock_task):
         self.assertIsNone(await self.tool())
 
-        mock_task.assert_called_once_with(context=self.context, port=self.port, scan=self.context.scanner.scan,
+        mock_task.assert_called_once_with(context=self.context, port=self.port,
                                           exploits=[self.aucote.exploits.find.return_value])
         self.aucote.exploits.find.assert_called_once_with('cve-search', 'cve-search')
 

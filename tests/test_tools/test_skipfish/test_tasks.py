@@ -38,7 +38,7 @@ class SkipfishScanTaskTest(AsyncTestCase):
         self.context = ScanContext(aucote=self.aucote,
                                    scanner=TCPScanner(MagicMock(), MagicMock(), MagicMock(), MagicMock()))
 
-        self.task = SkipfishScanTask(context=self.context, port=self.port, exploits=[self.exploit], scan=self.scan,)
+        self.task = SkipfishScanTask(context=self.context, port=self.port, exploits=[self.exploit])
         self.task.aucote.exploits.find.return_value = self.exploit
         self.task.store_scan_end = MagicMock()
 

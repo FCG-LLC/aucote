@@ -24,8 +24,7 @@ class CommandTaskTest(AsyncTestCase):
         self.command.async_call = MagicMock(return_value=future)
         self.exploit = MagicMock()
         self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
-        self.task = CommandTask(context=self.context, port=self.port, command=self.command, exploits=[self.exploit],
-                                scan=self.context.scanner.scan)
+        self.task = CommandTask(context=self.context, port=self.port, command=self.command, exploits=[self.exploit])
         self.cfg = {
             'tools': {
                 'test_name': {

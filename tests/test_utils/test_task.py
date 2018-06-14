@@ -23,7 +23,7 @@ class TaskTest(AsyncTestCase):
         self.executor.exploits = MagicMock()
         self.context = ScanContext(aucote=self.executor, scanner=MagicMock(scan=Scan()))
 
-        self.task = Task(context=self.context, scan=self.context.scanner.scan)
+        self.task = Task(context=self.context)
 
     def test_init(self):
         """

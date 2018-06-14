@@ -26,7 +26,7 @@ class ExecutorTest(AsyncTestCase):
         self.aucote.storage = MagicMock()
         self.context = ScanContext(aucote=self.aucote, scanner=MagicMock())
         self.context.scanner.scan = Scan()
-        self.executor = Executor(context=self.context, scan=self.context.scanner.scan, scanner=self.context.scanner)
+        self.executor = Executor(context=self.context, scanner=self.context.scanner)
 
     def test_init(self):
         self.assertEqual(self.executor.exploits, self.aucote.exploits)

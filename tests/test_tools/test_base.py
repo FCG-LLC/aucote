@@ -17,7 +17,7 @@ class ToolTest(AsyncTestCase):
         self.scan = Scan()
         self.context = ScanContext(aucote=self.aucote, scanner=None)
 
-        self.tool = Tool(context=self.context, exploits=self.exploits, port=self.port, config=self.config, scan=self.scan)
+        self.tool = Tool(context=self.context, exploits=self.exploits, port=self.port, config=self.config)
 
     def test_init(self):
         self.assertEqual(self.tool.aucote, self.aucote)

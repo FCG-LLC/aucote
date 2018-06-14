@@ -115,8 +115,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.scanner = MagicMock(NAME='tools', scan=Scan())
         self.context = ScanContext(aucote=self.aucote, scanner=self.scanner)
 
-        self.port_info = NmapPortInfoTask(context=self.context, port=self.port,
-                                          scan=self.context.scanner.scan, scanner=self.scanner)
+        self.port_info = NmapPortInfoTask(context=self.context, port=self.port, scanner=self.scanner)
 
         self.cfg = {
             'portdetection': {
@@ -315,7 +314,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         expected = 8*[vulnerability.return_value]
         self.aucote.storage.save_vulnerabilities.assert_called_once_with(vulnerabilities=expected,
-                                                                         scan=self.port_info._scan)
+                                                                         scan=self.port_info.scan)
 
         vulnerability.assert_has_calls([
             call(exploit=exploit, port=self.port, output='http', subid=vulnerability.SERVICE_PROTOCOL,

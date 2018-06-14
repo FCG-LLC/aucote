@@ -35,7 +35,7 @@ class NmapTool(Tool):
         packs = itertools.zip_longest(*by_name.values())
 
         for pack in packs:
-            self.context.add_task(NmapPortScanTask(context=self.context, port=self.port, scan=self.scan,
+            self.context.add_task(NmapPortScanTask(context=self.context, port=self.port,
                                                    script_classes=[val for val in pack if val is not None],
                                                    rate=self.rate))
 
@@ -90,7 +90,7 @@ class NmapTool(Tool):
                 task = NmapScript(exploit=exploit, port=self.port, parser=parser(), name=name, args=arg)
 
                 if singular:
-                    self.context.add_task(NmapPortScanTask(context=self.context, port=self.port, scan=self.scan,
+                    self.context.add_task(NmapPortScanTask(context=self.context, port=self.port,
                                                            script_classes=[task], rate=self.rate))
                     continue
                 tasks.append(task)
