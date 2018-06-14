@@ -22,7 +22,7 @@ class NmapPortInfoTask(PortTask):
 
     """
 
-    def __init__(self, scanner, scan_only=False, *args, **kwargs):
+    def __init__(self, scan_only=False, *args, **kwargs):
         """
         Initiazlize variables.
 
@@ -36,7 +36,7 @@ class NmapPortInfoTask(PortTask):
 
         self.command = NmapBase()
         self.scan_only = scan_only
-        self.scanner = scanner
+        self.scanner = self.context.scanner
 
     def prepare_args(self):
         """
