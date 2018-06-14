@@ -21,10 +21,9 @@ class TaskTest(AsyncTestCase):
         self.executor = MagicMock()
         self.executor.kudu_queue = MagicMock()
         self.executor.exploits = MagicMock()
-        self.scan = Scan()
-        self.context = ScanContext(aucote=self.executor, scanner=None)
+        self.context = ScanContext(aucote=self.executor, scanner=MagicMock(scan=Scan()))
 
-        self.task = Task(context=self.context, scan=self.scan)
+        self.task = Task(context=self.context, scan=self.context.scanner.scan)
 
     def test_init(self):
         """
@@ -57,7 +56,7 @@ class TaskTest(AsyncTestCase):
         self.task.store_scan_end(exploits=[exploit], port=port)
 
         self.task.aucote.storage.save_security_scans.assert_called_once_with(exploits=[exploit], port=port,
-                                                                             scan=self.scan)
+                                                                             scan=self.context.scanner.scan)
     def test_reload_config(self):
         result = self.task.reload_config()
 

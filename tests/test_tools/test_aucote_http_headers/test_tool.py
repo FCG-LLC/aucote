@@ -14,9 +14,9 @@ class AucoteHttpHeadersToolTest(AsyncTestCase):
         self.exploits = MagicMock()
         self.port = MagicMock()
         self.config = MagicMock()
-        self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scanner=None)
-        self.tool = AucoteHttpHeadersTool(context=self.context, exploits=self.exploits, port=self.port, scan=self.scan,
+        self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
+        self.tool = AucoteHttpHeadersTool(context=self.context, exploits=self.exploits, port=self.port,
+                                          scan=self.context.scanner.scan,
                                           config=self.config)
 
     @patch('tools.aucote_http_headers.tool.AucoteHttpHeadersTask')
@@ -24,5 +24,5 @@ class AucoteHttpHeadersToolTest(AsyncTestCase):
     async def test_call(self, mock_task):
         self.assertIsNone(await self.tool())
 
-        mock_task.assert_called_once_with(context=self.context, port=self.port, scan=self.scan,
+        mock_task.assert_called_once_with(context=self.context, port=self.port, scan=self.context.scanner.scan,
                                           exploits=self.exploits, config=self.config)

@@ -23,17 +23,16 @@ class SkipfishToolTest(AsyncTestCase):
         self.port.scan = Scan(start=13, end=45)
 
         self.aucote = MagicMock()
-        self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scanner=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
         self.skipfish_tool = SkipfishTool(context=self.context, exploits=self.exploits, port=self.port,
-                                          config=self.config, scan=self.scan)
+                                          config=self.config, scan=self.context.scanner.scan)
 
     @patch('tools.skipfish.tool.SkipfishScanTask')
     @gen_test
     async def test_call(self, skipfish_scan_mock):
         await self.skipfish_tool()
 
-        skipfish_scan_mock.assert_called_once_with(context=self.context, port=self.port, scan=self.scan,
+        skipfish_scan_mock.assert_called_once_with(context=self.context, port=self.port, scan=self.context.scanner.scan,
                                                    exploits=[self.aucote.exploits.find.return_value])
 
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))
@@ -41,7 +40,7 @@ class SkipfishToolTest(AsyncTestCase):
     async def test_disable(self):
         config = MagicMock()
         await SkipfishTool(exploits=MagicMock(), port=MagicMock(is_ipv6=False), context=self.context, config=config,
-                           scan=self.scan)()
+                           scan=self.context.scanner.scan)()
 
         self.assertEqual(config.get.call_count, 0)
 
@@ -51,6 +50,6 @@ class SkipfishToolTest(AsyncTestCase):
     async def test_disable_ipv6(self, mock_scantask):
         config = MagicMock()
         await SkipfishTool(exploits=MagicMock(), port=MagicMock(is_ipv6=True), context=self.context, config=config,
-                           scan=self.scan)()
+                           scan=self.context.scanner.scan)()
 
         self.assertFalse(mock_scantask.called)

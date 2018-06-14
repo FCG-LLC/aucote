@@ -207,4 +207,4 @@ class Task(object):
         """
         Scanner Scan
         """
-        return self._scan
+        return self.context.scanner.scan

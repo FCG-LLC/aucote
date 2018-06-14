@@ -16,16 +16,15 @@ class WhatWebToolTest(AsyncTestCase):
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         self.port = Port(node=self.node, transport_protocol=TransportProtocol.UDP, number=87)
         self.config = MagicMock()
-        self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scanner=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
         self.tool = WhatWebTool(context=self.context, exploits=[self.exploit], port=self.port, config=self.config,
-                                scan=self.scan)
+                                scan=self.context.scanner.scan)
 
     @patch('tools.whatweb.tool.WhatWebTask')
     @gen_test
     async def test_call(self, mock_task):
         await self.tool()
-        mock_task.assert_called_once_with(context=self.context, port=self.port, scan=self.scan,
+        mock_task.assert_called_once_with(context=self.context, port=self.port, scan=self.context.scanner.scan,
                                           exploits=[self.aucote.exploits.find.return_value])
         self.aucote.exploits.find.assert_called_once_with('whatweb', 'whatweb')
         self.aucote.add_async_task.assert_called_once_with(mock_task.return_value)

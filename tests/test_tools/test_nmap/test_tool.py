@@ -58,10 +58,9 @@ class NmapToolTest(AsyncTestCase):
         self.port.protocol = 'test_service'
 
         self.aucote = MagicMock(storage=Storage(":memory:"))
-        self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scanner=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
         self.nmap_tool = NmapTool(context=self.context, exploits=self.exploits, port=self.port, config=self.config,
-                                  scan=self.scan)
+                                  scan=self.context.scanner.scan)
 
     @patch('tools.nmap.tool.NmapVulnParser')
     @patch('tools.nmap.tool.NmapInfoParser')
@@ -74,7 +73,7 @@ class NmapToolTest(AsyncTestCase):
 
         await self.nmap_tool()
         nmap_script.has_calls((
-            call(exploit=self.exploit, port=self.port, parser=info_scan_script(), name='test_name',args='test_args'),
+            call(exploit=self.exploit, port=self.port, parser=info_scan_script(), name='test_name', args='test_args'),
             call(exploit=self.exploit2, port=self.port, parser=vuln_scan_script(), name='test_name', args='test_args')
         ))
 
