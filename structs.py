@@ -31,8 +31,8 @@ class Scan(object):
             scanner (str): scanner name
 
         """
-        self._start = None
-        self._end = None
+        self._start_ms = None
+        self._end_ms = None
 
         self.rowid = rowid
         self.start = start or time.time()
@@ -46,22 +46,22 @@ class Scan(object):
         """
         Scan start (unix timestamp) in seconds
         """
-        return self._start/1000 if self._start is not None else None
+        return self._start_ms / 1000 if self._start_ms is not None else None
 
     @start.setter
     def start(self, value: float):
-        self._start = round(value*1000) if value is not None else None
+        self._start_ms = round(value * 1000) if value is not None else None
 
     @property
     def end(self) -> float:
         """
         Scan end (unix timestamp) in seconds
         """
-        return self._end/1000 if self._end is not None else None
+        return self._end_ms / 1000 if self._end_ms is not None else None
 
     @end.setter
     def end(self, value: float):
-        self._end = round(value*1000) if value is not None else None
+        self._end_ms = round(value * 1000) if value is not None else None
 
     @property
     def protocol(self):
@@ -228,7 +228,7 @@ class SecurityScan(object):
 
     """
     def __init__(self, scan, port, exploit, scan_start=None, scan_end=None, rowid=None):
-        self._scan_start = None
+        self._scan_start_ms = None
 
         self.port = port
         self.exploit = exploit
@@ -250,11 +250,14 @@ class SecurityScan(object):
     
     @property
     def scan_start(self):
-        return self._scan_start / 1000 if self._scan_start is not None else None
+        """
+        Scan start in seconds
+        """
+        return self._scan_start_ms / 1000 if self._scan_start_ms is not None else None
 
     @scan_start.setter
     def scan_start(self, value):
-        self._scan_start = round(value * 1000) if value is not None else None
+        self._scan_start_ms = round(value * 1000) if value is not None else None
 
     def __eq__(self, other):
         return isinstance(other, SecurityScan) and all((self.port == other.port, self.exploit == other.exploit,
@@ -624,8 +627,8 @@ class Vulnerability(object):
             output(str): string or stringable output
 
         """
-        self._time = None
-        self._expiration_time = None
+        self._time_ms = None
+        self._expiration_time_ms = None
 
         self.output = str(output) if output is not None else None
         self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
@@ -641,19 +644,25 @@ class Vulnerability(object):
 
     @property
     def time(self):
-        return self._time/1000 if self._time is not None else None
+        return self._time_ms / 1000 if self._time_ms is not None else None
 
     @time.setter
     def time(self, value):
-        self._time = round(value*1000) if value is not None else None
+        """
+        Detection time in seconds (unix timestamp)
+        """
+        self._time_ms = round(value * 1000) if value is not None else None
 
     @property
     def expiration_time(self):
-        return self._expiration_time/1000 if self._expiration_time is not None else None
+        """
+        Vulnerability expiration time in seconds (unix timestamp)
+        """
+        return self._expiration_time_ms / 1000 if self._expiration_time_ms is not None else None
 
     @expiration_time.setter
     def expiration_time(self, value):
-        self._expiration_time = round(value*1000) if value is not None else None
+        self._expiration_time_ms = round(value * 1000) if value is not None else None
 
     @property
     def cve(self):
