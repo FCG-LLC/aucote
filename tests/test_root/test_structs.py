@@ -230,8 +230,7 @@ class ScanTest(TestCase):
             "_end_ms": 14600,
             "_protocol": TransportProtocol.ICMP,
             "_scanner": "test_scanner",
-            "rowid": 16,
-            "scanner_task": None
+            "rowid": 16
         }
 
         result = self.scan.__dict__
@@ -454,7 +453,7 @@ class ScanContextTest(AsyncTestCase):
         super(ScanContextTest, self).setUp()
         self.scan = MagicMock()
         self.aucote = MagicMock()
-        self.context = ScanContext(aucote=self.aucote, scan=self.scan)
+        self.context = ScanContext(aucote=self.aucote, scanner=self.scan)
 
     def test_add_task(self):
         task = MagicMock()

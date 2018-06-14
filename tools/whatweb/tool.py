@@ -12,5 +12,5 @@ class WhatWebTool(Tool):
 
     """
     async def call(self):
-        self.context.add_task(WhatWebTask(context=self.context, port=self.port, scan=self._scan,
+        self.context.add_task(WhatWebTask(context=self.context, port=self.port,
                                           exploits=[self.aucote.exploits.find('whatweb', 'whatweb')]))

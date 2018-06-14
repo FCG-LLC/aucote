@@ -23,10 +23,8 @@ class CommandTaskTest(AsyncTestCase):
         future.set_result(self.future_return)
         self.command.async_call = MagicMock(return_value=future)
         self.exploit = MagicMock()
-        self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
-        self.task = CommandTask(context=self.context, port=self.port, command=self.command, exploits=[self.exploit],
-                                scan=self.scan)
+        self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
+        self.task = CommandTask(context=self.context, port=self.port, command=self.command, exploits=[self.exploit])
         self.cfg = {
             'tools': {
                 'test_name': {
@@ -57,7 +55,7 @@ class CommandTaskTest(AsyncTestCase):
 
         self.command.async_call.assert_called_once_with(self.task.prepare_args(), timeout=0)
         mock_vuln.assert_called_once_with(exploit=self.exploit, port=self.port, output=self.future_return,
-                                          context=self.context, scan=self.scan)
+                                          context=self.context, scan=self.context.scanner.scan)
         self.task.store_vulnerability.assert_called_once_with(mock_vuln())
 
     @patch('tools.common.command_task.cfg', new_callable=Config)

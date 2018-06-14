@@ -306,7 +306,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
             'portdetection.test_name.scan_type': 'PERIODIC'
         }
 
-        self.thread.scan_start = 17
+        self.thread.scan.start = 17
         self.thread.NAME = 'test_name'
         await self.thread.update_scan_status(ScanStatus.IN_PROGRESS)
 
@@ -342,7 +342,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
             'portdetection.test_name.scan_type': 'PERIODIC'
         }
 
-        self.thread.scan_start = 17
+        self.thread.scan.start = 17
         self.thread.NAME = 'test_name'
         await self.thread.update_scan_status(ScanStatus.IDLE)
 

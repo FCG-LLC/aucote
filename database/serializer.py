@@ -21,7 +21,7 @@ columns:
  - vuln_id - exploit base
  - vuln_subid - vulnerability subidentifier (allows to push multiple records for one vulnerability)
  - node_id - node based
- - scan_start - context.scan.scan_start
+ - scan_start - main scan start
  - port_scan_start - port.scan.start
  - service_name - port based service (ftp, http, etc.)
  - service_version - port based (vuln_id=0, vuln_subid=3 for local storage)
@@ -30,7 +30,7 @@ columns:
  - traffic_type - internal
  - operating_system - port based (port.service.name and port.service.version)
  - metric - exploit based
- - scan_name - scan context based
+ - scan_name - scanner name
  - app_name - exploit base
  - exploit_name - exploit base
  - tags - explot based

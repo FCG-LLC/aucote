@@ -47,39 +47,37 @@ class Scanner(ScanAsyncTask):
         """
         try:
             self._shutdown_condition.clear()
-            self.scan_start = int(time.time())
+            self.scan.start = time.time()
             log.info("Starting port scan")
 
-            scan = Scan(self.scan_start, protocol=self.PROTOCOL, scanner=self.NAME)
-
-            nodes = await self._get_nodes_for_scanning(timestamp=None, filter_out_storage=True, scan=scan)
+            nodes = await self._get_nodes_for_scanning(filter_out_storage=True)
             if not nodes:
                 log.warning("List of nodes is empty")
-                self.scan_start = None
+                self.scan.start = None
                 return
-            self.storage.save_scan(scan)
+
+            self.storage.save_scan(self.scan)
             log.debug("Found %i nodes for potential scanning", len(nodes))
             self.nodes = nodes
             await self.update_scan_status(ScanStatus.IN_PROGRESS)
 
-            self.storage.save_nodes(nodes, scan=scan)
+            self.storage.save_nodes(nodes, scan=self.scan)
             self.current_scan = nodes
 
-            await self.run_scan(nodes, scan_only=self.as_service, scanners=self.scanners, protocol=self.PROTOCOL,
-                                scan=scan)
+            await self.run_scan(nodes, scan_only=self.as_service, scanners=self.scanners, protocol=self.PROTOCOL)
 
             self.current_scan = []
 
             await self.context.wait_on_tasks_finish()
-            scan.end = time.time()
-            self.storage.update_scan(scan)
-            self.diff_with_last_scan(scan)
+            self.scan.end = time.time()
+            self.storage.update_scan(self.scan)
+            self.diff_with_last_scan()
         except (HTTPError, ConnectionError) as exception:
             log.error('Cannot connect to topdis: %s, %s', self.topdis.api, exception)
         finally:
             await self._clean_scan()
 
-    async def run_scan(self, nodes, scanners, scan, protocol=PROTOCOL, scan_only=False):
+    async def run_scan(self, nodes, scanners, protocol=PROTOCOL, scan_only=False):
         """
         Run scanning.
 
@@ -105,7 +103,7 @@ class Scanner(ScanAsyncTask):
 
                 if protocol == TransportProtocol.UDP:
                     await self._scan_ports(ports=await scanner.scan_ports(dict_nodes[ip_protocol]),
-                                           scan_only=scan_only, scan=scan)
+                                           scan_only=scan_only)
                 else:
                     for node in dict_nodes[ip_protocol]:
                         if self.context.cancelled():
@@ -114,12 +112,12 @@ class Scanner(ScanAsyncTask):
                         log.debug('Scanning %s by scan %s', node.ip, self.NAME)
                         ports = await scanner.scan_ports([node])
                         log.debug('Found %s ports for %s for scan %s', len(ports), node.ip, self.NAME)
-                        await self._scan_ports(ports=ports, scan_only=scan_only, scan=scan)
+                        await self._scan_ports(ports=ports, scan_only=scan_only)
 
         self.context.add_task(Executor(context=self.context, nodes=nodes, ports=self._get_special_ports(),
-                                       scan_only=scan_only, scan=scan, scanner=self))
+                                       scan_only=scan_only))
 
-    async def _scan_ports(self, scan_only, scan, ports):
+    async def _scan_ports(self, scan_only, ports):
 
         port_range_allow = NmapTool.ports_from_list(tcp=cfg['portdetection.tcp.ports.include'],
                                                     udp=cfg['portdetection.udp.ports.include'])
@@ -129,8 +127,7 @@ class Scanner(ScanAsyncTask):
 
         ports = [port for port in ports if port.in_range(port_range_allow) and not port.in_range(port_range_deny)]
 
-        self.context.add_task(Executor(context=self.context, nodes=[], ports=ports, scan_only=scan_only, scan=scan,
-                                       scanner=self))
+        self.context.add_task(Executor(context=self.context, nodes=[], ports=ports, scan_only=scan_only))
 
     @property
     def scanners(self):
@@ -161,7 +158,7 @@ class Scanner(ScanAsyncTask):
 
         return return_value
 
-    def diff_with_last_scan(self, scan):
+    def diff_with_last_scan(self):
         """
         Differentiate two last scans.
 
@@ -174,12 +171,12 @@ class Scanner(ScanAsyncTask):
             None
 
         """
-        nodes = self.storage.get_nodes_by_scan(scan=scan)
+        nodes = self.storage.get_nodes_by_scan(scan=self.scan)
         changes = []
 
         for node in nodes:
-            last_scans = self.storage.get_scans_by_node(node=node, scan=scan)
-            current_ports_scans = set(self.storage.get_ports_by_scan_and_node(node=node, scan=scan))
+            last_scans = self.storage.get_scans_by_node(node=node, scan=self.scan)
+            current_ports_scans = set(self.storage.get_ports_by_scan_and_node(node=node, scan=self.scan))
 
             if len(last_scans) < 2:
                 previous_ports_scans = set()

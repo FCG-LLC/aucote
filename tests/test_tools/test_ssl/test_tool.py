@@ -16,16 +16,14 @@ class SSLToolTest(AsyncTestCase):
                          transport_protocol=TransportProtocol.UDP, number=16)
         self.exploit = Exploit(exploit_id=3)
         self.config = MagicMock()
-        self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
-        self.tool = SSLTool(context=self.context, port=self.port, exploits=[self.exploit], config=self.config,
-                            scan=self.scan,)
+        self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
+        self.tool = SSLTool(context=self.context, port=self.port, exploits=[self.exploit], config=self.config)
 
     @patch('tools.ssl.tool.SSLScriptTask')
     @gen_test
     async def test_call(self, mock_task):
         await self.tool()
         self.aucote.add_async_task.assert_called_once_with(mock_task.return_value)
-        mock_task.assert_called_once_with(context=self.context, port=self.port, scan=self.scan,
+        mock_task.assert_called_once_with(context=self.context, port=self.port,
                                           exploits=[self.aucote.exploits.find.return_value])
         self.aucote.exploits.find.assert_called_once_with('testssl', 'testssl')

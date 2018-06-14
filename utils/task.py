@@ -14,7 +14,7 @@ class Task(object):
     Base class for tasks, e.g. scan, nmap, hydra
 
     """
-    def __init__(self, context, scan):
+    def __init__(self, context):
         """
         Assign executor
 
@@ -24,7 +24,6 @@ class Task(object):
         self.start_time = None
         self.finish_time = None
         self._name = None
-        self._scan = scan
         self._cancelled = False
         self.executor = None
 
@@ -79,7 +78,7 @@ class Task(object):
             None
 
         """
-        self.aucote.storage.save_security_scans(exploits=exploits, port=port, scan=self._scan)
+        self.aucote.storage.save_security_scans(exploits=exploits, port=port, scan=self.scan)
 
     def store_vulnerability(self, vuln):
         """
@@ -97,7 +96,7 @@ class Task(object):
         self.kudu_queue.send_msg(msg)
 
         try:
-            self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self._scan)
+            self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self.scan)
         except Exception:
             log.warning('Error during saving vulnerability (%s, %s) to the storage',
                         vuln.exploit.id if vuln.exploit is not None else None, vuln.subid)
@@ -158,10 +157,10 @@ class Task(object):
         """
         Scan name related to given task
         """
-        if self.context is None or self.context.scan is None:
+        if self.context is None or self.context.scanner is None:
             return None
 
-        return self.context.scan.NAME
+        return self.context.scanner.NAME
 
     def cancel(self):
         """
@@ -201,3 +200,10 @@ class Task(object):
         Checks if task finished
         """
         return self.finish_time is not None
+
+    @property
+    def scan(self):
+        """
+        Scanner Scan
+        """
+        return self.context.scanner.scan

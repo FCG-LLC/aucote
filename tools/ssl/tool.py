@@ -15,5 +15,5 @@ class SSLTool(Tool):
         """
         Prepares tasks for executing
         """
-        self.context.add_task(SSLScriptTask(context=self.context, port=self.port, scan=self._scan,
+        self.context.add_task(SSLScriptTask(context=self.context, port=self.port,
                                             exploits=[self.aucote.exploits.find('testssl', 'testssl')]))

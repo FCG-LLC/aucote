@@ -15,12 +15,12 @@ class SietTaskTest(AsyncTestCase):
     def setUp(self):
         super(SietTaskTest, self).setUp()
         self.context = ScanContext(aucote=MagicMock(),
-                                   scan=TCPScanner(MagicMock(), MagicMock(), MagicMock(), MagicMock()))
+                                   scanner=TCPScanner(MagicMock(), MagicMock(), MagicMock(), MagicMock()))
         self.node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=14)
         self.scan = Scan()
         self.port = Port(node=self.node, number=46, transport_protocol=TransportProtocol.TCP, scan=self.scan)
         self.exploit = Exploit(exploit_id=15, app='aucote-scripts', name='siet')
-        self.task = SietTask(context=self.context, port=self.port, scan=self.scan, exploits=[self.exploit])
+        self.task = SietTask(context=self.context, port=self.port, exploits=[self.exploit])
 
     @gen_test
     async def test_call(self):

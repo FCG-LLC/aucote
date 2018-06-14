@@ -12,7 +12,7 @@ from tornado.httpclient import HTTPError
 from aucote_cfg import cfg
 from scans.executor import Executor
 from scans.scan_async_task import ScanAsyncTask
-from structs import Scan, ScanStatus
+from structs import ScanStatus
 
 
 class ToolsScanner(ScanAsyncTask):
@@ -36,28 +36,26 @@ class ToolsScanner(ScanAsyncTask):
 
         """
         try:
-            self.scan_start = int(time.time())
+            self.scan.start = time.time()
+
             await self.update_scan_status(ScanStatus.IN_PROGRESS)
             self.shutdown_condition.clear()
             log.info("Starting security scan")
             last_scan_start = self.get_last_scan_start()
 
-            scan = Scan(time.time(), protocol=self.PROTOCOL, scanner=self.NAME)
-            scan.scanner_task = self
-
-            nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, scan=scan, filter_out_storage=False)
-            self.storage.save_scan(scan)
-            self.storage.save_nodes(nodes, scan=scan)
+            nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, filter_out_storage=False)
+            self.storage.save_scan(self.scan)
+            self.storage.save_nodes(nodes, scan=self.scan)
 
             ports = self.get_ports_for_scan(nodes, timestamp=last_scan_start)
             log.debug("Ports for security scan: %s", ports)
             self.context.add_task(Executor(context=self.context, nodes=nodes if cfg['portdetection.{0}.scan_nodes'.
-                                           format(self.NAME)] else None, ports=ports, scan=scan, scanner=self))
+                                           format(self.NAME)] else None, ports=ports))
 
             await self.context.wait_on_tasks_finish()
 
-            scan.end = time.time()
-            self.storage.update_scan(scan)
+            self.scan.end = time.time()
+            self.storage.update_scan(self.scan)
         except (HTTPError, ConnectionError) as exception:
             log.error('Cannot connect to topdis: %s, %s', self.topdis.api, exception)
         finally:

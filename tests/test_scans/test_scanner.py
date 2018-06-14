@@ -116,10 +116,6 @@ class ScannerTest(AsyncTestCase):
 
         self.thread._get_special_ports = MagicMock(return_value=[port])
 
-        ports = [ports_ipv4[0], ports_ipv6[0], port]
-
-        scan = Scan()
-
         futures = []
 
         for i in range(20):
@@ -129,21 +125,20 @@ class ScannerTest(AsyncTestCase):
 
         mock_executor.return_value.side_effect = futures
 
-        await self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock(), scan=scan)
+        await self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock())
 
-        mock_executor.assert_has_calls((call(context=self.thread.context, nodes=nodes, ports=[port], scan_only=False,
-                                             scan=scan, scanner=self.thread),
+        mock_executor.assert_has_calls((call(context=self.thread.context, nodes=nodes, ports=[port], scan_only=False),
                                         call(context=self.thread.context, nodes=[], ports=[ports_ipv6[0]],
-                                             scan_only=False, scan=scan, scanner=self.thread),
+                                             scan_only=False),
                                         call(context=self.thread.context, nodes=[], ports=[ports_ipv4[0]],
-                                             scan_only=False, scan=scan, scanner=self.thread)), any_order=True)
+                                             scan_only=False)),
+                                       any_order=True)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
-    @patch('scans.scanner.Scan')
     @patch('scans.scanner.Scanner.scanners', new_callable=PropertyMock)
     @patch('scans.scanner.cfg', new_callable=Config)
     @gen_test
-    async def test_periodical_scan(self, cfg, scanners, scan):
+    async def test_periodical_scan(self, cfg, scanners):
         self.thread.PROTOCOL = TransportProtocol.UDP
         nodes = MagicMock()
         future = Future()
@@ -164,9 +159,8 @@ class ScannerTest(AsyncTestCase):
 
         await self.thread.run()
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True, protocol=TransportProtocol.UDP,
-                                                     scanners=udp_scanner, scan=scan())
-        self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True, scan=scan(),
-                                                                    timestamp=None)
+                                                     scanners=udp_scanner)
+        self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True)
 
     @gen_test
     async def test_periodical_scan_with_topdis_error(self):
@@ -234,6 +228,7 @@ class ScannerTest(AsyncTestCase):
     @patch('scans.scanner.Serializer.serialize_vulnerability_change')
     def test_diff_two_last_scans(self, serializer):
         current_scan = Scan()
+        self.thread.scan = current_scan
         previous_scan = Scan()
         node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 
@@ -259,7 +254,7 @@ class ScannerTest(AsyncTestCase):
             PortDetectionChange(current_finding=None, previous_finding=port_scans_previous[1])
         ]
 
-        self.thread.diff_with_last_scan(current_scan)
+        self.thread.diff_with_last_scan()
 
         self.aucote.storage.get_nodes_by_scan.assert_called_once_with(scan=current_scan)
         self.assertEqual(len(self.aucote.storage.save_changes.call_args_list), 1)
@@ -270,6 +265,7 @@ class ScannerTest(AsyncTestCase):
     @patch('scans.scanner.Serializer.serialize_vulnerability_change')
     def test_diff_two_last_scans_for_first_scan(self, serializer):
         current_scan = Scan()
+        self.thread.scan = current_scan
         node = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
 
         self.aucote.storage.get_nodes_by_scan.return_value = [node]
@@ -289,7 +285,7 @@ class ScannerTest(AsyncTestCase):
             PortDetectionChange(current_finding=port_scans_current[0], previous_finding=None)
         ]
 
-        self.thread.diff_with_last_scan(current_scan)
+        self.thread.diff_with_last_scan()
 
         self.aucote.storage.get_nodes_by_scan.assert_called_once_with(scan=current_scan)
         self.assertEqual(len(self.aucote.storage.save_changes.call_args_list), 1)
@@ -362,10 +358,6 @@ class ScannerTest(AsyncTestCase):
 
         self.thread._get_special_ports = MagicMock(return_value=[port])
 
-        ports = [ports_ipv4[0], ports_ipv6[0], port]
-
-        scan = Scan()
-
         futures = []
 
         for i in range(20):
@@ -375,8 +367,7 @@ class ScannerTest(AsyncTestCase):
 
         mock_executor.return_value.side_effect = futures
 
-        await self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock(), scan=scan)
+        await self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock())
 
-        mock_executor.assert_called_once_with(context=self.thread.context, nodes=nodes, ports=[port], scan_only=False,
-                                              scan=scan, scanner=self.thread)
+        mock_executor.assert_called_once_with(context=self.thread.context, nodes=nodes, ports=[port], scan_only=False)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)

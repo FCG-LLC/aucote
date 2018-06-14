@@ -112,11 +112,10 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port = Port(number=22, transport_protocol=TransportProtocol.TCP, node=self.node)
         self.port.scan = Scan()
         self.port_ipv6 = Port(number=22, node=self.node_ipv6, transport_protocol=TransportProtocol.TCP)
-        self.scan = Scan()
-        self.scanner = MagicMock(NAME='tools')
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.scanner = MagicMock(NAME='tools', scan=Scan())
+        self.context = ScanContext(aucote=self.aucote, scanner=self.scanner)
 
-        self.port_info = NmapPortInfoTask(context=self.context, port=self.port, scan=self.scan, scanner=self.scanner)
+        self.port_info = NmapPortInfoTask(context=self.context, port=self.port)
 
         self.cfg = {
             'portdetection': {
@@ -222,7 +221,8 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port_info.command.async_call = MagicMock(return_value=future)
         await self.port_info()
 
-        vulnerability.assert_has_calls((call(port=self.port_info._port, context=self.context, scan=self.scan),))
+        vulnerability.assert_has_calls((call(port=self.port_info._port, context=self.context,
+                                             scan=self.context.scanner.scan),))
         mock_serializer.assert_called_once_with(vulnerability.return_value)
 
         self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)
@@ -314,25 +314,25 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
         expected = 8*[vulnerability.return_value]
         self.aucote.storage.save_vulnerabilities.assert_called_once_with(vulnerabilities=expected,
-                                                                         scan=self.port_info._scan)
+                                                                         scan=self.port_info.scan)
 
         vulnerability.assert_has_calls([
             call(exploit=exploit, port=self.port, output='http', subid=vulnerability.SERVICE_PROTOCOL,
-                 context=self.context, scan=self.scan),
+                 context=self.context, scan=self.context.scanner.scan),
             call(exploit=exploit, port=self.port, output='Apache httpd', subid=vulnerability.SERVICE_NAME,
-                 context=self.context, scan=self.scan),
+                 context=self.context, scan=self.context.scanner.scan),
             call(exploit=exploit, port=self.port, output='2.4.23', subid=vulnerability.SERVICE_VERSION,
-                 context=self.context, scan=self.scan),
+                 context=self.context, scan=self.context.scanner.scan),
             call(exploit=exploit, port=self.port, output=None, subid=vulnerability.SERVICE_BANNER,
-                 context=self.context, scan=self.scan),
+                 context=self.context, scan=self.context.scanner.scan),
             call(exploit=exploit, port=self.port, output='cpe:2.3:a:apache:http_server:2.4.23:*:*:*:*:*:*:*',
-                 subid=vulnerability.SERVICE_CPE, context=self.context, scan=self.scan),
+                 subid=vulnerability.SERVICE_CPE, context=self.context, scan=self.context.scanner.scan),
             call(exploit=exploit, port=self.port, output='os test name',
-                 subid=vulnerability.OS_NAME, context=self.context, scan=self.scan),
+                 subid=vulnerability.OS_NAME, context=self.context, scan=self.context.scanner.scan),
             call(exploit=exploit, port=self.port, output='os test version',
-                 subid=vulnerability.OS_VERSION, context=self.context, scan=self.scan),
+                 subid=vulnerability.OS_VERSION, context=self.context, scan=self.context.scanner.scan),
             call(exploit=exploit, port=self.port, output='cpe:2.3:o:vendor:product:-:*:*:*:*:*:*:*',
-                 subid=vulnerability.OS_CPE, context=self.context, scan=self.scan)
+                 subid=vulnerability.OS_CPE, context=self.context, scan=self.context.scanner.scan)
         ])
 
     @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability_change')
@@ -341,7 +341,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         exploit = Exploit(exploit_id=1)
         self.port_info._current_exploits = [self.exploit]
         scan_2 = Scan()
-        scans = [self.scan, scan_2]
+        scans = [self.context.scanner.scan, scan_2]
         self.port_info.storage.get_scans_by_security_scan.return_value = scans
         vuln_added = Vulnerability(port=self.port, exploit=exploit, subid=3, output='a')
         vuln_removed = Vulnerability(port=self.port, exploit=exploit, subid=1, output='b')
@@ -360,7 +360,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port_info.diff_with_last_scan()
 
         self.port_info.storage.get_vulnerabilities.assert_has_calls((
-            call(port=self.port, exploit=self.exploit, scan=self.scan),
+            call(port=self.port, exploit=self.exploit, scan=self.context.scanner.scan),
             call(port=self.port, exploit=self.exploit, scan=scan_2)
         ), any_order=True)
 
@@ -372,7 +372,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
     def test_diff_two_last_scans_first_scan(self, serializer):
         exploit = Exploit(exploit_id=1)
         self.port_info._current_exploits = [self.exploit]
-        scans = [self.scan]
+        scans = [self.context.scanner.scan]
         self.port_info.storage.get_scans_by_security_scan.return_value = scans
         vuln_added = Vulnerability(port=self.port, exploit=exploit, subid=3, output='a')
         vuln_changed_1 = Vulnerability(port=self.port, exploit=exploit, subid=2, output='c')
@@ -386,7 +386,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port_info.diff_with_last_scan()
 
         self.port_info.storage.get_vulnerabilities.assert_has_calls((
-            call(port=self.port, exploit=self.exploit, scan=self.scan),
+            call(port=self.port, exploit=self.exploit, scan=self.context.scanner.scan),
         ))
 
         self.assertCountEqual(self.port_info.storage.save_changes.call_args[0][0], expected)

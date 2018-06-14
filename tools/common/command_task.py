@@ -76,7 +76,7 @@ class CommandTask(PortTask):
         return results
 
     def _get_vulnerabilities(self, results):
-        return [Vulnerability(exploit=self.exploit, scan=self._scan, port=self._port, output=results,
+        return [Vulnerability(exploit=self.exploit, scan=self.scan, port=self._port, output=results,
                               context=self.context)]
 
     def kill(self):
