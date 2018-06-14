@@ -454,7 +454,7 @@ class ScanContextTest(AsyncTestCase):
         super(ScanContextTest, self).setUp()
         self.scan = MagicMock()
         self.aucote = MagicMock()
-        self.context = ScanContext(aucote=self.aucote, scan=self.scan)
+        self.context = ScanContext(aucote=self.aucote, scanner=self.scan)
 
     def test_add_task(self):
         task = MagicMock()

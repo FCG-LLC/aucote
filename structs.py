@@ -991,11 +991,11 @@ class VulnerabilityChange(VulnerabilityChangeBase):
 
 class ScanContext:
     """
-    Scan context handle information about scan ant it progress
+    Scan context handle information about scan and it progress
     """
-    def __init__(self, aucote, scan):
+    def __init__(self, aucote, scanner):
         self.aucote = aucote
-        self.scan = scan
+        self.scanner = scanner
         self.tasks = []
         self._cancelled = False
         self.start = None
@@ -1015,7 +1015,7 @@ class ScanContext:
         Executes post scan operations
 
         """
-        log.debug('Executing post scan hook for scan %s', self.scan.NAME)
+        log.debug('Executing post scan hook for scan %s', self.scanner.NAME)
 
     def add_task(self, task):
         self.tasks.append(task)

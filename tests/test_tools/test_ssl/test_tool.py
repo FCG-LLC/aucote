@@ -17,7 +17,7 @@ class SSLToolTest(AsyncTestCase):
         self.exploit = Exploit(exploit_id=3)
         self.config = MagicMock()
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.tool = SSLTool(context=self.context, port=self.port, exploits=[self.exploit], config=self.config,
                             scan=self.scan,)
 

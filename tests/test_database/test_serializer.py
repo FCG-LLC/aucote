@@ -23,8 +23,8 @@ class SerializerTest(TestCase):
         node.os = MagicMock()
         node.os.name_with_version = 'test_name_and_version'
 
-        self.context = ScanContext(aucote=None, scan=TCPScanner(MagicMock(), MagicMock(), MagicMock(), MagicMock()))
-        self.context.scan.scan_start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
+        self.context = ScanContext(aucote=None, scanner=TCPScanner(MagicMock(), MagicMock(), MagicMock(), MagicMock()))
+        self.context.scanner.scan_start = datetime.datetime(2016, 8, 16, 15, 23, 10, 183095, tzinfo=utc).timestamp()
 
         self.vuln.context = self.context
 

@@ -31,7 +31,7 @@ Hydra (http://www.thc.org/thc-hydra) finished at 2016-08-09 14:19:37'''
         self.port.scan = Scan()
         self.exploit = Exploit(exploit_id=1)
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
 
         self.hydra_script_task = HydraScriptTask(exploits=[self.exploit], context=self.context, port=self.port,
                                                  service=self.port.service_name, scan=self.scan,)

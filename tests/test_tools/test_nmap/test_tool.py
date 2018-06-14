@@ -59,7 +59,7 @@ class NmapToolTest(AsyncTestCase):
 
         self.aucote = MagicMock(storage=Storage(":memory:"))
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.nmap_tool = NmapTool(context=self.context, exploits=self.exploits, port=self.port, config=self.config,
                                   scan=self.scan)
 

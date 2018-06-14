@@ -17,7 +17,7 @@ class WhatWebToolTest(AsyncTestCase):
         self.port = Port(node=self.node, transport_protocol=TransportProtocol.UDP, number=87)
         self.config = MagicMock()
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.tool = WhatWebTool(context=self.context, exploits=[self.exploit], port=self.port, config=self.config,
                                 scan=self.scan)
 

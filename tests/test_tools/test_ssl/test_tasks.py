@@ -14,7 +14,7 @@ class SSLScriptTaskTest(TestCase):
         port = Port(node=Node(node_id=2, ip=ipaddress.ip_address('127.0.0.1')),
                     transport_protocol=TransportProtocol.TCP, number=16)
         self.aucote = MagicMock()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.scan = Scan()
         self.task = SSLScriptTask(port=port, exploits=[exploit], context=self.context, scan=self.scan)
 

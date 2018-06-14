@@ -15,7 +15,7 @@ class ToolTest(AsyncTestCase):
         self.config = MagicMock()
         self.port = MagicMock()
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
 
         self.tool = Tool(context=self.context, exploits=self.exploits, port=self.port, config=self.config, scan=self.scan)
 

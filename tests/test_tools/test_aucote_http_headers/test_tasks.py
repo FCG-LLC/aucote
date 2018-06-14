@@ -53,7 +53,7 @@ class AucoteHttpHeadersTaskTest(AsyncTestCase):
         }
         self.scan = Scan()
         self.custom_headers = {'Accept-Encoding': 'gzip, deflate', 'User-Agent': 'test'}
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.task = AucoteHttpHeadersTask(port=self.port, context=self.context, exploits=[self.exploit],
                                           config=self.config, scan=self.scan)
 

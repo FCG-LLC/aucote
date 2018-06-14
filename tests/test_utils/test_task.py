@@ -22,7 +22,7 @@ class TaskTest(AsyncTestCase):
         self.executor.kudu_queue = MagicMock()
         self.executor.exploits = MagicMock()
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.executor, scan=None)
+        self.context = ScanContext(aucote=self.executor, scanner=None)
 
         self.task = Task(context=self.context, scan=self.scan)
 

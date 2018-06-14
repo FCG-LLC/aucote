@@ -15,7 +15,7 @@ class AucoteHttpHeadersToolTest(AsyncTestCase):
         self.port = MagicMock()
         self.config = MagicMock()
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.tool = AucoteHttpHeadersTool(context=self.context, exploits=self.exploits, port=self.port, scan=self.scan,
                                           config=self.config)
 

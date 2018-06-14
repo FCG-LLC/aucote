@@ -24,7 +24,7 @@ class ExecutorTest(AsyncTestCase):
         self.cfg = cfg
         self.aucote = MagicMock()
         self.aucote.storage = MagicMock()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.scan = Scan()
         self.scanner = MagicMock()
         self.executor = Executor(context=self.context, scan=self.scan, scanner=self.scanner)

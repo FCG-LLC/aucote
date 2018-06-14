@@ -16,7 +16,7 @@ class TasksHandlerTest(AsyncHTTPTestCase):
 
     def get_app(self):
         self.aucote = MagicMock(unfinished_tasks=4)
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.tasks = AsyncTaskManager()
         tasks = [
             {'port': 45, 'id': 1, 'ip': '127.0.0.1'},

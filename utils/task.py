@@ -158,10 +158,10 @@ class Task(object):
         """
         Scan name related to given task
         """
-        if self.context is None or self.context.scan is None:
+        if self.context is None or self.context.scanner is None:
             return None
 
-        return self.context.scan.NAME
+        return self.context.scanner.NAME
 
     def cancel(self):
         """

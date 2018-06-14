@@ -50,7 +50,7 @@ class TaskMapperTest(AsyncTestCase):
         self.executor.exploits.find_all_matching.return_value = self.exploits
         self.scan = Scan()
         self.scanner = MagicMock()
-        self.context = ScanContext(aucote=self.executor, scan=None)
+        self.context = ScanContext(aucote=self.executor, scanner=None)
 
         self.task_mapper = TaskMapper(context=self.context, scan=self.scan, scanner=self.scanner)
 

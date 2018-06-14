@@ -15,7 +15,7 @@ class CVESearchToolTest(AsyncTestCase):
         self.config = MagicMock()
         self.node = MagicMock()
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.tool = CVESearchTool(context=self.context, exploits=self.exploits, port=self.port, node=self.node,
                                   config=self.config, scan=self.scan)
 

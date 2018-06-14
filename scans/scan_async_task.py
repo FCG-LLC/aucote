@@ -46,7 +46,7 @@ class ScanAsyncTask(object):
     def _init(self):
         if self.context is not None:
             raise Exception("Scan context already exists")
-        self.context = ScanContext(aucote=self.aucote, scan=self)
+        self.context = ScanContext(aucote=self.aucote, scanner=self)
 
     async def __call__(self):
         try:

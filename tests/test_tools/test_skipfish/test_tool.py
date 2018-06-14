@@ -24,7 +24,7 @@ class SkipfishToolTest(AsyncTestCase):
 
         self.aucote = MagicMock()
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.skipfish_tool = SkipfishTool(context=self.context, exploits=self.exploits, port=self.port,
                                           config=self.config, scan=self.scan)
 

@@ -55,7 +55,7 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         self.exploit = Exploit(exploit_id=1337, name='cve-search', app='cve-search')
         self.aucote = MagicMock()
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.task = CVESearchServiceTask(context=self.context, port=self.port, exploits=[self.exploit], scan=self.scan)
 
         self.vuln_1 = Vulnerability(port=self.port, exploit=self.exploit, cve='CVE-2016-8612', cvss=3.3,

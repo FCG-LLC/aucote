@@ -37,7 +37,7 @@ class HydraToolTest(AsyncTestCase):
         self.port_no_login.scan = Scan(start=14)
 
         self.aucote = MagicMock()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.scan = Scan()
         self.hydra_tool = HydraTool(context=self.context, exploits=self.exploits, port=self.port, config=self.config,
                                     scan=self.scan,)

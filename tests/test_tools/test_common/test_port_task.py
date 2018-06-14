@@ -12,7 +12,7 @@ class PortTaskTest(TestCase):
         self.port = Port(node=MagicMock(), transport_protocol=None, number=MagicMock())
         self.exploit = MagicMock()
         self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=None)
+        self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.task = PortTask(context=self.context, port=self.port, exploits=[self.exploit], scan=self.scan)
 
     def test_init(self):
