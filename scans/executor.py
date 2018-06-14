@@ -73,20 +73,20 @@ class Executor(Task):
 
     def _execute_ports(self):
         storage_ports = self.storage.get_ports(pasttime=parse_period(cfg['portdetection._internal.port_period']),
-                                               scan=self._scan)
+                                               scan=self.scan)
 
         ports = self._get_ports_for_scanning(self.ports, storage_ports)
         log.info("Found %i recently not scanned ports", len(ports))
 
-        self.storage.save_ports(ports, scan=self._scan)
+        self.storage.save_ports(ports, scan=self.scan)
 
         for port in ports:
             self.add_async_task(NmapPortInfoTask(context=self.context, port=port, scan_only=self.scan_only,
-                                                 scan=self._scan, scanner=self.scanner))
+                                                 scan=self.scan, scanner=self.scanner))
 
     async def _execute_nodes(self):
         for node in set(self.nodes):
-            await TaskMapper(context=self.context, scan=self._scan, scanner=self.scanner).assign_tasks_for_node(node)
+            await TaskMapper(context=self.context, scan=self.scan, scanner=self.scanner).assign_tasks_for_node(node)
 
     async def execute(self, *args, **kwargs):
         """

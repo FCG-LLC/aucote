@@ -15,5 +15,5 @@ class AucoteScriptsTool(Tool):
             raise PortNotSpecifiedException()
 
         if Exploit(exploit_id=178) in self.exploits:
-            self.context.add_task(SietTask(context=self.context, port=self.port, scan=self._scan,
+            self.context.add_task(SietTask(context=self.context, port=self.port, scan=self.scan,
                                            exploits=[self.context.aucote.exploits.find('aucote-scripts', 'siet')]))

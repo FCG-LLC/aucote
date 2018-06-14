@@ -27,4 +27,4 @@ class HydraTool(Tool):
 
         self.context.add_task(HydraScriptTask(context=self.context, port=self.port, service=service_name,
                                               exploits=[self.aucote.exploits.find('hydra', 'hydra')], login=login,
-                                              scan=self._scan))
+                                              scan=self.scan))

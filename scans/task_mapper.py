@@ -5,7 +5,6 @@ Maps scans to ports and services. This module is also for filtering based on con
 import logging as log
 
 from aucote_cfg import cfg
-from fixtures.exploits.exploit import ExploitCategory
 from scans.executor_config import EXECUTOR_CONFIG
 from structs import SpecialPort
 
@@ -31,6 +30,13 @@ class TaskMapper(object):
     def _aucote(self):
         return self.context.aucote
 
+    @property
+    def scan(self) -> 'Scan':
+        """
+        Scanner's Scan
+        """
+        return self._scan
+
     async def assign_tasks(self, port, scripts=None):
         """
 
@@ -55,7 +61,7 @@ class TaskMapper(object):
             log.info("Using %i exploits against %s", len(exploits), port)
             self.store_security_scan(port=port, exploits=exploits)
             task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, port=port.copy(),
-                                                         config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
+                                                         config=EXECUTOR_CONFIG['apps'][app], scan=self.scan)
 
             self.context.add_task(task)
 
@@ -72,7 +78,7 @@ class TaskMapper(object):
             log.info("Using %i exploits against %s", len(exploits), node)
 
             task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, node=node,
-                                                         config=EXECUTOR_CONFIG['apps'][app], scan=self._scan)
+                                                         config=EXECUTOR_CONFIG['apps'][app], scan=self.scan)
 
             self.context.add_task(task)
 
@@ -105,7 +111,7 @@ class TaskMapper(object):
         Returns:
             None
         """
-        self.storage.save_security_scans(exploits=exploits, port=port, scan=self._scan)
+        self.storage.save_security_scans(exploits=exploits, port=port, scan=self.scan)
 
     @property
     def storage(self):

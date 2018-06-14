@@ -79,7 +79,7 @@ class Task(object):
             None
 
         """
-        self.aucote.storage.save_security_scans(exploits=exploits, port=port, scan=self._scan)
+        self.aucote.storage.save_security_scans(exploits=exploits, port=port, scan=self.scan)
 
     def store_vulnerability(self, vuln):
         """
@@ -97,7 +97,7 @@ class Task(object):
         self.kudu_queue.send_msg(msg)
 
         try:
-            self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self._scan)
+            self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self.scan)
         except Exception:
             log.warning('Error during saving vulnerability (%s, %s) to the storage',
                         vuln.exploit.id if vuln.exploit is not None else None, vuln.subid)
@@ -201,3 +201,10 @@ class Task(object):
         Checks if task finished
         """
         return self.finish_time is not None
+
+    @property
+    def scan(self):
+        """
+        Scanner Scan
+        """
+        return self._scan
