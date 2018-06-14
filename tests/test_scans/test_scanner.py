@@ -127,12 +127,11 @@ class ScannerTest(AsyncTestCase):
 
         await self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock())
 
-        mock_executor.assert_has_calls((call(context=self.thread.context, nodes=nodes, ports=[port], scan_only=False,
-                                             scanner=self.thread),
+        mock_executor.assert_has_calls((call(context=self.thread.context, nodes=nodes, ports=[port], scan_only=False),
                                         call(context=self.thread.context, nodes=[], ports=[ports_ipv6[0]],
-                                             scan_only=False, scanner=self.thread),
+                                             scan_only=False),
                                         call(context=self.thread.context, nodes=[], ports=[ports_ipv4[0]],
-                                             scan_only=False, scanner=self.thread)),
+                                             scan_only=False)),
                                        any_order=True)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)
 
@@ -370,6 +369,5 @@ class ScannerTest(AsyncTestCase):
 
         await self.thread.run_scan(nodes=nodes, scanners=scanners, scan_only=False, protocol=MagicMock())
 
-        mock_executor.assert_called_once_with(context=self.thread.context, nodes=nodes, ports=[port], scan_only=False,
-                                              scanner=self.thread)
+        mock_executor.assert_called_once_with(context=self.thread.context, nodes=nodes, ports=[port], scan_only=False)
         self.thread.aucote.add_task.called_once_with(mock_executor.return_value)

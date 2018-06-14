@@ -50,7 +50,7 @@ class TaskMapperTest(AsyncTestCase):
         self.executor.exploits.find_all_matching.return_value = self.exploits
         self.context = ScanContext(aucote=self.executor, scanner=MagicMock(scan=Scan()))
 
-        self.task_mapper = TaskMapper(context=self.context, scanner=self.context.scanner)
+        self.task_mapper = TaskMapper(context=self.context)
 
         self.cfg = {
             'portdetection': {

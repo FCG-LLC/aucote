@@ -15,7 +15,7 @@ class TaskMapper(object):
 
     """
 
-    def __init__(self, context, scanner):
+    def __init__(self, context):
         """
         Args:
             executor (Executor): tasks executor
@@ -23,7 +23,7 @@ class TaskMapper(object):
 
         """
         self.context = context
-        self.scanner = scanner
+        self.scanner = context.scanner
 
     @property
     def _aucote(self):

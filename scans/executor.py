@@ -20,7 +20,7 @@ class Executor(Task):
 
     """
 
-    def __init__(self, scanner, ports=None, scan_only=False, nodes=None, *args, **kwargs):
+    def __init__(self, ports=None, scan_only=False, nodes=None, *args, **kwargs):
         """
         Init executor. Sets kudu_queue and nodes
 
@@ -28,7 +28,7 @@ class Executor(Task):
         super(Executor, self).__init__(*args, **kwargs)
         self._ports = ports or []
         self.nodes = nodes or []
-        self.scanner = scanner
+        self.scanner = self.context.scanner
 
         self.scan_only = scan_only
         if cfg['portdetection._internal.broadcast']:
