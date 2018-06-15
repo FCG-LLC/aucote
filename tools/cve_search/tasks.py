@@ -147,7 +147,7 @@ class CVESearchServiceTask(PortTask):
 
         for result in results:
             # Omit vulnerability with the same CVE found in current scan
-            if result.cve in cves:
+            if result.cwe in cves:
                 log.debug('%s:(%s) vulnerability already discovered for %s', self.exploit, result.cve, self._port)
                 continue
 

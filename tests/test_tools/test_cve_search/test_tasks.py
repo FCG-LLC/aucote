@@ -127,10 +127,13 @@ class CVESearchServiceTaskTest(AsyncTestCase):
     def test_get_vulnerabilities_duplicated(self):
         results = CVESearchVulnerabilityResults()
 
-        vulnerability_1 = CVESearchVulnerabilityResult(cwe='CVE-2016-435')
-        vulnerability_1.summary = 'test_vuln'
-        results.vulnerabilities = (vulnerability_1, )
-        self.aucote.storage.get_vulnerabilities.return_value = (vulnerability_1, )
+        result_1 = CVESearchVulnerabilityResult(cwe='CVE-2016-435')
+        result_1.summary = 'test_vuln'
+        results.vulnerabilities = (result_1, )
+
+        vuln_1 = Vulnerability(cve='CVE-2016-435', output='test_vuln')
+
+        self.aucote.storage.get_vulnerabilities.return_value = (vuln_1, )
 
         result = self.task.get_vulnerabilities(results=results)
 
