@@ -1,6 +1,6 @@
 import ipaddress
 import tempfile
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
@@ -9,6 +9,7 @@ from fixtures.exploits import Exploit
 from scans.tcp_scanner import TCPScanner
 from structs import Port, Node, TransportProtocol, Scan, ScanContext
 from tools.aucote_scripts.tasks.siet import SietTask
+from utils import Config
 
 
 class SietTaskTest(AsyncTestCase):
@@ -21,9 +22,16 @@ class SietTaskTest(AsyncTestCase):
         self.port = Port(node=self.node, number=46, transport_protocol=TransportProtocol.TCP, scan=self.scan)
         self.exploit = Exploit(exploit_id=15, app='aucote-scripts', name='siet')
         self.task = SietTask(context=self.context, port=self.port, exploits=[self.exploit])
+        self.cfg = {
+            'portdetection': {
+                'expiration_period': '7d'
+            }
+        }
 
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @gen_test
-    async def test_call(self):
+    async def test_call(self, cfg):
+        cfg._cfg = self.cfg
         test_file = tempfile.NamedTemporaryFile()
 
         test_file.write(b"""line 1

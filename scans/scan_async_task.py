@@ -353,18 +353,25 @@ class ScanAsyncTask(object):
 
     def store_vulnerability(self, vuln):
         """
-        Saves vulnerability into database (kudu)
+        Saves vulnerability into database: kudu and local storage
         """
-        log.debug('Found vulnerability %s for %s', vuln.exploit.id if vuln.exploit is not None else None, vuln.port)
-        msg = Serializer.serialize_vulnerability(vuln)
-        self.aucote.kudu_queue.send_msg(msg)
+        expiration_period = parse_period(cfg['portdetection.expiration_period'])
 
-        # Do not save vulnerability which is already saved: FixMe: better save and update vulns
-        if vuln.expiration_time is not None:
-            return
+        log.debug('Found vulnerability %s for %s', vuln.exploit.id if vuln.exploit is not None else None, vuln.port)
 
         try:
-            self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self.scan)
+            # Do not save vulnerability which is already saved: FixMe: better save and update vulns
+            if vuln.expiration_time is None:
+                self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self.scan)
         except Exception:
             log.warning('Error during saving vulnerability (%s, %s) to the storage',
                         vuln.exploit.id if vuln.exploit is not None else None, vuln.subid)
+
+        # FixMe: A little bit hacking here: Serializer doesn't have access to Toucan,
+        # so I have to set expiration time in vuln. Future solution: Incorporate serializer into Aucote instance
+
+        if vuln.expiration_time is None:
+            vuln.expiration_time = vuln.time + expiration_period
+
+        msg = Serializer.serialize_vulnerability(vuln)
+        self.aucote.kudu_queue.send_msg(msg)

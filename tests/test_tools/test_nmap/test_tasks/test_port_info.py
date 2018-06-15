@@ -124,7 +124,8 @@ class NmapPortInfoTaskTest(AsyncTestCase):
             'portdetection': {
                 'tools': {
                     'scan_rate': 1337
-                }
+                },
+                'expiration_period': '7d'
             },
             'tools': {
                 'nmap': {
@@ -216,13 +217,16 @@ class NmapPortInfoTaskTest(AsyncTestCase):
 
     @patch('tools.nmap.tasks.port_info.Vulnerability')
     @patch('scans.scan_async_task.Serializer.serialize_vulnerability')
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     @gen_test
-    async def test_add_port_scan_info(self, cfg, mock_serializer, vulnerability):
-        cfg._cfg = self.cfg
+    async def test_add_port_scan_info(self, cfg, cfg_scan, mock_serializer, vulnerability):
+        cfg._cfg = cfg_scan._cfg = self.cfg
         future = Future()
         future.set_result(ElementTree.fromstring(self.XML_BANNER))
         self.port_info.command.async_call = MagicMock(return_value=future)
+        vulnerability.return_value = MagicMock(time=234., expiration_time=None)
+
         await self.port_info()
 
         vulnerability.assert_has_calls((call(port=self.port_info._port, context=self.context,
@@ -230,6 +234,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         mock_serializer.assert_called_once_with(vulnerability.return_value)
 
         self.port_info.kudu_queue.send_msg.assert_called_once_with(mock_serializer.return_value)
+        self.assertEqual(vulnerability.return_value.expiration_time, 234. + 60*60*24*7)
 
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     def test_prepare_args_ipv6(self, cfg):
