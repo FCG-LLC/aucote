@@ -16,27 +16,27 @@ security_audits (0x8)
 columns:
  - time_stamp_bucket. time_stamp_remainder - calculated from port.scan.start
  - server_ip1, server_ip2 - calculated from Node IP
- - port - port based (number)
- - prot - port based (protocol (tcp, udp))
- - vuln_id - exploit base
+ - port - port number
+ - prot - port protocol
+ - vuln_id - Exploit identifier
  - vuln_subid - vulnerability subidentifier (allows to push multiple records for one vulnerability)
- - node_id - node based
- - scan_start - main scan start
- - port_scan_start - port.scan.start
- - service_name - port based service (ftp, http, etc.)
- - service_version - port based (vuln_id=0, vuln_subid=3 for local storage)
- - service_banner - port based (vuln_id=0, vuln_subid=4 for local storage)
- - vuln_output - vulnerability based
- - traffic_type - internal
- - operating_system - port based (port.service.name and port.service.version)
- - metric - exploit based
- - scan_name - scanner name
- - app_name - exploit base
- - exploit_name - exploit base
- - tags - explot based
- - cve - vuln based
- - cvss - vuln based
- - expiration_time - vuln based
+ - node_id - Node identifier
+ - scan_start - main scan start e.g. tcp scan, basic tool scan
+ - port_scan_start - port scan scart
+ - service_name - port service (ftp, http, etc.)
+ - service_version - service version (vuln_id=0, vuln_subid=3 for local storage)
+ - service_banner - service banner (vuln_id=0, vuln_subid=4 for local storage)
+ - vuln_output - vulnerability output
+ - traffic_type - timba internal field
+ - operating_system - port.service.name and port.service.version
+ - metric - exploit metric
+ - scan_name - scanner name (main scan related e.g. 'tcp', 'Basic scan')
+ - app_name - exploit app name
+ - exploit_name - exploit script name
+ - tags - exploit tags
+ - cve - vulnerability cve
+ - cvss - vulnerability cvss
+ - expiration_time - vulnerability expiration time (updated when new security scan is performed)
 
 
 """
