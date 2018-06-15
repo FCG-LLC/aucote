@@ -313,7 +313,8 @@ class NmapPortInfoTaskTest(AsyncTestCase):
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     @gen_test
     async def test_store_vulnerabilities(self, cfg, vulnerability, exploit):
-        self.port_info.store_vulnerability = MagicMock()
+        self.port_info.context.scanner.store_vulnerability = MagicMock()
+        self.port_info.filter_out_vulnerability = MagicMock()
         cfg._cfg = self.cfg
         future = Future()
         future.set_result(ElementTree.fromstring(self.XML_CPE))
@@ -324,6 +325,8 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         expected = 8*[vulnerability.return_value]
         self.aucote.storage.save_vulnerabilities.assert_called_once_with(vulnerabilities=expected,
                                                                          scan=self.port_info.scan)
+
+        self.assertEqual(self.port_info.filter_out_vulnerability.call_count, 1)
 
         vulnerability.assert_has_calls([
             call(exploit=exploit, port=self.port, output='http', subid=vulnerability.SERVICE_PROTOCOL,

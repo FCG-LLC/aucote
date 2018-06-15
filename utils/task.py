@@ -84,7 +84,8 @@ class Task(object):
         """
         Saves vulnerability into database (kudu)
         """
-        self.context.scanner.store_vulnerability(vuln)
+        if self.filter_out_vulnerability(vuln):
+            self.context.scanner.store_vulnerability(vuln)
 
     def store_vulnerabilities(self, vulnerabilities):
         """
@@ -192,3 +193,10 @@ class Task(object):
         Scanner Scan
         """
         return self.context.scanner.scan
+
+    def filter_out_vulnerability(self, vuln):
+        """
+        Filter out vulnerabilities. Some task could be executed multiple times, so found vulnrabilities need validation
+        against already found vulnerabilities. Default behavior is to do nothing
+        """
+        return vuln
