@@ -21,10 +21,11 @@ class WebServer(object):
     Web server
 
     """
-    def __init__(self, aucote, host, port):
+    def __init__(self, aucote, host, port, path=''):
         self.server = None
         self.port = port
         self.host = host
+        self.path = path
         self.aucote = aucote
         self.name = "WebServer"
 
@@ -68,7 +69,7 @@ class WebServer(object):
             Application
 
         """
-        return Application((url, handler, {'aucote': self.aucote}) for url, handler in [
+        return Application((url, handler, {'aucote': self.aucote, 'path': self.path}) for url, handler in [
             (r"/api/v1/kill", KillHandler),
             (r"/api/v1/scanners", ScannersHandler),
             (r"/api/v1/scanners/([\w_]+)", ScannersHandler),

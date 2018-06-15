@@ -43,7 +43,8 @@ class AucoteTest(AsyncTestCase):
                     'v1': {
                         'host': None,
                         'port': None
-                    }
+                    },
+                    'path': ''
                 }
             },
             'kuduworker': {

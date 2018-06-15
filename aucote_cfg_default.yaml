@@ -17,6 +17,7 @@
 #     password: <hexstr> - SHA512 hash of password in hexadecimal format
 #                          Require for admin operations, e.g. killing aucote process.
 #                          Please do not use default password!
+#     path: <str> - path to the aucote api if aucote is behind proxy
 
 service:
     scans:
@@ -27,6 +28,7 @@ service:
         v1:
             host: 0.0.0.0
             port: 1235
+        path: ''
         # password: ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff # password: test
 
 

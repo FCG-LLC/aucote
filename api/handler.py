@@ -22,7 +22,7 @@ class Handler(RequestHandler):
     SECURITY_SCAN_URL = '/api/v1/security_scans/{sec_scan_id}'
     VULNERABILITY_URL = '/api/v1/vulnerabilities/{vuln_id}'
 
-    def initialize(self, aucote):
+    def initialize(self, aucote, path=''):
         """
         Integrates Handlers with aucote
 
@@ -34,6 +34,8 @@ class Handler(RequestHandler):
 
         """
         self.aucote = aucote
+        path = path.strip('/')
+        self.path = ('/' + path) if path else ''
 
     @staticmethod
     def auth(handler_class):
