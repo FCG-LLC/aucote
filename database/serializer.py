@@ -1,5 +1,44 @@
 """
-Provides serializers for database
+Database
+========
+
+
+Kudu database schema:
+
+security_audits (0x8)
+---------------
+
++-------------------+------------+------------+------+------+---------+------------+----------------------+---------+------------+-----------------+--------------+-----------------+----------------+-------------+--------------+------------------+--------+-----------+----------+--------------+------+-----+------+-----------------+
+| time_stamp_bucket | server_ip1 | server_ip2 | port | prot | vuln_id | vuln_subid | time_stamp_remainder | node_id | scan_start | port_scan_start | service_name | service_version | service_banner | vuln_output | traffic_type | operating_system | metric | scan_name | app_name | exploit_name | tags | cve | cvss | expiration_time |
++===================+============+============+======+======+=========+============+======================+=========+============+=================+==============+=================+================+=============+==============+==================+========+===========+==========+==============+======+=====+======+=================+
++-------------------+------------+------------+------+------+---------+------------+----------------------+---------+------------+-----------------+--------------+-----------------+----------------+-------------+--------------+------------------+--------+-----------+----------+--------------+------+-----+------+-----------------+
+
+columns:
+ - time_stamp_bucket. time_stamp_remainder - calculated from port.scan.start
+ - server_ip1, server_ip2 - calculated from Node IP
+ - port - port number
+ - prot - port protocol
+ - vuln_id - Exploit identifier
+ - vuln_subid - vulnerability subidentifier (allows to push multiple records for one vulnerability)
+ - node_id - Node identifier
+ - scan_start - main scan start e.g. tcp scan, basic tool scan
+ - port_scan_start - port scan scart
+ - service_name - port service (ftp, http, etc.)
+ - service_version - service version (vuln_id=0, vuln_subid=3 for local storage)
+ - service_banner - service banner (vuln_id=0, vuln_subid=4 for local storage)
+ - vuln_output - vulnerability output
+ - traffic_type - timba internal field
+ - operating_system - port.service.name and port.service.version
+ - metric - exploit metric
+ - scan_name - scanner name (main scan related e.g. 'tcp', 'Basic scan')
+ - app_name - exploit app name
+ - exploit_name - exploit script name
+ - tags - exploit tags
+ - cve - vulnerability cve
+ - cvss - vulnerability cvss
+ - expiration_time - vulnerability expiration time (updated when new security scan is performed)
+
+
 """
 from enum import Enum
 
@@ -28,7 +67,7 @@ class Serializer:
         Serializes Vulnerability
         """
         msg = KuduMsg(MsgType.VULNERABILITY.value)
-        msg.add_datetime(vuln.context.scan.scan_start)  # scan_start
+        msg.add_datetime(vuln.scan.start)  # scan_start
         msg.add_short(vuln.port.number)
         msg.add_ip(vuln.port.node.ip)
         msg.add_int(vuln.port.node.id)
@@ -43,12 +82,13 @@ class Serializer:
         msg.add_datetime(vuln.time)
         msg.add_str(vuln.port.node.os.name_with_version)
         msg.add_str(vuln.exploit.metric.name if vuln.exploit is not None and vuln.exploit.metric is not None else '')
-        msg.add_str(vuln.context.scan.NAME if vuln.context is not None else '')
+        msg.add_str(vuln.scan.scanner if vuln.scan is not None else '')
         msg.add_str(vuln.exploit.app if vuln.exploit is not None else '')
         msg.add_str(vuln.exploit.name if vuln.exploit is not None else '')
         msg.add_long(vuln.exploit.tags_mask if vuln.exploit is not None else 0)
         msg.add_str(vuln.cve)
         msg.add_byte(round(vuln.cvss*10))
+        msg.add_datetime(vuln.expiration_time)
         return msg
 
     @classmethod

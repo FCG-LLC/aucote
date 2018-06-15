@@ -21,7 +21,7 @@ class CVESearchTool(Tool):
         if not self.port:
             self.port = PhysicalPort(node=self.node)
 
-        self.context.add_task(CVESearchServiceTask(context=self.context, port=self.port, scan=self._scan,
+        self.context.add_task(CVESearchServiceTask(context=self.context, port=self.port,
                                                    exploits=[self.aucote.exploits.find('cve-search', 'cve-search')]))
 
     def additional_info(self):

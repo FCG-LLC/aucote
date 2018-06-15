@@ -6,7 +6,7 @@ netifaces==0.10.5
 croniter==0.3.13
 pytz==2016.10
 inotify==0.2.8
-tornado==4.4.2
+tornado==4.5.2
 tornado-crontab==0.3.2
 pyopenssl==17.0.0
 pyasn1==0.2.3

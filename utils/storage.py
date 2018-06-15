@@ -77,10 +77,10 @@ columns:
 vulnerabilities
 ---------------
 
-+-------+---------+---------+---------+---------------+------+------------------+---------------------+-----+------+---------------+
-| rowid | scan_id | node_id | node_ip | port_protocol | port | vulnerability_id | vulnerability_subid | cve | cvss | output | time |
-+=======+=========+=========+=========+===============+======+==================+=====================+=====+======+===============+
-+-------+---------+---------+---------+---------------+------+------------------+---------------------+-----+------+---------------+
++-------+---------+---------+---------+---------------+------+------------------+---------------------+-----+------+---------------+-----------------+
+| rowid | scan_id | node_id | node_ip | port_protocol | port | vulnerability_id | vulnerability_subid | cve | cvss | output | time | expiration_time |
++=======+=========+=========+=========+===============+======+==================+=====================+=====+======+===============+=================+
++-------+---------+---------+---------+---------------+------+------------------+---------------------+-----+------+---------------+-----------------+
 
 columns:
  - rowid (int) - row identifier
@@ -95,6 +95,7 @@ columns:
  - cvss (string) - CVSS value (0 to 10 with 0.1 resolution)
  - output (string) - vulnerability details
  - time (int) - vulnerability detection time
+ - expiration_time (int) - vulnerability expiration time
 
 """
 import ipaddress
@@ -143,7 +144,7 @@ class Storage(DbInterface):
         },
         'vulnerabilities': {
             'columns': ['rowid', 'scan_id', 'node_id', 'node_ip', 'port_protocol', 'port', 'vulnerability_id',
-                        'vulnerability_subid', 'cve', 'cvss', 'output', 'time'],
+                        'vulnerability_subid', 'cve', 'cvss', 'output', 'time', 'expiration_time'],
             'factor': '_vulnerability_from_row',
             'order': 'ORDER BY time DESC'
         },
@@ -184,16 +185,21 @@ class Storage(DbInterface):
                            "OR sec_scan_end IS NULL"
 
     SAVE_SECURITY_SCAN = "INSERT INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name,"\
-                                " node_id, node_ip, port_protocol, port_number, sec_scan_start, sec_scan_end) " \
+                         " node_id, node_ip, port_protocol, port_number, sec_scan_start, sec_scan_end) " \
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
     CREATE_VULNERABILITIES_TABLE = "CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, "\
                                    "port_protocol int, port int, vulnerability_id int, vulnerability_subid int, "\
-                                   "cve text, cvss text, output text, time int, primary key(scan_id, node_id, "\
+                                   "cve text, cvss text, output text, time int, expiration_time int, " \
+                                   "primary key(scan_id, node_id, "\
                                    "node_ip, port_protocol, port, vulnerability_id, vulnerability_subid))"
     SAVE_VULNERABILITY = "INSERT INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
                          "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+
+    UPDATE_VULNERABILITY_EXPIRATION= "UPDATE vulnerabilities SET expiration_time=? WHERE scan_id=? AND node_id=? " \
+                                     "AND node_ip=? AND port_protocol=? AND port=? AND vulnerability_id=? " \
+                                     "AND vulnerability_subid=?"
 
     CREATE_CHANGES_TABLE = "CREATE TABLE IF NOT EXISTS changes(type int, vulnerability_id int, "\
                            "vulnerability_subid int, previous_id int, current_id int, time int, PRIMARY KEY(type, " \
@@ -641,6 +647,23 @@ class Storage(DbInterface):
                            join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where':
                                {'protocol': scan.protocol, 'scanner_name': scan.scanner}})
 
+    def security_scan_by_vuln(self, vuln):
+        return self.select('security_scans', exploit_id=vuln.exploit.id, node_id=vuln.port.node.id,
+                           node_ip=vuln.port.node.ip, port_protocol=vuln.port.transport_protocol,
+                           port_number=vuln.port.number, scan_id=vuln.scan.rowid, limit=1)
+
+    def next_security_scan(self, sec_scan):
+        """
+        Get security scan which finish after given
+
+        """
+        return self.select('security_scans', limit=1, exploit_id=sec_scan.exploit.id, node_id=sec_scan.port.node.id,
+                           node_ip=sec_scan.port.node.ip, port_protocol=sec_scan.port.transport_protocol,
+                           port_number=sec_scan.port.number, where={
+                            'operator': {
+                                '>': {'sec_scan_end': sec_scan.scan_end}
+                            }})
+
     def save_changes(self, changes: list):
         """
         Save changes to database
@@ -851,10 +874,20 @@ class Storage(DbInterface):
                         scan=self.get_scan_by_id(row[3]))
 
     def _vulnerability_from_row(self, row: list) -> 'Vulnerability':
-        return Vulnerability(port=Port(transport_protocol=self._transport_protocol(row[4]), number=row[5],
+        vuln = Vulnerability(port=Port(transport_protocol=self._transport_protocol(row[4]), number=row[5],
                                        node=Node(node_id=row[2], ip=ipaddress.ip_address(row[3]))),
                              exploit=Exploit(exploit_id=row[6]), subid=row[7], cve=row[8], cvss=row[9], output=row[10],
-                             vuln_time=row[11], rowid=row[0], scan=self.get_scan_by_id(row[1]))
+                             vuln_time=row[11], rowid=row[0], scan=self.get_scan_by_id(row[1]), expiration_time=row[12])
+
+        sec_scans = self.security_scan_by_vuln(vuln)
+
+        if not sec_scans:
+            log.error('Cannot find security scan for given vulnerability')
+            return vuln
+
+        sec_scan = sec_scans[0]
+        vuln.port.scan = Scan(start=sec_scan.scan_start, end=sec_scan.scan_end, scanner=vuln.scan.scanner)
+        return vuln
 
     def _sec_scan_from_row(self, row: list) -> SecurityScan:
         return SecurityScan(port=Port(node=Node(node_id=row[5], ip=ipaddress.ip_address(row[6])),
@@ -967,3 +1000,87 @@ class Storage(DbInterface):
                                                 self._protocol_to_iana(vuln.port.transport_protocol), vuln.port.number,
                                                 vuln.exploit.id, vuln.subid, vuln.cve, vuln.cvss, vuln.output,
                                                 vuln.time)))
+
+    def expire_vulnerability(self, vuln: 'Vulnerability') -> 'Vulnerability':
+        """
+        Set vulnerability expiration time:
+
+        1. Get security scan related to given vulnerability
+        2. Get next security scan after obtained
+        3. If next security scan exists, it means that given vulnerability is no longer actual
+
+        """
+        curr_sec_scans = self.security_scan_by_vuln(vuln)
+
+        if not curr_sec_scans:
+            log.error('Cannot find security scan for given vulnerability')
+            return vuln
+
+        curr_sec_scan = curr_sec_scans[0]
+
+        next_sec_scans = self.next_security_scan(curr_sec_scan)
+
+        if not next_sec_scans:
+            return vuln
+
+        next_sec_scan = next_sec_scans[0]
+
+        vuln.expiration_time = next_sec_scan.scan_start
+        self.execute((self.UPDATE_VULNERABILITY_EXPIRATION, (vuln.expiration_time, vuln.scan.rowid, vuln.port.node.id,
+                                                             str(vuln.port.node.ip),
+                                                             self._protocol_to_iana(vuln.port.transport_protocol),
+                                                             vuln.port.number, vuln.exploit.id, vuln.subid)))
+
+        return vuln
+
+    def active_vulnerabilities(self) -> list:
+        """
+        Gets all vulnerabilites with unset expiration time
+        """
+        return self.select('vulnerabilities', expiration_time=None)
+
+    def expire_vulnerabilities(self):
+        """
+        Checks if any of vulnerability should be expired and do it if needed. Returns expired vulnerabilities
+
+        """
+        vulns = self.active_vulnerabilities()
+        log.debug('%s active vulnerabilities to check', len(vulns))
+
+        for vuln in vulns:
+            self.expire_vulnerability(vuln)
+
+        log.debug('Left %s active vulnerabilities', len([vuln for vuln in vulns if vuln.expiration_time is None]))
+
+        return [vuln for vuln in vulns if vuln.expiration_time is not None]
+
+    def portdetection_vulns(self, vuln: 'Vulnerability'):
+        """
+        Returns dict which describes service details (name, version, application name, banner) for given vulnerability
+
+        """
+        return_value = {}
+
+        vulnerabilities = self.select(table='vulnerabilities', node_id=vuln.port.node.id, node_ip=vuln.port.node.ip,
+                                      port=vuln.port.number, port_protocol=vuln.port.transport_protocol,
+                                      vulnerability_id=0, scan_id=vuln.scan.rowid)
+
+        for vulnerability in vulnerabilities:
+            if vulnerability.subid == Vulnerability.SERVICE_PROTOCOL:
+                return_value['protocol'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.SERVICE_NAME:
+                return_value['name'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.SERVICE_VERSION:
+                return_value['version'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.SERVICE_BANNER:
+                return_value['banner'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.SERVICE_CPE:
+                return_value['cpe'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.OS_NAME:
+                return_value['os_name'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.OS_VERSION:
+                return_value['os_version'] = vulnerability.output
+            elif vulnerability.subid == Vulnerability.OS_CPE:
+                return_value['os_cpe'] = vulnerability.output
+
+        return return_value

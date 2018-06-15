@@ -78,7 +78,7 @@ class APITest(AsyncHTTPTestCase):
 
         self.scanner = TCPScanner(aucote=self.aucote, host='localhost', port=1339)
         self.scanner.NAME = 'test_name'
-        self.scanner.scan_start = 1290
+        self.scanner.scan.start = 1290
         self.scanner.nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))]
         self.aucote.scanners = [self.scanner, ToolsScanner(name='tools', aucote=self.aucote)]
         self.app = Application((url, handler, {'aucote': self.aucote}) for url, handler in [

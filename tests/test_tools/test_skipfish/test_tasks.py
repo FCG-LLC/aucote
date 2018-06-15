@@ -36,18 +36,19 @@ class SkipfishScanTaskTest(AsyncTestCase):
         self.exploit = Exploit(exploit_id=1)
         self.scan = Scan()
         self.context = ScanContext(aucote=self.aucote,
-                                   scan=TCPScanner(MagicMock(), MagicMock(), MagicMock(), MagicMock()))
+                                   scanner=TCPScanner(MagicMock(), MagicMock(), MagicMock(), MagicMock()))
 
-        self.task = SkipfishScanTask(context=self.context, port=self.port, exploits=[self.exploit], scan=self.scan,)
+        self.task = SkipfishScanTask(context=self.context, port=self.port, exploits=[self.exploit])
         self.task.aucote.exploits.find.return_value = self.exploit
         self.task.store_scan_end = MagicMock()
 
     @patch('time.time', MagicMock(return_value=27.0))
     @patch('tools.common.command_task.cfg', new_callable=Config)
+    @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('tools.skipfish.tasks.cfg', new_callable=Config)
     @gen_test
-    async def test_storage(self, cfg, cfg_comm_task):
-        cfg_comm_task._cfg = cfg._cfg = {
+    async def test_storage(self, cfg, cfg_scan, cfg_comm_task):
+        cfg_comm_task._cfg = cfg_scan._cfg = cfg._cfg = {
             'tools': {
                 'skipfish': {
                     'threads': 30,
@@ -55,6 +56,9 @@ class SkipfishScanTaskTest(AsyncTestCase):
                     'tmp_directory': '/tmp',
                     'timeout': 0
                 }
+            },
+            'portdetection': {
+                'expiration_period': '7d'
             }
         }
         future = Future()

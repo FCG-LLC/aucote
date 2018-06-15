@@ -34,6 +34,7 @@ service:
 # portdetection:
 #   security_scans: [] - list of `tool` scans. Every scan should be configured in this yaml. Example scans are
 #                        `tools_basic` and `tools_advanced`
+#   expiration_period: <period> - How much time the found vulnerability is valid
 #
 #   (tcp|udp|sctp|tools): - Type of scan
 #     scan_enabled: <bool> - Defines if scan is enable or not
@@ -230,6 +231,7 @@ portdetection:
     _internal:
         port_period: 0s
         broadcast: False
+    expiration_period: 7d
 
 
 # In this section there is configuration related to the tools used by the aucote

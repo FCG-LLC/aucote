@@ -22,7 +22,7 @@ class NmapPortInfoTask(PortTask):
 
     """
 
-    def __init__(self, scanner, scan_only=False, *args, **kwargs):
+    def __init__(self, scan_only=False, *args, **kwargs):
         """
         Initiazlize variables.
 
@@ -36,7 +36,7 @@ class NmapPortInfoTask(PortTask):
 
         self.command = NmapBase()
         self.scan_only = scan_only
-        self.scanner = scanner
+        self.scanner = self.context.scanner
 
     def prepare_args(self):
         """
@@ -110,29 +110,36 @@ class NmapPortInfoTask(PortTask):
             if cpe is not None:
                 self._port.service.cpe = cpe.text
 
-        self.storage.save_security_scan(port=self.port, exploit=self.exploit, scan=self._scan)
+        self.storage.save_security_scan(port=self.port, exploit=self.exploit, scan=self.scan)
 
         cpe = self.port.service.cpe.as_fs() if self.port.service.cpe else None
 
         vulnerabilities = [
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.protocol,
-                          subid=Vulnerability.SERVICE_PROTOCOL, context=self.context),
+                          subid=Vulnerability.SERVICE_PROTOCOL, context=self.context, scan=self.scan),
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.service.name,
-                          subid=Vulnerability.SERVICE_NAME, context=self.context),
+                          subid=Vulnerability.SERVICE_NAME, context=self.context, scan=self.scan),
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.service.version,
-                          subid=Vulnerability.SERVICE_VERSION, context=self.context),
+                          subid=Vulnerability.SERVICE_VERSION, context=self.context, scan=self.scan),
             Vulnerability(exploit=self.exploit, port=self.port, output=self.port.banner,
-                          subid=Vulnerability.SERVICE_BANNER, context=self.context),
+                          subid=Vulnerability.SERVICE_BANNER, context=self.context, scan=self.scan),
             Vulnerability(exploit=self.exploit, port=self.port, output=cpe,
-                          subid=Vulnerability.SERVICE_CPE, context=self.context)
-        ]
-        self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self._scan)
+                          subid=Vulnerability.SERVICE_CPE, context=self.context, scan=self.scan),
 
-        self.store_vulnerability(Vulnerability(port=self._port, context=self.context))
+            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.node.os.name,
+                          subid=Vulnerability.OS_NAME, context=self.context, scan=self.scan),
+            Vulnerability(exploit=self.exploit, port=self.port, output=self.port.node.os.version,
+                          subid=Vulnerability.OS_VERSION, context=self.context, scan=self.scan),
+            Vulnerability(exploit=self.exploit, port=self.port, subid=Vulnerability.OS_CPE, context=self.context,
+                          output=str(self.port.node.os.cpe.cpe_str) if self.port.node.os.cpe else None, scan=self.scan)
+        ]
+        self.aucote.storage.save_vulnerabilities(vulnerabilities=vulnerabilities, scan=self.scan)
+
+        self.store_vulnerability(Vulnerability(port=self._port, context=self.context, scan=self.scan))
         self.diff_with_last_scan()
 
         if not self.scan_only:
-            await TaskMapper(context=self.context, scan=self._scan, scanner=self.scanner).assign_tasks(self._port)
+            await TaskMapper(context=self.context).assign_tasks(self._port)
 
     def diff_with_last_scan(self):
         """
@@ -151,7 +158,7 @@ class NmapPortInfoTask(PortTask):
 
         for exploit in self.current_exploits:
             last_scans = self.storage.get_scans_by_security_scan(port=self.port, exploit=exploit)
-            _current_findings = self.storage.get_vulnerabilities(port=self.port, exploit=exploit, scan=self._scan)
+            _current_findings = self.storage.get_vulnerabilities(port=self.port, exploit=exploit, scan=self.scan)
 
             if len(last_scans) < 2:
                 _previous_findings = []

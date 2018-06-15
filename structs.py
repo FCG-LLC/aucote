@@ -22,7 +22,7 @@ class Scan(object):
 
     """
 
-    def __init__(self, start=None, end=None, protocol=None, scanner='', rowid=None):
+    def __init__(self, start=None, end=None, protocol=None, scanner='', rowid=None, init=True):
         """
         Args:
             protocol TransportProtocol: scan protocol
@@ -31,37 +31,36 @@ class Scan(object):
             scanner (str): scanner name
 
         """
-        self._start = None
-        self._end = None
+        self._start_ms = None
+        self._end_ms = None
 
         self.rowid = rowid
-        self.start = start or time.time()
+        self.start = time.time() if start is None and init is True else start
         self.end = end
         self._protocol = protocol
         self._scanner = scanner
-        self.scanner_task = None
 
     @property
     def start(self) -> float:
         """
         Scan start (unix timestamp) in seconds
         """
-        return self._start/1000 if self._start is not None else None
+        return self._start_ms / 1000 if self._start_ms is not None else None
 
     @start.setter
     def start(self, value: float):
-        self._start = round(value*1000) if value is not None else None
+        self._start_ms = round(value * 1000) if value is not None else None
 
     @property
     def end(self) -> float:
         """
         Scan end (unix timestamp) in seconds
         """
-        return self._end/1000 if self._end is not None else None
+        return self._end_ms / 1000 if self._end_ms is not None else None
 
     @end.setter
     def end(self, value: float):
-        self._end = round(value*1000) if value is not None else None
+        self._end_ms = round(value * 1000) if value is not None else None
 
     @property
     def protocol(self):
@@ -228,7 +227,7 @@ class SecurityScan(object):
 
     """
     def __init__(self, scan, port, exploit, scan_start=None, scan_end=None, rowid=None):
-        self._scan_start = None
+        self._scan_start_ms = None
 
         self.port = port
         self.exploit = exploit
@@ -250,11 +249,14 @@ class SecurityScan(object):
     
     @property
     def scan_start(self):
-        return self._scan_start / 1000 if self._scan_start is not None else None
+        """
+        Scan start in seconds
+        """
+        return self._scan_start_ms / 1000 if self._scan_start_ms is not None else None
 
     @scan_start.setter
     def scan_start(self, value):
-        self._scan_start = round(value * 1000) if value is not None else None
+        self._scan_start_ms = round(value * 1000) if value is not None else None
 
     def __eq__(self, other):
         return isinstance(other, SecurityScan) and all((self.port == other.port, self.exploit == other.exploit,
@@ -467,10 +469,7 @@ class Port(object):
             transport_protocol (TransportProtocol):
 
         """
-        self._when_discovered = None
-
         self.vulnerabilities = []
-        self.when_discovered = time.time()
         self.node = node
         self.number = number
         self.transport_protocol = transport_protocol
@@ -480,14 +479,6 @@ class Port(object):
         self.banner = None
         self.scan = scan
         self.interface = None
-
-    @property
-    def when_discovered(self):
-        return self._when_discovered/1000 if self._when_discovered is not None else None
-
-    @when_discovered.setter
-    def when_discovered(self, value):
-        self._when_discovered = round(value*1000) if value is not None else None
 
     def __eq__(self, other):
         return isinstance(other, Port) and self.transport_protocol == other.transport_protocol \
@@ -609,9 +600,12 @@ class Vulnerability(object):
     SERVICE_VERSION = 3
     SERVICE_BANNER = 4
     SERVICE_CPE = 5
+    OS_NAME = 6
+    OS_VERSION = 7
+    OS_CPE = 8
 
     def __init__(self, exploit=None, port=None, output='', cve=None, cvss=None, subid=0, vuln_time=None,
-                 rowid=None, scan=None, context=None):
+                 rowid=None, scan=None, context=None, expiration_time=None):
         """
         Init values
 
@@ -621,9 +615,10 @@ class Vulnerability(object):
             output(str): string or stringable output
 
         """
-        self._time = None
+        self._time_ms = None
+        self._expiration_time_ms = None
 
-        self.output = str(output)
+        self.output = str(output) if output is not None else None
         self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
         self.port = port
         self._cve = cve
@@ -633,14 +628,29 @@ class Vulnerability(object):
         self.rowid = rowid
         self.scan = scan
         self.context = context
+        self.expiration_time = expiration_time
 
     @property
     def time(self):
-        return self._time/1000 if self._time is not None else None
+        return self._time_ms / 1000 if self._time_ms is not None else None
 
     @time.setter
     def time(self, value):
-        self._time = round(value*1000) if value is not None else None
+        """
+        Detection time in seconds (unix timestamp)
+        """
+        self._time_ms = round(value * 1000) if value is not None else None
+
+    @property
+    def expiration_time(self):
+        """
+        Vulnerability expiration time in seconds (unix timestamp)
+        """
+        return self._expiration_time_ms / 1000 if self._expiration_time_ms is not None else None
+
+    @expiration_time.setter
+    def expiration_time(self, value):
+        self._expiration_time_ms = round(value * 1000) if value is not None else None
 
     @property
     def cve(self):
@@ -989,11 +999,11 @@ class VulnerabilityChange(VulnerabilityChangeBase):
 
 class ScanContext:
     """
-    Scan context handle information about scan ant it progress
+    Scan context handle information about scan and it progress
     """
-    def __init__(self, aucote, scan):
+    def __init__(self, aucote, scanner):
         self.aucote = aucote
-        self.scan = scan
+        self.scanner = scanner
         self.tasks = []
         self._cancelled = False
         self.start = None
@@ -1008,12 +1018,16 @@ class ScanContext:
         self._end = val
         self._post_scan_hook()
 
+    @property
+    def scan(self):
+        return self.scanner.scan
+
     def _post_scan_hook(self):
         """
         Executes post scan operations
 
         """
-        log.debug('Executing post scan hook for scan %s', self.scan.NAME)
+        log.debug('Executing post scan hook for scan %s', self.scanner.NAME)
 
     def add_task(self, task):
         self.tasks.append(task)

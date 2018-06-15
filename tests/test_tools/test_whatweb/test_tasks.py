@@ -21,9 +21,8 @@ class WhatWebTaskTest(AsyncTestCase):
         self.port.protocol = 'http'
         self.aucote = MagicMock()
         self.exploit = Exploit(app='whatweb', name='whatweb', exploit_id=1)
-        self.scan = Scan()
-        self.context = ScanContext(aucote=self.aucote, scan=TCPScanner)
-        self.task = WhatWebTask(port=self.port, context=self.context, exploits=[self.exploit], scan=self.scan)
+        self.context = ScanContext(aucote=self.aucote, scanner=MagicMock(scan=Scan()))
+        self.task = WhatWebTask(port=self.port, context=self.context, exploits=[self.exploit])
 
     def test_init(self):
         self.assertIsInstance(self.task.command, WhatWebBase)

@@ -12,7 +12,8 @@ from croniter import croniter
 from netaddr import IPSet
 
 from aucote_cfg import cfg
-from structs import ScanType, ScanStatus, ScanContext
+from database.serializer import Serializer
+from structs import ScanType, ScanStatus, ScanContext, Service, Scan
 from utils.time import parse_period
 
 
@@ -33,7 +34,7 @@ class ScanAsyncTask(object):
         self._current_scan = []
         self._aucote = aucote
         self.context = None
-        self.scan_start = None
+        self.scan = Scan(protocol=self.PROTOCOL, scanner=self.NAME, init=False)
         self._shutdown_condition = Event()
         self.status = ScanStatus.IDLE
         self.run_now = False
@@ -45,7 +46,7 @@ class ScanAsyncTask(object):
     def _init(self):
         if self.context is not None:
             raise Exception("Scan context already exists")
-        self.context = ScanContext(aucote=self.aucote, scan=self)
+        self.context = ScanContext(aucote=self.aucote, scanner=self)
 
     async def __call__(self):
         try:
@@ -69,6 +70,7 @@ class ScanAsyncTask(object):
         finally:
             self.context.end = time.time()
             self.context = None
+            self.expire_vulnerabilities()
 
     async def run(self):
         raise NotImplementedError()
@@ -84,7 +86,7 @@ class ScanAsyncTask(object):
         """
         return self._shutdown_condition
 
-    async def _get_nodes_for_scanning(self, scan, timestamp=None, filter_out_storage=True):
+    async def _get_nodes_for_scanning(self, timestamp=None, filter_out_storage=True):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -100,7 +102,7 @@ class ScanAsyncTask(object):
         nodes = await self.topdis.get_nodes()
 
         if filter_out_storage:
-            storage_nodes = self.storage.get_nodes(pasttime=self._scan_interval(), timestamp=timestamp, scan=scan)
+            storage_nodes = self.storage.get_nodes(pasttime=self._scan_interval(), timestamp=timestamp, scan=self.scan)
             nodes = nodes - set(storage_nodes)
 
         include_networks = self._get_networks_list()
@@ -267,19 +269,19 @@ class ScanAsyncTask(object):
         if next_scan != self.next_scan:
             data['portdetection'][self.NAME]['status']['next_scan_start'] = self.next_scan
 
-        if self.scan_start:
+        if self.scan.start:
             previous_scan_start = current_status['scan_start']
-            if previous_scan_start != self.scan_start:
+            if previous_scan_start != self.scan.start:
                 data['portdetection'][self.NAME]['status']['previous_scan_start'] = previous_scan_start
-                data['portdetection'][self.NAME]['status']['scan_start'] = self.scan_start
+                data['portdetection'][self.NAME]['status']['scan_start'] = self.scan.start
 
         if status is not None:
             current_status_code = current_status['code']
             if current_status_code != status.value:
                 data['portdetection'][self.NAME]['status']['code'] = status.value
 
-        if status is ScanStatus.IDLE and self.scan_start is not None:
-            data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan_start)
+        if status is ScanStatus.IDLE and self.scan.start is not None:
+            data['portdetection'][self.NAME]['status']['previous_scan_duration'] = int(time.time() - self.scan.start)
 
         if data['portdetection'][self.NAME]['status']:
             log.debug("Update toucan by %s with %s", self.NAME, data)
@@ -318,3 +320,58 @@ class ScanAsyncTask(object):
         await self.context.wait_on_scan_end()
 
         log.info('Scan %s cancelled successfully', self.NAME)
+
+    def prepare_vulnerability_for_kudu(self, vuln: 'Vulnerability'):
+        """
+        Update vulnerability to meet all fields required by kudu serializer
+
+        """
+        data = self.storage.portdetection_vulns(vuln)
+
+        os_service = Service(name=data['os_name'], version=data['os_version'], cpe=data['os_cpe'])
+        vuln.port.node.os = os_service
+        vuln.port.protocol = data['protocol']
+        vuln.port.banner = data['banner']
+        vuln.port.service.name = data['name']
+        vuln.port.service.version = data['version']
+        vuln.port.service.cpe = data['cpe']
+
+        return vuln
+
+    def expire_vulnerabilities(self):
+        """
+        Update validation time of vulnerabilites
+
+        """
+        vulns = self.storage.expire_vulnerabilities()
+        for vuln in vulns:
+            # There is some mismatch between kudu and local storage
+            if vuln.exploit.id == 0 and vuln.subid > 0:
+                continue
+            self.prepare_vulnerability_for_kudu(vuln)
+            self.store_vulnerability(vuln)
+
+    def store_vulnerability(self, vuln):
+        """
+        Saves vulnerability into database: kudu and local storage
+        """
+        expiration_period = parse_period(cfg['portdetection.expiration_period'])
+
+        log.debug('Found vulnerability %s for %s', vuln.exploit.id if vuln.exploit is not None else None, vuln.port)
+
+        try:
+            # Do not save vulnerability which is already saved: FixMe: better save and update vulns
+            if vuln.expiration_time is None:
+                self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self.scan)
+        except Exception:
+            log.warning('Error during saving vulnerability (%s, %s) to the storage',
+                        vuln.exploit.id if vuln.exploit is not None else None, vuln.subid)
+
+        # FixMe: A little bit hacking here: Serializer doesn't have access to Toucan,
+        # so I have to set expiration time in vuln. Future solution: Incorporate serializer into Aucote instance
+
+        if vuln.expiration_time is None:
+            vuln.expiration_time = vuln.time + expiration_period
+
+        msg = Serializer.serialize_vulnerability(vuln)
+        self.aucote.kudu_queue.send_msg(msg)
