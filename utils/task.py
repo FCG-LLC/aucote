@@ -197,6 +197,6 @@ class Task(object):
     def filter_out_vulnerability(self, vuln):
         """
         Filter out vulnerabilities. Some task could be executed multiple times, so found vulnrabilities need validation
-        against already found vulnerabilities. Default behavior is to do nothing
+        against already found vulnerabilities. Default behavior is to do nothing.
         """
         return vuln

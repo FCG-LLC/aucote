@@ -10,7 +10,7 @@ from tornado.testing import gen_test, AsyncTestCase
 from fixtures.exploits import Exploit
 from structs import Port, Node, Scan, TransportProtocol, Service, PhysicalPort, ScanContext, Vulnerability
 from tools.cve_search.exceptions import CVESearchApiException
-from tools.cve_search.structs import CVESearchVulnerabilityResults
+from tools.cve_search.structs import CVESearchVulnerabilityResults, CVESearchVulnerabilityResult
 from tools.cve_search.tasks import CVESearchServiceTask
 from utils import Config
 
@@ -123,6 +123,18 @@ class CVESearchServiceTaskTest(AsyncTestCase):
         self.assertEqual(result[0].exploit, self.exploit)
         self.assertEqual(result[0].port, self.port)
         self.assertEqual(result[0].output, 'test_vuln')
+
+    def test_get_vulnerabilities_duplicated(self):
+        results = CVESearchVulnerabilityResults()
+
+        vulnerability_1 = CVESearchVulnerabilityResult(cwe='CVE-2016-435')
+        vulnerability_1.summary = 'test_vuln'
+        results.vulnerabilities = (vulnerability_1, )
+        self.aucote.storage.get_vulnerabilities.return_value = (vulnerability_1, )
+
+        result = self.task.get_vulnerabilities(results=results)
+
+        self.assertEqual(result, [])
 
     @gen_test
     async def test_call_with_port_without_cpe(self):
