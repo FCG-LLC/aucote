@@ -7,6 +7,8 @@ from tornado.concurrent import Future
 from tornado.testing import gen_test, AsyncTestCase
 
 from fixtures.exploits import Exploit
+from scans.scanner import Scanner
+from scans.tcp_scanner import TCPScanner
 from structs import Port, TransportProtocol, Node, BroadcastPort, Scan, Vulnerability, VulnerabilityChange, ScanContext, \
     Service
 
@@ -112,7 +114,8 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.port = Port(number=22, transport_protocol=TransportProtocol.TCP, node=self.node)
         self.port.scan = Scan()
         self.port_ipv6 = Port(number=22, node=self.node_ipv6, transport_protocol=TransportProtocol.TCP)
-        self.scanner = MagicMock(NAME='tools', scan=Scan())
+        self.scanner = Scanner(aucote=self.aucote)
+        self.scanner.NAME = 'tools'
         self.context = ScanContext(aucote=self.aucote, scanner=self.scanner)
 
         self.port_info = NmapPortInfoTask(context=self.context, port=self.port)
@@ -121,13 +124,13 @@ class NmapPortInfoTaskTest(AsyncTestCase):
             'portdetection': {
                 'tools': {
                     'scan_rate': 1337
-                },
+                }
             },
             'tools': {
                 'nmap': {
                     'scripts_dir': 'test'
                 }
-            }
+            },
         }
 
     @gen_test
@@ -176,6 +179,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         future = Future()
         future.set_result(ElementTree.fromstring(self.XML))
         self.port_info.command.async_call = MagicMock(return_value=future)
+
         await self.port_info()
 
         result = self.port_info._port
@@ -211,7 +215,7 @@ class NmapPortInfoTaskTest(AsyncTestCase):
         self.aucote.task_mapper.assign_tasks.assert_called_once_with(BroadcastPort())
 
     @patch('tools.nmap.tasks.port_info.Vulnerability')
-    @patch('tools.nmap.tasks.port_info.Serializer.serialize_vulnerability')
+    @patch('scans.scan_async_task.Serializer.serialize_vulnerability')
     @patch('tools.nmap.tasks.port_info.cfg', new_callable=Config)
     @gen_test
     async def test_add_port_scan_info(self, cfg, mock_serializer, vulnerability):

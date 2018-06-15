@@ -364,7 +364,7 @@ class ScanAsyncTask(object):
             return
 
         try:
-            self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self)
+            self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self.scan)
         except Exception:
             log.warning('Error during saving vulnerability (%s, %s) to the storage',
                         vuln.exploit.id if vuln.exploit is not None else None, vuln.subid)

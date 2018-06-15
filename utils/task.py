@@ -83,23 +83,8 @@ class Task(object):
     def store_vulnerability(self, vuln):
         """
         Saves vulnerability into database (kudu)
-
-        Args:
-            vuln (Vulnerability):
-
-        Returns:
-            None
-
         """
-        log.debug('Found vulnerability %s for %s', vuln.exploit.id if vuln.exploit is not None else None, vuln.port)
-        msg = Serializer.serialize_vulnerability(vuln)
-        self.kudu_queue.send_msg(msg)
-
-        try:
-            self.aucote.storage.save_vulnerabilities(vulnerabilities=[vuln], scan=self.scan)
-        except Exception:
-            log.warning('Error during saving vulnerability (%s, %s) to the storage',
-                        vuln.exploit.id if vuln.exploit is not None else None, vuln.subid)
+        self.context.scanner.store_vulnerability(vuln)
 
     def store_vulnerabilities(self, vulnerabilities):
         """
