@@ -1059,7 +1059,16 @@ class Storage(DbInterface):
         Returns dict which describes service details (name, version, application name, banner) for given vulnerability
 
         """
-        return_value = {}
+        return_value = {
+            'protocol': None,
+            'name': None,
+            'version': None,
+            'banner': None,
+            'cpe': None,
+            'os_name': None,
+            'os_version': None,
+            'os_cpe': None
+        }
 
         vulnerabilities = self.select(table='vulnerabilities', node_id=vuln.port.node.id, node_ip=vuln.port.node.ip,
                                       port=vuln.port.number, port_protocol=vuln.port.transport_protocol,

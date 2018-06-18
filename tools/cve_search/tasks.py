@@ -132,6 +132,28 @@ class CVESearchServiceTask(PortTask):
         return ujson.loads(response.body.decode())
 
     def get_vulnerabilities(self, results):
-        return [Vulnerability(exploit=self.exploit, port=self._port, output=result.summary, scan=self.scan,
-                              context=self.context, cve=result.cve, cvss=result.cvss, subid=subid)
-                for subid, result in enumerate(results)]
+        """
+        CVE-Search could be run multiple times during one scan by different scripts, so duplicated vulnerabilities
+        should be filtered out.
+
+        Filtering is executed against vulnerabilities already stored in storage
+        """
+        current_scan_vulns = self.storage.get_vulnerabilities(port=self._port, scan=self.scan, exploit=self.exploit)
+
+        next_subid = max([-1, *[vuln.subid for vuln in current_scan_vulns]]) + 1
+        cves = [vuln.cve for vuln in current_scan_vulns]
+
+        return_value = []
+
+        for result in results:
+            # Omit vulnerability with the same CVE found in current scan
+            if result.cwe in cves:
+                log.debug('%s:(%s) vulnerability already discovered for %s', self.exploit, result.cve, self._port)
+                continue
+
+            return_value.append(Vulnerability(exploit=self.exploit, port=self._port, output=result.summary,
+                                              scan=self.scan, context=self.context, cve=result.cve, cvss=result.cvss,
+                                              subid=next_subid))
+            next_subid += 1
+
+        return return_value

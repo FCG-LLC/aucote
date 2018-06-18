@@ -267,7 +267,7 @@ class AsyncTaskManager(object):
         return_value = {}
 
         for task in tasks:
-            return_value.setdefault(task.context.scan.NAME, []).append(task)
+            return_value.setdefault(task.context.scanner.NAME, []).append(task)
 
         return return_value
 
