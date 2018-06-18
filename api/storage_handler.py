@@ -73,7 +73,7 @@ class StorageHandler(Handler):
         return self._format_url(self.LIST_URL.format(name=self.ENDPOINT_NAME, limit=limit, page=page))
 
     def _format_url(self, url, **kwargs):
-        return '{0}://{1}{2}'.format(self.request.protocol, self.request.host, url).format(**kwargs)
+        return '{0}://{1}{2}{3}'.format(self.request.protocol, self.request.host, self.path, url).format(**kwargs)
 
     def _url_scanner(self, scanner_name):
         return self._format_url(self.SCANNER_URL, scanner_name=scanner_name)

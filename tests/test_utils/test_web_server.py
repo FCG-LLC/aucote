@@ -11,7 +11,8 @@ class WebServerThreadTest(AsyncTestCase):
         self.port = MagicMock()
         self.host = MagicMock()
         self.aucote = MagicMock()
-        self.web_server = WebServer(self.aucote, self.host, self.port)
+        self.path = ''
+        self.web_server = WebServer(self.aucote, self.host, self.port, self.path)
 
     @patch('utils.web_server.bind_sockets')
     @patch('utils.web_server.HTTPServer')

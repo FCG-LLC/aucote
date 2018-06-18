@@ -81,7 +81,7 @@ class APITest(AsyncHTTPTestCase):
         self.scanner.scan.start = 1290
         self.scanner.nodes = [Node(node_id=1, ip=ipaddress.ip_address('127.0.0.1'))]
         self.aucote.scanners = [self.scanner, ToolsScanner(name='tools', aucote=self.aucote)]
-        self.app = Application((url, handler, {'aucote': self.aucote}) for url, handler in [
+        endpoints = [(url, handler, {'aucote': self.aucote}) for url, handler in [
             (r"/api/v1/kill", KillHandler),
             (r"/api/v1/scanners", ScannersHandler),
             (r"/api/v1/scanners/([\w_]+)", ScannersHandler),
@@ -95,7 +95,9 @@ class APITest(AsyncHTTPTestCase):
             (r"/api/v1/security_scans", SecurityScansHandler),
             (r"/api/v1/security_scans/([\d]+)", SecurityScansHandler),
             (r"/api/v1/vulnerabilities", VulnerabilitiesHandler),
-            (r"/api/v1/vulnerabilities/([\d]+)", VulnerabilitiesHandler),
-        ])
+        ]]
+        endpoints.append((r"/api/v1/vulnerabilities/([\d]+)", VulnerabilitiesHandler, {'aucote': self.aucote,
+                                                                                       'path': '/aucote/'}))
+        self.app = Application(endpoints)
 
         return self.app

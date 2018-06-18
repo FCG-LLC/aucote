@@ -82,7 +82,7 @@ class VulnerabilitiesHandlerTest(APITest):
                      'scanner': 'tcp',
                      'start': 123,
                      'start_human': '1970-01-01T00:02:03+00:00',
-                     'url': self.get_url('/api/v1/scans/1')},
+                     'url': self.get_url('/aucote/api/v1/scans/1')},
             'scans': [{'end': 447,
                        'end_human': '1970-01-01T00:07:27+00:00',
                        'id': 2,
@@ -90,7 +90,7 @@ class VulnerabilitiesHandlerTest(APITest):
                        'scanner': 'udp',
                        'start': 230,
                        'start_human': '1970-01-01T00:03:50+00:00',
-                       'url': self.get_url('/api/v1/scans/2')},
+                       'url': self.get_url('/aucote/api/v1/scans/2')},
                       {'end': 446,
                        'end_human': '1970-01-01T00:07:26+00:00',
                        'id': 1,
@@ -98,12 +98,12 @@ class VulnerabilitiesHandlerTest(APITest):
                        'scanner': 'tcp',
                        'start': 123,
                        'start_human': '1970-01-01T00:02:03+00:00',
-                       'url': self.get_url('/api/v1/scans/1')}],
+                       'url': self.get_url('/aucote/api/v1/scans/1')}],
             'time': 134,
             'time_human': '1970-01-01T00:02:14+00:00',
             'expired': None,
             'expired_human': None,
-            'url': self.get_url('/api/v1/vulnerabilities/1')}
+            'url': self.get_url('/aucote/api/v1/vulnerabilities/1')}
 
         response = self.fetch('/api/v1/vulnerabilities/1', method='GET')
         self.assertEqual(response.code, 200)
