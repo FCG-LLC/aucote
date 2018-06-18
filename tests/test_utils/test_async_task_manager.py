@@ -172,6 +172,7 @@ class TestAsyncTaskManager(AsyncTestCase):
                 return 0
 
         self.task_manager._tasks = queue(task)
+        self.task_manager._tasks._queue = [task]  # Very awful mocking async queue
 
         yield self.task_manager.process_tasks(0)
         task.assert_called_once_with()

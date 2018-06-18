@@ -216,7 +216,10 @@ class AsyncTaskManager(object):
                 finally:
                     log.debug("Worker %s: %s finished", number, item)
                     self._tasks.task_done()
-                    log.debug("Tasks left in queue: %s", self.unfinished_tasks)
+                    tasks_per_scan = ('{}: {}'.format(scanner, len(tasks))
+                                      for scanner, tasks in self.tasks_by_scan.items())
+                    log.debug("Tasks left in queue: %s (%s)", self.unfinished_tasks,
+                              ', '.join(tasks_per_scan))
                     self._task_workers[number] = None
             except QueueEmpty:
                 await gen.sleep(0.5)
@@ -253,6 +256,20 @@ class AsyncTaskManager(object):
 
         """
         return self._tasks._unfinished_tasks
+
+    @property
+    def tasks_by_scan(self):
+        """
+        Returns queued tasks grouped by scan
+        """
+        tasks = self._tasks._queue
+
+        return_value = {}
+
+        for task in tasks:
+            return_value.setdefault(task.context.scan.NAME, []).append(task)
+
+        return return_value
 
     @property
     def cron_tasks(self):
