@@ -6,7 +6,7 @@ import logging as log
 
 class TFTPThread(Thread):
     DEFAULT_TIMEOUT = 120  # Time to wait on file in seconds
-    DATA_DIR = 'tmp/tftp/'
+    DATA_DIR = 'tmp/tftp/aucote'
 
     def __init__(self, host, port, timeout, min_port, max_port, *args, **kwargs):
         super(TFTPThread, self).__init__(*args, **kwargs)
@@ -28,23 +28,18 @@ class TFTPThread(Thread):
             self._tftp.listen()
         except Exception as exception:  # pylint: disable=broad-exception
             log.error("Cannot start TFTP server: %s", exception)
-            self._error = True
+            self._tftp.monitor_filesystem()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._tftp.stop()
         self.join()
 
-    async def async_get_file(self, address, callback, timeout=DEFAULT_TIMEOUT):
-        if self._error:
-            raise TFTPError('Cancel task due to tftp fatal error')
-
-        event = self._tftp.register_address(address, timeout=timeout)
+    async def async_get_file(self, address, callback, filename, timeout=DEFAULT_TIMEOUT):
+        event = self._tftp.register_address(address, filename=filename, timeout=timeout)
 
         callback()
 
         while not event.is_set():
-            if self._error:
-                raise TFTPError('Cancel task due to tftp fatal error')
             await sleep(1)
 
         return self._tftp.get_file(address)

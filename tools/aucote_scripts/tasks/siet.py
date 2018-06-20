@@ -9,9 +9,14 @@ from utils.tftp import TFTPError
 
 
 class SietTask(PortTask):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.filename = '{}_{}.conf'.format(time.time(), str(self._port.node.ip))
+
     async def execute(self, *args, **kwargs):
         try:
-            result = await self.context.aucote.tftp_server.async_get_file(str(self._port.node.ip), self.callback)
+            result = await self.context.aucote.tftp_server.async_get_file(str(self._port.node.ip), self.callback,
+                                                                          self.filename)
 
             try:
                 with open(result, 'r') as f:
@@ -46,7 +51,7 @@ class SietTask(PortTask):
         my_ip = os.getenv('HOST')
 
         c1 = b'copy system:running-config flash:/config.text'
-        c2 = 'copy flash:/config.text tftp://{0}/{1}.conf'.format(my_ip, ip).encode('utf-8')
+        c2 = 'copy flash:/config.text tftp://{0}/aucote/{1}'.format(my_ip, self.filename).encode('utf-8')
         c3 = b''
 
         sTcp = b'\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x08\x00\x00\x04\x08\x00\x01\x00\x14\x00\x00\x00\x01\x00' \
