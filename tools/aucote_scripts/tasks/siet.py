@@ -14,6 +14,8 @@ class SietTask(PortTask):
         self.filename = '{}_{}.conf'.format(time.time(), str(self._port.node.ip))
 
     async def execute(self, *args, **kwargs):
+        data = None
+
         try:
             result = await self.context.aucote.tftp_server.async_get_file(str(self._port.node.ip), self.callback,
                                                                           self.filename)
@@ -27,7 +29,10 @@ class SietTask(PortTask):
                     data.extend([line for line in lines if line.startswith('hostname')])
 
             finally:
-                os.unlink(result)
+                try:
+                    os.unlink(result)
+                except Exception:  # pylint: disable=broad-exception
+                    log.warning('Cannot remove file %s', self.filename)
 
             if data:
                 output = "".join(data)
