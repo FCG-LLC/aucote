@@ -9,8 +9,9 @@ import socket
 import os
 import select
 import time
-from threading import Event
+from threading import Event, Lock
 
+from os.path import isfile
 
 log = logging.getLogger('aucote.tftp')
 
@@ -87,8 +88,9 @@ class TFTP:
         self._receivers = {}
         self._files = {}
         self._stop = False
+        self._lock = Lock()
 
-    def register_address(self, address, timeout=120):
+    def register_address(self, address, filename, timeout=120):
         """
         Ask server to listen for file from given address. Raises Exception if any script is already waiting on file.
 
@@ -97,16 +99,20 @@ class TFTP:
         """
         event = Event()
 
-        if address in self._files:
-            raise TFTPAlreadyExists(address)
-        self._files[address] = {
-            'event': event,
-            'time': int(time.time()) + timeout,
-            'exception': None,
-            'size': 0
-        }
+        with self._lock:
+            if address in self._files:
+                raise TFTPAlreadyExists(address)
 
-        log.debug('Add %s to the TFTP server', address)
+            self._files[address] = {
+                'event': event,
+                'time': int(time.time()) + timeout,
+                'exception': None,
+                'size': 0,
+                'filename': filename,
+                'path': '{}/{}'.format(self._dir, filename)
+            }
+
+            log.debug('Add %s to the TFTP server', address)
 
         return event
 
@@ -116,21 +122,29 @@ class TFTP:
         the TimeoutError is raise
 
         """
-        if address not in self._files:
-            raise TFTPNotFound(address)
+        with self._lock:
+            if address not in self._files:
+                raise TFTPNotFound(address)
+
+        self._lock.acquire()
 
         event = self._files[address]['event']
 
         while not event.is_set():
+            self._lock.release()
             time.sleep(1)
-        return_value = self._files[address].get('path')
+            self._lock.acquire()
 
-        try:
-            if self._files[address]['exception'] is not None:
-                raise self._files[address]['exception']
-            return return_value
-        finally:
-            del self._files[address]
+        return_value = self._files[address].get('path')
+        self._lock.release()
+
+        with self._lock:
+            try:
+                if self._files[address]['exception'] is not None:
+                    raise self._files[address]['exception']
+                return return_value
+            finally:
+                del self._files[address]
 
     @property
     def next_receive_port(self):
@@ -188,10 +202,11 @@ class TFTP:
             log.warning("Error while obtaining data by TFTP server")
             return
 
-        if address not in self._files:
-            # Unexpected packet, do nothing
-            log.warning("TFTP server got packet from unexpected address: %s", address)
-            return
+        with self._lock:
+            if address not in self._files:
+                # Unexpected packet, do nothing
+                log.warning("TFTP server got packet from unexpected address: %s", address)
+                return
 
         log.debug('Connection from %s:%s', address, port)
 
@@ -211,9 +226,8 @@ class TFTP:
 
             receiver.sendto(response, (address, port))
             self._epoll.register(receiver.fileno())
-            self._files[address]['filename'] = filename
-            self._files[address]['path'] = 'tmp/{}_{}'.format(time.time(), filename)
-            self._files[address]['receiver'] = receiver
+            with self._lock:
+                self._files[address]['receiver'] = receiver
             self._receivers[receiver.fileno()] = receiver
         else:
             # Ignore request
@@ -225,18 +239,20 @@ class TFTP:
         """
         receiver = self._receivers[fd]
         buffer, (remote_address, remote_port) = receiver.recvfrom(self.MAX_BLKSIZE)
-        path = self._files[remote_address]['path']
 
-        log.debug("Receiving data from %s", remote_address)
+        with self._lock:
+            path = self._files[remote_address]['path']
 
-        self._files[remote_address]['size'] += len(buffer[self.PREFIX_LEN:])
+            log.debug("Receiving data from %s", remote_address)
 
-        if self._files[remote_address]['size'] > self.MAX_FILE_SIZE:
-            # Too big file from client, close connection
-            self._files[remote_address]['exception'] = TFTPMaxSizeExceeded(remote_address)
-            self._close_receiver(fd, remote_address)
-            os.remove(path)
-            return
+            self._files[remote_address]['size'] += len(buffer[self.PREFIX_LEN:])
+
+            if self._files[remote_address]['size'] > self.MAX_FILE_SIZE:
+                # Too big file from client, close connection
+                self._files[remote_address]['exception'] = TFTPMaxSizeExceeded(remote_address)
+                self._close_receiver(fd, remote_address)
+                os.remove(path)
+                return
 
         with open(path, 'ba') as f:
             f.write(buffer[self.PREFIX_LEN:])
@@ -257,7 +273,8 @@ class TFTP:
         self._epoll.unregister(fd)
         self._receivers[fd].close()
         del self._receivers[fd]
-        self._files[remote_address]['event'].set()
+        with self._lock:
+            self._files[remote_address]['event'].set()
 
     def check_timeouts(self):
         """
@@ -265,24 +282,25 @@ class TFTP:
         """
         current_time = time.time()
 
-        for address, details in self._files.items():
-            if details['event'].is_set():
-                continue
+        with self._lock:
+            for address, details in self._files.items():
+                if details['event'].is_set():
+                    continue
 
-            if details['time'] > current_time:
-                continue
+                if details['time'] > current_time:
+                    continue
 
-            if 'receiver' in details:
-                del self._receivers[details['receiver'].fileno()]
-                details['receiver'].close()
+                if 'receiver' in details:
+                    del self._receivers[details['receiver'].fileno()]
+                    details['receiver'].close()
 
-            try:
-                os.remove(details['path'])
-            except:
-                pass
+                try:
+                    os.remove(details['path'])
+                except:
+                    pass
 
-            details['exception'] = TFTPTimeoutError(address)
-            details['event'].set()
+                details['exception'] = TFTPTimeoutError(address)
+                details['event'].set()
 
     def stop(self):
         """
@@ -305,3 +323,19 @@ class TFTP:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((host, port))
         return sock
+
+    def monitor_filesystem(self):
+        """
+        Monitor for filesystem in case when external TFTP server is used
+        """
+        while not self._stop:
+            with self._lock:
+                for address, details in self._files.items():
+                    try:
+                        if isfile(details['path']):
+                            details['event'].set()
+                    finally:
+                        pass
+
+            self.check_timeouts()
+            time.sleep(1)

@@ -19,7 +19,9 @@ RUN setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap
 RUN setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/masscan
 
 RUN groupadd -g 10014 aucote
+RUN groupadd -g 10039 tftp
 RUN adduser --no-create-home --system --shell /bin/false --gecos 'aucote dedicated user' --uid 10014 --gid 10014 --disabled-password aucote
+RUN usermod -aG tftp aucote
 
 # Capabilities to bind to low ports by other than root users
 RUN setcap 'cap_net_bind_service=+ep' /opt/aucote/venv/bin/python

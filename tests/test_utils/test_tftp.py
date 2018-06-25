@@ -75,6 +75,8 @@ class TFTPTest(TestCase):
         self.tftp._files = {
             '127.0.0.1': {
                 'event': event,
+                'filename': 'test_filename',
+                'path': 'tmp/114_test_filename',
                 'time': 0,
                 'exception': None,
                 'size': 0
@@ -202,10 +204,11 @@ class TFTPTest(TestCase):
 
     @patch('utils.tftp.time.time', MagicMock(return_value=114))
     def test_register_address(self):
-        self.tftp.register_address('127.0.0.15', 117)
+        self.tftp.register_address('127.0.0.15', 'test_name', 117)
 
         self.assertIsInstance(self.tftp._files['127.0.0.15']['event'], Event)
         self.assertEqual(self.tftp._files['127.0.0.15']['time'], 231)
+        self.assertEqual(self.tftp._files['127.0.0.15']['filename'], 'test_name')
         self.assertEqual(self.tftp._files['127.0.0.15']['size'], 0)
         self.assertIsNone(self.tftp._files['127.0.0.15']['exception'])
 
