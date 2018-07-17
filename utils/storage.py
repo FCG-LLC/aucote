@@ -782,7 +782,7 @@ class Storage(DbInterface):
 
         """
         self.execute(self._save_scan(scan=scan))
-        scan.rowid = self.get_scan_id(scan)
+        scan.rowid = self.get_last_rowid()
         return scan
 
     def update_scan(self, scan: 'Scan'):

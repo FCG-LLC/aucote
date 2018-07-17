@@ -205,7 +205,7 @@ class AucoteTest(AsyncTestCase):
     @gen_test
     async def test_scan(self, cfg, tcp_scanner, udp_scanner, tools_scanner, mock_storage_task):
         cfg._cfg = self.cfg._cfg
-        cfg._consumer = MagicMock()
+        cfg.register_action = MagicMock()
         self.aucote._thread_pool = MagicMock()
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
@@ -228,7 +228,7 @@ class AucoteTest(AsyncTestCase):
 
         tcp_scanner.assert_called_once_with(aucote=self.aucote, as_service=False, host='localhost', port=1239)
         udp_scanner.assert_called_once_with(aucote=self.aucote, as_service=False)
-        cfg._consumer.register_action.assert_has_calls((
+        cfg.register_action.assert_has_calls((
             call(self.aucote.SCAN_CONTROL_START, self.aucote.start_scan),
             call(self.aucote.SCAN_CONTROL_STOP, self.aucote.stop_scan)
         ))
