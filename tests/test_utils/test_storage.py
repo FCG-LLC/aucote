@@ -620,12 +620,6 @@ class StorageTest(TestCase):
 
         self.assertCountEqual(result, expected)
 
-    def test_get_last_rowid(self):
-        self.storage.connect()
-        self.storage.execute(("CREATE TABLE test(test int)",))
-        self.storage.execute(("INSERT INTO test(test) VALUES (5), (6), (7)",))
-        self.assertEqual(self.storage.get_last_rowid(), 3)
-
     def test_scans(self):
         self.prepare_tables()
 
