@@ -276,19 +276,6 @@ class StorageTest(TestCase):
         self.storage._create_tables.assert_called_once_with()
 
     @patch('utils.storage.time.time', MagicMock(return_value=134))
-    def test_save_node(self):
-        self.storage.connect()
-        self.storage.init_schema()
-
-        expected = [(56, 1, '127.0.0.1', 134)]
-
-        self.storage.save_node(node=self.node_1, scan=self.scan_1)
-
-        result = self.storage.execute(self.SEL_NOD_SCAN)
-
-        self.assertEqual(result, expected)
-
-    @patch('utils.storage.time.time', MagicMock(return_value=134))
     def test_save_nodes(self):
         self.storage.connect()
         self.storage.init_schema()
@@ -498,8 +485,11 @@ class StorageTest(TestCase):
         self.storage.conn = MagicMock()
 
         self.storage.execute(queries)
-        self.storage.cursor.execute.assert_has_calls((call("part_1", "arg_1", "arg_2"), call("part_2", "arg_3")))
-        self.storage.conn.commit.assert_called_once_with()
+        self.storage.cursor.execute.assert_has_calls(
+            (call("part_1", "arg_1", "arg_2"),
+            (call("part_1", "arg_1", "arg_2").fetchall()),
+             call("part_2", "arg_3"),
+             call("part_2", "arg_3").fetchall()))
 
     def test_transport_protocol_none(self):
         result = self.storage._transport_protocol(None)

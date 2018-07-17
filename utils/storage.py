@@ -531,23 +531,13 @@ class Storage(DbInterface):
             try:
                 if isinstance(query, list):
                     self.log.debug("[%s] executing %i queries", log_id, len(query))
-                    for row in query:
-                        self.cursor.execute(*row)
+                    return [self.cursor.execute(*row).fetchall() for row in query]
                 else:
                     self.log.debug("[%s] executing query: %s", log_id, query)
                     return self.cursor.execute(*query).fetchall()
             except sqlite3.Error as exception:
                 self.log.exception("[%s] exception occured:", log_id)
                 raise exception
-
-            self.conn.commit()
-
-    def save_node(self, node: 'Node', scan: 'Scan'):
-        """
-        Save node to database
-
-        """
-        return self.execute(self._save_node(node=node, scan=scan))
 
     def save_nodes(self, nodes: list, scan: 'Scan'):
         """
