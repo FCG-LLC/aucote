@@ -316,3 +316,11 @@ class Config:
         io_loop = get_event_loop()
         if self.rabbit:
             ensure_future(self.rabbit.add_consumer(consumer), loop=io_loop)
+
+    def register_action(self, regex, action):
+        """
+        Register action for configuration regex
+
+        """
+        if self.rabbit:
+            self._consumer.register_action(regex, action)

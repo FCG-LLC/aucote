@@ -240,8 +240,8 @@ class Storage(DbInterface):
         self.execute(self._create_tables())
         self.execute(self._clear_security_scans())
 
-    def get_last_rowid(self):
-        return self.execute((self.GET_LAST_ROWID,))[0][0] or None
+    def _get_last_rowid(self):
+        return (self.GET_LAST_ROWID, )
 
     def connect(self):
         if not self.is_correct_thread:
@@ -531,23 +531,13 @@ class Storage(DbInterface):
             try:
                 if isinstance(query, list):
                     self.log.debug("[%s] executing %i queries", log_id, len(query))
-                    for row in query:
-                        self.cursor.execute(*row)
+                    return [self.cursor.execute(*row).fetchall() for row in query]
                 else:
                     self.log.debug("[%s] executing query: %s", log_id, query)
                     return self.cursor.execute(*query).fetchall()
             except sqlite3.Error as exception:
                 self.log.exception("[%s] exception occured:", log_id)
                 raise exception
-
-            self.conn.commit()
-
-    def save_node(self, node: 'Node', scan: 'Scan'):
-        """
-        Save node to database
-
-        """
-        return self.execute(self._save_node(node=node, scan=scan))
 
     def save_nodes(self, nodes: list, scan: 'Scan'):
         """
@@ -781,8 +771,8 @@ class Storage(DbInterface):
         Save scan into storage
 
         """
-        self.execute(self._save_scan(scan=scan))
-        scan.rowid = self.get_last_rowid()
+        result = self.execute([self._save_scan(scan=scan), self._get_last_rowid()])
+        scan.rowid = result[1][0][0]
         return scan
 
     def update_scan(self, scan: 'Scan'):
@@ -936,8 +926,11 @@ class Storage(DbInterface):
         Save NodeScan to the storage. Returns NodeScan with updated ROWID
 
         """
-        self.execute(self._save_node(node_scan.node, node_scan.scan, timestamp=node_scan.timestamp))
-        node_scan.rowid = self.get_last_rowid()
+        result = self.execute([
+            self._save_node(node_scan.node, node_scan.scan, timestamp=node_scan.timestamp),
+            self._get_last_rowid()
+        ])
+        node_scan.rowid = result[1][0][0]
         return node_scan
 
     def save_port_scan(self, port_scan: 'PortScan'):
@@ -952,12 +945,15 @@ class Storage(DbInterface):
         Save SecurityScan to the storage. Returns SecurityScan with updated rowid
 
         """
-        self.execute((self.SAVE_SECURITY_SCAN, (sec_scan.scan.rowid, sec_scan.exploit.id, sec_scan.exploit.app,
-                                                sec_scan.exploit.name, sec_scan.node.id, str(sec_scan.node.ip),
-                                                self._protocol_to_iana(sec_scan.port.transport_protocol),
-                                                sec_scan.port.number, sec_scan.scan_start, sec_scan.scan_end)))
+        result = self.execute([
+            (self.SAVE_SECURITY_SCAN, (sec_scan.scan.rowid, sec_scan.exploit.id, sec_scan.exploit.app,
+                                       sec_scan.exploit.name, sec_scan.node.id, str(sec_scan.node.ip),
+                                       self._protocol_to_iana(sec_scan.port.transport_protocol),
+                                       sec_scan.port.number, sec_scan.scan_start, sec_scan.scan_end)),
+            self._get_last_rowid()
+        ])
 
-        sec_scan.rowid = self.get_last_rowid()
+        sec_scan.rowid = result[1][0][0]
         return sec_scan
 
     def scans_by_security_scan(self, sec_scan: 'SecurityScan') -> list:

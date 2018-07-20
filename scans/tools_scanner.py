@@ -24,8 +24,8 @@ class ToolsScanner(ScanAsyncTask):
     NAME = None
 
     def __init__(self, name, *args, **kwargs):
+        self.NAME = name  # Set scanner name before initializing parent constructor
         super(ToolsScanner, self).__init__(*args, **kwargs)
-        self.NAME = name
 
     async def run(self):
         """
