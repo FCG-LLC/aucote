@@ -29,4 +29,7 @@ RUN setcap 'cap_net_bind_service=+ep' /opt/aucote/venv/bin/python
 EXPOSE 1235
 
 COPY files/docker-entrypoint.sh /entrypoint.sh
+COPY files/version.sh /version.sh
+RUN ln -s /version.sh /usr/bin/version
+
 CMD ["/entrypoint.sh"]
