@@ -119,11 +119,11 @@ class ScanAsyncTask(object):
 
         return_value = []
 
-        if cfg['portdetection.{name}.scan_devices.snmp']:
+        if cfg['portdetection.{name}.scan_devices.snmp'.format(name=self.NAME)]:
             return_value.extend(node for node in list(nodes['snmp'])
                                 if node.ip.exploded in include_networks and node.ip.exploded not in exclude_networks)
 
-        if cfg['portdetection.{name}.scan_devices.host']:
+        if cfg['portdetection.{name}.scan_devices.host'.format(name=self.NAME)]:
             return_value.extend(node for node in list(nodes['hosts'])
                                 if node.ip.exploded in include_networks and node.ip.exploded not in exclude_networks)
 
