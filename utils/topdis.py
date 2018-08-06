@@ -26,8 +26,14 @@ class Topdis(object):
     def __init__(self, hostname, port, api):
         self.api = 'http://{0}:{1}{2}'.format(hostname, port, api)
 
+    async def get_snmp_nodes(self) -> set:
+        return await self._get_nodes('nodes?ip=0&snmp=1')
+
+    async def get_all_nodes(self) -> set:
+        return await self._get_nodes('nodes?ip=1&snmp=1')
+
     @retry_if_fail(min_retry_time, max_retry_time, max_retry_count, HTTPError)
-    async def get_nodes(self) -> set:
+    async def _get_nodes(self, url: str) -> set:
         """
         Get nodes from Topdis
 
@@ -35,7 +41,7 @@ class Topdis(object):
             set of unique nodes (Node object)
 
         """
-        url = '{0}/nodes?ip=t'.format(self.api)
+        url = '{0}/{1}'.format(self.api, url)
         resource = await HTTPClient.instance().get(url)
 
         nodes_cfg = ujson.loads(resource.body)

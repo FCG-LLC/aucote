@@ -99,7 +99,7 @@ class ScanAsyncTask(object):
             list
 
         """
-        nodes = await self.topdis.get_nodes()
+        nodes = await self.topdis.get_all_nodes()
 
         if filter_out_storage:
             storage_nodes = self.storage.get_nodes(pasttime=self._scan_interval(), timestamp=timestamp, scan=self.scan)

@@ -75,7 +75,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         nodes = {node_1, node_2, node_3}
         future = Future()
         future.set_result(nodes)
-        self.aucote.topdis.get_nodes.return_value = future
+        self.aucote.topdis.get_all_nodes.return_value = future
 
         self.thread.storage.get_nodes = MagicMock(return_value=[node_2])
 
