@@ -117,10 +117,15 @@ class ScanAsyncTask(object):
         include_networks = self._get_networks_list()
         exclude_networks = self._get_excluded_networks_list()
 
-        return_value = [node for node in list(nodes['snmp']) if node.ip.exploded in include_networks
-                        and node.ip.exploded not in exclude_networks]
-        return_value.extend(node for node in list(nodes['hosts']) if node.ip.exploded in include_networks
-                            and node.ip.exploded not in exclude_networks)
+        return_value = []
+
+        if cfg['portdetection.{name}.scan_devices.snmp']:
+            return_value.extend(node for node in list(nodes['snmp'])
+                                if node.ip.exploded in include_networks and node.ip.exploded not in exclude_networks)
+
+        if cfg['portdetection.{name}.scan_devices.host']:
+            return_value.extend(node for node in list(nodes['hosts'])
+                                if node.ip.exploded in include_networks and node.ip.exploded not in exclude_networks)
 
         return return_value
 
