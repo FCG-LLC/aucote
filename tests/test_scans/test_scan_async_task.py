@@ -26,6 +26,10 @@ class ScanAsyncTaskTest(AsyncTestCase):
                     'live_scan': {
                         'min_time_gap': 0,
                     },
+                    'scan_devices': {
+                        'snmp': True,
+                        'host': True
+                    }
                 },
                 '_internal': {
                     'tools_cron': '* * * * *'
