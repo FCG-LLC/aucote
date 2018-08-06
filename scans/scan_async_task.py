@@ -99,17 +99,30 @@ class ScanAsyncTask(object):
             list
 
         """
-        nodes = await self.topdis.get_all_nodes()
+        nodes = {
+            'snmp': await self.topdis.get_snmp_nodes()
+        }
+        nodes['hosts'] = await self.topdis.get_all_nodes() - nodes['snmp']
 
         if filter_out_storage:
-            storage_nodes = self.storage.get_nodes(pasttime=self._scan_interval(), timestamp=timestamp, scan=self.scan)
-            nodes = nodes - set(storage_nodes)
+            storage_nodes = set(self.storage.get_nodes(
+                pasttime=self._scan_interval(),
+                timestamp=timestamp,
+                scan=self.scan
+            ))
+
+            nodes['hosts'] = nodes['hosts'] - storage_nodes
+            nodes['snmp'] = nodes['snmp'] - storage_nodes
 
         include_networks = self._get_networks_list()
         exclude_networks = self._get_excluded_networks_list()
 
-        return [node for node in list(nodes) if node.ip.exploded in include_networks
-                and node.ip.exploded not in exclude_networks]
+        return_value = [node for node in list(nodes['snmp']) if node.ip.exploded in include_networks
+                        and node.ip.exploded not in exclude_networks]
+        return_value.extend(node for node in list(nodes['hosts']) if node.ip.exploded in include_networks
+                            and node.ip.exploded not in exclude_networks)
+
+        return return_value
 
     def _get_networks_list(self):
         """

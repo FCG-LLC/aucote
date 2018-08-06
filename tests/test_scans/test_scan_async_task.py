@@ -66,23 +66,26 @@ class ScanAsyncTaskTest(AsyncTestCase):
     @gen_test
     async def test_get_nodes_for_scanning(self, cfg):
         cfg._cfg = self.cfg
-        cfg['portdetection.test_name.networks.include'] = ['127.0.0.2/31']
+        cfg['portdetection.test_name.networks.include'] = ['127.0.0.2/31', '127.0.0.4/32']
 
         node_1 = Node(ip=ipaddress.ip_address('127.0.0.1'), node_id=1)
         node_2 = Node(ip=ipaddress.ip_address('127.0.0.2'), node_id=2)
         node_3 = Node(ip=ipaddress.ip_address('127.0.0.3'), node_id=3)
+        node_4 = Node(ip=ipaddress.ip_address('127.0.0.4'), node_id=4)
 
         nodes = {node_1, node_2, node_3}
         future = Future()
         future.set_result(nodes)
         self.aucote.topdis.get_all_nodes.return_value = future
+        self.aucote.topdis.get_snmp_nodes.return_value = Future()
+        self.aucote.topdis.get_snmp_nodes.return_value.set_result({node_4})
 
         self.thread.storage.get_nodes = MagicMock(return_value=[node_2])
 
         scan = Scan()
 
         result = await self.thread._get_nodes_for_scanning(scan)
-        expected = [node_3]
+        expected = [node_4, node_3]
 
         self.assertListEqual(result, expected)
 
