@@ -208,7 +208,7 @@ class TopdisTest(AsyncTestCase):
         self.req_future.set_result(MagicMock(body=self.NODE_WITH_OS_FINGERPRINT))
         http_client.instance().get.return_value = self.req_future
 
-        nodes = await self.topdis.get_nodes()
+        nodes = await self.topdis.get_all_nodes()
         self.assertEqual(len(nodes), 1)
         result = list(nodes)[0]
 
@@ -221,7 +221,7 @@ class TopdisTest(AsyncTestCase):
         self.req_future.set_result(self.http_client_response)
         http_client.instance().get.return_value = self.req_future
 
-        nodes = await self.topdis.get_nodes()
+        nodes = await self.topdis.get_all_nodes()
 
         node = None
         for obj in nodes:
@@ -244,7 +244,7 @@ class TopdisTest(AsyncTestCase):
         http_client.instance().get.return_value = self.req_future
         mock_cpe.return_value = 'cpe:2.3:a:b:c:d:*:*:*:*:*:*:*'
 
-        nodes = await self.topdis.get_nodes()
+        nodes = await self.topdis.get_all_nodes()
         self.assertEqual(len(nodes), 1)
         result = list(nodes)[0]
 
@@ -261,7 +261,7 @@ class TopdisTest(AsyncTestCase):
         http_client.instance().get.return_value = self.req_future
         mock_cpe.side_effect = KeyError()
 
-        nodes = await self.topdis.get_nodes()
+        nodes = await self.topdis.get_all_nodes()
         self.assertEqual(len(nodes), 1)
         result = list(nodes)[0]
 
@@ -275,7 +275,7 @@ class TopdisTest(AsyncTestCase):
         self.req_future.set_result(self.http_client_response)
         http_client.instance().get.return_value = self.req_future
 
-        nodes = await self.topdis.get_nodes()
+        nodes = await self.topdis.get_all_nodes()
         expected = 1470915752.843
 
         node = list(nodes)[0]
