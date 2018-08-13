@@ -1,4 +1,4 @@
-FROM docker-registry.cs.int/prod/cs-base
+FROM docker-registry.cs.int/int/cs-base:perk
 LABEL maintainer "devops@collective-sense.com"
 
 ARG destEnv
