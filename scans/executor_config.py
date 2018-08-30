@@ -5,6 +5,7 @@ from tools.acuote_ad.tool import AucoteActiveDirectory
 from tools.aucote_http_headers.structs import HeaderDefinition
 from tools.aucote_http_headers.tool import AucoteHttpHeadersTool
 from tools.aucote_scripts.tool import AucoteScriptsTool
+from tools.ciscoapis.tool import CiscoApisTool
 from tools.cve_search.tool import CVESearchTool
 from tools.hydra.tool import HydraTool
 from tools.nmap.parsers import NmapBrutParser, NmapInfoParser, NmapHTTPWebsphereConsoleParser
@@ -186,7 +187,10 @@ EXECUTOR_CONFIG = {
         },
         'aucote-scripts': {
             'class': AucoteScriptsTool
+        },
+        'ciscoapis': {
+            'class': CiscoApisTool
         }
     },
-    'node_scan': ['cve-search', 'aucote-active-directory']
+    'node_scan': ['cve-search', 'aucote-active-directory', 'ciscoapis']
 }
