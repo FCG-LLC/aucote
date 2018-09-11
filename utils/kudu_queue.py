@@ -14,7 +14,8 @@ class KuduMsg:
     Class which represents message for Kudu
     """
     MAGIC_WORD = 0xEDB7
-    PROTOCOL_VERSION = 0x1
+    PROTOCOL_VERSION = 0x2
+    STATIC_DATA = 0x1
 
     _ENDIANNESS = 'little'
 
@@ -128,8 +129,9 @@ class KuduMsg:
         Returns kudu data
         """
 
-        return self._convert_short(self.MAGIC_WORD) + self._convert_short(self.PROTOCOL_VERSION) + \
-               self._convert_int(len(self._data)) + self._convert_short(self._type) + \
+        return self._convert_short(self.MAGIC_WORD) + self._convert_byte(self.PROTOCOL_VERSION) + \
+               self._convert_byte(self.STATIC_DATA) + self._convert_int(len(self._data)) + \
+               self._convert_int(0x1) + self._convert_short(self._type) + \
                self._convert_short(self._version) + self._data
 
 
