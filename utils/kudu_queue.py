@@ -15,7 +15,7 @@ class KuduMsg:
     """
     MAGIC_WORD = 0xEDB7
     PROTOCOL_VERSION = 0x2
-    STATIC_DATA = 0x1
+    STATIC_DATA = 0x0
 
     _ENDIANNESS = 'little'
 
