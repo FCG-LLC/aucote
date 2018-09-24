@@ -526,8 +526,6 @@ class Storage(DbInterface):
             return self._thread.execute(query)
         else:
             log_id = uuid.uuid4()
-            log.debug("Executing query with id: %s", log_id)
-
             try:
                 if isinstance(query, list):
                     self.log.debug("[%s] executing %i queries", log_id, len(query))
@@ -536,6 +534,7 @@ class Storage(DbInterface):
                     self.log.debug("[%s] executing query: %s", log_id, query)
                     return self.cursor.execute(*query).fetchall()
             except sqlite3.Error as exception:
+                self.log.error("[%s] During execution of %s", log_id, query)
                 self.log.exception("[%s] exception occured:", log_id)
                 raise exception
 
