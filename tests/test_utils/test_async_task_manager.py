@@ -15,7 +15,7 @@ class TestAsyncTaskManager(AsyncTestCase):
 
         self.task_1 = MagicMock()
         self.task_2 = MagicMock()
-        AsyncTaskManager._instance = None
+        AsyncTaskManager._instances = {}
         self.task_manager = AsyncTaskManager.instance(parallel_tasks=1)
         self.task_manager._shutdown_condition = MagicMock()
         self.task_manager._stop_condition = MagicMock()

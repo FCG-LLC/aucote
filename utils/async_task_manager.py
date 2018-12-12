@@ -78,7 +78,7 @@ class AsyncTaskManager(object):
     This class should be accessed by instance class method, which returns global instance of task manager
 
     """
-    _instance = None
+    _instances = {}
 
     TASKS_POLITIC_WAIT = 0
     TASKS_POLITIC_KILL_WORKING_FIRST = 1
@@ -98,7 +98,7 @@ class AsyncTaskManager(object):
         self._toucan_keys = {}
 
     @classmethod
-    def instance(cls, *args, **kwargs):
+    def instance(cls, name=None, **kwargs):
         """
         Return instance of AsyncTaskManager
 
@@ -106,9 +106,9 @@ class AsyncTaskManager(object):
             AsyncTaskManager
 
         """
-        if cls._instance is None:
-            cls._instance = AsyncTaskManager(*args, **kwargs)
-        return cls._instance
+        if cls._instances.get(name) is None:
+            cls._instances[name] = AsyncTaskManager(**kwargs)
+        return cls._instances[name]
 
     @property
     def shutdown_condition(self):
