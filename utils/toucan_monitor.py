@@ -26,11 +26,14 @@ class ToucanMonitor:
         value change
 
         """
-        self._toucan_keys[key] = {
-            'callback': callback,
-            'default': default,
-            'add_prefix': add_prefix
-        }
+        if self._toucan_keys.get(key) is None:
+            self._toucan_keys[key] = {
+                'callbacks': [callback],
+                'default': default,
+                'add_prefix': add_prefix
+            }
+        else:
+            self._toucan_keys[key]['callbacks'].append(callback)
 
     async def monitor(self):
         """
@@ -45,10 +48,15 @@ class ToucanMonitor:
                 except Exception:  # pylint: disable=broad-except
                     value = details['default']
 
-                try:
-                    details['callback'](key=key, value=value)
-                except Exception:  # pylint: disable=broad-except
-                    log.exception("Error during executing callback for %s", key)
+                failed_callbacks = []
+                for callback in details['callbacks']:
+                    try:
+                        callback(key=key, value=value)
+                    except Exception:  # pylint: disable=broad-except
+                        failed_callbacks.append(str(Exception))
+
+                if failed_callbacks:
+                    log.error('\n'.join(failed_callbacks))
         finally:
             self._ioloop.call_later(self.THROTTLE_POLL_TIME, self.monitor)
 

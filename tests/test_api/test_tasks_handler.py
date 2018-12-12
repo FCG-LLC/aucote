@@ -44,27 +44,31 @@ class TasksHandlerTest(AsyncHTTPTestCase):
                                                      exploits=[]) for number, task in enumerate(worker_tasks)}
         self.tasks._task_workers.update({2: None, 3: None, 4: None})
 
-        self.aucote.async_task_manager = self.tasks
+        self.aucote.async_task_managers = {
+            'test': self.tasks
+        }
         self.app = Application([
             (r"/api/v1/tasks", TasksHandler, {'aucote': self.aucote})])
         return self.app
 
     def test_tasks(self):
         expected = {
-            'unfinished_tasks': 4,
-            'queue': [
-                '[+] [None] PortTask [on 127.0.0.1:45]',
-                '[+] [None] PortTask [on 127.0.0.2:56]',
-                '[+] [None] PortTask [on 127.0.0.3:67]'
-            ],
-            'workers': {
-                'count': 5,
-                'jobs': {
-                    '0': '[+] [None] PortTask [on 127.0.0.4:78]',
-                    '1': '[+] [None] PortTask [on 127.0.0.5:89]',
-                    '2': None,
-                    '3': None,
-                    '4': None
+            'test': {
+                'unfinished_tasks': 4,
+                'queue': [
+                    '[+] [None] PortTask [on 127.0.0.1:45]',
+                    '[+] [None] PortTask [on 127.0.0.2:56]',
+                    '[+] [None] PortTask [on 127.0.0.3:67]'
+                ],
+                'workers': {
+                    'count': 5,
+                    'jobs': {
+                        '0': '[+] [None] PortTask [on 127.0.0.4:78]',
+                        '1': '[+] [None] PortTask [on 127.0.0.5:89]',
+                        '2': None,
+                        '3': None,
+                        '4': None
+                    }
                 }
             }
         }

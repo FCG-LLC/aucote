@@ -20,7 +20,7 @@ class ToucanMonitorTest(AsyncTestCase):
 
         expected = {
             'test.key': {
-                'callback': callback,
+                'callbacks': [callback],
                 'default': default,
                 'add_prefix': True
             }
@@ -29,6 +29,17 @@ class ToucanMonitorTest(AsyncTestCase):
         result = self.toucan_monitor._toucan_keys
 
         self.assertEqual(result, expected)
+        self.toucan_monitor.register_toucan_key(key=key, callback=callback, default=default)
+        expected = {
+            'test.key': {
+                'callbacks': [callback, callback],
+                'default': default,
+                'add_prefix': True
+            }
+        }
+        result = self.toucan_monitor._toucan_keys
+        self.assertEqual(result, expected)
+
 
     @gen_test
     async def test_polling(self):
