@@ -17,7 +17,6 @@ services:
       AUCOTE_TEST_POSTGRES: "dbname=test_aucote user=test_aucote password=test_aucote host=postgres port=5432"
       LD_LIBRARY_PATH: /usr/local/lib64
     entrypoint:
-#      - bash
       - .ci/run_all.sh
     working_dir: /src
     depends_on:
