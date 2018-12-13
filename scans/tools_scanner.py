@@ -51,7 +51,7 @@ class ToolsScanner(ScanAsyncTask):
             log.debug("Ports for security scan: %s", ports)
             self.context.add_task(Executor(context=self.context, nodes=nodes if cfg['portdetection.{0}.scan_nodes'.
                                            format(self.NAME)] else None, ports=ports),
-                                  task_manager=self.aucote.TASK_MANAGER_QUICK)
+                                  manager=self.aucote.TASK_MANAGER_QUICK)
 
             await self.context.wait_on_tasks_finish()
 

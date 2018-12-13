@@ -104,37 +104,37 @@ class Executor(Task):
         finally:
             self.finish_time = time.time()
 
-    def add_task(self, task, task_manager: Optional[str] = None):
+    def add_task(self, task, manager: Optional[str] = None):
         """
         Add task to aucote pool
 
         Args:
             task (Task):
-            task_manager: Task manager which should be used to handle task
+            manager: Task manager which should be used to handle task
 
         Returns:
             None
 
         """
-        if task_manager is None:
-            task_manager = self.aucote.TASK_MANAGER_REGULAR
-        return self.aucote.add_task(task, task_manager=task_manager)
+        if manager is None:
+            manager = self.aucote.TASK_MANAGER_REGULAR
+        return self.aucote.add_task(task, manager=manager)
 
-    def add_async_task(self, task, task_manager: Optional[str] = None):
+    def add_async_task(self, task, manager: Optional[str] = None):
         """
         Add async task to aucote pool
 
         Args:
             task (Task):
-            task_manager: Task manager which should be used to handle task
+            manager: Task manager which should be used to handle task
 
         Returns:
             None
 
         """
-        if task_manager is None:
-            task_manager = self.aucote.TASK_MANAGER_REGULAR
-        return self.context.add_task(task, task_manager=task_manager)
+        if manager is None:
+            manager = self.aucote.TASK_MANAGER_REGULAR
+        return self.context.add_task(task, manager=manager)
 
     @property
     def exploits(self):

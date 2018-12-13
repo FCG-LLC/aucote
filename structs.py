@@ -1029,16 +1029,16 @@ class ScanContext:
         """
         log.debug('Executing post scan hook for scan %s', self.scanner.NAME)
 
-    def add_task(self, task, task_manager: str = None):
-        if task_manager is None:
-            task_manager = self.aucote.TASK_MANAGER_REGULAR
+    def add_task(self, task, manager: str = None):
+        if manager is None:
+            manager = self.aucote.TASK_MANAGER_REGULAR
 
         self.tasks.append(task)
         if self._cancelled:
             task.cancel()
             return
 
-        self.aucote.add_async_task(task, task_manager=task_manager)
+        self.aucote.add_async_task(task, manager=manager)
 
     def is_scan_end(self):
         if self.end is None or self.unfinished_tasks():

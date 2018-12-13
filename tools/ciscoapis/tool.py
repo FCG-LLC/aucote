@@ -24,7 +24,7 @@ class CiscoApisTool(Tool):
 
         self.context.add_task(CiscoApisPsirtTask(context=self.context, port=self.port,
                                                  exploits=[self.aucote.exploits.find('ciscoapis', 'psirt')]),
-                              task_manager=self.aucote.TASK_MANAGER_QUICK)
+                              manager=self.aucote.TASK_MANAGER_QUICK)
 
     def additional_info(self):
         return "on {port}".format(port=self.port if self.port else self.node)
