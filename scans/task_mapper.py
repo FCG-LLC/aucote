@@ -72,6 +72,8 @@ class TaskMapper(object):
         scripts = self._aucote.exploits.find_by_apps(apps)
 
         for app, exploits in scripts.items():
+            if not cfg['tools.{0}.enable'.format(app)]:
+                continue
             exploits = self._filter_exploits(exploits)
 
             log.info("Using %i exploits against %s", len(exploits), node)
