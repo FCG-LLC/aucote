@@ -1,3 +1,4 @@
+from os import getenv
 from unittest.mock import MagicMock
 
 import ipaddress
@@ -26,10 +27,11 @@ class APITest(AsyncHTTPTestCase):
 
     def get_app(self):
         self.aucote = MagicMock()
-        self.storage = Storage(filename=":memory:")
+        self.storage = Storage(getenv('AUCOTE_TEST_POSTGRES'))
         self.aucote.storage = self.storage
 
         self.storage.connect()
+        self.storage.remove_all()
         self.storage.init_schema()
         self.scan_1 = Scan(start=123, end=446, protocol=TransportProtocol.TCP, scanner='tcp')
         self.scan_2 = Scan(start=230, end=447, protocol=TransportProtocol.UDP, scanner='udp')
@@ -101,3 +103,6 @@ class APITest(AsyncHTTPTestCase):
         self.app = Application(endpoints)
 
         return self.app
+
+    def tearDown(self):
+        self.storage.remove_all()

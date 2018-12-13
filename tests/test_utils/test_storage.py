@@ -1,9 +1,11 @@
 import ipaddress
+from os import getenv
 from unittest import TestCase
 
 from sqlite3 import Connection
 
 from sqlite3 import connect
+from psycopg2.extensions import connection
 from unittest.mock import MagicMock, patch, call
 
 from fixtures.exploits import Exploit
@@ -24,7 +26,7 @@ class StorageTest(TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        self.storage = Storage(filename=":memory:")
+        self.storage = Storage(conn_string=getenv('AUCOTE_TEST_POSTGRES'))
         self.scan = Scan(start=1, end=17, protocol=TransportProtocol.UDP, scanner='test_name')
 
         self.scan_1 = Scan(rowid=56, protocol=TransportProtocol.UDP, scanner='test_name', start=13, end=19)
@@ -145,6 +147,7 @@ class StorageTest(TestCase):
 
     def prepare_tables(self):
         self.storage.connect()
+        self.storage.remove_all()
         self.storage.init_schema()
         self.prepare_scans()
         self.prepare_nodes_scans()
@@ -153,12 +156,12 @@ class StorageTest(TestCase):
         self.prepare_security_scans()
 
     def prepare_scans(self):
-        self.storage.execute(('INSERT INTO scans(ROWID, protocol, scanner_name, scan_start, scan_end) '
-                              'VALUES '
-                              '(56, 17, "test_name", 13, 19), '
-                              '(80, 17, "test_name_2", 20, 45), '
-                              '(79, 17, "test_name", 2, 18),'
-                              '(78, 6,  "portdetection", 1, 2)',))
+        self.storage.execute(("INSERT INTO scans(ROWID, protocol, scanner_name, scan_start, scan_end) "
+                              "VALUES "
+                              "(56, 17, 'test_name', 13, 19), "
+                              "(80, 17, 'test_name_2', 20, 45), "
+                              "(79, 17, 'test_name', 2, 18),"
+                              "(78, 6,  'portdetection', 1, 2)",))
 
     def prepare_nodes_scans(self):
         self.storage.execute(("INSERT INTO nodes_scans (ROWID, scan_id, node_id, node_ip, time) VALUES "
@@ -171,10 +174,10 @@ class StorageTest(TestCase):
     def prepare_ports_scans(self):
         self.storage.execute(('INSERT INTO ports_scans(ROWID, scan_id, node_id, node_ip, port, port_protocol, time) '
                               'VALUES '
-                              '(124, 56, 1, "127.0.0.1", 45, 17, 176), '
-                              '(480, 56, 1, "127.0.0.1", 80, 17, 650), '
-                              '(13, 56, 3, "127.0.0.3", 99, 1, 619), '
-                              '(15, 56, 2, "127.0.0.2", 65, 17, 987)',))
+                              "(124, 56, 1, '127.0.0.1', 45, 17, 176), "
+                              "(480, 56, 1, '127.0.0.1', 80, 17, 650), "
+                              "(13, 56, 3, '127.0.0.3', 99, 1, 619), "
+                              "(15, 56, 2, '127.0.0.2', 65, 17, 987)",))
 
     def prepare_security_scans(self):
         self.storage.execute(("INSERT INTO security_scans(exploit_id, exploit_name, exploit_app, scan_id, node_id, "
@@ -212,7 +215,7 @@ class StorageTest(TestCase):
     def test_connect(self):
         self.storage.connect()
 
-        self.assertIsInstance(self.storage.conn, Connection)
+        self.assertIsInstance(self.storage.conn, connection)
 
     def test_close(self):
         self.storage.conn = connect(":memory:")
@@ -223,27 +226,27 @@ class StorageTest(TestCase):
     def test__create_table(self):
         result = self.storage._create_tables()
         expected = [
-            ("CREATE TABLE IF NOT EXISTS security_scans (scan_id int, exploit_id int, exploit_app text, "
-              "exploit_name text, node_id int, node_ip text, port_protocol int, port_number int, sec_scan_start float, "
+            ("CREATE TABLE IF NOT EXISTS security_scans (rowid SERIAL UNIQUE, scan_id int, exploit_id int, exploit_app text, "
+              "exploit_name text, node_id BIGINT, node_ip text, port_protocol int, port_number int, sec_scan_start float, "
               "sec_scan_end float, PRIMARY KEY (scan_id, exploit_id, node_id, node_ip, port_protocol, port_number))",),
 
-            ("CREATE TABLE IF NOT EXISTS ports_scans (scan_id int, node_id int, node_ip text, port int, port_protocol int,"
+            ("CREATE TABLE IF NOT EXISTS ports_scans (rowid SERIAL UNIQUE, scan_id int, node_id BIGINT, node_ip text, port int, port_protocol int,"
               " time int, primary key (scan_id, node_id, node_ip, port, port_protocol))",),
 
-            ('CREATE TABLE IF NOT EXISTS nodes_scans(scan_id int, node_id int, node_ip text, time int, primary key (scan_id, node_id, node_ip))',),
+            ('CREATE TABLE IF NOT EXISTS nodes_scans(rowid SERIAL UNIQUE, scan_id int, node_id BIGINT, node_ip text, time int, primary key (scan_id, node_id, node_ip))',),
 
             (
-            'CREATE TABLE IF NOT EXISTS scans(protocol int, scanner_name str, scan_start int, scan_end int, UNIQUE '\
+            'CREATE TABLE IF NOT EXISTS scans(rowid SERIAL UNIQUE, protocol int, scanner_name VARCHAR, scan_start int, scan_end int, UNIQUE '\
             '(protocol, scanner_name, scan_start))',),
 
             (
-            'CREATE TABLE IF NOT EXISTS vulnerabilities(scan_id int, node_id int, node_ip int, '\
+            'CREATE TABLE IF NOT EXISTS vulnerabilities(rowid SERIAL UNIQUE, scan_id int, node_id BIGINT, node_ip text, '\
             'port_protocol int, port int, vulnerability_id int, vulnerability_subid int, cve text, cvss text, '\
             'output text, time int, expiration_time int, primary key(scan_id, node_id, node_ip, port_protocol, port, '\
             'vulnerability_id, vulnerability_subid))',),
 
             (
-                'CREATE TABLE IF NOT EXISTS changes(type int, vulnerability_id int, vulnerability_subid int, ' \
+                'CREATE TABLE IF NOT EXISTS changes(rowid SERIAL UNIQUE, type int, vulnerability_id int, vulnerability_subid int, ' \
                 'previous_id int, current_id int, time int, PRIMARY KEY(type, vulnerability_id, ' \
                 'vulnerability_subid, previous_id, current_id, time))',
             )
@@ -275,6 +278,7 @@ class StorageTest(TestCase):
     @patch('utils.storage.time.time', MagicMock(return_value=134))
     def test_save_nodes(self):
         self.storage.connect()
+        self.storage.remove_all()
         self.storage.init_schema()
 
         expected = [(56, 1, '127.0.0.1', 134),
@@ -318,6 +322,7 @@ class StorageTest(TestCase):
     @patch('utils.storage.time.time', MagicMock(return_value=167))
     def test_save_port(self):
         self.storage.connect()
+        self.storage.remove_all()
         self.storage.init_schema()
 
         expected = [(56, 1, '127.0.0.1', 45, 17, 167)]
@@ -331,6 +336,7 @@ class StorageTest(TestCase):
     @patch('utils.storage.time.time', MagicMock(return_value=167))
     def test_save_ports(self):
         self.storage.connect()
+        self.storage.remove_all()
         self.storage.init_schema()
 
         expected = [(56, 1, '127.0.0.1', 45, 17, 167),
@@ -364,6 +370,7 @@ class StorageTest(TestCase):
 
     def test_save_security_scan(self):
         self.storage.connect()
+        self.storage.remove_all()
         self.storage.init_schema()
 
         expected = [(56, 14, 'test_app', 'test_name', 1, '127.0.0.1', 17, 45, 13.0, 19.0)]
@@ -376,6 +383,7 @@ class StorageTest(TestCase):
 
     def test_save_security_scan_twice(self):
         self.storage.connect()
+        self.storage.remove_all()
         self.storage.init_schema()
         self.port_1.scan.start = None
 
@@ -400,6 +408,7 @@ class StorageTest(TestCase):
 
     def test_save_security_scans(self):
         self.storage.connect()
+        self.storage.remove_all()
         self.storage.init_schema()
 
         expected = [(56, 14, 'test_app', 'test_name', 1, '127.0.0.1', 17, 45, 13.0, 19.0),
@@ -424,6 +433,7 @@ class StorageTest(TestCase):
 
     def test_save_changes(self):
         self.storage.connect()
+        self.storage.remove_all()
         self.storage.init_schema()
 
         expected = [(1, 0, 0, 15, 124, 124445), (1, 0, 0, 13, 15, 32434)]
@@ -470,23 +480,24 @@ class StorageTest(TestCase):
     def test_execute_query(self):
         query = "part_1", "arg_1", "arg_2"
         self.storage._cursor = MagicMock()
+        self.storage._cursor.rowcount = 2
+        self.storage.conn = MagicMock()
 
         result = self.storage.execute(query)
         self.storage.cursor.execute.assert_called_once_with("part_1", "arg_1", "arg_2")
-        self.storage.cursor.execute().fetchall.assert_called_once_with()
-        self.assertEqual(result, self.storage.cursor.execute().fetchall())
+        self.storage.cursor.fetchall.assert_called_once_with()
+        self.assertEqual(result, self.storage.cursor.fetchall())
 
     def test_execute_query_list(self):
         queries = [("part_1", "arg_1", "arg_2"), ("part_2", "arg_3")]
         self.storage._cursor = MagicMock()
+        self.storage._cursor.rowcount = 2
         self.storage.conn = MagicMock()
 
         self.storage.execute(queries)
         self.storage.cursor.execute.assert_has_calls(
             (call("part_1", "arg_1", "arg_2"),
-            (call("part_1", "arg_1", "arg_2").fetchall()),
-             call("part_2", "arg_3"),
-             call("part_2", "arg_3").fetchall()))
+             call("part_2", "arg_3")))
 
     def test_transport_protocol_none(self):
         result = self.storage._transport_protocol(None)
@@ -505,6 +516,7 @@ class StorageTest(TestCase):
 
     def test_save_scan(self):
         self.storage.connect()
+        self.storage.remove_all()
         self.storage.init_schema()
 
         expected = [(1, 13, 19, 17, 'test_name')]
@@ -606,6 +618,7 @@ class StorageTest(TestCase):
 
     def test_save_vulnerabilities(self):
         self.storage.connect()
+        self.storage.remove_all()
         self.storage.init_schema()
 
         expected = [(56, 1, '127.0.0.1', 17, 45, 14, 1, 'CVE-2017', '6.7', 'test_output_1', 13),

@@ -194,7 +194,7 @@ class Storage(DbInterface):
                                           "exploit_app=%s AND exploit_name=%s AND node_id=%s AND node_ip=%s " \
                                           "AND (port_protocol=%s OR (%s IS NULL AND port_protocol IS NULL)) " \
                                           "AND port_number=%s AND scan_id=%s"
-    QUERY_CLEAR_SECURITY_SCANS = "DELETE FROM security_scans WHERE sec_scan_start >= sec_scan_end OR sec_scan_start  " \
+    QUERY_CLEAR_SECURITY_SCANS = "DELETE FROM security_scans WHERE sec_scan_start >= sec_scan_end OR sec_scan_start " \
                                  "IS NULL OR sec_scan_end IS NULL"
 
     QUERY_SAVE_SECURITY_SCAN = "INSERT INTO security_scans (scan_id, exploit_id, exploit_app, exploit_name," \
@@ -563,6 +563,7 @@ class Storage(DbInterface):
             self.cursor.execute(*query)
         except psycopg2.DataError:
             pass
+
         self.conn.commit()
         if self.cursor.rowcount <= 0:
             return []
@@ -1124,3 +1125,9 @@ class Storage(DbInterface):
                 return_value['os_cpe'] = vulnerability.output
 
         return return_value
+
+    def remove_all(self):
+        for key in self.TABLES:
+            self.execute(('DROP TABLE IF EXISTS {}'.format(key), ))
+
+        self.execute(('DROP TABLE IF EXISTS changes',))
