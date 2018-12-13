@@ -53,8 +53,9 @@ class TasksHandlerTest(AsyncHTTPTestCase):
 
     def test_tasks(self):
         expected = {
+            'unfinished_tasks': 4,
             'test': {
-                'unfinished_tasks': 4,
+                'unfinished_tasks': 3,
                 'queue': [
                     '[+] [None] PortTask [on 127.0.0.1:45]',
                     '[+] [None] PortTask [on 127.0.0.2:56]',
