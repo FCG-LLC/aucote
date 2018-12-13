@@ -19,3 +19,4 @@ defusedxml==0.5.0
 MarkupSafe==0.23  # 1.0 is not installable via simple pip install
 Sphinx==1.7.2
 sphinx_rtd_theme==0.2.4
+psycopg2==2.7.6.1

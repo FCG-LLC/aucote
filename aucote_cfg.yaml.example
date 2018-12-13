@@ -40,12 +40,11 @@ logging:
         propagate: False
 
 # storage: Storage configuration
-#    path: <str> - Path to the storage
+#    db: <str> - Postgresql connection string
 #    max_nodes_query: <int> - Maximum number of nodes which should be quered for ports
-#    fresh_start: <bool> - If True storage will be removed on start
 
 storage:
-    path: "tmp/storage.sqlite3"
+    db: "dbname=aucote user=aucote password=aucote host=postgres port=5432"
     max_nodes_query: 200
     fresh_start: True
 

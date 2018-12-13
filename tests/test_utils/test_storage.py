@@ -205,9 +205,6 @@ class StorageTest(TestCase):
                               "(208, 78, 4, '127.0.0.4', 6, 22, 0, 8, NULL, NULL, 'test:os:cpe', 124, 400)"
                               "",))
 
-    def test_init(self):
-        self.assertEqual(self.storage.filename, ":memory:")
-
     def test_context_manager(self):
         with self.storage:
             self.assertTrue(True)
