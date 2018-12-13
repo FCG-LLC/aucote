@@ -108,7 +108,9 @@ class TaskMapperTest(AsyncTestCase):
         self.executor.storage.get_security_scan_info.return_value = []
         await self.task_mapper.assign_tasks(self.UDP)
         self.task_mapper._aucote.add_async_task.assert_called_once_with(
-            self.EXECUTOR_CONFIG['apps']['test']['class'].return_value)
+            self.EXECUTOR_CONFIG['apps']['test']['class'].return_value,
+            task_manager=self.context.aucote.TASK_MANAGER_QUICK
+        )
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
     @patch('aucote_cfg.cfg.get', MagicMock(return_value=False))

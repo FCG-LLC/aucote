@@ -460,7 +460,7 @@ class ScanContextTest(AsyncTestCase):
         self.context.add_task(task)
 
         self.assertIn(task, self.context.tasks)
-        self.aucote.add_async_task.assert_called_once_with(task)
+        self.aucote.add_async_task.assert_called_once_with(task, task_manager=self.aucote.TASK_MANAGER_REGULAR)
 
     def test_non_end_scan(self):
         self.context.tasks = [MagicMock(has_finished=MagicMock(return_value=False))]
