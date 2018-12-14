@@ -176,6 +176,7 @@ class Aucote(object):
         try:
             cfg.register_action(self.SCAN_CONTROL_START, self.start_scan)
             cfg.register_action(self.SCAN_CONTROL_STOP, self.stop_scan)
+            
             with self._storage_thread, self._tftp_thread:
                 self.async_task_manager.clear()
                 self._storage.init_schema()

@@ -19,6 +19,7 @@ class TFTPThread(Thread):
     def __enter__(self):
         self.start()
         self.started_event.wait()
+        log.debug('StorageThread started')
         return self
 
     def run(self):
