@@ -252,6 +252,7 @@ class Storage(DbInterface):
         """
         Initialize database schema
         """
+        log.debug('Initializing database schema')
         self.execute(self._create_tables())
         self.execute(self._clear_security_scans())
 

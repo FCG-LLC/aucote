@@ -324,3 +324,4 @@ class Config:
         """
         if self.rabbit:
             self._consumer.register_action(regex, action)
+            log.debug('Registering action for %s', str(regex))
