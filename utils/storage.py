@@ -264,7 +264,10 @@ class Storage(DbInterface):
             raise Exception("Connection from incorrect thread")
 
         log.debug("Connecting to database")
-        self.conn = psycopg2.connect(self._conn_string)
+        try:
+            self.conn = psycopg2.connect(self._conn_string)
+        except Exception:
+            log.exception('Exception during connecting to database')
         log.debug("Connected to database")
         self._cursor = self.conn.cursor()
         self._cursor = self.conn.cursor()
