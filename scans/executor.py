@@ -12,7 +12,7 @@ from scans.task_mapper import TaskMapper
 from tools.nmap.tasks.port_info import NmapPortInfoTask
 from utils.task import Task
 from utils.time import parse_period
-from structs import BroadcastPort
+from structs import BroadcastPort, TaskManagerType
 
 
 class Executor(Task):
@@ -104,7 +104,7 @@ class Executor(Task):
         finally:
             self.finish_time = time.time()
 
-    def add_task(self, task, manager: Optional[str] = None):
+    def add_task(self, task, manager: TaskManagerType = TaskManagerType.REGULAR):
         """
         Add task to aucote pool
 
@@ -116,11 +116,9 @@ class Executor(Task):
             None
 
         """
-        if manager is None:
-            manager = self.aucote.TASK_MANAGER_REGULAR
         return self.aucote.add_task(task, manager=manager)
 
-    def add_async_task(self, task, manager: Optional[str] = None):
+    def add_async_task(self, task, manager: TaskManagerType = TaskManagerType.REGULAR):
         """
         Add async task to aucote pool
 
@@ -132,8 +130,6 @@ class Executor(Task):
             None
 
         """
-        if manager is None:
-            manager = self.aucote.TASK_MANAGER_REGULAR
         return self.context.add_task(task, manager=manager)
 
     @property

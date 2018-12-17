@@ -3,7 +3,7 @@ CiscoAPIs is a tool which provides CiscoAPIS functionality
 
 """
 
-from structs import PhysicalPort
+from structs import PhysicalPort, TaskManagerType
 from tools.base import Tool
 from tools.ciscoapis.tasks import CiscoApisPsirtTask
 from tools.cve_search.tasks import CVESearchServiceTask
@@ -24,7 +24,7 @@ class CiscoApisTool(Tool):
 
         self.context.add_task(CiscoApisPsirtTask(context=self.context, port=self.port,
                                                  exploits=[self.aucote.exploits.find('ciscoapis', 'psirt')]),
-                              manager=self.aucote.TASK_MANAGER_QUICK)
+                              manager=TaskManagerType.QUICK)
 
     def additional_info(self):
         return "on {port}".format(port=self.port if self.port else self.node)

@@ -12,7 +12,7 @@ from tornado.httpclient import HTTPError
 from aucote_cfg import cfg
 from scans.executor import Executor
 from scans.scan_async_task import ScanAsyncTask
-from structs import ScanStatus
+from structs import ScanStatus, TaskManagerType
 
 
 class ToolsScanner(ScanAsyncTask):
@@ -51,7 +51,7 @@ class ToolsScanner(ScanAsyncTask):
             log.debug("Ports for security scan: %s", ports)
             self.context.add_task(Executor(context=self.context, nodes=nodes if cfg['portdetection.{0}.scan_nodes'.
                                            format(self.NAME)] else None, ports=ports),
-                                  manager=self.aucote.TASK_MANAGER_QUICK)
+                                  manager=TaskManagerType.QUICK)
 
             await self.context.wait_on_tasks_finish()
 

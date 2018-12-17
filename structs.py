@@ -998,6 +998,12 @@ class VulnerabilityChange(VulnerabilityChangeBase):
         return self.current_finding.output if self.current_finding else ""
 
 
+class TaskManagerType(Enum):
+    REGULAR = 'regular'
+    SCANNER = 'scanner'
+    QUICK = 'quick'
+
+
 class ScanContext:
     """
     Scan context handle information about scan and it progress
@@ -1030,10 +1036,7 @@ class ScanContext:
         """
         log.debug('Executing post scan hook for scan %s', self.scanner.NAME)
 
-    def add_task(self, task, manager: Optional[str] = None):
-        if manager is None:
-            manager = self.aucote.TASK_MANAGER_REGULAR
-
+    def add_task(self, task, manager: TaskManagerType = TaskManagerType.REGULAR):
         self.tasks.append(task)
         if self._cancelled:
             task.cancel()
@@ -1063,9 +1066,3 @@ class ScanContext:
 
     def cancelled(self):
         return self._cancelled
-
-
-class TaskManagerType(Enum):
-    REGULAR = 'regular'
-    SCANNER = 'scanner'
-    QUICK = 'quick'

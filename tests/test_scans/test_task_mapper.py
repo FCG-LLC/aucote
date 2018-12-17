@@ -7,7 +7,7 @@ from tornado.testing import gen_test, AsyncTestCase
 from fixtures.exploits import Exploit
 from fixtures.exploits.exploit import ExploitCategory
 from scans.task_mapper import TaskMapper
-from structs import Port, TransportProtocol, Scan, Node, SecurityScan, ScanContext
+from structs import Port, TransportProtocol, Scan, Node, SecurityScan, ScanContext, TaskManagerType
 from utils import Config
 
 
@@ -109,7 +109,7 @@ class TaskMapperTest(AsyncTestCase):
         await self.task_mapper.assign_tasks(self.UDP)
         self.task_mapper._aucote.add_async_task.assert_called_once_with(
             self.EXECUTOR_CONFIG['apps']['test']['class'].return_value,
-            manager=self.context.aucote.TASK_MANAGER_QUICK
+            manager=TaskManagerType.QUICK
         )
 
     @patch("scans.task_mapper.EXECUTOR_CONFIG", EXECUTOR_CONFIG)
