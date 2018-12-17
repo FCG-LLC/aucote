@@ -5,7 +5,7 @@ import ipaddress
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 from api.tasks_handler import TasksHandler
-from structs import Node, Port, TransportProtocol, ScanContext
+from structs import Node, Port, TransportProtocol, ScanContext, TaskManagerType
 from tools.common.port_task import PortTask
 from utils.async_task_manager import AsyncTaskManager
 
@@ -45,7 +45,7 @@ class TasksHandlerTest(AsyncHTTPTestCase):
         self.tasks._task_workers.update({2: None, 3: None, 4: None})
 
         self.aucote.async_task_managers = {
-            'test': self.tasks
+            TaskManagerType.SCANNER: self.tasks
         }
         self.app = Application([
             (r"/api/v1/tasks", TasksHandler, {'aucote': self.aucote})])
@@ -54,7 +54,7 @@ class TasksHandlerTest(AsyncHTTPTestCase):
     def test_tasks(self):
         expected = {
             'unfinished_tasks': 4,
-            'test': {
+            'scanner': {
                 'unfinished_tasks': 3,
                 'queue': [
                     '[+] [None] PortTask [on 127.0.0.1:45]',

@@ -16,7 +16,7 @@ class TasksHandler(Handler):
             queue_tasks = task_manager._tasks._queue
             workers = task_manager._task_workers
 
-            return_value[name] = {
+            return_value[name.value] = {
                 'unfinished_tasks': task_manager.unfinished_tasks,
                 'queue': [str(task) for task in queue_tasks],
                 'workers': {
