@@ -8,6 +8,7 @@ from tornado.concurrent import Future
 from tornado.testing import AsyncTestCase, gen_test
 
 from aucote import main, Aucote
+from structs import TaskManagerType
 from utils import Config
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.web_server import WebServer
@@ -249,9 +250,9 @@ class AucoteTest(AsyncTestCase):
         self.aucote._storage = MagicMock()
         self.aucote._kudu_queue = MagicMock()
 
-        self.aucote.async_task_managers[Aucote.TASK_MANAGER_SCANNER] = MagicMock()
-        self.aucote.async_task_managers[Aucote.TASK_MANAGER_SCANNER].shutdown_condition.wait.return_value = Future()
-        self.aucote.async_task_managers[Aucote.TASK_MANAGER_SCANNER].shutdown_condition.wait.return_value.set_result(True)
+        self.aucote.async_task_managers[TaskManagerType.SCANNER] = MagicMock()
+        self.aucote.async_task_managers[TaskManagerType.SCANNER].shutdown_condition.wait.return_value = Future()
+        self.aucote.async_task_managers[TaskManagerType.SCANNER].shutdown_condition.wait.return_value.set_result(True)
 
         self.mock_web_server()
 
@@ -269,7 +270,7 @@ class AucoteTest(AsyncTestCase):
         tcp_scanner.assert_called_once_with(aucote=self.aucote, as_service=True, host='localhost', port=1239)
         udp_scanner.assert_called_once_with(aucote=self.aucote, as_service=True)
         tools_scanner.assert_called_once_with(aucote=self.aucote, name='tools')
-        self.aucote.async_task_managers[Aucote.TASK_MANAGER_SCANNER].add_crontab_task.assert_has_calls((
+        self.aucote.async_task_managers[TaskManagerType.SCANNER].add_crontab_task.assert_has_calls((
             call(tcp_scanner(), tcp_scanner()._scan_cron),
             call(udp_scanner(), udp_scanner()._scan_cron),
             call(tools_scanner(), tools_scanner()._scan_cron, event='tools')))
@@ -303,7 +304,7 @@ class AucoteTest(AsyncTestCase):
         data = MagicMock()
 
         self.aucote.add_async_task(data)
-        self.aucote.async_task_managers[Aucote.TASK_MANAGER_REGULAR].add_task.assert_called_once_with(data)
+        self.aucote.async_task_managers[TaskManagerType.REGULAR].add_task.assert_called_once_with(data)
 
     @patch('aucote.cfg_load')
     @patch('builtins.open', mock_open())
@@ -372,7 +373,7 @@ class AucoteTest(AsyncTestCase):
 
         future_1 = Future()
         future_1.set_result(None)
-        self.aucote.async_task_managers[Aucote.TASK_MANAGER_SCANNER].stop.return_value = future_1
+        self.aucote.async_task_managers[TaskManagerType.SCANNER].stop.return_value = future_1
 
         self.aucote._watch_thread = MagicMock()
         self.aucote.graceful_stop(None, None)
@@ -405,9 +406,9 @@ class AucoteTest(AsyncTestCase):
         mock_kill.assert_called_once_with(1)
 
     def test_unfinished_tasks(self):
-        self.aucote.async_task_managers[Aucote.TASK_MANAGER_REGULAR] = MagicMock(unfinished_tasks=3)
-        self.aucote.async_task_managers[Aucote.TASK_MANAGER_SCANNER] = MagicMock(unfinished_tasks=4)
-        self.aucote.async_task_managers[Aucote.TASK_MANAGER_QUICK] = MagicMock(unfinished_tasks=8)
+        self.aucote.async_task_managers[TaskManagerType.REGULAR] = MagicMock(unfinished_tasks=3)
+        self.aucote.async_task_managers[TaskManagerType.SCANNER] = MagicMock(unfinished_tasks=4)
+        self.aucote.async_task_managers[TaskManagerType.QUICK] = MagicMock(unfinished_tasks=8)
         self.assertEqual(self.aucote.unfinished_tasks, 15)
 
     def test_python_version(self):

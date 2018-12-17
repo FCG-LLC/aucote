@@ -24,6 +24,7 @@ from scans.executor_config import EXECUTOR_CONFIG
 from scans.tcp_scanner import TCPScanner
 from scans.tools_scanner import ToolsScanner
 from scans.udp_scanner import UDPScanner
+from structs import TaskManagerType
 from threads.storage_thread import StorageThread
 from threads.tftp_thread import TFTPThread
 from utils.async_task_manager import AsyncTaskManager, ThrottlingConsumer
@@ -116,9 +117,6 @@ class Aucote(object):
 
     SCAN_CONTROL_START = re.compile(r'portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control\.start')
     SCAN_CONTROL_STOP = re.compile(r'portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control\.stop')
-    TASK_MANAGER_SCANNER = 'scanner'
-    TASK_MANAGER_REGULAR = 'regular'
-    TASK_MANAGER_QUICK = 'quick'
 
     def __init__(self, exploits, kudu_queue, tools_config):
         self.exploits = exploits
@@ -134,10 +132,11 @@ class Aucote(object):
         self.topdis = Topdis(cfg['topdis.api.host'], cfg['topdis.api.port'], cfg['topdis.api.base'])
 
         self.async_task_managers = {
-            self.TASK_MANAGER_SCANNER: AsyncTaskManager.instance(name=self.TASK_MANAGER_SCANNER, parallel_tasks=10),
-            self.TASK_MANAGER_REGULAR: AsyncTaskManager.instance(name=self.TASK_MANAGER_REGULAR,
-                                                                 parallel_tasks=cfg['service.scans.parallel_tasks']),
-            self.TASK_MANAGER_QUICK: AsyncTaskManager.instance(name=self.TASK_MANAGER_QUICK, parallel_tasks=30)
+            TaskManagerType.SCANNER: AsyncTaskManager.instance(name=TaskManagerType.SCANNER.value,
+                                                               parallel_tasks=10),
+            TaskManagerType.REGULAR: AsyncTaskManager.instance(name=TaskManagerType.REGULAR.value,
+                                                               parallel_tasks=cfg['service.scans.parallel_tasks']),
+            TaskManagerType.QUICK: AsyncTaskManager.instance(name=TaskManagerType.QUICK.value, parallel_tasks=30)
         }
 
         for task_manager in self.async_task_managers.values():
@@ -185,7 +184,7 @@ class Aucote(object):
         Returns: None
 
         """
-        scan_task_manager = self.async_task_managers[self.TASK_MANAGER_SCANNER]
+        scan_task_manager = self.async_task_managers[TaskManagerType.SCANNER]
         try:
             cfg.register_action(self.SCAN_CONTROL_START, self.start_scan)
             cfg.register_action(self.SCAN_CONTROL_STOP, self.stop_scan)
@@ -251,7 +250,7 @@ class Aucote(object):
         for exploit in self.exploits:
             self.kudu_queue.send_msg(serializer.serialize_exploit(exploit))
 
-    def add_async_task(self, task, manager: str = TASK_MANAGER_REGULAR):
+    def add_async_task(self, task, manager: str = TaskManagerType.REGULAR):
         """
         Add async task for executing
 
@@ -359,7 +358,7 @@ class Aucote(object):
             log.debug('Starting %s basing on Toucan request', scan_name)
             cfg.toucan.put(key, False)
             self.ioloop.add_callback(partial(
-                self.async_task_managers[self.TASK_MANAGER_SCANNER].crontab_task(scan_name), skip_cron=True))
+                self.async_task_managers[TaskManagerType.SCANNER].crontab_task(scan_name), skip_cron=True))
 
     def stop_scan(self, key, value, scan_name=None):
         """
@@ -371,7 +370,7 @@ class Aucote(object):
         if value is True:
             log.debug('Stopping %s basing on Toucan request', scan_name)
             cfg.toucan.put(key, False)
-            self.ioloop.add_callback(self.async_task_managers[self.TASK_MANAGER_SCANNER].cron_task(scan_name).stop)
+            self.ioloop.add_callback(self.async_task_managers[TaskManagerType.SCANNER].cron_task(scan_name).stop)
 
 
 # =================== start app =================

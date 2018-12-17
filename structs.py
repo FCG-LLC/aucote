@@ -1063,3 +1063,9 @@ class ScanContext:
 
     def cancelled(self):
         return self._cancelled
+
+
+class TaskManagerType(Enum):
+    REGULAR = 'regular'
+    SCANNER = 'scanner'
+    QUICK = 'quick'
