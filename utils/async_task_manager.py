@@ -284,13 +284,8 @@ class AsyncTaskManager(object):
 
     def cron_task(self, name):
         for task in self._cron_tasks.values():
-            if task.NAME == name:
+            if task.func.NAME == name:
                 return task
-
-    def crontab_task(self, name):
-        for task, crontab in self._cron_tasks.items():
-            if task.NAME == name:
-                return crontab
 
     def change_throttling_toucan(self, key, value):
         self.change_throttling(value)

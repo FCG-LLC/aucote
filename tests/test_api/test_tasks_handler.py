@@ -18,6 +18,7 @@ class TasksHandlerTest(AsyncHTTPTestCase):
         self.aucote = MagicMock(unfinished_tasks=4)
         self.context = ScanContext(aucote=self.aucote, scanner=None)
         self.tasks = AsyncTaskManager()
+        self.tasks._is_running = False
         tasks = [
             {'port': 45, 'id': 1, 'ip': '127.0.0.1'},
             {'port': 56, 'id': 2, 'ip': '127.0.0.2'},
@@ -83,7 +84,8 @@ class TasksHandlerTest(AsyncHTTPTestCase):
                 'cron_tasks': [
                     {
                         'name': 'test_function',
-                        'cron': '0 0 0 0 0'
+                        'cron': '0 0 0 0 0',
+                        'is_running': False
                     }
                 ]
             }

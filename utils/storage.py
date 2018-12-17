@@ -216,9 +216,10 @@ class Storage(DbInterface):
                                             "node_id=%s AND node_ip=%s AND port_protocol=%s AND port=%s AND " \
                                             "vulnerability_id=%s AND vulnerability_subid=%s"
 
-    QUERY_CREATE_CHANGES_TABLE = "CREATE TABLE IF NOT EXISTS changes(rowid SERIAL UNIQUE, type int, " \
-                                 "vulnerability_id int, vulnerability_subid int, previous_id int, current_id int, " \
-                                 "time int, PRIMARY KEY(type, vulnerability_id, vulnerability_subid, previous_id, " \
+    QUERY_CREATE_CHANGES_TABLE = "CREATE TABLE IF NOT EXISTS changes(rowid SERIAL PRIMARY KEY, type int, " \
+                                 "vulnerability_id int, vulnerability_subid int, previous_id int null, " \
+                                 "current_id int null, " \
+                                 "time int, UNIQUE(type, vulnerability_id, vulnerability_subid, previous_id, " \
                                  "current_id, time))"
     QUERY_SAVE_CHANGE = "INSERT INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
                         "current_id, time) VALUES (%s, %s, %s, %s, %s, %s)"

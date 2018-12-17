@@ -246,8 +246,9 @@ class StorageTest(TestCase):
             'vulnerability_id, vulnerability_subid))',),
 
             (
-                'CREATE TABLE IF NOT EXISTS changes(rowid SERIAL UNIQUE, type int, vulnerability_id int, vulnerability_subid int, ' \
-                'previous_id int, current_id int, time int, PRIMARY KEY(type, vulnerability_id, ' \
+                'CREATE TABLE IF NOT EXISTS changes(rowid SERIAL PRIMARY KEY, type int, vulnerability_id int, '
+                'vulnerability_subid int, ' \
+                'previous_id int null, current_id int null, time int, UNIQUE(type, vulnerability_id, ' \
                 'vulnerability_subid, previous_id, current_id, time))',
             )
         ]

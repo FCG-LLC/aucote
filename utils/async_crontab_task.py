@@ -70,6 +70,7 @@ class AsyncCrontabTask(object):
             self._future = None
 
         if self._stop:
+            log.error('AsyncCrontabTask[%s]: Is stopped. Skipping scan', self.name)
             self._started = False
             return
 
