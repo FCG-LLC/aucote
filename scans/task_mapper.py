@@ -6,7 +6,7 @@ import logging as log
 
 from aucote_cfg import cfg
 from scans.executor_config import EXECUTOR_CONFIG
-from structs import SpecialPort
+from structs import SpecialPort, TaskManagerType
 
 
 class TaskMapper(object):
@@ -62,7 +62,7 @@ class TaskMapper(object):
             task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, port=port.copy(),
                                                          config=EXECUTOR_CONFIG['apps'][app])
 
-            self.context.add_task(task, manager=self.context.aucote.TASK_MANAGER_QUICK)
+            self.context.add_task(task, manager=TaskManagerType.QUICK)
 
     async def assign_tasks_for_node(self, node: 'Node') -> None:
         """
@@ -81,7 +81,7 @@ class TaskMapper(object):
             task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, node=node,
                                                          config=EXECUTOR_CONFIG['apps'][app])
 
-            self.context.add_task(task, manager=self.context.aucote.TASK_MANAGER_QUICK)
+            self.context.add_task(task, manager=TaskManagerType.QUICK)
 
     def _filter_exploits(self, exploits):
         return list(filter(self._is_exploit_allowed, exploits))

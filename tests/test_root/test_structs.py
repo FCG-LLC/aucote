@@ -6,7 +6,8 @@ from cpe import CPE
 from tornado.testing import AsyncTestCase, gen_test
 
 from structs import Node, Port, Scan, PhysicalPort, BroadcastPort, Service, CPEType, PortState, \
-    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange, PortScan, ScanContext, Vulnerability
+    VulnerabilityChangeType, VulnerabilityChange, PortDetectionChange, PortScan, ScanContext, Vulnerability, \
+    TaskManagerType
 from structs import TransportProtocol
 from fixtures.exploits import RiskLevel, Exploit
 
@@ -460,7 +461,7 @@ class ScanContextTest(AsyncTestCase):
         self.context.add_task(task)
 
         self.assertIn(task, self.context.tasks)
-        self.aucote.add_async_task.assert_called_once_with(task, manager=self.aucote.TASK_MANAGER_REGULAR)
+        self.aucote.add_async_task.assert_called_once_with(task, manager=TaskManagerType.REGULAR)
 
     def test_non_end_scan(self):
         self.context.tasks = [MagicMock(has_finished=MagicMock(return_value=False))]

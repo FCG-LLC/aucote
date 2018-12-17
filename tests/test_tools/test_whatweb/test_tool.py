@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from tornado.testing import AsyncTestCase, gen_test
 
 from fixtures.exploits import Exploit
-from structs import Node, Port, TransportProtocol, Scan, ScanContext
+from structs import Node, Port, TransportProtocol, Scan, ScanContext, TaskManagerType
 from tools.whatweb.tool import WhatWebTool
 
 
@@ -27,4 +27,4 @@ class WhatWebToolTest(AsyncTestCase):
                                           exploits=[self.aucote.exploits.find.return_value])
         self.aucote.exploits.find.assert_called_once_with('whatweb', 'whatweb')
         self.aucote.add_async_task.assert_called_once_with(mock_task.return_value,
-                                                           manager=self.aucote.TASK_MANAGER_REGULAR)
+                                                           manager=TaskManagerType.REGULAR)

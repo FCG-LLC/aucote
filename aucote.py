@@ -250,7 +250,7 @@ class Aucote(object):
         for exploit in self.exploits:
             self.kudu_queue.send_msg(serializer.serialize_exploit(exploit))
 
-    def add_async_task(self, task, manager: str = TaskManagerType.REGULAR):
+    def add_async_task(self, task, manager: TaskManagerType = TaskManagerType.REGULAR):
         """
         Add async task for executing
 
