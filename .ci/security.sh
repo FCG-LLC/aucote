@@ -2,5 +2,5 @@
 
 PYLINT_FILES=$(find . -name "*.py" -not -path "./tests/*" -not -path "./venv/*" -not -path "./internal_deps*")
 
-bandit -ll ${PYLINT_FILES} | tee bandit.txt
+python -m bandit -ll ${PYLINT_FILES} | tee /tmp/bandit.txt
 exit ${PIPESTATUS[0]}

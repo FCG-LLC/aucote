@@ -90,12 +90,6 @@ async def main():
         return MagicMock()  # used for local testing
 
     with get_kuduworker() as kudu_queue:
-        if cfg['storage.fresh_start']:
-            try:
-                os.remove(cfg['storage.path'])
-            except FileNotFoundError:
-                pass
-
         aucote = Aucote(exploits=exploits, kudu_queue=kudu_queue, tools_config=EXECUTOR_CONFIG)
 
         if args.syncdb:
@@ -130,7 +124,7 @@ class Aucote(object):
         signal.signal(signal.SIGHUP, self.graceful_stop)
         self.load_tools(tools_config)
 
-        self._storage = Storage(filename=cfg['storage.path'], nodes_limit=cfg['storage.max_nodes_query'])
+        self._storage = Storage(conn_string=cfg['storage.db'], nodes_limit=cfg['storage.max_nodes_query'])
 
         self.ioloop = IOLoop.current()
         self.topdis = Topdis(cfg['topdis.api.host'], cfg['topdis.api.port'], cfg['topdis.api.base'])
@@ -182,6 +176,7 @@ class Aucote(object):
         try:
             cfg.register_action(self.SCAN_CONTROL_START, self.start_scan)
             cfg.register_action(self.SCAN_CONTROL_STOP, self.stop_scan)
+            
             with self._storage_thread, self._tftp_thread:
                 self.async_task_manager.clear()
                 self._storage.init_schema()

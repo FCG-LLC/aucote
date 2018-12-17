@@ -26,6 +26,7 @@ class StorageThread(Thread):
     def __enter__(self):
         self.start()
         self.started_event.wait()
+        log.debug('StorageThread started')
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
