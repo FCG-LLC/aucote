@@ -280,10 +280,10 @@ class AsyncTaskManager(object):
             list
 
         """
-        return self._cron_tasks.keys()
+        return self._cron_tasks.values()
 
     def cron_task(self, name):
-        for task in self._cron_tasks:
+        for task in self._cron_tasks.values():
             if task.NAME == name:
                 return task
 

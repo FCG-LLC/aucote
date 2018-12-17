@@ -22,7 +22,10 @@ class TasksHandler(Handler):
                 'workers': {
                     'count': len(workers),
                     'jobs': {number: str(worker) if worker is not None else None for number, worker in workers.items()},
-                }
+                },
+                'cron_tasks': [
+                    {'name': task.name, 'cron': task.cron} for task in task_manager.cron_tasks
+                ]
             }
 
         self.write(return_value)

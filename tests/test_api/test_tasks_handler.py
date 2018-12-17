@@ -42,6 +42,15 @@ class TasksHandlerTest(AsyncHTTPTestCase):
                                                          number=task['port'],
                                                          transport_protocol=TransportProtocol.TCP,),
                                                      exploits=[]) for number, task in enumerate(worker_tasks)}
+
+        class test_function:
+            def __str__(self):
+                return 'test_function'
+
+            def __call__(self, *args, **kwargs):
+                pass
+
+        self.tasks.add_crontab_task(test_function(), '0 0 0 0 0')
         self.tasks._task_workers.update({2: None, 3: None, 4: None})
 
         self.aucote.async_task_managers = {
@@ -70,7 +79,13 @@ class TasksHandlerTest(AsyncHTTPTestCase):
                         '3': None,
                         '4': None
                     }
-                }
+                },
+                'cron_tasks': [
+                    {
+                        'name': 'test_function',
+                        'cron': '0 0 0 0 0'
+                    }
+                ]
             }
         }
         response = self.fetch('/api/v1/tasks', method='GET')

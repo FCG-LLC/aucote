@@ -195,10 +195,10 @@ class TestAsyncTaskManager(AsyncTestCase):
             MagicMock(): 'd',
         }
 
-        expected = self.task_manager._cron_tasks.keys()
+        expected = self.task_manager._cron_tasks.values()
         result = self.task_manager.cron_tasks
 
-        self.assertEqual(result, expected)
+        self.assertCountEqual(result, expected)
 
 
 class _ExecutorTest(AsyncTestCase):
