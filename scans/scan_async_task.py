@@ -393,3 +393,6 @@ class ScanAsyncTask(object):
 
         msg = Serializer.serialize_vulnerability(vuln)
         self.aucote.kudu_queue.send_msg(msg)
+
+    def __str__(self):
+        return self.__class__.__name__

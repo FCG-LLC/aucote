@@ -5,6 +5,7 @@ In second case the NmapPortInfoTask is responsible for executing TaskMapper
 """
 import logging as log
 import time
+from typing import Optional
 
 from aucote_cfg import cfg
 from scans.task_mapper import TaskMapper
@@ -103,31 +104,37 @@ class Executor(Task):
         finally:
             self.finish_time = time.time()
 
-    def add_task(self, task):
+    def add_task(self, task, manager: Optional[str] = None):
         """
         Add task to aucote pool
 
         Args:
             task (Task):
+            manager: Task manager which should be used to handle task
 
         Returns:
             None
 
         """
-        return self.aucote.add_task(task)
+        if manager is None:
+            manager = self.aucote.TASK_MANAGER_REGULAR
+        return self.aucote.add_task(task, manager=manager)
 
-    def add_async_task(self, task):
+    def add_async_task(self, task, manager: Optional[str] = None):
         """
         Add async task to aucote pool
 
         Args:
             task (Task):
+            manager: Task manager which should be used to handle task
 
         Returns:
             None
 
         """
-        return self.context.add_task(task)
+        if manager is None:
+            manager = self.aucote.TASK_MANAGER_REGULAR
+        return self.context.add_task(task, manager=manager)
 
     @property
     def exploits(self):

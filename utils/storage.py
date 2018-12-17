@@ -99,8 +99,8 @@ columns:
 
 """
 import ipaddress
+import os
 import sqlite3
-import sys
 import time
 import logging as log
 import uuid
@@ -269,7 +269,7 @@ class Storage(DbInterface):
             self.conn = psycopg2.connect(self._conn_string)
         except Exception:
             log.exception('Exception during connecting to database')
-            sys._exit()
+            os._exit()
             raise Exception
         log.debug("Connected to database")
         self._cursor = self.conn.cursor()

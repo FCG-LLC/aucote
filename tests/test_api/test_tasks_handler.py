@@ -5,7 +5,7 @@ import ipaddress
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 from api.tasks_handler import TasksHandler
-from structs import Node, Port, TransportProtocol, ScanContext
+from structs import Node, Port, TransportProtocol, ScanContext, TaskManagerType
 from tools.common.port_task import PortTask
 from utils.async_task_manager import AsyncTaskManager
 
@@ -42,9 +42,20 @@ class TasksHandlerTest(AsyncHTTPTestCase):
                                                          number=task['port'],
                                                          transport_protocol=TransportProtocol.TCP,),
                                                      exploits=[]) for number, task in enumerate(worker_tasks)}
+
+        class test_function:
+            def __str__(self):
+                return 'test_function'
+
+            def __call__(self, *args, **kwargs):
+                pass
+
+        self.tasks.add_crontab_task(test_function(), '0 0 0 0 0')
         self.tasks._task_workers.update({2: None, 3: None, 4: None})
 
-        self.aucote.async_task_manager = self.tasks
+        self.aucote.async_task_managers = {
+            TaskManagerType.SCANNER: self.tasks
+        }
         self.app = Application([
             (r"/api/v1/tasks", TasksHandler, {'aucote': self.aucote})])
         return self.app
@@ -52,20 +63,29 @@ class TasksHandlerTest(AsyncHTTPTestCase):
     def test_tasks(self):
         expected = {
             'unfinished_tasks': 4,
-            'queue': [
-                '[+] [None] PortTask [on 127.0.0.1:45]',
-                '[+] [None] PortTask [on 127.0.0.2:56]',
-                '[+] [None] PortTask [on 127.0.0.3:67]'
-            ],
-            'workers': {
-                'count': 5,
-                'jobs': {
-                    '0': '[+] [None] PortTask [on 127.0.0.4:78]',
-                    '1': '[+] [None] PortTask [on 127.0.0.5:89]',
-                    '2': None,
-                    '3': None,
-                    '4': None
-                }
+            'scanner': {
+                'unfinished_tasks': 3,
+                'queue': [
+                    '[+] [None] PortTask [on 127.0.0.1:45]',
+                    '[+] [None] PortTask [on 127.0.0.2:56]',
+                    '[+] [None] PortTask [on 127.0.0.3:67]'
+                ],
+                'workers': {
+                    'count': 5,
+                    'jobs': {
+                        '0': '[+] [None] PortTask [on 127.0.0.4:78]',
+                        '1': '[+] [None] PortTask [on 127.0.0.5:89]',
+                        '2': None,
+                        '3': None,
+                        '4': None
+                    }
+                },
+                'cron_tasks': [
+                    {
+                        'name': 'test_function',
+                        'cron': '0 0 0 0 0'
+                    }
+                ]
             }
         }
         response = self.fetch('/api/v1/tasks', method='GET')

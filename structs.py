@@ -9,6 +9,7 @@ from ctypes import c_uint32
 from enum import Enum
 import time
 import logging as log
+from typing import Optional
 
 from cpe import CPE
 from tornado import gen
@@ -1029,13 +1030,16 @@ class ScanContext:
         """
         log.debug('Executing post scan hook for scan %s', self.scanner.NAME)
 
-    def add_task(self, task):
+    def add_task(self, task, manager: Optional[str] = None):
+        if manager is None:
+            manager = self.aucote.TASK_MANAGER_REGULAR
+
         self.tasks.append(task)
         if self._cancelled:
             task.cancel()
             return
 
-        self.aucote.add_async_task(task)
+        self.aucote.add_async_task(task, manager=manager)
 
     def is_scan_end(self):
         if self.end is None or self.unfinished_tasks():
@@ -1059,3 +1063,9 @@ class ScanContext:
 
     def cancelled(self):
         return self._cancelled
+
+
+class TaskManagerType(Enum):
+    REGULAR = 'regular'
+    SCANNER = 'scanner'
+    QUICK = 'quick'

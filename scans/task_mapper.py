@@ -62,7 +62,7 @@ class TaskMapper(object):
             task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, port=port.copy(),
                                                          config=EXECUTOR_CONFIG['apps'][app])
 
-            self.context.add_task(task)
+            self.context.add_task(task, manager=self.context.aucote.TASK_MANAGER_QUICK)
 
     async def assign_tasks_for_node(self, node: 'Node') -> None:
         """
@@ -72,6 +72,8 @@ class TaskMapper(object):
         scripts = self._aucote.exploits.find_by_apps(apps)
 
         for app, exploits in scripts.items():
+            if not cfg['tools.{0}.enable'.format(app)]:
+                continue
             exploits = self._filter_exploits(exploits)
 
             log.info("Using %i exploits against %s", len(exploits), node)
@@ -79,7 +81,7 @@ class TaskMapper(object):
             task = EXECUTOR_CONFIG['apps'][app]['class'](context=self.context, exploits=exploits, node=node,
                                                          config=EXECUTOR_CONFIG['apps'][app])
 
-            self.context.add_task(task)
+            self.context.add_task(task, manager=self.context.aucote.TASK_MANAGER_QUICK)
 
     def _filter_exploits(self, exploits):
         return list(filter(self._is_exploit_allowed, exploits))

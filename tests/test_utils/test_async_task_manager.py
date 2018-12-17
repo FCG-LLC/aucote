@@ -15,7 +15,7 @@ class TestAsyncTaskManager(AsyncTestCase):
 
         self.task_1 = MagicMock()
         self.task_2 = MagicMock()
-        AsyncTaskManager._instance = None
+        AsyncTaskManager._instances = {}
         self.task_manager = AsyncTaskManager.instance(parallel_tasks=1)
         self.task_manager._shutdown_condition = MagicMock()
         self.task_manager._stop_condition = MagicMock()
@@ -195,10 +195,10 @@ class TestAsyncTaskManager(AsyncTestCase):
             MagicMock(): 'd',
         }
 
-        expected = self.task_manager._cron_tasks.keys()
+        expected = self.task_manager._cron_tasks.values()
         result = self.task_manager.cron_tasks
 
-        self.assertEqual(result, expected)
+        self.assertCountEqual(result, expected)
 
 
 class _ExecutorTest(AsyncTestCase):
