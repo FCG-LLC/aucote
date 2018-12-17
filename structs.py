@@ -9,6 +9,7 @@ from ctypes import c_uint32
 from enum import Enum
 import time
 import logging as log
+from typing import Optional
 
 from cpe import CPE
 from tornado import gen
@@ -1029,7 +1030,7 @@ class ScanContext:
         """
         log.debug('Executing post scan hook for scan %s', self.scanner.NAME)
 
-    def add_task(self, task, manager: str = None):
+    def add_task(self, task, manager: Optional[str] = None):
         if manager is None:
             manager = self.aucote.TASK_MANAGER_REGULAR
 
