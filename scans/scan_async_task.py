@@ -62,7 +62,7 @@ class ScanAsyncTask(object):
             run_after = cfg['portdetection.{name}.run_after'.format(name=self.NAME)]
             for scan_name in run_after:
 
-                scan_task = self.aucote.async_task_manager.crontab_task(scan_name)
+                scan_task = self.aucote.async_task_manager.cron_task(scan_name)
                 if scan_task is not None:
                     self.aucote.ioloop.add_callback(partial(scan_task, run_now=True))
 

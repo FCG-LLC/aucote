@@ -24,7 +24,9 @@ class TasksHandler(Handler):
                     'jobs': {number: str(worker) if worker is not None else None for number, worker in workers.items()},
                 },
                 'cron_tasks': [
-                    {'name': task.name, 'cron': task.cron} for task in task_manager.cron_tasks
+                    {'name': task.name,
+                     'cron': task.cron,
+                     'is_running': task.is_running()} for task in task_manager.cron_tasks
                 ]
             }
 
