@@ -46,6 +46,9 @@ class Command(object):
         if args is None:
             args = []
 
+        if not timeout:
+            timeout = None
+
         all_args = [self.CMD if self.CMD is not None else cfg['tools.%s.cmd' % self.NAME]]
         all_args.extend(self.COMMON_ARGS)
         all_args.extend(args)
