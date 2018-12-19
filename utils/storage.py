@@ -110,6 +110,7 @@ from math import ceil
 import threading
 
 import psycopg2
+from yoyo import get_backend, read_migrations
 
 from fixtures.exploits import Exploit
 from structs import Port, Node, TransportProtocol, Scan, Vulnerability, PortScan, SecurityScan, NodeScan
@@ -161,28 +162,14 @@ class Storage(DbInterface):
 
     QUERY_GET_LAST_ROWID = "SELECT LASTVAL()"
 
-    QUERY_CREATE_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS scans(rowid SERIAL UNIQUE, protocol int, " \
-                               "scanner_name VARCHAR, scan_start int, scan_end int, UNIQUE (protocol, scanner_name, " \
-                               "scan_start))"
     QUERY_SAVE_SCAN = "INSERT INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (%s, %s, %s, %s)"
     QUERY_UPDATE_SCAN_END = "UPDATE scans set scan_end = %s WHERE ROWID=%s"
 
-    QUERY_CREATE_NODES_TABLE = "CREATE TABLE IF NOT EXISTS nodes_scans(rowid SERIAL UNIQUE, scan_id int, " \
-                               "node_id BIGINT, node_ip text, time int, primary key (scan_id, node_id, node_ip))"
     QUERY_SAVE_NODE = "INSERT INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (%s, %s, %s, %s)"
 
-    QUERY_CREATE_PORTS_TABLE = "CREATE TABLE IF NOT EXISTS ports_scans (rowid SERIAL UNIQUE, scan_id int, " \
-                               "node_id BIGINT, node_ip text, port int, port_protocol int, time int, " \
-                               "primary key (scan_id, node_id, node_ip, port, port_protocol))"
     QUERY_SAVE_PORT = "INSERT INTO ports_scans (scan_id, node_id, node_ip, port, port_protocol, time) " \
                       "VALUES (%s, %s, %s, %s, %s, %s)"
 
-    QUERY_CREATE_SECURITY_SCANS_TABLE = "CREATE TABLE IF NOT EXISTS security_scans (rowid SERIAL UNIQUE, " \
-                                        "scan_id int, exploit_id int, exploit_app text, exploit_name text, " \
-                                        "node_id BIGINT, node_ip text, port_protocol int, port_number int, " \
-                                        "sec_scan_start float, sec_scan_end float,"\
-                                        " PRIMARY KEY (scan_id, exploit_id, node_id, node_ip, port_protocol, " \
-                                        "port_number))"
     QUERY_SAVE_SECURITY_SCAN_DETAIL = "INSERT INTO security_scans (scan_id, exploit_id, exploit_app," \
                                       " exploit_name, node_id, node_ip, port_protocol, port_number) VALUES " \
                                       "(%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (scan_id, exploit_id, node_id, " \
@@ -202,12 +189,6 @@ class Storage(DbInterface):
                                " node_id, node_ip, port_protocol, port_number, sec_scan_start, sec_scan_end) " \
                                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
 
-    QUERY_CREATE_VULNERABILITIES_TABLE = "CREATE TABLE IF NOT EXISTS vulnerabilities(rowid SERIAL UNIQUE, " \
-                                         "scan_id int, node_id BIGINT, " \
-                                         "node_ip text, port_protocol int, port int, vulnerability_id int, " \
-                                         "vulnerability_subid int, cve text, cvss text, output text, time int, " \
-                                         "expiration_time int, primary key(scan_id, node_id, " \
-                                         "node_ip, port_protocol, port, vulnerability_id, vulnerability_subid))"
     QUERY_SAVE_VULNERABILITY = "INSERT INTO vulnerabilities (scan_id, node_id, node_ip, port_protocol, port, " \
                                "vulnerability_id, vulnerability_subid, cve, cvss, output, time) " \
                                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
@@ -216,11 +197,6 @@ class Storage(DbInterface):
                                             "node_id=%s AND node_ip=%s AND port_protocol=%s AND port=%s AND " \
                                             "vulnerability_id=%s AND vulnerability_subid=%s"
 
-    QUERY_CREATE_CHANGES_TABLE = "CREATE TABLE IF NOT EXISTS changes(rowid SERIAL PRIMARY KEY, type int, " \
-                                 "vulnerability_id int, vulnerability_subid int, previous_id int null, " \
-                                 "current_id int null, " \
-                                 "time int, UNIQUE(type, vulnerability_id, vulnerability_subid, previous_id, " \
-                                 "current_id, time))"
     QUERY_SAVE_CHANGE = "INSERT INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
                         "current_id, time) VALUES (%s, %s, %s, %s, %s, %s)"
 
@@ -255,7 +231,7 @@ class Storage(DbInterface):
         Initialize database schema
         """
         log.debug('Initializing database schema')
-        self.execute(self._create_tables())
+        self.migrate()
         self.execute(self._clear_security_scans())
 
     def _get_last_rowid(self):
@@ -532,20 +508,6 @@ class Storage(DbInterface):
         """
         log.debug('Cleaning scan details')
         return self.QUERY_CLEAR_SECURITY_SCANS,
-
-    def _create_tables(self) -> list:
-        """
-        List of queries for table creation
-
-        """
-        queries = [(self.QUERY_CREATE_SCANS_TABLE,),
-                   (self.QUERY_CREATE_SECURITY_SCANS_TABLE,),
-                   (self.QUERY_CREATE_PORTS_TABLE,),
-                   (self.QUERY_CREATE_NODES_TABLE,),
-                   (self.QUERY_CREATE_VULNERABILITIES_TABLE,),
-                   (self.QUERY_CREATE_CHANGES_TABLE,)]
-
-        return queries
 
     def execute(self, query: [list, tuple, str]) -> list:
         """
@@ -1141,3 +1103,13 @@ class Storage(DbInterface):
             self.execute(('DROP TABLE IF EXISTS {}'.format(key), ))
 
         self.execute(('DROP TABLE IF EXISTS changes',))
+        self.execute(('DROP TABLE IF EXISTS _yoyo_log',))
+        self.execute(('DROP TABLE IF EXISTS _yoyo_migration',))
+        self.execute(('DROP TABLE IF EXISTS _yoyo_version',))
+        self.execute(('DROP TABLE IF EXISTS yoyo_lock',))
+
+    def migrate(self):
+        backend = get_backend(self._conn_string)
+        migrations = read_migrations('../migrations')
+        with backend.lock():
+            backend.apply_migrations(backend.to_apply(migrations), force=True)
