@@ -1110,6 +1110,6 @@ class Storage(DbInterface):
 
     def migrate(self):
         backend = get_backend(self._conn_string)
-        migrations = read_migrations('../migrations')
+        migrations = read_migrations(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../migrations'))
         with backend.lock():
             backend.apply_migrations(backend.to_apply(migrations), force=True)
