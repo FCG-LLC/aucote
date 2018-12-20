@@ -14,7 +14,7 @@ services:
     volumes:
       - ./:/src
     environment:
-      AUCOTE_TEST_POSTGRES: postgresql://test_aucote:test_aucote@postgres/test_aucote'
+      AUCOTE_TEST_POSTGRES: 'postgresql://test_aucote:test_aucote@postgres/test_aucote'
       LD_LIBRARY_PATH: /usr/local/lib64
     entrypoint:
       - .ci/run_all.sh

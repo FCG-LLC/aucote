@@ -6,6 +6,18 @@ GITHUB_TOKEN=263f9ede48d798f8d1f92bbefe34f34064ec6f3f
 GITHUB_REPO=https://api.github.com/repos/FCG-LLC/aucote
 EXIT_VALUE=0
 
+function wait_on_jenkins {
+    for i in {1..120}
+    do
+        psql ${AUCOTE_TEST_POSTGRES} -c "SELECT 1"
+        if [[ $? -eq 0 ]]
+        then
+            return
+        fi
+        sleep 1
+    done
+}
+
 function set_git_status {
     STATE=$1
     TARGET_URL=$2
@@ -34,6 +46,8 @@ function check_status {
 
     return ${RETURN_VALUE}
 }
+
+wait_on_jenkins
 
 set_git_status pending "${BUILD_URL}" "Status checks executed" "status checks"
 
