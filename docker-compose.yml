@@ -14,7 +14,7 @@ services:
     volumes:
       - ./:/src
     environment:
-      AUCOTE_TEST_POSTGRES: "dbname=test_aucote user=test_aucote password=test_aucote host=postgres port=5432"
+      AUCOTE_TEST_POSTGRES: 'postgresql://test_aucote:test_aucote@postgres/test_aucote'
       LD_LIBRARY_PATH: /usr/local/lib64
     entrypoint:
       - .ci/run_all.sh
