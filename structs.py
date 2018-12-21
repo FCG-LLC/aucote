@@ -182,7 +182,7 @@ class NodeScan(object):
 
     """
 
-    def __init__(self, node, scan, timestamp, end_timestamp, rowid=None):
+    def __init__(self, node, scan, timestamp, end_timestamp=None, rowid=None):
         self.node = node
         self.scan = scan
         self.timestamp = timestamp

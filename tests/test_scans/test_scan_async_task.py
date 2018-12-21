@@ -222,7 +222,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
 
         await self.thread()
 
-        self.thread.run.assert_called_once_with()
+        self.thread.run.assert_called_once_with(resume=False)
 
     @patch('scans.scan_async_task.cfg', new_callable=Config)
     @patch('scans.scan_async_task.partial')
