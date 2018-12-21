@@ -5,6 +5,7 @@ This module contains class responsible scanning tasks.
 import logging as log
 import time
 from functools import partial
+from typing import Optional
 
 from tornado.locks import Event
 
@@ -48,7 +49,7 @@ class ScanAsyncTask(object):
             raise Exception("Scan context already exists")
         self.context = ScanContext(aucote=self.aucote, scanner=self)
 
-    async def __call__(self):
+    async def __call__(self, resume=False):
         try:
             self._init()
 
@@ -57,7 +58,7 @@ class ScanAsyncTask(object):
                 return
             log.info("Starting %s scanner", self.NAME)
 
-            result = await self.run()
+            result = await self.run(resume=resume)
 
             run_after = cfg['portdetection.{name}.run_after'.format(name=self.NAME)]
             for scan_name in run_after:
@@ -72,7 +73,7 @@ class ScanAsyncTask(object):
             self.context = None
             self.expire_vulnerabilities()
 
-    async def run(self):
+    async def run(self, **kwargs):
         raise NotImplementedError()
 
     @property
@@ -86,7 +87,7 @@ class ScanAsyncTask(object):
         """
         return self._shutdown_condition
 
-    async def _get_nodes_for_scanning(self, timestamp=None, filter_out_storage=True):
+    async def _get_nodes_for_scanning(self, timestamp=None, filter_out_storage=True, scan=None):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -99,10 +100,16 @@ class ScanAsyncTask(object):
             list
 
         """
-        nodes = {
-            'snmp': await self.topdis.get_snmp_nodes()
-        }
-        nodes['hosts'] = await self.topdis.get_all_nodes() - nodes['snmp']
+        if scan is not None:
+            nodes = {
+                'snmp': set(self.storage.get_non_finished_nodes(scan)),
+                'hosts': set()
+            }
+        else:
+            nodes = {
+                'snmp': await self.topdis.get_snmp_nodes()
+            }
+            nodes['hosts'] = await self.topdis.get_all_nodes() - nodes['snmp']
 
         if filter_out_storage:
             storage_nodes = set(self.storage.get_nodes(
@@ -396,3 +403,14 @@ class ScanAsyncTask(object):
 
     def __str__(self):
         return self.__class__.__name__
+
+    def get_last_scan(self) -> Optional['Scan']:
+        """
+        Get last scan from database
+
+        FixMe: Doesn't work if current scan is already in database
+        """
+        scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=1)
+        if not scans:
+            return None
+        return scans

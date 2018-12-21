@@ -52,8 +52,8 @@ class ToucanMonitor:
                 for callback in details['callbacks']:
                     try:
                         callback(key=key, value=value)
-                    except Exception:  # pylint: disable=broad-except
-                        failed_callbacks.append(str(Exception))
+                    except Exception as exception:  # pylint: disable=broad-except
+                        failed_callbacks.append(str(exception))
 
                 if failed_callbacks:
                     log.error('\n'.join(failed_callbacks))

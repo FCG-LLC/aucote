@@ -27,7 +27,7 @@ class ToolsScanner(ScanAsyncTask):
         self.NAME = name  # Set scanner name before initializing parent constructor
         super(ToolsScanner, self).__init__(*args, **kwargs)
 
-    async def run(self):
+    async def run(self, resume=False):
         """
         Run scan by using tools and historical port data
 
@@ -41,9 +41,11 @@ class ToolsScanner(ScanAsyncTask):
             await self.update_scan_status(ScanStatus.IN_PROGRESS)
             self.shutdown_condition.clear()
             log.info("Starting security scan")
-            last_scan_start = self.get_last_scan_start()
+            last_scan = self.get_last_scan()
+            last_scan_start = last_scan.start if last_scan is not None else 0
 
-            nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, filter_out_storage=False)
+            nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, filter_out_storage=False,
+                                                       scan=last_scan if resume else None)
             self.storage.save_scan(self.scan)
             self.storage.save_nodes(nodes, scan=self.scan)
 
@@ -73,8 +75,3 @@ class ToolsScanner(ScanAsyncTask):
         return list(set(self.storage.get_ports_by_nodes(nodes=nodes, timestamp=timestamp, protocol=self.PROTOCOL,
                                                         portdetection_only=True)))
 
-    def get_last_scan_start(self):
-        scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=1)
-        if not scans:
-            return 0
-        return scans[0].start

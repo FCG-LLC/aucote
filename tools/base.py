@@ -46,3 +46,11 @@ class Tool(Task):
 
     def additional_info(self):
         return "on {port}".format(port=self.port)
+
+    @property
+    def node(self) -> 'Node':
+        """
+        Node which is under testing
+        """
+
+        return self._port.node

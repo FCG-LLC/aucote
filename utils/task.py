@@ -7,6 +7,7 @@ import logging as log
 import time
 from asyncio import sleep
 from multiprocessing import Lock
+from structs import Node
 
 
 class Task(object):
@@ -202,6 +203,50 @@ class Task(object):
         """
         return vuln
 
+    def _extract_nodes(self):
+        nodes = set()
+        _nodes = set()
+        _ports = set()
+
+        if hasattr(self, 'node'):
+            _nodes = getattr(self, 'node')
+
+        if hasattr(self, 'nodes'):
+            _nodes = getattr(self, 'nodes')
+
+        if not isinstance(_nodes, (list, set, tuple)):
+            _nodes = {_ports}
+
+        nodes.update(_nodes)
+
+        if hasattr(self, 'port'):
+            _ports = getattr(self, 'port')
+
+        if hasattr(self, 'ports'):
+            _ports = getattr(self, 'ports')
+
+        if not isinstance(_ports, (list, set, tuple)):
+            _ports = {_ports}
+
+        nodes.update({port.node for port in _ports})
+
+        return list(nodes)
+
+    async def post_run(self):
+        nodes = self._extract_nodes()
+        for node in nodes:
+            tasks = self.context.unfinished_tasks_for_node(node)
+
+            if self in tasks:
+                tasks.remove(self)
+
+            if not tasks:
+                self.aucote.storage.update_node_scan(self.context, node)
+                log.info('All tasks for node %s were completed', node)
+
+    def process_node(self, node: Node):
+        return node in self._extract_nodes()
+
 
 class TaskWrapper(Task):
     def __init__(self, context, function, *args, **kwargs):
@@ -251,3 +296,4 @@ class TaskWrapper(Task):
 
     def kill(self):
         self.function.__self__.kill()
+

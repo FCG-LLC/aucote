@@ -50,6 +50,7 @@ class _Executor(Thread):
         """
         try:
             await self.task()
+            await self.task.post_run()
         except:
             log.exception("Exception while executing task on worker %s", self.number)
         finally:

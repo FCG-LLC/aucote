@@ -12,6 +12,7 @@ import sys
 import fcntl
 
 import signal
+from typing import Optional
 from unittest.mock import MagicMock
 
 from functools import partial
@@ -117,6 +118,7 @@ class Aucote(object):
 
     SCAN_CONTROL_START = re.compile(r'portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control\.start')
     SCAN_CONTROL_STOP = re.compile(r'portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control\.stop')
+    SCAN_CONTROL_RESUME = re.compile(r'portdetection\.(?P<scan_name>[a-zA-Z0-9_]+)\.control\.resume')
 
     def __init__(self, exploits, kudu_queue, tools_config):
         self.exploits = exploits
@@ -174,8 +176,10 @@ class Aucote(object):
         if cfg.toucan:
             start_key = 'portdetection.{}.control.start'.format(scanner.NAME)
             stop_key = 'portdetection.{}.control.stop'.format(scanner.NAME)
+            resume_key = 'portdetection.{}.control.resume'.format(scanner.NAME)
             cfg.toucan_monitor.register_toucan_key(start_key, callback=self.start_scan, default=False, add_prefix=True)
             cfg.toucan_monitor.register_toucan_key(stop_key, callback=self.stop_scan, default=False, add_prefix=True)
+            cfg.toucan_monitor.register_toucan_key(resume_key, callback=self.resume_scan, default=False, add_prefix=True)
 
     async def run_scan(self, as_service=True):
         """
@@ -188,6 +192,7 @@ class Aucote(object):
         try:
             cfg.register_action(self.SCAN_CONTROL_START, self.start_scan)
             cfg.register_action(self.SCAN_CONTROL_STOP, self.stop_scan)
+            cfg.register_action(self.SCAN_CONTROL_RESUME, self.resume_scan)
             
             with self._storage_thread, self._tftp_thread:
                 scan_task_manager.clear()
@@ -343,7 +348,7 @@ class Aucote(object):
     def _get_scan_name(self, regex, key):
         match = regex.match(key)
         if match is None:
-            raise KeyError('Cannot find scan_name for key %s'.format(key))
+            raise KeyError('Cannot find scan_name for key {}'.format(key))
 
         return match.groupdict()['scan_name']
 
@@ -371,6 +376,15 @@ class Aucote(object):
             log.debug('Stopping %s basing on Toucan request', scan_name)
             cfg.toucan.put(key, False)
             self.ioloop.add_callback(self.async_task_managers[TaskManagerType.SCANNER].cron_task(scan_name).func.stop)
+
+    def resume_scan(self, key, value, scan_name: Optional[str] = None):
+        scan_name = self._get_scan_name(self.SCAN_CONTROL_RESUME, key) if scan_name is None else scan_name
+
+        if value is True:
+            log.debug('Resuming %s basing on Toucan request', scan_name)
+            cfg.toucan.put(key, False)
+            self.ioloop.add_callback(partial(
+                self.async_task_managers[TaskManagerType.SCANNER].cron_task(scan_name), skip_cron=True, resume=True))
 
 
 # =================== start app =================

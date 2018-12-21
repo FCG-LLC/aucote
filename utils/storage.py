@@ -24,10 +24,10 @@ columns:
 nodes_scans
 -----------
 
-+--------+---------+---------+---------+------+
-| rowid  | node_id | node_ip | scan_id | time |
-+========+=========+=========+=========+======+
-+--------+---------+---------+---------+------+
++--------+---------+---------+---------+------+---------------+
+| rowid  | node_id | node_ip | scan_id | time | end_timestamp |
++========+=========+=========+=========+======+===============+
++--------+---------+---------+---------+------+---------------+
 
 columns:
  - rowid (int) - row identifier
@@ -35,6 +35,7 @@ columns:
  - node_ip (string) - node ip address
  - scan_id (int) - scan identifier (scans.rowid)
  - time (int) - node detecting time
+ - end_timestamp (int) - node scan finish time
 
 ports_scans
 -----------
@@ -108,6 +109,7 @@ import uuid
 from math import ceil
 
 import threading
+from typing import Optional
 
 import psycopg2
 from yoyo import get_backend, read_migrations
@@ -135,7 +137,7 @@ class Storage(DbInterface):
             'order': 'ORDER BY scan_start DESC, scan_end DESC'
         },
         'nodes_scans': {
-            'columns': ['rowid', 'node_id', 'node_ip', 'scan_id', 'time'],
+            'columns': ['rowid', 'node_id', 'node_ip', 'scan_id', 'time', 'end_timestamp'],
             'factor': '_nodes_scan_from_row',
             'order': 'ORDER BY time DESC'
         },
@@ -860,7 +862,7 @@ class Storage(DbInterface):
 
     def _nodes_scan_from_row(self, row: list) -> 'NodeScan':
         return NodeScan(node=Node(node_id=row[1], ip=ipaddress.ip_address(row[2])), rowid=row[0], timestamp=row[4],
-                        scan=self.get_scan_by_id(row[3]))
+                        scan=self.get_scan_by_id(row[3]), end_timestamp=row[5])
 
     def _port_scan_from_row(self, row: list) -> 'PortScan':
         return PortScan(port=Port(node=Node(node_id=row[1], ip=ipaddress.ip_address(row[2])),
@@ -1113,3 +1115,12 @@ class Storage(DbInterface):
         migrations = read_migrations(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../migrations'))
         with backend.lock():
             backend.apply_migrations(backend.to_apply(migrations), force=True)
+
+    def update_node_scan(self, context: 'ScanContext', node: Node, timestamp: Optional[float] = None):
+        scan_id = self.get_scan_id(context.scan)
+        return self.execute(('UPDATE nodes_scans SET end_timestamp=%s WHERE scan_id=%s AND node_id=%s AND node_ip=%s',
+                (timestamp or int(time.time()), scan_id, node.id, str(node.ip))))
+
+    def get_non_finished_nodes(self, scan: 'Scan'):
+        return [node_scan.node for node_scan in self.select(
+            'nodes_scans', where={'operator': {'=': {'end_timestamp': None, 'scan_id': scan.rowid}}})]
