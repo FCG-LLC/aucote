@@ -9,10 +9,10 @@ Currently storage consists of 5 tables
 scans
 -----
 
-+-------+----------+--------------+------------+----------+
-| rowid | protocol | scanner_name | scan_start | scan_end |
-+=======+==========+==============+============+==========+
-+-------+----------+--------------+------------+----------+
++-------+----------+--------------+------------+----------+--------+
+| rowid | protocol | scanner_name | scan_start | scan_end | resume |
++=======+==========+==============+============+==========+========+
++-------+----------+--------------+------------+----------+--------+
 
 columns:
  - rowid (int) - row identifier
@@ -20,6 +20,7 @@ columns:
  - scanner_name (string) - name of scanner
  - scan_start (int) - scan start timestamp
  - scan_end (int) - scan end timestamp
+ - resume (boolean) - true if scan is resumption scan
 
 nodes_scans
 -----------
@@ -132,7 +133,7 @@ class Storage(DbInterface):
 
     TABLES = {
         'scans': {
-            'columns': ['rowid', 'protocol', 'scanner_name', 'scan_start', 'scan_end'],
+            'columns': ['rowid', 'protocol', 'scanner_name', 'scan_start', 'scan_end', 'resume'],
             'factor': '_scan_from_row',
             'order': 'ORDER BY scan_start DESC, scan_end DESC'
         },
@@ -164,7 +165,8 @@ class Storage(DbInterface):
 
     QUERY_GET_LAST_ROWID = "SELECT LASTVAL()"
 
-    QUERY_SAVE_SCAN = "INSERT INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (%s, %s, %s, %s)"
+    QUERY_SAVE_SCAN = "INSERT INTO scans (protocol, scanner_name, scan_start, scan_end, resume) " \
+                      "VALUES (%s, %s, %s, %s, %s)"
     QUERY_UPDATE_SCAN_END = "UPDATE scans set scan_end = %s WHERE ROWID=%s"
 
     QUERY_SAVE_NODE = "INSERT INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (%s, %s, %s, %s)"
@@ -769,7 +771,8 @@ class Storage(DbInterface):
         Queries for saving scan into database
 
         """
-        return self.QUERY_SAVE_SCAN, (self._protocol_to_iana(scan.protocol), scan.scanner, scan.start, scan.end)
+        return self.QUERY_SAVE_SCAN, (self._protocol_to_iana(scan.protocol), scan.scanner, scan.start, scan.end,
+                                      scan.resume)
 
     def _update_scan(self, scan: 'Scan') -> tuple:
         return self.QUERY_UPDATE_SCAN_END, (scan.end, scan.rowid)
@@ -801,12 +804,22 @@ class Storage(DbInterface):
         _scan = self.select("scans", limit=1, protocol=scan.protocol, scanner_name=scan.scanner, scan_start=scan.start)
         return _scan[0].rowid if _scan else None
 
-    def get_scans(self, protocol: 'TransportProtocol', scanner_name: 'str', amount: int = 2) -> list:
+    def get_scans(self, protocol: 'TransportProtocol', scanner_name: 'str', amount: int = 2,
+                  resume: Optional[bool] = None) -> list:
         """
         Obtain scans from storage. Scans are taken from newest to oldest
 
         """
-        return self.select("scans", protocol=protocol, limit=amount, scanner_name=scanner_name)
+        kwargs = {
+            'protocol': protocol,
+            'limit': amount,
+            'scanner_name': scanner_name
+        }
+
+        if resume is not None:
+            kwargs['resume'] = resume
+
+        return self.select("scans", **kwargs)
 
     def get_scans_by_node(self, node: 'Node', scan: 'Scan') -> list:
         """
@@ -858,7 +871,8 @@ class Storage(DbInterface):
         return self.execute(self._save_vulnerabilities(vulnerabilities=vulnerabilities, scan=scan))
 
     def _scan_from_row(self, row: list) -> 'Scan':
-        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]), scanner=row[2], rowid=row[0])
+        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]), scanner=row[2], rowid=row[0],
+                    resume=row[5])
 
     def _nodes_scan_from_row(self, row: list) -> 'NodeScan':
         return NodeScan(node=Node(node_id=row[1], ip=ipaddress.ip_address(row[2])), rowid=row[0], timestamp=row[4],

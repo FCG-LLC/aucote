@@ -58,6 +58,11 @@ class ScanAsyncTask(object):
                 return
             log.info("Starting %s scanner", self.NAME)
 
+            if resume:
+                self.scan.resume = True
+            else:
+                self.scan.resume = False
+
             result = await self.run(resume=resume)
 
             run_after = cfg['portdetection.{name}.run_after'.format(name=self.NAME)]
@@ -105,6 +110,9 @@ class ScanAsyncTask(object):
                 'snmp': set(self.storage.get_non_finished_nodes(scan)),
                 'hosts': set()
             }
+
+            for node in nodes['snmp']:
+                node.scan = self.scan
         else:
             nodes = {
                 'snmp': await self.topdis.get_snmp_nodes()
@@ -417,3 +425,14 @@ class ScanAsyncTask(object):
             return scans[1]
 
         return scans[0]
+
+    def get_previous_non_resumed_scan(self):
+        scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=2, resume=False)
+
+        if not scans:
+            return None
+
+        if len(scans) == 1:
+            return None
+
+        return scans[1]

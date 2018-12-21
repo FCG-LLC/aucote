@@ -240,7 +240,7 @@ class Task(object):
             if self in tasks:
                 tasks.remove(self)
 
-            if not tasks:
+            if not tasks and not self.context.cancelled:
                 self.aucote.storage.update_node_scan(self.context, node)
                 log.info('All tasks for node %s were completed', node)
 

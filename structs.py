@@ -23,7 +23,7 @@ class Scan(object):
 
     """
 
-    def __init__(self, start=None, end=None, protocol=None, scanner='', rowid=None, init=True):
+    def __init__(self, start=None, end=None, protocol=None, scanner='', rowid=None, init=True, resume=False):
         """
         Args:
             protocol TransportProtocol: scan protocol
@@ -40,6 +40,7 @@ class Scan(object):
         self.end = end
         self._protocol = protocol
         self._scanner = scanner
+        self.resume = resume
 
     @property
     def start(self) -> float:
