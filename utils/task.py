@@ -215,7 +215,7 @@ class Task(object):
             _nodes = getattr(self, 'nodes')
 
         if not isinstance(_nodes, (list, set, tuple)):
-            _nodes = {_ports}
+            _nodes = {_nodes}
 
         nodes.update(_nodes)
 
@@ -228,7 +228,7 @@ class Task(object):
         if not isinstance(_ports, (list, set, tuple)):
             _ports = {_ports}
 
-        nodes.update({port.node for port in _ports})
+        nodes.update({port.node for port in _ports if port is not None})
 
         return list(nodes)
 
