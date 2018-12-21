@@ -244,7 +244,7 @@ class Task(object):
                 self.aucote.storage.update_node_scan(self.context, node)
                 log.info('All tasks for node %s were completed', node)
 
-    def process_node(self, node: Node):
+    def is_node_processed(self, node: Node):
         return node in self._extract_nodes()
 
 

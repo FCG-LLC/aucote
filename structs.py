@@ -1021,7 +1021,7 @@ class ScanContext:
         return_value = []
 
         for task in self.tasks:
-            if task.process_node(node) and not task.has_finished():
+            if task.is_node_processed(node) and not task.has_finished():
                 return_value.append(task)
 
         return return_value
