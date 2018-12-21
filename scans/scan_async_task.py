@@ -407,10 +407,13 @@ class ScanAsyncTask(object):
     def get_last_scan(self) -> Optional['Scan']:
         """
         Get last scan from database
-
-        FixMe: Doesn't work if current scan is already in database
         """
-        scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=1)
+        scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=2)
+
         if not scans:
             return None
-        return scans
+
+        if scans[0].rowid == self.scan.rowid:
+            return scans[1]
+
+        return scans[0]
