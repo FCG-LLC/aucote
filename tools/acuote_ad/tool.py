@@ -24,7 +24,7 @@ class AucoteActiveDirectory(Tool):
     """
     def __init__(self, node=None, port=None, *args, **kwargs):
         super(AucoteActiveDirectory, self).__init__(port=port, *args, **kwargs)
-        self.node = node
+        self._node = node
 
     async def call(self, *args, **kwargs):
         dns_servers = cfg['tools.common.active-directory.dns_servers']._cfg
@@ -33,14 +33,14 @@ class AucoteActiveDirectory(Tool):
         password = cfg['tools.common.active-directory.password']
         exploits = [self.aucote.exploits.find('aucote-active-directory', 'enum4linux')]
 
-        if not self.node:
+        if not self._node:
             for domain_name in domain_names:
                 self.context.add_task(Enum4linuxTask(domain=domain_name, username=username, password=password,
                                                      command=Enum4linuxBase(), context=self.context,
                                                      port=self._port, exploits=exploits))
             return
 
-        if str(self.node.ip) not in dns_servers:
+        if str(self._node.ip) not in dns_servers:
             return
 
         for domain_name in domain_names:
@@ -50,7 +50,7 @@ class AucoteActiveDirectory(Tool):
                 nodes.update(await self.resolve_nodes(dns_server=dns_server, domain_name=domain_name,
                                                       current_nodes=current_nodes))
 
-            port = SpecialPort(node=self.node, transport_protocol=TransportProtocol.TCP)
+            port = SpecialPort(node=self._node, transport_protocol=TransportProtocol.TCP)
             port.scan = self.scan
 
             self.context.add_task(AucoteActiveDirectoryTask(
@@ -78,4 +78,8 @@ class AucoteActiveDirectory(Tool):
         return nodes
 
     def additional_info(self):
-        return "on {port}".format(port=self.port if self.port else self.node)
+        return "on {port}".format(port=self.port if self.port else self._node)
+
+    @property
+    def node(self):
+        return self.port.node if self.port else self._node
