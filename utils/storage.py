@@ -524,6 +524,8 @@ class Storage(DbInterface):
             while True:
                 try:
                     # FixMe: Possible postgres crash in middle of executions
+                    # Probability: Low
+                    # Effect: Data deintegration
                     if isinstance(query, list):
                         self.log.debug("[%s] executing %i queries", log_id, len(query))
                         return [self._fetchall(row) for row in query]
