@@ -101,9 +101,8 @@ columns:
 
 """
 import ipaddress
-import os
-import sqlite3
 import time
+import os
 import logging as log
 import uuid
 
@@ -129,7 +128,6 @@ class Storage(DbInterface):
     """
 
     DRIVER_POSTGRES = 'postgres'
-    DRIVER_SQLITE3 = 'sqlite3'
 
     TABLES = {
         'scans': {
@@ -204,7 +202,7 @@ class Storage(DbInterface):
     QUERY_SAVE_CHANGE = "INSERT INTO changes(type, vulnerability_id, vulnerability_subid, previous_id, " \
                         "current_id, time) VALUES (%s, %s, %s, %s, %s, %s)"
 
-    def __init__(self, conn_string: str = "storage.sqlite3", nodes_limit: int = 200):
+    def __init__(self, conn_string: str = "postgresql://aucote:aucote@postgres/aucote", nodes_limit: int = 200):
 
         """
         Init storage
@@ -246,12 +244,13 @@ class Storage(DbInterface):
             raise Exception("Connection from incorrect thread")
 
         log.debug("Connecting to database")
-        try:
-            self.conn = psycopg2.connect(self._conn_string)
-        except Exception:
-            log.exception('Exception during connecting to database')
-            os._exit()
-            raise Exception
+        while True:
+            try:
+                self.conn = psycopg2.connect(self._conn_string)
+                break
+            except Exception as exception:
+                log.error('Exception during connecting to database: %s', exception)
+                time.sleep(10)
         log.debug("Connected to database")
         self._cursor = self.conn.cursor()
         self._cursor = self.conn.cursor()
@@ -522,17 +521,18 @@ class Storage(DbInterface):
             return self._thread.execute(query)
         else:
             log_id = uuid.uuid4()
-            try:
-                if isinstance(query, list):
-                    self.log.debug("[%s] executing %i queries", log_id, len(query))
-                    return [self._fetchall(row) for row in query]
-                else:
-                    self.log.debug("[%s] executing query: %s", log_id, query)
-                    return self._fetchall(query)
-            except sqlite3.Error as exception:
-                self.log.error("[%s] During execution of %s", log_id, query)
-                self.log.exception("[%s] exception occured:", log_id)
-                raise exception
+            while True:
+                try:
+                    # FixMe: Possible postgres crash in middle of executions
+                    if isinstance(query, list):
+                        self.log.debug("[%s] executing %i queries", log_id, len(query))
+                        return [self._fetchall(row) for row in query]
+                    else:
+                        self.log.debug("[%s] executing query: %s", log_id, query)
+                        return self._fetchall(query)
+                except psycopg2.InterfaceError as exception:
+                    log.warning('Exception during executing query: %s', exception)
+                    self.connect()
 
     def _fetchall(self, query):
         try:
