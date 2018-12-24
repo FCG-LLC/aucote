@@ -52,9 +52,7 @@ class Scanner(ScanAsyncTask):
             log.info("Starting port scan")
 
             if resume:
-                previous_scan = self.storage.get_scans(protocol=self.scan.protocol,
-                                                       scanner_name=self.scan.scanner,
-                                                       amount=1)[0]
+                previous_scan = self.get_last_scan()
                 log.info('Resuming scan %s with rowid %s', previous_scan.scanner, previous_scan.rowid)
             else:
                 previous_scan = None

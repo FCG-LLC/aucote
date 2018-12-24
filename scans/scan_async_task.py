@@ -412,22 +412,25 @@ class ScanAsyncTask(object):
     def __str__(self):
         return self.__class__.__name__
 
-    def get_last_scan(self) -> Optional['Scan']:
+    def get_last_scan(self, resume: Optional[bool] = None) -> Optional['Scan']:
         """
         Get last scan from database
         """
-        scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=2)
+        scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=2, resume=resume)
 
         if not scans:
             return None
 
         if scans[0].rowid == self.scan.rowid:
+            if len(scans) == 1:
+                return None
+
             return scans[1]
 
         return scans[0]
 
     def get_previous_non_resumed_scan(self):
-        scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=2, resume=False)
+        scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=3, resume=False)
 
         if not scans:
             return None
@@ -435,4 +438,9 @@ class ScanAsyncTask(object):
         if len(scans) == 1:
             return None
 
-        return scans[1]
+        if scans[1].rowid == self.scan.rowid:
+            if len(scans) == 2:
+                return None
+
+        return scans[2]
+
