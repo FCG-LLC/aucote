@@ -28,7 +28,7 @@ class PortsScan(PortScanTask):
         rate = self.scan_rate()
 
         if rate == '0':
-            raise StopCommandException("Cancel scan due to low throttling rate {}".format(throttling))
+            raise StopCommandException("Cancel scan due to low throttling rate")
 
         if self.ipv6:
             args.append('-6')

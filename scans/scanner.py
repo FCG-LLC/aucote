@@ -19,6 +19,7 @@ from scans.executor import Executor
 from scans.scan_async_task import ScanAsyncTask
 from structs import ScanStatus, PhysicalPort, Scan, TransportProtocol, PortDetectionChange, TaskManagerType
 from tools.nmap.tool import NmapTool
+from utils.task import TaskWrapper
 
 
 class Scanner(ScanAsyncTask):
@@ -102,8 +103,11 @@ class Scanner(ScanAsyncTask):
                     continue
 
                 if protocol == TransportProtocol.UDP:
-                    await self._scan_ports(ports=await scanner.scan_ports(dict_nodes[ip_protocol]),
-                                           scan_only=scan_only)
+                    task = TaskWrapper(self.context, scanner.scan_ports, dict_nodes[ip_protocol])
+                    self.context.add_task(task, TaskManagerType.SCANNER)
+                    ports = await task.get_result()
+
+                    await self._scan_ports(ports=ports, scan_only=scan_only)
                 else:
                     for node in dict_nodes[ip_protocol]:
                         if self.context.cancelled():

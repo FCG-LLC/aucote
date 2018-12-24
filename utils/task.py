@@ -5,8 +5,8 @@ All Task based class should override __call__ function
 """
 import logging as log
 import time
-
-from database.serializer import Serializer
+from asyncio import sleep
+from multiprocessing import Lock
 
 
 class Task(object):
@@ -26,6 +26,7 @@ class Task(object):
         self._name = None
         self._cancelled = False
         self.executor = None
+        self._lock = Lock()
 
     @property
     def cancelled(self):
@@ -200,3 +201,53 @@ class Task(object):
         against already found vulnerabilities. Default behavior is to do nothing.
         """
         return vuln
+
+
+class TaskWrapper(Task):
+    def __init__(self, context, function, *args, **kwargs):
+        """
+        Task wrapper which allows to wait on task (Now this is used only by UDPScanner)
+
+        For now only Task and PortScanTask can be used as input of this function.
+        Function will be executed by TaskExecutor with *args and **kwargs
+
+        ToDo: Rewrite Tasks executing and task management.
+
+        """
+        self.function = function
+        self.kwargs = kwargs
+        self.args = args
+        self._result = None
+        self._finished = False  # Ensure that we don't interract with Task
+        self._exception = None
+        super(TaskWrapper, self).__init__(context=context)
+
+    async def execute(self, *args, **kwargs):
+        try:
+            result = await self.function(*self.args, **self.kwargs)
+            with self._lock:
+                self._result = result
+        except Exception as exception:
+            with self._lock:
+                self._finished = True
+                self._exception = exception
+            raise exception
+
+    async def get_result(self):
+        """
+        Get result of function execution or raise exception if function crashed
+        """
+        while True:
+            with self._lock:
+                if self._finished:
+                    break
+            await sleep(10)
+
+        with self._lock:
+            if self._exception:
+                raise self._exception
+
+            return self._result
+
+    def kill(self):
+        self.function.__self__.kill()
