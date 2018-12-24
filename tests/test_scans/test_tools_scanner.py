@@ -32,7 +32,7 @@ class ToolsScannerTest(AsyncTestCase):
         await self.task.run()
 
         mock_executor.assert_called_once_with(context=self.task.context, nodes=nodes, ports=ports)
-        self.task.get_ports_for_scan.assert_called_once_with(nodes, timestamp=self.task.get_last_scan_start())
+        self.task.get_ports_for_scan.assert_called_once_with(nodes, timestamp=self.task.get_last_scan().start)
 
     @patch('scans.tools_scanner.Executor')
     @patch('scans.tools_scanner.cfg', new_callable=Config)
@@ -51,7 +51,7 @@ class ToolsScannerTest(AsyncTestCase):
         await self.task.run()
 
         mock_executor.assert_called_once_with(context=self.task.context, nodes=None, ports=ports)
-        self.task.get_ports_for_scan.assert_called_once_with(nodes, timestamp=self.task.get_last_scan_start())
+        self.task.get_ports_for_scan.assert_called_once_with(nodes, timestamp=self.task.get_last_scan().start)
 
     @gen_test
     async def test_run_disable_nodes_topdis_error(self):

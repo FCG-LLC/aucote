@@ -160,7 +160,7 @@ class ScannerTest(AsyncTestCase):
         await self.thread.run()
         self.thread.run_scan.assert_called_once_with(nodes, scan_only=True, protocol=TransportProtocol.UDP,
                                                      scanners=udp_scanner)
-        self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True)
+        self.thread._get_nodes_for_scanning.assert_called_once_with(filter_out_storage=True, scan=None)
 
     @gen_test
     async def test_periodical_scan_with_topdis_error(self):

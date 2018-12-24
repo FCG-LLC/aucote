@@ -23,7 +23,7 @@ class Scan(object):
 
     """
 
-    def __init__(self, start=None, end=None, protocol=None, scanner='', rowid=None, init=True):
+    def __init__(self, start=None, end=None, protocol=None, scanner='', rowid=None, init=True, resume=False):
         """
         Args:
             protocol TransportProtocol: scan protocol
@@ -40,6 +40,7 @@ class Scan(object):
         self.end = end
         self._protocol = protocol
         self._scanner = scanner
+        self.resume = resume
 
     @property
     def start(self) -> float:
@@ -182,11 +183,12 @@ class NodeScan(object):
 
     """
 
-    def __init__(self, node, scan, timestamp, rowid=None):
+    def __init__(self, node, scan, timestamp, end_timestamp=None, rowid=None):
         self.node = node
         self.scan = scan
         self.timestamp = timestamp
         self.rowid = rowid
+        self.end_timestamp = end_timestamp
 
     def __eq__(self, other):
         return isinstance(other, NodeScan) and all((self.node == other.node, self.scan == other.scan))
@@ -1016,6 +1018,15 @@ class ScanContext:
         self.start = None
         self._end = None
 
+    def unfinished_tasks_for_node(self, node: Node):
+        return_value = []
+
+        for task in self.tasks:
+            if task.is_node_processed(node) and not task.has_finished():
+                return_value.append(task)
+
+        return return_value
+
     @property
     def end(self):
         return self._end
@@ -1036,7 +1047,7 @@ class ScanContext:
         """
         log.debug('Executing post scan hook for scan %s', self.scanner.NAME)
 
-    def add_task(self, task, manager: TaskManagerType = TaskManagerType.REGULAR):
+    def add_task(self, task: 'Task', manager: TaskManagerType = TaskManagerType.REGULAR):
         self.tasks.append(task)
         if self._cancelled:
             task.cancel()

@@ -5,6 +5,7 @@ This module contains class responsible scanning tasks.
 import logging as log
 import time
 from functools import partial
+from typing import Optional
 
 from tornado.locks import Event
 
@@ -34,7 +35,7 @@ class ScanAsyncTask(object):
         self._current_scan = []
         self._aucote = aucote
         self.context = None
-        self.scan = Scan(protocol=self.PROTOCOL, scanner=self.NAME, init=False)
+        self.scan = Scan(protocol=self.PROTOCOL, scanner=self.NAME, init=False)  # ToDo: move it inside
         self._shutdown_condition = Event()
         self.status = ScanStatus.IDLE
         self.run_now = False
@@ -48,7 +49,7 @@ class ScanAsyncTask(object):
             raise Exception("Scan context already exists")
         self.context = ScanContext(aucote=self.aucote, scanner=self)
 
-    async def __call__(self):
+    async def __call__(self, resume=False):
         try:
             self._init()
 
@@ -57,7 +58,12 @@ class ScanAsyncTask(object):
                 return
             log.info("Starting %s scanner", self.NAME)
 
-            result = await self.run()
+            if resume:
+                self.scan.resume = True
+            else:
+                self.scan.resume = False
+
+            result = await self.run(resume=resume)
 
             run_after = cfg['portdetection.{name}.run_after'.format(name=self.NAME)]
             for scan_name in run_after:
@@ -72,7 +78,7 @@ class ScanAsyncTask(object):
             self.context = None
             self.expire_vulnerabilities()
 
-    async def run(self):
+    async def run(self, **kwargs):
         raise NotImplementedError()
 
     @property
@@ -86,7 +92,7 @@ class ScanAsyncTask(object):
         """
         return self._shutdown_condition
 
-    async def _get_nodes_for_scanning(self, timestamp=None, filter_out_storage=True):
+    async def _get_nodes_for_scanning(self, timestamp=None, filter_out_storage=True, scan=None):
         """
         Get nodes for scan since timestamp.
             - If timestamp is None, it is equal: current timestamp - node scan period
@@ -99,10 +105,19 @@ class ScanAsyncTask(object):
             list
 
         """
-        nodes = {
-            'snmp': await self.topdis.get_snmp_nodes()
-        }
-        nodes['hosts'] = await self.topdis.get_all_nodes() - nodes['snmp']
+        if scan is not None:
+            nodes = {
+                'snmp': set(self.storage.get_non_finished_nodes(scan)),
+                'hosts': set()
+            }
+
+            for node in nodes['snmp']:
+                node.scan = self.scan
+        else:
+            nodes = {
+                'snmp': await self.topdis.get_snmp_nodes()
+            }
+            nodes['hosts'] = await self.topdis.get_all_nodes() - nodes['snmp']
 
         if filter_out_storage:
             storage_nodes = set(self.storage.get_nodes(
@@ -253,6 +268,7 @@ class ScanAsyncTask(object):
 
         """
         await self.update_scan_status(ScanStatus.IDLE)
+        self.scan.rowid = None  # ToDo: Do it more pythonic
         self._shutdown_condition.set()
 
     async def update_scan_status(self, status=None):
@@ -396,3 +412,36 @@ class ScanAsyncTask(object):
 
     def __str__(self):
         return self.__class__.__name__
+
+    def get_last_scan(self, resume: Optional[bool] = None) -> Optional['Scan']:
+        """
+        Get last scan from database
+        """
+        scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=2, resume=resume)
+
+        if not scans:
+            return None
+
+        if scans[0].rowid == self.scan.rowid:
+            if len(scans) == 1:
+                return None
+
+            return scans[1]
+
+        return scans[0]
+
+    def get_previous_non_resumed_scan(self):
+        scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=3, resume=False)
+
+        if not scans:
+            return None
+
+        if len(scans) == 1:
+            return None
+
+        if scans[1].rowid == self.scan.rowid:
+            if len(scans) == 2:
+                return None
+
+        return scans[2]
+

@@ -52,7 +52,7 @@ class AsyncCrontabTask(object):
 
         return self._cron
 
-    async def __call__(self, skip_cron=False):
+    async def __call__(self, skip_cron=False, **kwargs):
         """
         Execute function. Do it only if it is no currently executing
 
@@ -107,7 +107,7 @@ class AsyncCrontabTask(object):
             if self._event is not None:
                 self._event.set()
             try:
-                await self.func()
+                await self.func(**kwargs)
             finally:
                 if self._event is not None:
                     self._event.clear()

@@ -2,6 +2,7 @@
 This module contains class for managing async tasks.
 
 """
+import subprocess
 from functools import partial
 import logging as log
 from threading import Thread
@@ -50,6 +51,9 @@ class _Executor(Thread):
         """
         try:
             await self.task()
+            await self.task.post_run()
+        except subprocess.CalledProcessError as exception:
+            log.warning('%s', exception)
         except:
             log.exception("Exception while executing task on worker %s", self.number)
         finally:

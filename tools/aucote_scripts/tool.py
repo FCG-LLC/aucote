@@ -7,7 +7,7 @@ from utils.exceptions import PortNotSpecifiedException
 class AucoteScriptsTool(Tool):
 
     def __init__(self, node=None, port=None, *args, **kwargs):
-        self.node = node
+        self._node = node
         super(AucoteScriptsTool, self).__init__(port=port, *args, **kwargs)
 
     async def call(self, *args, **kwargs):

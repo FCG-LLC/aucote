@@ -231,7 +231,8 @@ class ScanTest(TestCase):
             "_end_ms": 14600,
             "_protocol": TransportProtocol.ICMP,
             "_scanner": "test_scanner",
-            "rowid": 16
+            "rowid": 16,
+            'resume': False
         }
 
         result = self.scan.__dict__

@@ -5,7 +5,6 @@ In second case the NmapPortInfoTask is responsible for executing TaskMapper
 """
 import logging as log
 import time
-from typing import Optional
 
 from aucote_cfg import cfg
 from scans.task_mapper import TaskMapper

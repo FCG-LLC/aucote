@@ -9,10 +9,10 @@ Currently storage consists of 5 tables
 scans
 -----
 
-+-------+----------+--------------+------------+----------+
-| rowid | protocol | scanner_name | scan_start | scan_end |
-+=======+==========+==============+============+==========+
-+-------+----------+--------------+------------+----------+
++-------+----------+--------------+------------+----------+--------+
+| rowid | protocol | scanner_name | scan_start | scan_end | resume |
++=======+==========+==============+============+==========+========+
++-------+----------+--------------+------------+----------+--------+
 
 columns:
  - rowid (int) - row identifier
@@ -20,14 +20,15 @@ columns:
  - scanner_name (string) - name of scanner
  - scan_start (int) - scan start timestamp
  - scan_end (int) - scan end timestamp
+ - resume (boolean) - true if scan is resumption scan
 
 nodes_scans
 -----------
 
-+--------+---------+---------+---------+------+
-| rowid  | node_id | node_ip | scan_id | time |
-+========+=========+=========+=========+======+
-+--------+---------+---------+---------+------+
++--------+---------+---------+---------+------+---------------+
+| rowid  | node_id | node_ip | scan_id | time | end_timestamp |
++========+=========+=========+=========+======+===============+
++--------+---------+---------+---------+------+---------------+
 
 columns:
  - rowid (int) - row identifier
@@ -35,6 +36,7 @@ columns:
  - node_ip (string) - node ip address
  - scan_id (int) - scan identifier (scans.rowid)
  - time (int) - node detecting time
+ - end_timestamp (int) - node scan finish time
 
 ports_scans
 -----------
@@ -108,6 +110,7 @@ import uuid
 from math import ceil
 
 import threading
+from typing import Optional
 
 import psycopg2
 from yoyo import get_backend, read_migrations
@@ -130,12 +133,12 @@ class Storage(DbInterface):
 
     TABLES = {
         'scans': {
-            'columns': ['rowid', 'protocol', 'scanner_name', 'scan_start', 'scan_end'],
+            'columns': ['rowid', 'protocol', 'scanner_name', 'scan_start', 'scan_end', 'resume'],
             'factor': '_scan_from_row',
             'order': 'ORDER BY scan_start DESC, scan_end DESC'
         },
         'nodes_scans': {
-            'columns': ['rowid', 'node_id', 'node_ip', 'scan_id', 'time'],
+            'columns': ['rowid', 'node_id', 'node_ip', 'scan_id', 'time', 'end_timestamp'],
             'factor': '_nodes_scan_from_row',
             'order': 'ORDER BY time DESC'
         },
@@ -162,7 +165,8 @@ class Storage(DbInterface):
 
     QUERY_GET_LAST_ROWID = "SELECT LASTVAL()"
 
-    QUERY_SAVE_SCAN = "INSERT INTO scans (protocol, scanner_name, scan_start, scan_end) VALUES (%s, %s, %s, %s)"
+    QUERY_SAVE_SCAN = "INSERT INTO scans (protocol, scanner_name, scan_start, scan_end, resume) " \
+                      "VALUES (%s, %s, %s, %s, %s)"
     QUERY_UPDATE_SCAN_END = "UPDATE scans set scan_end = %s WHERE ROWID=%s"
 
     QUERY_SAVE_NODE = "INSERT INTO nodes_scans (scan_id, node_id, node_ip, time) VALUES (%s, %s, %s, %s)"
@@ -767,7 +771,8 @@ class Storage(DbInterface):
         Queries for saving scan into database
 
         """
-        return self.QUERY_SAVE_SCAN, (self._protocol_to_iana(scan.protocol), scan.scanner, scan.start, scan.end)
+        return self.QUERY_SAVE_SCAN, (self._protocol_to_iana(scan.protocol), scan.scanner, scan.start, scan.end,
+                                      scan.resume)
 
     def _update_scan(self, scan: 'Scan') -> tuple:
         return self.QUERY_UPDATE_SCAN_END, (scan.end, scan.rowid)
@@ -799,12 +804,22 @@ class Storage(DbInterface):
         _scan = self.select("scans", limit=1, protocol=scan.protocol, scanner_name=scan.scanner, scan_start=scan.start)
         return _scan[0].rowid if _scan else None
 
-    def get_scans(self, protocol: 'TransportProtocol', scanner_name: 'str', amount: int = 2) -> list:
+    def get_scans(self, protocol: 'TransportProtocol', scanner_name: 'str', amount: int = 2,
+                  resume: Optional[bool] = None) -> list:
         """
         Obtain scans from storage. Scans are taken from newest to oldest
 
         """
-        return self.select("scans", protocol=protocol, limit=amount, scanner_name=scanner_name)
+        kwargs = {
+            'protocol': protocol,
+            'limit': amount,
+            'scanner_name': scanner_name
+        }
+
+        if resume is not None:
+            kwargs['resume'] = resume
+
+        return self.select("scans", **kwargs)
 
     def get_scans_by_node(self, node: 'Node', scan: 'Scan') -> list:
         """
@@ -856,11 +871,12 @@ class Storage(DbInterface):
         return self.execute(self._save_vulnerabilities(vulnerabilities=vulnerabilities, scan=scan))
 
     def _scan_from_row(self, row: list) -> 'Scan':
-        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]), scanner=row[2], rowid=row[0])
+        return Scan(start=row[3], end=row[4], protocol=self._transport_protocol(row[1]), scanner=row[2], rowid=row[0],
+                    resume=row[5])
 
     def _nodes_scan_from_row(self, row: list) -> 'NodeScan':
         return NodeScan(node=Node(node_id=row[1], ip=ipaddress.ip_address(row[2])), rowid=row[0], timestamp=row[4],
-                        scan=self.get_scan_by_id(row[3]))
+                        scan=self.get_scan_by_id(row[3]), end_timestamp=row[5])
 
     def _port_scan_from_row(self, row: list) -> 'PortScan':
         return PortScan(port=Port(node=Node(node_id=row[1], ip=ipaddress.ip_address(row[2])),
@@ -1113,3 +1129,12 @@ class Storage(DbInterface):
         migrations = read_migrations(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../migrations'))
         with backend.lock():
             backend.apply_migrations(backend.to_apply(migrations), force=True)
+
+    def update_node_scan(self, context: 'ScanContext', node: Node, timestamp: Optional[float] = None):
+        scan_id = self.get_scan_id(context.scan)
+        return self.execute(('UPDATE nodes_scans SET end_timestamp=%s WHERE scan_id=%s AND node_id=%s AND node_ip=%s',
+                (timestamp or int(time.time()), scan_id, node.id, str(node.ip))))
+
+    def get_non_finished_nodes(self, scan: 'Scan'):
+        return [node_scan.node for node_scan in self.select(
+            'nodes_scans', where={'operator': {'=': {'end_timestamp': None, 'scan_id': scan.rowid}}})]

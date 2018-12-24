@@ -38,7 +38,7 @@ class Scanner(ScanAsyncTask):
         self.as_service = as_service
         self.nodes = []
 
-    async def run(self):
+    async def run(self, resume=False):
         """
         Scan nodes for open ports
 
@@ -51,13 +51,23 @@ class Scanner(ScanAsyncTask):
             self.scan.start = time.time()
             log.info("Starting port scan")
 
-            nodes = await self._get_nodes_for_scanning(filter_out_storage=True)
+            if resume:
+                previous_scan = self.get_last_scan()
+                if not previous_scan:
+                    log.warning('No scan to resume')
+                    return
+                log.info('Resuming scan %s with rowid %s', previous_scan.scanner, previous_scan.rowid)
+            else:
+                previous_scan = None
+
+            nodes = await self._get_nodes_for_scanning(filter_out_storage=True, scan=previous_scan)
             if not nodes:
                 log.warning("List of nodes is empty")
                 self.scan.start = None
                 return
 
             self.storage.save_scan(self.scan)
+
             log.debug("Found %i nodes for potential scanning", len(nodes))
             self.nodes = nodes
             await self.update_scan_status(ScanStatus.IN_PROGRESS)
