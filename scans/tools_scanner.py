@@ -31,9 +31,14 @@ class ToolsScanner(ScanAsyncTask):
         """
         Run scan by using tools and historical port data
 
-        Returns:
-            None
+        To achieve resuming scans, the resume is introduced.
 
+        If resume is enabled, last scan is used to grab non scanned nodes, otherwise topdisco is used to refresh data
+
+        Ports are taken from date of last check, which is date of previous finished scan
+
+        If tools scanner is performed without tcp scan between them, then no ports are taken to security scans.
+        The problem is than in live scan mode, last tcp scan will have only info limited number of nodes
         """
         try:
             self.scan.start = time.time()
@@ -45,24 +50,24 @@ class ToolsScanner(ScanAsyncTask):
             last_scan = self.get_last_scan()
             last_scan_start = last_scan.start if last_scan is not None else 0
 
-            resumed_scan = None
+            last_finished_scan = self.get_previous_non_resumed_scan()
+            last_finished_scan_start = last_finished_scan.start if last_finished_scan is not None else 0
 
             if resume:
                 log.info('Resuming scan %s with rowid %i', last_scan.scanner, last_scan.rowid)
 
-                resumed_scan = self.get_previous_non_resumed_scan()
-
-                if resumed_scan:
-                    log.debug('Taking ports same as scan %s with rowid %i', resumed_scan.scanner, resumed_scan.rowid)
+                if last_finished_scan:
+                    log.debug('Taking ports same as scan %s with rowid %i', last_finished_scan.scanner,
+                              last_finished_scan.rowid)
 
             nodes = await self._get_nodes_for_scanning(timestamp=last_scan_start, filter_out_storage=False,
                                                        scan=last_scan if resume else None)
+
             self.storage.save_scan(self.scan)
             log.debug('Current scan rowid is %s', self.scan.rowid)
             self.storage.save_nodes(nodes, scan=self.scan)
 
-            ports = self.get_ports_for_scan(nodes, timestamp=resumed_scan.start if resumed_scan is not None
-                                            else 0)
+            ports = self.get_ports_for_scan(nodes, timestamp=last_finished_scan_start)
             log.debug("Ports for security scan: %s", ports)
             self.context.add_task(Executor(context=self.context, nodes=nodes if cfg['portdetection.{0}.scan_nodes'.
                                            format(self.NAME)] else None, ports=ports),

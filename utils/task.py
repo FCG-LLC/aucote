@@ -296,4 +296,3 @@ class TaskWrapper(Task):
 
     def kill(self):
         self.function.__self__.kill()
-
