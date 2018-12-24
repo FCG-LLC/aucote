@@ -35,7 +35,7 @@ class ScanAsyncTask(object):
         self._current_scan = []
         self._aucote = aucote
         self.context = None
-        self.scan = Scan(protocol=self.PROTOCOL, scanner=self.NAME, init=False)
+        self.scan = Scan(protocol=self.PROTOCOL, scanner=self.NAME, init=False)  # ToDo: move it inside
         self._shutdown_condition = Event()
         self.status = ScanStatus.IDLE
         self.run_now = False
@@ -268,6 +268,7 @@ class ScanAsyncTask(object):
 
         """
         await self.update_scan_status(ScanStatus.IDLE)
+        self.scan.rowid = None  # ToDo: Do it more pythonic
         self._shutdown_condition.set()
 
     async def update_scan_status(self, status=None):

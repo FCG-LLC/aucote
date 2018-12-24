@@ -60,6 +60,10 @@ class ToolsScanner(ScanAsyncTask):
                 if previous_finished_scan is not None else 0
 
             if resume:
+                if not last_scan:
+                    log.warning('No scan to resume')
+                    return
+
                 log.info('Resuming scan %s with rowid %i', last_scan.scanner, last_scan.rowid)
 
                 if previous_finished_scan:

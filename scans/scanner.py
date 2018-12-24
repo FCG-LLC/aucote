@@ -53,6 +53,9 @@ class Scanner(ScanAsyncTask):
 
             if resume:
                 previous_scan = self.get_last_scan()
+                if not previous_scan:
+                    log.warning('No scan to resume')
+                    return
                 log.info('Resuming scan %s with rowid %s', previous_scan.scanner, previous_scan.rowid)
             else:
                 previous_scan = None
