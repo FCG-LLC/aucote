@@ -435,17 +435,25 @@ class ScanAsyncTask(object):
         return scans[0]
 
     def get_previous_non_resumed_scan(self):
+        """
+        Returns scan before last scan (which is not current scan)
+        Returns:
+
+        """
         scans = self.storage.get_scans(self.PROTOCOL, self.NAME, amount=3, resume=False)
 
         if not scans:
             return None
 
+        # We should have at least 2 scans
         if len(scans) == 1:
             return None
 
-        if scans[1].rowid == self.scan.rowid:
-            if len(scans) == 2:
+        if len(scans) == 2:
+            # If last scan is current scan, the second one is truly last scan
+            if scans[0].rowid == self.scan.rowid:
                 return None
+            return scans[1]
 
         return scans[2]
 
