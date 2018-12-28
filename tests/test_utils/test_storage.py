@@ -631,8 +631,19 @@ class StorageTest(TestCase):
         expected = []
 
         self.storage.expire_vulnerabilities()
-        result = self.storage.active_vulnerabilities()
+        result = self.storage.active_vulnerabilities(timestamp=400)
 
+        self.assertEqual(result, expected)
+
+    def test_active_vulnerabilities_different_timestamps(self):
+        self.prepare_tables()
+
+        expected = [self.vulnerability_3]
+        result = self.storage.active_vulnerabilities(timestamp=0)
+        self.assertEqual(result, expected)
+
+        expected = []
+        result = self.storage.active_vulnerabilities(timestamp=40)
         self.assertEqual(result, expected)
 
     def test_portdetection_vulns(self):
