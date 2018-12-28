@@ -72,8 +72,8 @@ class APITest(AsyncHTTPTestCase):
 
         self.vulnerability_1 = Vulnerability(exploit=self.exploit_1, port=self.port_1, cvss="6.8", cve="CVE-2017-1231",
                                              scan=self.scan_1, output="Vulnerable stuff", vuln_time=134, subid=34)
-        self.vulnerability_2 = Vulnerability(exploit=self.exploit_1, port=self.port_1, cvss="6.8", cve="CVE-2017-1231",
-                                             scan=self.scan_2, output="Vulnerable stuff", vuln_time=718, subid=34)
+        self.vulnerability_2 = Vulnerability(exploit=self.exploit_1, port=self.port_1, cvss="6.8", cve="CVE-2017-1232",
+                                             scan=self.scan_2, output=None, vuln_time=718, subid=34)
 
         for vulnerability in (self.vulnerability_1, self.vulnerability_2):
             self.storage.save_vulnerability(vulnerability)

@@ -19,7 +19,7 @@ class VulnerabilitiesHandlerTest(APITest):
                     {'cvss': 6.8,
                      'exploit': 14,
                      'id': 2,
-                     'output': 'Vulnerable stuff',
+                     'output': '',
                      'port': '10.156.67.18:34',
                      'scan': {
                          'end': 447,

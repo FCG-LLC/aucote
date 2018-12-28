@@ -607,7 +607,7 @@ class Vulnerability(object):
     OS_VERSION = 7
     OS_CPE = 8
 
-    def __init__(self, exploit=None, port=None, output='', cve=None, cvss=None, subid=0, vuln_time=None,
+    def __init__(self, exploit=None, port=None, output: Optional[str] = '', cve=None, cvss=None, subid=0, vuln_time=None,
                  rowid=None, scan=None, context=None, expiration_time=None):
         """
         Init values
@@ -621,7 +621,7 @@ class Vulnerability(object):
         self._time_ms = None
         self._expiration_time_ms = None
 
-        self.output = str(output) if output is not None else None
+        self.output = str(output) if output is not None else ''
         self.exploit = exploit if exploit is not None else Exploit(exploit_id=0)
         self.port = port
         self._cve = cve
