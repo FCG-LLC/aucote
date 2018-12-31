@@ -1055,18 +1055,28 @@ class Storage(DbInterface):
 
         return vuln
 
-    def active_vulnerabilities(self) -> list:
+    def active_vulnerabilities(self, timestamp: int = 0) -> list:
         """
         Gets all vulnerabilites with unset expiration time
         """
-        return self.select('vulnerabilities', expiration_time=None)
+        where = {
+            'operator': {
+                '>': {
+                    'time': timestamp
+                },
+                '=': {
+                    'expiration_time': None
+                }
+            }
+        }
+        return self.select('vulnerabilities', where=where)
 
-    def expire_vulnerabilities(self):
+    def expire_vulnerabilities(self, timestamp: int = 0):
         """
         Checks if any of vulnerability should be expired and do it if needed. Returns expired vulnerabilities
 
         """
-        vulns = self.active_vulnerabilities()
+        vulns = self.active_vulnerabilities(timestamp=timestamp)
         log.debug('%s active vulnerabilities to check', len(vulns))
 
         for vuln in vulns:

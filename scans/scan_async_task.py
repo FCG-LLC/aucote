@@ -377,7 +377,11 @@ class ScanAsyncTask(object):
         Update validation time of vulnerabilites
 
         """
-        vulns = self.storage.expire_vulnerabilities()
+        # Do not update already deprecated vulnerabilities, so get all later than timestamp - expiration_period
+        timestamp = time.time()
+        expiration_period = parse_period(cfg['portdetection.expiration_period'])
+
+        vulns = self.storage.expire_vulnerabilities(timesstamp=timestamp - expiration_period)
         for vuln in vulns:
             # There is some mismatch between kudu and local storage
             if vuln.exploit.id == 0 and vuln.subid > 0:

@@ -33,7 +33,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
                 },
                 '_internal': {
                     'tools_cron': '* * * * *'
-                }
+                },
+                'expiration_period': '365d'
             },
             'topdis': {
                 'api': {
@@ -217,6 +218,8 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread.NAME = 'test_name'
         cfg['portdetection.test_name.scan_enabled'] = True
         cfg['portdetection.test_name.run_after'] = []
+        cfg['portdetection.expiration_period'] = '7d'
+
         self.thread.run = MagicMock(return_value=Future())
         self.thread.run.return_value.set_result(True)
 
@@ -231,6 +234,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread.NAME = 'test_name'
         cfg['portdetection.test_name.scan_enabled'] = True
         cfg['portdetection.test_name.run_after'] = ['test_scan']
+        cfg['portdetection.expiration_period'] = '7d'
         self.thread.run = MagicMock(return_value=Future())
         self.thread.run.return_value.set_result(True)
 
@@ -249,6 +253,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
         self.thread.NAME = 'test_name'
         cfg['portdetection.test_name.scan_enabled'] = True
         cfg['portdetection.test_name.run_after'] = ['test_scan']
+        cfg['portdetection.expiration_period'] = '7d'
         self.thread.run = MagicMock(return_value=Future())
         self.thread.run.return_value.set_result(True)
 
@@ -266,6 +271,7 @@ class ScanAsyncTaskTest(AsyncTestCase):
     async def test_call_disabled(self, cfg):
         self.thread.NAME = 'test_name'
         cfg['portdetection.test_name.scan_enabled'] = False
+        cfg['portdetection.expiration_period'] = '7d'
         self.thread.run = MagicMock()
 
         await self.thread()
