@@ -290,9 +290,10 @@ class TaskWrapper(Task):
                 self._result = result
         except Exception as exception:
             with self._lock:
-                self._finished = True
                 self._exception = exception
             raise exception
+        finally:
+            self._finished = True
 
     async def get_result(self):
         """
