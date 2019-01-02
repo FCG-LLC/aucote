@@ -639,16 +639,6 @@ class Storage(DbInterface):
         """
         return self.execute(self._save_security_scans(exploits=exploits, port=port, scan=scan))
 
-    def get_security_scan_info(self, port: 'Port', app: str, scan: 'Scan') -> list:
-        """
-        Get security scan info from database
-
-        """
-        return self.select("security_scans", exploit_app=app, node_id=port.node.id, node_ip=port.node.ip,
-                           port_protocol=port.transport_protocol, port_number=port.number,
-                           join={'table': 'scans', 'from': 'scan_id', 'to': 'rowid', 'where':
-                               {'protocol': scan.protocol, 'scanner_name': scan.scanner}})
-
     def security_scan_by_vuln(self, vuln):
         return self.select('security_scans', exploit_id=vuln.exploit.id, node_id=vuln.port.node.id,
                            node_ip=vuln.port.node.ip, port_protocol=vuln.port.transport_protocol,

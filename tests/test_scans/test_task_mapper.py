@@ -68,15 +68,6 @@ class TaskMapperTest(AsyncTestCase):
             }
         }
 
-        self.executor.storage.get_security_scan_info.return_value = [
-            SecurityScan(port=self.UDP,
-                         exploit=self.exploits['test'][0],
-                         scan_start=17, scan_end=26, scan=None),
-            SecurityScan(port=self.UDP,
-                         exploit=self.exploits['test'][1],
-                         scan_start=12, scan_end=17, scan=None)
-        ]
-
     def tearDown(self):
         self.EXECUTOR_CONFIG['apps']['test']['class'].reset_mock()
         self.EXECUTOR_CONFIG['apps']['test2']['class'].reset_mock()
@@ -91,7 +82,6 @@ class TaskMapperTest(AsyncTestCase):
     @gen_test
     async def test_app_running(self, cfg):
         cfg._cfg = self.cfg
-        self.executor.storage.get_security_scan_info.return_value = []
         await self.task_mapper.assign_tasks(self.UDP)
 
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 1)
@@ -105,7 +95,6 @@ class TaskMapperTest(AsyncTestCase):
         cfg._cfg = self.cfg
         cfg['tools.test2.enable'] = False
 
-        self.executor.storage.get_security_scan_info.return_value = []
         await self.task_mapper.assign_tasks(self.UDP)
         self.task_mapper._aucote.add_async_task.assert_called_once_with(
             self.EXECUTOR_CONFIG['apps']['test']['class'].return_value,
@@ -128,7 +117,6 @@ class TaskMapperTest(AsyncTestCase):
         cfg._cfg = self.cfg
         cfg['tools.test.enable'] = False
 
-        self.executor.storage.get_security_scan_info.return_value = []
         await self.task_mapper.assign_tasks(self.UDP)
 
         self.assertEqual(self.EXECUTOR_CONFIG['apps']['test']['class'].call_count, 0)
@@ -146,7 +134,6 @@ class TaskMapperTest(AsyncTestCase):
     @gen_test
     async def test_copying_port(self, cfg):
         cfg._cfg = self.cfg
-        self.executor.storage.get_security_scan_info.return_value = []
         await self.task_mapper.assign_tasks(self.UDP)
 
         self.assertNotEqual(id(self.EXECUTOR_CONFIG['apps']['test']['class'].call_args[1]['port']), id(self.UDP))

@@ -388,15 +388,6 @@ class StorageTest(TestCase):
 
         self.assertEqual(result, expected)
 
-    def test_get_security_scan_info(self):
-        self.prepare_tables()
-
-        expected = [self.security_scan_1, self.security_scan_3, self.security_scan_5]
-
-        result = self.storage.get_security_scan_info(self.port_1, 'test_app', scan=self.scan_1)
-
-        self.assertCountEqual(result, expected)
-
     def test_save_changes(self):
         self.storage.connect()
         self.storage.remove_all()
