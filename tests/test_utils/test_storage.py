@@ -226,21 +226,6 @@ class StorageTest(TestCase):
     def test_cursor_property(self):
         self.assertEqual(self.storage.cursor, self.storage._cursor)
 
-    def test__clear_security_scans(self):
-        expected = "DELETE FROM security_scans WHERE sec_scan_start >= sec_scan_end OR sec_scan_start IS NULL OR sec_scan_end IS NULL",
-
-        result = self.storage._clear_security_scans()
-
-        self.assertEqual(result, expected)
-
-    def test_init_schema(self):
-        self.storage.execute = MagicMock()
-        self.storage._clear_security_scans = MagicMock()
-
-        self.storage.init_schema()
-        self.storage.execute.assert_has_calls((call(self.storage._clear_security_scans.return_value), ))
-        self.storage._clear_security_scans.assert_called_once_with()
-
     @patch('utils.storage.time.time', MagicMock(return_value=134))
     def test_save_nodes(self):
         self.storage.connect()
@@ -400,20 +385,6 @@ class StorageTest(TestCase):
         result = self.storage.execute(self.SEL_CHANGE)
 
         self.assertEqual(result, expected)
-
-    def test_clear_security_scans(self):
-        self.storage._clear_security_scans = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.clear_security_scans()
-        self.storage._clear_security_scans.assert_called_once_with()
-        self.storage.execute.assert_called_once_with(self.storage._clear_security_scans())
-
-    def test_create_tables(self):
-        self.storage._create_tables = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.create_tables()
-        self.storage._create_tables.assert_called_once_with()
-        self.storage.execute.assert_called_once_with(self.storage._create_tables())
 
     def test_get_ports_by_nodes_without_nodes(self):
         expected = []

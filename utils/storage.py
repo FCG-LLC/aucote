@@ -234,7 +234,6 @@ class Storage(DbInterface):
         """
         log.debug('Initializing database schema')
         self.migrate()
-        self.execute(self._clear_security_scans())
 
     def _get_last_rowid(self):
         return (self.QUERY_GET_LAST_ROWID,)
@@ -504,14 +503,6 @@ class Storage(DbInterface):
         """
         return [self._save_change(change) for change in changes]
 
-    def _clear_security_scans(self) -> tuple:
-        """
-        Query for cleaning table
-
-        """
-        log.debug('Cleaning scan details')
-        return self.QUERY_CLEAR_SECURITY_SCANS,
-
     def execute(self, query: [list, tuple, str]) -> list:
         """
         Execute query or queries.
@@ -662,20 +653,6 @@ class Storage(DbInterface):
 
         """
         return self.execute(self._save_changes(changes=changes))
-
-    def clear_security_scans(self):
-        """
-        Clear broken scan details
-
-        """
-        return self.execute(self._clear_security_scans())
-
-    def create_tables(self):
-        """
-        Create tables in storage
-
-        """
-        return self.execute(self._create_tables())
 
     def get_ports_by_nodes(self, nodes: list, pasttime: float = 0, timestamp: float = None,
                            protocol: 'TransportProtocol' = None, portdetection_only: bool = False):
@@ -833,7 +810,7 @@ class Storage(DbInterface):
         return self.select(table='scans', join={'table': 'security_scans', 'from': 'rowid', 'to': 'scan_id', 'where': {
             'node_id': port.node.id, 'node_ip': port.node.ip, 'port_number': port.number,
             'port_protocol': port.transport_protocol, 'exploit_id': exploit.id, 'exploit_app': exploit.app,
-            'exploit_name': exploit.name
+            'exploit_name': exploit.name, 'operator': {'!=': {'sec_scan_end': None}}
         }})
 
     def get_scan_by_id(self, scan_id: int) -> Scan:
@@ -983,7 +960,7 @@ class Storage(DbInterface):
                                'port_protocol': sec_scan.port.transport_protocol,
                                'exploit_id': sec_scan.exploit.id,
                                'exploit_app': sec_scan.exploit.app,
-                               'exploit_name': sec_scan.exploit.name,
+                               'exploit_name': sec_scan.exploit.name
                            }})
 
     def scans_by_vulnerability(self, vuln: 'Vulnerability') -> list:
