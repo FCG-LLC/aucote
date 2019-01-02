@@ -1034,7 +1034,7 @@ class Storage(DbInterface):
         curr_sec_scans = self.security_scan_by_vuln(vuln)
 
         if not curr_sec_scans:
-            log.error('Cannot find security scan for given vulnerability')
+            log.error('Cannot find security scan for given vulnerability (%s)', vuln.rowid)
             return vuln
 
         curr_sec_scan = curr_sec_scans[0]
