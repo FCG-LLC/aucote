@@ -153,12 +153,15 @@ class Task(object):
     def cancel(self):
         """
         Cancels tasks. If task is already executing stop it
+
+        Thread safe
         """
         log.debug('Cancelling task %s', self)
 
-        if self.executor is not None:
-            log.debug('Task %s is already processing. Stopping it', self)
-            self._stop()
+        with self._lock:
+            if self.executor is not None:
+                log.debug('Task %s is already processing. Stopping it', self)
+                self._stop()
 
         self._cancelled = True
         self.finish_time = time.time()
@@ -166,6 +169,8 @@ class Task(object):
     def _stop(self):
         """
         Stop executing task
+
+        Non thread safe. Should be used by calling cancel
         """
         self.executor.stop()
 
@@ -180,8 +185,10 @@ class Task(object):
         Clear after task. By default task doesn't require any special clearing,
         some task (especially which uses external tools) can need it
 
+        Thread safe
         """
-        self.executor = None
+        with self._lock:
+            self.executor = None
 
     def has_finished(self):
         """
@@ -247,6 +254,15 @@ class Task(object):
     def is_node_processed(self, node: Node):
         return node in self._extract_nodes()
 
+    def set_executor(self, executor):
+        """
+        Set executor
+
+        Thread safe
+        """
+        with self._lock:
+            self.executor = executor
+
 
 class TaskWrapper(Task):
     def __init__(self, context, function, *args, **kwargs):
@@ -274,9 +290,11 @@ class TaskWrapper(Task):
                 self._result = result
         except Exception as exception:
             with self._lock:
-                self._finished = True
                 self._exception = exception
             raise exception
+        finally:
+            with self._lock:
+                self._finished = True
 
     async def get_result(self):
         """
