@@ -226,21 +226,6 @@ class StorageTest(TestCase):
     def test_cursor_property(self):
         self.assertEqual(self.storage.cursor, self.storage._cursor)
 
-    def test__clear_security_scans(self):
-        expected = "DELETE FROM security_scans WHERE sec_scan_start >= sec_scan_end OR sec_scan_start IS NULL OR sec_scan_end IS NULL",
-
-        result = self.storage._clear_security_scans()
-
-        self.assertEqual(result, expected)
-
-    def test_init_schema(self):
-        self.storage.execute = MagicMock()
-        self.storage._clear_security_scans = MagicMock()
-
-        self.storage.init_schema()
-        self.storage.execute.assert_has_calls((call(self.storage._clear_security_scans.return_value), ))
-        self.storage._clear_security_scans.assert_called_once_with()
-
     @patch('utils.storage.time.time', MagicMock(return_value=134))
     def test_save_nodes(self):
         self.storage.connect()
@@ -388,15 +373,6 @@ class StorageTest(TestCase):
 
         self.assertEqual(result, expected)
 
-    def test_get_security_scan_info(self):
-        self.prepare_tables()
-
-        expected = [self.security_scan_1, self.security_scan_3, self.security_scan_5]
-
-        result = self.storage.get_security_scan_info(self.port_1, 'test_app', scan=self.scan_1)
-
-        self.assertCountEqual(result, expected)
-
     def test_save_changes(self):
         self.storage.connect()
         self.storage.remove_all()
@@ -409,20 +385,6 @@ class StorageTest(TestCase):
         result = self.storage.execute(self.SEL_CHANGE)
 
         self.assertEqual(result, expected)
-
-    def test_clear_security_scans(self):
-        self.storage._clear_security_scans = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.clear_security_scans()
-        self.storage._clear_security_scans.assert_called_once_with()
-        self.storage.execute.assert_called_once_with(self.storage._clear_security_scans())
-
-    def test_create_tables(self):
-        self.storage._create_tables = MagicMock()
-        self.storage.execute = MagicMock()
-        self.storage.create_tables()
-        self.storage._create_tables.assert_called_once_with()
-        self.storage.execute.assert_called_once_with(self.storage._create_tables())
 
     def test_get_ports_by_nodes_without_nodes(self):
         expected = []
