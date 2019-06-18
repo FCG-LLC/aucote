@@ -4,3 +4,6 @@
 [submodule "internal_deps/py_cslib"]
 	path = internal_deps/py_cslib
 	url = git@github.com:FCG-LLC/py_cslib.git
+[submodule ".ci"]
+	path = .ci
+	url = git@gitlab.cs.int:cicd/ci-utils.git
