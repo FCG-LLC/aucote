@@ -51,9 +51,9 @@ wait_on_jenkins
 
 set_git_status pending "${BUILD_URL}" "Status checks executed" "status checks"
 
-check_status .ci/unit_tests.sh "${BUILD_URL}/testReport/" "Performs unit tests" "unit tests" || { EXIT_VALUE=1; echo "UNIT TESTS FAILED"; }
-check_status .ci/security.sh "${BUILD_URL}/console" "Checks code security" "code security" || { EXIT_VALUE=1; echo "SECURITY TESTS FAILED"; }
-check_status .ci/pylint.sh "${BUILD_URL}/testReport/" "Checks code quality" "code quality"
+check_status ci/unit_tests.sh "${BUILD_URL}/testReport/" "Performs unit tests" "unit tests" || { EXIT_VALUE=1; echo "UNIT TESTS FAILED"; }
+check_status ci/security.sh "${BUILD_URL}/console" "Checks code security" "code security" || { EXIT_VALUE=1; echo "SECURITY TESTS FAILED"; }
+check_status ci/pylint.sh "${BUILD_URL}/testReport/" "Checks code quality" "code quality"
 
 set_git_status success "${BUILD_URL}" "Status checks executed" "status checks"
 
