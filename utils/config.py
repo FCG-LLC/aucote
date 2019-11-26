@@ -7,45 +7,6 @@ import logging as log
 from asyncio import get_event_loop, ensure_future
 import yaml
 
-from pycslib.utils import RabbitConsumer, Rabbit
-from utils.exceptions import ToucanException
-
-
-class ToucanConsumer(RabbitConsumer):
-    def __init__(self, cfg):
-        self.cfg = cfg
-        super(ToucanConsumer, self).__init__('toucan', 'topic', 'toucan.config.aucote.#')
-        self._actions = {
-
-        }
-
-    def register_action(self, regex, action):
-        self._actions[regex] = action
-
-    async def process_message(self, msg):
-        result = msg.json()
-        if result['status'] != 'OK':
-            log.warning('Toucan send message with error: %s', result)
-            return
-
-        if not msg.routing_key.startswith('toucan.config.aucote.'):
-            log.warning('Unexpected routing key %s', msg.routing_key)
-            return
-
-        key = msg.routing_key[len('toucan.config.aucote.'):]
-        value = result['value']
-
-        self.cfg[key] = value
-        log.debug('Changing configuration key %s to %s', key, value)
-
-        for regex, action in self._actions.items():
-            result = regex.match(key)
-            if result is not None:
-                try:
-                    action(key=key, value=value, **result.groupdict())
-                except:
-                    log.warning("Error during processing Toucan action: %s", action)
-
 
 class Config:
     """
@@ -60,11 +21,9 @@ class Config:
         self._immutable = set()
         self.push_config(cfg, immutable=True)
         self.default = self._cfg.copy()
-        self.toucan = None
-        self.rabbit = None
         self.cache_time = cache_time
         self._consumer = None
-        self.toucan_monitor = None
+        self.toucan = None
 
     def __len__(self):
         return len(self._cfg)
@@ -96,21 +55,6 @@ class Config:
         try:
             if key in self._immutable:
                 return_value = self._get(key)
-
-            elif self.toucan:
-                if cache and key in self.timestamps and self.timestamps[key] + self.cache_time > time.time():
-                    return_value = self._get(key)
-
-                elif self.toucan.is_special(key):
-                    result = self._from_toucan(key)
-
-                    for subkey, value in result.items():
-                        self._set(subkey, value)
-                    return_value = self._get(key)
-
-                else:
-                    return_value = self._from_toucan(key)
-                    self._set(key, return_value)
             else:
                 return_value = self._get(key)
 
@@ -120,21 +64,6 @@ class Config:
             return return_value
         except KeyError:
             raise KeyError(key)
-        except ToucanException:
-            log.exception("Error while obtaining configuration: %s", key)
-            raise KeyError(key)
-
-    def _from_toucan(self, key):
-        """
-        Obtains config value from toucan based on given key
-
-        Args:
-            key (str): Configuration key
-
-        Returns:
-
-        """
-        return self.toucan.get(key)
 
     def set(self, key, value):
         """
@@ -294,34 +223,3 @@ class Config:
 
             if immutable:
                 self._immutable.add(new_key)
-
-    async def start_rabbit(self, host, port, username, password):
-        """
-        Start rabbit client
-        """
-        io_loop = get_event_loop()
-        self.rabbit = Rabbit(host=host, port=port, username=username, password=password, ioloop=io_loop)
-        await self.rabbit.connect()
-        self.rabbit.start_monitoring()
-
-        self._consumer = ToucanConsumer(self)
-
-        ensure_future(self.rabbit.add_consumer(self._consumer), loop=io_loop)
-        ensure_future(self._consumer.consume(), loop=io_loop)
-
-    async def add_rabbit_consumer(self, consumer):
-        """
-        Add consumer to the rabbit
-        """
-        io_loop = get_event_loop()
-        if self.rabbit:
-            ensure_future(self.rabbit.add_consumer(consumer), loop=io_loop)
-
-    def register_action(self, regex, action):
-        """
-        Register action for configuration regex
-
-        """
-        if self.rabbit:
-            self._consumer.register_action(regex, action)
-            log.debug('Registering action for %s', str(regex))

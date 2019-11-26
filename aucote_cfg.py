@@ -5,14 +5,11 @@ import os.path as path
 from sys import stderr
 
 import yaml
-from pycslib.utils import Toucan
 
 import utils.log as log_cfg
 from utils import Config
 
 # default values
-# from utils.toucan import Toucan
-from utils.toucan_monitor import ToucanMonitor
 
 LOG_DIR = path.join(path.dirname(__file__), 'logs')
 
@@ -70,38 +67,6 @@ _DEFAULT = {
 cfg = Config(_DEFAULT)
 
 
-async def start_toucan(default_config):
-    """
-    Initialize Toucan
-
-    Args:
-        default_config:
-
-    Returns:
-        None
-
-    """
-    Toucan.min_retry_time = cfg['toucan.min_retry_time']
-    Toucan.max_retry_time = cfg['toucan.max_retry_time']
-    Toucan.max_retry_count = cfg['toucan.max_retry_count']
-
-    cfg.toucan = Toucan(api=cfg['toucan.api'], prefix='aucote')
-
-    # Add toucan monitor
-    cfg.toucan_monitor = ToucanMonitor(toucan=cfg.toucan)
-    cfg.toucan_monitor.start()
-
-    if cfg['rabbit.enable']:
-        await cfg.start_rabbit(cfg['rabbit.host'], int(cfg['rabbit.port']), cfg['rabbit.username'],
-                               cfg['rabbit.password'])
-
-    if cfg['toucan.push_default']:
-        with open(default_config, "r") as file:
-            config = yaml.safe_load(file)
-
-        await cfg.toucan.async_push_config(config, overwrite=cfg['toucan.overwrite'])
-
-
 async def load(file_name=None):
     '''
     Initializes this module.
@@ -125,11 +90,8 @@ async def load(file_name=None):
 
     default_config_filename = cfg['default_config']
 
-    if cfg['toucan.enable']:
-        await start_toucan(default_config_filename)
-    else:
-        try:
-            cfg.load(default_config_filename, cfg.cfg)
-        except Exception:
-            stderr.write("Cannot load configuration file {0}".format(default_config_filename))
-            exit()
+    try:
+        cfg.load(default_config_filename, cfg.cfg)
+    except Exception:
+        stderr.write("Cannot load configuration file {0}".format(default_config_filename))
+        exit()

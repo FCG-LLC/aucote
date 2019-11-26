@@ -8,7 +8,6 @@ import logging as log
 from threading import Thread
 
 import time
-from pycslib.utils import RabbitConsumer
 from tornado import gen
 from tornado.gen import sleep
 from tornado.ioloop import IOLoop
@@ -344,23 +343,3 @@ class AsyncTaskManager(object):
             IOLoop.current().add_callback(partial(self.process_tasks, self._next_task_number))
             self._next_task_number += 1
 
-
-class ThrottlingConsumer(RabbitConsumer):
-    """
-    Throttling consumer for rabbit queue
-    """
-    def __init__(self, manager):
-        self._manager = manager
-        super(ThrottlingConsumer, self).__init__('toucan', 'topic', 'toucan.config.throttling.rate')
-
-    async def process_message(self, msg):
-        """
-        Process message and set new throttling value
-        """
-        if msg.routing_key != 'toucan.config.throttling.rate':
-            return
-
-        value = float(msg.json()['value'])
-
-        log.info("Changing throttling scan rate to %s", value)
-        self._manager.change_throttling(value)

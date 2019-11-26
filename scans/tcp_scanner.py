@@ -2,7 +2,6 @@ from asyncio import get_event_loop
 
 from scans.scanner import Scanner
 from structs import TransportProtocol
-from utils.portscan import PortscanScanner
 
 
 class TCPScanner(Scanner):
@@ -13,11 +12,10 @@ class TCPScanner(Scanner):
         super(TCPScanner, self).__init__(*args, **kwargs)
         self.host = host
         self.port = port
-        self._tcp_scanner = PortscanScanner(self.host, self.port, get_event_loop())
 
     @property
     def scanners(self):
         return {
-            self.IPV4: [self._tcp_scanner],
-            self.IPV6: [self._tcp_scanner]
+            self.IPV4: [PortsScan(ipv6=False, tcp=True, udp=False)],
+            self.IPV6: [PortsScan(ipv6=True, tcp=True, udp=False)]
         }

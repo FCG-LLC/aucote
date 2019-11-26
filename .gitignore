@@ -92,6 +92,7 @@ ENV/
 stderr
 aucote_cfg.yaml
 logs/
+.vscode
 
 # Tools related files
 hydra.restore

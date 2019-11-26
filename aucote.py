@@ -28,7 +28,7 @@ from scans.udp_scanner import UDPScanner
 from structs import TaskManagerType
 from threads.storage_thread import StorageThread
 from threads.tftp_thread import TFTPThread
-from utils.async_task_manager import AsyncTaskManager, ThrottlingConsumer
+from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
 from utils.kudu_queue import KuduQueue
@@ -141,11 +141,6 @@ class Aucote(object):
             TaskManagerType.QUICK: AsyncTaskManager.instance(name=TaskManagerType.QUICK.value, parallel_tasks=30)
         }
 
-        for task_manager in self.async_task_managers.values():
-            throttling_consumer = ThrottlingConsumer(manager=task_manager)
-            self.ioloop.add_callback(partial(cfg.add_rabbit_consumer, throttling_consumer))
-            self.ioloop.add_callback(throttling_consumer.consume)
-
         self.web_server = WebServer(self, cfg['service.api.v1.host'], cfg['service.api.v1.port'],
                                     path=cfg['service.api.path'])
         self._tftp_thread = TFTPThread(cfg['tftp.host'], cfg['tftp.port'], timeout=cfg['tftp.timeout'],
@@ -190,10 +185,6 @@ class Aucote(object):
         """
         scan_task_manager = self.async_task_managers[TaskManagerType.SCANNER]
         try:
-            cfg.register_action(self.SCAN_CONTROL_START, self.start_scan)
-            cfg.register_action(self.SCAN_CONTROL_STOP, self.stop_scan)
-            cfg.register_action(self.SCAN_CONTROL_RESUME, self.resume_scan)
-            
             with self._storage_thread, self._tftp_thread:
                 scan_task_manager.clear()
                 self._storage.init_schema()
