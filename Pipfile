@@ -1,0 +1,33 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+pyaml = "==15.8.2"
+nanomsg = "==1.0"
+netaddr = "==0.7.18"
+python-dateutil = "*"
+netifaces = "==0.10.5"
+croniter = "==0.3.13"
+pytz = "==2016.10"
+inotify = "==0.2.8"
+tornado = "==4.5.2"
+tornado-crontab = "==0.3.2"
+pyasn1 = "==0.2.3"
+ndg-httpsclient = "==0.4.2"
+cpe = "==1.2.1"
+ujson = "==1.35"
+async-dns = "==1.0.0"
+defusedxml = "==0.5.0"
+sphinx-rtd-theme = "==0.2.4"
+psycopg2 = "==2.7.6.1"
+yoyo-migrations = "==6.0.0"
+pyOpenSSL = "==17.0.0"
+MarkupSafe = "==0.23"
+Sphinx = "==1.7.2"
+
+[requires]
+python_version = "3.7"
