@@ -31,7 +31,6 @@ from threads.tftp_thread import TFTPThread
 from utils.async_task_manager import AsyncTaskManager
 from utils.exceptions import NmapUnsupported, TopdisConnectionException
 from utils.storage import Storage
-from utils.kudu_queue import KuduQueue
 from utils.topdis import Topdis
 from utils.web_server import WebServer
 from database.serializer import Serializer
@@ -89,6 +88,7 @@ async def main():
 
         """
         if cfg['kuduworker.enable']:
+            from utils.kudu_queue import KuduQueue
             return KuduQueue(cfg['kuduworker.queue.address'])
         return MagicMock()  # used for local testing
 

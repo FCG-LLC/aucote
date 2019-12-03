@@ -53,7 +53,7 @@ _DEFAULT = {
         'fetch_os': False
     },
     'toucan': {
-        'enable': True,
+        'enable': False,
         'api': 'http://toucan:3000',
         'min_retry_time': 5,
         'max_retry_time': 60 * 5,

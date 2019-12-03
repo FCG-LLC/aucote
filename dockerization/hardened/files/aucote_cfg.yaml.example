@@ -1,0 +1,136 @@
+# This is an example configuration file, which provides information about configurable options of aucote.
+#
+# pid_file: <str> - defines pid file path
+# default_config: <str> - Path to the default configuration (default is aucote_cfg_default.yaml)
+
+pid_file: tmp/aucote.pid
+default_config: aucote_cfg_default.yaml
+
+# logging: Aucote logs a most of events in configuration files
+#   (root|storage): Logger name. Storage is used only for logging queries
+#       file: <str> - Log file path
+#       level: (debug|info|warning|error|critical) - Logging level (default: debug)
+#       max_file_size: <int> - Maximum log file's size. After reaching the limit, new file is created and old is archived.
+#       max_files: <int> - Maximum amount of log files (with archived).
+#       format: <str> - Log line formats. For more information see link:
+#                       https://docs.python.org/3/library/logging.html#logrecord-attributes
+#       propagate: <bool> - True if logs should be propagated to root
+
+logging:
+    root:
+        file: logs/aucote.log
+        level: debug
+        max_file_size: 10485760
+        max_files: 5
+        format: "%(levelname)s %(asctime)s %(module)s.%(funcName)s:%(lineno)d %(message)s"
+        propagate: True
+    storage:
+        file: logs/storage.log
+        level: debug
+        max_file_size: 10485760
+        max_files: 10
+        format: "%(levelname)s %(asctime)s %(message)s"
+        propagate: False
+    pycslib:
+        file: logs/pycslib.log
+        level: debug
+        max_file_size: 10485760
+        max_files: 10
+        format: "%(levelname)s %(asctime)s %(message)s"
+        propagate: False
+
+# storage: Storage configuration
+#    db: <str> - Postgresql connection string
+#    max_nodes_query: <int> - Maximum number of nodes which should be quered for ports
+
+storage:
+    db: "postgresql://aucote:aucote@postgres/aucote"
+    max_nodes_query: 200
+    fresh_start: True
+
+# fixtures:
+#   exploits:
+#     filename: <str> - Path to the exploits database
+
+fixtures:
+    exploits:
+        filename: fixtures/exploits/exploits.csv
+
+# kuduworker: Configuration of kudu.
+#   enable: <bool> - Define if kudu should be enable or not
+#   queue:
+#     address: <str> - URL to the kudu worker
+
+kuduworker:
+    enable: False
+    queue:
+        address: ipc:///tmp/scar-pipeline.ipc
+
+# This section contains configuration related to topdis service
+# topdis:
+#   api:
+#     host: <str|ipaddress> - host of api
+#     port: <int> - port of api
+#     base: <str> - base address for topdis
+
+topdis:
+    api:
+        host: topdis
+        port: 1234
+        base: /api/v1
+
+# Toucan is centralized node manager. It provides configuration for Aucote
+# toucan:
+#   enable: <bool> - Enable or disable support for Toucan
+#   min_retry_time: <int> - minimum time which aucote waits before retrying connection to Toucan after unsuccessful try
+#   max_retry_time: <int> - maximum time: after failed connection to Toucan waiting time is double up to maximum
+#   max_retry_count: <int> - maximum number of retries
+#   api: <str(prot://host:port) - REST api address
+#   overwrite: <bool> - Overwrite configuration on start
+
+toucan:
+    enable: True
+    min_retry_time: 5
+    max_retry_time: 300
+    max_retry_count: 20
+    api: http://toucan:3000
+    overwrite: False
+
+# RabbitMQ is used for obtaining real-time information from other services
+# rabbit:
+#   enable: <bool>
+#   host: <str>
+#   port: <int>
+#   username: <str>
+#   password: <str>
+
+rabbit:
+    enable: True
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+# TCP portscan is a remote scanning service used for TCP portdetection
+# tcpportscan:
+#   host: <str>
+#   port: <int>
+
+tcpportscan:
+    host: portscan
+    port: 1339
+
+# TFTP server is used by some security checks. Should be available from outside on port 69
+# tftp:
+#   host: <str> - host
+#   port: <int> - port number
+#   timeout: <int> - timeout in seconds
+#   min_port: <int> - minimum port of data exchange
+#   max_port: <int> - maximum port of data exchange
+
+tftp:
+    host: 0.0.0.0
+    port: 6969
+    timeout: 60
+    min_port: 60000
+    max_port: 61000
