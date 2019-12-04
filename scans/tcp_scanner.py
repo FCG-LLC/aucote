@@ -2,6 +2,7 @@ from asyncio import get_event_loop
 
 from scans.scanner import Scanner
 from structs import TransportProtocol
+from tools.nmap.ports import PortsScan
 
 
 class TCPScanner(Scanner):
