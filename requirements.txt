@@ -8,7 +8,7 @@ pytz==2016.10
 inotify==0.2.8
 tornado==4.5.2
 tornado-crontab==0.3.2
-pyopenssl==17.0.0
+pyopenssl==17.5.0
 pyasn1==0.2.3
 ndg-httpsclient==0.4.2
 cpe==1.2.1
